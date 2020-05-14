@@ -16,3 +16,7 @@ target_link_libraries(test_HandRegistration lib_TimeString)
 #ICP
 include_directories("${CMAKE_SOURCE_DIR}/include_ICP")
 target_link_libraries(test_HandRegistration lib_ICP)
+
+#PointcloudFuction
+include_directories("${CMAKE_SOURCE_DIR}/include_PointcloudFunction")
+target_link_libraries(test_HandRegistration lib_PointcloudFunction)
