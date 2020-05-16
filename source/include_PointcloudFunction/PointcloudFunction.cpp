@@ -78,44 +78,76 @@ Eigen::Vector6d CPointcloudFuction::calcVector6dFromHomogeneousMatrix(Eigen::Mat
 	//cout << "Yaw_ = " << Yaw_ << endl;
 
 	return XYZRPY;
+
+
 }
 
-void CPointcloudFuction::initVisualizer(const std::type_info& type) {
+template < typename T_PointType >
+CPointVisualization<T_PointType>::CPointVisualization()
+{
+	//// PCL Visualizer
+	//m_viewer.reset(new pcl::visualization::PCLVisualizer("Velodyne Viewer"));
+	//m_viewer->addCoordinateSystem(3.0, "coordinate");
+	//m_viewer->setBackgroundColor(0.0, 0.0, 0.0, 0);
+	//m_viewer->initCameraParameters();
+	//m_viewer->setCameraPosition(0.0, 0.0, 30.0, 0.0, 1.0, 0.0, 0);
+	setViewer("Velodyne Viewer");
 
-	// PCL Visualizer
-	m_viewer.reset(new pcl::visualization::PCLVisualizer("Velodyne Viewer"));
 
-	m_viewer->addCoordinateSystem(3.0, "coordinate");
-	m_viewer->setBackgroundColor(0.0, 0.0, 0.0, 0);
-	m_viewer->initCameraParameters();
-	m_viewer->setCameraPosition(0.0, 0.0, 30.0, 0.0, 1.0, 0.0, 0);
 	//m_viewer->removeCoordinateSystem("coordinate");		//remove axis in viewer
 
 	// Point Cloud Color Handler
-	//pcl::visualization::PointCloudColorHandler<PointType>::Ptr handler;	//Ç±ÇÍÇÕÉÅÉìÉoïœêîÇ…ÇµÇΩÅD
-	
-	//const std::type_info& type = typeid(PointType);
-
-	if (type == typeid(pcl::PointXYZ)) {
+	//if (type == typeid(pcl::PointXYZ)) {
+	//	std::vector<double> color = { 255.0, 255.0, 255.0 };
+	//	boost::shared_ptr<pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ>> color_handler(new pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ>(color[0], color[1], color[2]));
+	//	m_handler = color_handler;
+	//}
+	//else if (type == typeid(pcl::PointXYZI)) {
+	//	boost::shared_ptr<pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointXYZI>> color_handler(new pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointXYZI>("intensity"));
+	//	m_handler = color_handler;
+	//}
+	//else if (type == typeid(pcl::PointXYZRGBA)) {
+	//	boost::shared_ptr<pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGBA>> color_handler(new pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGBA>());
+	//	m_handler = color_handler;
+	//}
+	//else if (type == typeid(pcl::PointXYZRGB)) {
+	//	boost::shared_ptr<pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB>> color_handler(new pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB>());
+	//	m_handler = color_handler;
+	//}
+	//else {
+	//	throw std::runtime_error("This PointType is unsupported.");
+	//}
+	// Point Cloud Color Handler
+	if (T_PointType == typeid(pcl::PointXYZ)) {
 		std::vector<double> color = { 255.0, 255.0, 255.0 };
-		boost::shared_ptr<pcl::visualization::PointCloudColorHandlerCustom<PointType>> color_handler(new pcl::visualization::PointCloudColorHandlerCustom<PointType>(color[0], color[1], color[2]));
+		boost::shared_ptr<pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ>> color_handler(new pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ>(color[0], color[1], color[2]));
 		m_handler = color_handler;
 	}
-	else if (type == typeid(pcl::PointXYZI)) {
-		boost::shared_ptr<pcl::visualization::PointCloudColorHandlerGenericField<PointType>> color_handler(new pcl::visualization::PointCloudColorHandlerGenericField<PointType>("intensity"));
+	else if (T_PointType == typeid(pcl::PointXYZI)) {
+		boost::shared_ptr<pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointXYZI>> color_handler(new pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointXYZI>("intensity"));
 		m_handler = color_handler;
 	}
-	else if (type == typeid(pcl::PointXYZRGBA)) {
-		boost::shared_ptr<pcl::visualization::PointCloudColorHandlerRGBField<PointType>> color_handler(new pcl::visualization::PointCloudColorHandlerRGBField<PointType>());
+	else if (T_PointType == typeid(pcl::PointXYZRGBA)) {
+		boost::shared_ptr<pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGBA>> color_handler(new pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGBA>());
 		m_handler = color_handler;
 	}
-	else if (type == typeid(pcl::PointXYZRGB)) {
-		boost::shared_ptr<pcl::visualization::PointCloudColorHandlerRGBField<PointType>> color_handler(new pcl::visualization::PointCloudColorHandlerRGBField<PointType>());
+	else if (T_PointType == typeid(pcl::PointXYZRGB)) {
+		boost::shared_ptr<pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB>> color_handler(new pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB>());
 		m_handler = color_handler;
 	}
 	else {
 		throw std::runtime_error("This PointType is unsupported.");
 	}
+}
 
+template < typename T_PointType >
+void CPointVisualization<T_PointType>::setViewer(const string name_window_arg)
+{
+	m_viewer.reset(new pcl::visualization::PCLVisualizer(name_window_arg));
+	m_viewer->addCoordinateSystem(3.0, "coordinate");
+	m_viewer->setBackgroundColor(0.0, 0.0, 0.0, 0);
+	m_viewer->initCameraParameters();
+	m_viewer->setCameraPosition(0.0, 0.0, 30.0, 0.0, 1.0, 0.0, 0);
 
 }
+

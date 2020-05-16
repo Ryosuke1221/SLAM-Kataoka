@@ -22,6 +22,9 @@ using namespace std;
 
 int main()
 {
+	CPointcloudFuction::CPointVisualization<pcl::PointXYZ> pov;
+	CPointcloudFuction::CPointVisualization<pcl::PointXYZ> pov2("test");
+
 	string foldername_;
 	foldername_ = "../savedfolder/temp";
 

@@ -15,7 +15,7 @@
 #define M_PI 3.14159265359
 
 using namespace std;
-typedef pcl::PointXYZI PointType;
+//typedef pcl::PointXYZI PointType;
 //typedef pcl::PointXYZRGB PointType;
 
 namespace Eigen {
@@ -26,12 +26,34 @@ namespace Eigen {
 
 }    // namespace Eigen
 
+template < typename T_PointType >	class CPointVisualization
+{
+
+	pcl::visualization::PointCloudColorHandler<T_PointType>::Ptr m_handler;
+	boost::shared_ptr<pcl::visualization::PCLVisualizer> m_viewer;				//大丈夫？
+	string name_window;
+
+public:
+	//template < typename T_PointType >
+	//CPointVisualization();
+
+	CPointVisualization();
+
+	void setViewer(const string name_window_arg);
+
+
+	//m_viewer->close();
+};
+
+
 class CPointcloudFuction
 {
 
-	boost::shared_ptr<pcl::visualization::PCLVisualizer> m_viewer;				//大丈夫？
-
 public:
+	CPointcloudFuction() 
+	{
+
+	}
 
 	static Eigen::Matrix4d calcHomogeneousMatrixFromVector6d(double X_, double Y_, double Z_,
 		double Roll_, double Pitch_, double Yaw_);
@@ -40,6 +62,13 @@ public:
 
 	static Eigen::Vector6d calcVector6dFromHomogeneousMatrix(Eigen::Matrix4d transformation_Node);
 
-	void initVisualizer(const std::type_info& type);
+	//pcl::visualization::PointCloudColorHandler<pcl::PointXYZ>::Ptr m_handler;
+	//pcl::visualization::PointCloudColorHandler<>::Ptr m_handler;
+
+
+	//CPointVisualization<pcl::PointXYZ> pointv;
+	//CPointVisualization<pcl::PointXYZ> pointv2("test");
+	//CPointVisualization<pcl::PointXYZ> pointv3(const_cast<string>("test"));
+	//CPointcloudFuction::CPointVisualization<pcl::PointXYZ> pointv4("test");
 
 };
