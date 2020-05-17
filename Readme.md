@@ -17,7 +17,7 @@
 text
 
 >reference
-Click [reference](https://help.github.com/ja/github/writing-on-github/basic-writing-and-formatting-syntax)
+Click [reference_page](https://help.github.com/ja/github/writing-on-github/basic-writing-and-formatting-syntax)
 
 ```
 git status
