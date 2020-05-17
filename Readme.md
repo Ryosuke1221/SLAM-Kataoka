@@ -19,7 +19,9 @@ text
 >reference
 
 Click [reference_page1](https://help.github.com/ja/github/writing-on-github/basic-writing-and-formatting-syntax)
+
 Click [reference_page2](https://cpp-learning.com/readme/)
+
 Click [reference_page3](https://cpp-learning.com/wp-content/uploads/2019/06/README_Template.html)
 
 ```
