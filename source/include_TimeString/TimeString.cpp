@@ -1,27 +1,23 @@
 #include"TimeString.h"
 
-string CTimeString::getTimeString() {
-	setTime();
+string CTimeString::getTimeString() 
+{
+	int i_year, i_month, i_day, i_hour, i_minute, i_second, i_milliseconds;
+	setTime(i_year, i_month, i_day, i_hour, i_minute, i_second, i_milliseconds);
+
 	string s_year, s_month, s_day, s_hour, s_minute, s_second, s_milliseconds,s_time;
-
-	s_year = to_string(m_year);
-
-	s_month = to_string(m_month);						//size 2
+	s_year = to_string(i_year);
+	s_month = to_string(i_month);						//size 2
 	if (s_month.size() < 2) s_month = "0" + s_month;
-
-	s_day = to_string(m_day);							//size 2
+	s_day = to_string(i_day);							//size 2
 	if (s_day.size() < 2) s_day = "0" + s_day;
-
-	s_hour = to_string(m_hour);							//size 2
+	s_hour = to_string(i_hour);							//size 2
 	if (s_hour.size() < 2) s_hour = "0" + s_hour;
-
-	s_minute = to_string(m_minute);						//size 2
+	s_minute = to_string(i_minute);						//size 2
 	if (s_minute.size() < 2) s_minute = "0" + s_minute;
-
-	s_second = to_string(m_second);						//size 2
+	s_second = to_string(i_second);						//size 2
 	if (s_second.size() < 2) s_second = "0" + s_second;
-
-	s_milliseconds = to_string(m_milliseconds);			//size 3
+	s_milliseconds = to_string(i_milliseconds);			//size 3
 	if (s_milliseconds.size() < 3) s_milliseconds = "0" + s_milliseconds;
 	if (s_milliseconds.size() < 3) s_milliseconds = "0" + s_milliseconds;
 	//s_milliseconds.erase(s_milliseconds.begin() + 1, s_milliseconds.begin() + 3);
@@ -178,25 +174,21 @@ void CTimeString::getTimeValueFromString(string string_,int &i_minute,int &i_sec
 	i_millisecond = stoi(s_millisecond);
 }
 
-
-void CTimeString::setTime() {
-
+void CTimeString::setTime(int& i_year, int& i_month, int& i_day, int& i_hour, int& i_minute, int& i_second, int& i_milliseconds)
+{
 	SYSTEMTIME st;
 	GetSystemTime(&st);
-
-	m_year = st.wYear;
-	m_month = st.wMonth;
-	m_day = st.wDay;
-	m_hour = st.wHour+9;
-	m_minute = st.wMinute;
-	m_second = st.wSecond;
-	m_milliseconds = st.wMilliseconds;
-
-	if (m_hour >= 24) {
-		m_hour -= 24;
-		m_day++;
+	i_year = st.wYear;
+	i_month = st.wMonth;
+	i_day = st.wDay;
+	i_hour = st.wHour+9;
+	i_minute = st.wMinute;
+	i_second = st.wSecond;
+	i_milliseconds = st.wMilliseconds;
+	if (i_hour >= 24) {
+		i_hour -= 24;
+		i_day++;
 	}
-
 }
 
 //https://www.sejuku.net/blog/49318

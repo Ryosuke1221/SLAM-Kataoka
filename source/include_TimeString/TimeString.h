@@ -10,31 +10,28 @@ using namespace std;
 
 class CTimeString {
 
-	int m_year, m_month, m_day, m_hour, m_minute, m_second, m_milliseconds;
+	static void setTime(int& i_year, int& i_month, int& i_day, int& i_hour, int& i_minute, int& i_second, int& i_milliseconds);
 
-	void setTime();
-
-	void getTimeValueFromString(string string_, int &i_minute, int &i_second, int &i_millisecond);
+	static void getTimeValueFromString(string string_, int &i_minute, int &i_second, int &i_millisecond);
 	void getTimeValueFromString(string string_, int &i_hour, int &i_minute, int &i_second, int &i_millisecond);
 
 public:
 
 	//can use "std::to_string" for it ...but detail is unknown
-	template < typename T > std::string to_string(const T& n)
+	template < typename T > static std::string to_string(const T& n)
 	{
 		std::ostringstream stm;
 		stm << n;
 		return stm.str();
 	}
 
+	static string getTimeString();
 
-	string getTimeString();
-
-	string getTimeElapsefrom2Strings(string s_former, string s_latter);	//output  second
+	static string getTimeElapsefrom2Strings(string s_former, string s_latter);	//output  second
 
 	string getTElapsefrom2S(string s_former, string s_latter);
 
-	std::vector<int> find_all(const std::string str, const std::string subStr);
+	static std::vector<int> find_all(const std::string str, const std::string subStr);
 
 	template<typename T>
 	vector<vector<T>> getVecVecFromCSV(string filename_) {
@@ -95,6 +92,6 @@ public:
 	bool getFileNames(std::string folderPath, std::vector<std::string> &file_names);
 	bool getFileNames_extension(std::string folderPath, std::vector<std::string> &file_names,string s_extension);
 
-	int getTimeElapsefrom2Strings_millisec(string s_former, string s_latter);	//output  second
+	static int getTimeElapsefrom2Strings_millisec(string s_former, string s_latter);	//output  second
 
 };
