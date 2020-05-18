@@ -8,3 +8,7 @@ if( PCL_FOUND )
 	link_directories( ${PCL_LIBRARY_DIRS} )
 	target_link_libraries(lib_PointcloudFunction ${PCL_LIBRARIES} )
 endif()
+
+#TimeString
+include_directories("${CMAKE_SOURCE_DIR}/include_TimeString")
+target_link_libraries(lib_PointcloudFunction lib_TimeString)

@@ -10,8 +10,15 @@
 #include <pcl/registration/transforms.h>
 #include <pcl/visualization/cloud_viewer.h>
 
+////https://akio-tanaka.tumblr.com/page/2
+//#pragma comment(lib,"opengl32.lib")	
+//#include <vtkAutoInit.h>
+//VTK_MODULE_INIT(vtkRenderingOpenGL);
+//VTK_MODULE_INIT(vtkInteractionStyle);
+
 //should be under pcl includes
 #include<windows.h>
+#include "TimeString.h"
 
 
 #define M_PI 3.14159265359
@@ -70,12 +77,21 @@ class CPointVisualization
 	boost::shared_ptr<T_ColorHandler> M_handler;
 	string M_name_window;
 	boost::mutex M_mutex;
+	static boost::mutex M_mutex_viewer;
 	T_PointCloudPtr M_cloud_;
 	T_PointType M_point;
+
+	boost::thread M_thread;
+
+	bool M_b_showWindow;
+
+	void startThread(T_PointCloudPtr cloud_arg);
+	void doThread();
 
 public:
 
 	CPointVisualization();
+	~CPointVisualization();
 
 	void setWindowName(const string name_window_arg);
 
@@ -114,6 +130,7 @@ template < typename T_PointType >
 CPointVisualization<T_PointType>::CPointVisualization()
 {
 	setWindowName("init");
+
 	//m_viewer->removeCoordinateSystem("coordinate");		//remove axis in viewer
 
 	// Point Cloud Color Handler
@@ -146,12 +163,18 @@ CPointVisualization<T_PointType>::CPointVisualization()
 	}
 
 	M_cloud_ = (new pcl::PointCloud<T_PointType>)->makeShared();
+
 }
 
 template < typename T_PointType >
 void CPointVisualization<T_PointType>::setWindowName(const string name_window_arg)
 {
-	if(M_viewer) M_viewer->close();
+	M_name_window = name_window_arg;
+	if (M_viewer)
+	{
+		cout << "reset viewer" << endl;
+		M_viewer->close();
+	}
 	M_viewer.reset(new pcl::visualization::PCLVisualizer(name_window_arg));
 	M_viewer->addCoordinateSystem(3.0, "coordinate");
 	M_viewer->setBackgroundColor(0.0, 0.0, 0.0, 0);
@@ -165,6 +188,7 @@ void CPointVisualization<T_PointType>::setPointCloud(T_PointCloudPtr cloud_arg)
 	//mutex with scoped_lock
 	boost::mutex::scoped_lock lock(M_mutex);
 	//update pointcloud
+	M_cloud_->clear();
 	pcl::copyPointCloud(*cloud_arg, *M_cloud_);
 }
 
@@ -173,16 +197,76 @@ void CPointVisualization<T_PointType>::updateViewer()
 {
 	if (!M_viewer->wasStopped())
 	{
+		//spinOnce() error in thread
+		//https://stackoverflow.com/questions/21155658/using-pclvisualization-in-different-threads-from-different-instance-of-a-cla
+		//http://www.pcl-users.org/PCL-viewer-hangs-with-busy-cursor-td4021568.html
+		//http://www.pcl-users.org/Updating-PCLVisualizer-from-another-thread-td4021570.html
 		M_viewer->spinOnce();
 
 		//mutex with no stop
 		boost::mutex::scoped_try_lock lock(M_mutex);
 		if (lock.owns_lock() && M_cloud_)
 		{
+			//cout << "locked";
+			//cout << "(WindowName:" << M_name_window << ")" << endl;
 			M_handler->setInputCloud(M_cloud_);
 			//update viewer
 			if (!M_viewer->updatePointCloud(M_cloud_, *M_handler, "cloud"))
 				M_viewer->addPointCloud(M_cloud_, *M_handler, "cloud");
 		}
 	}
+}
+
+//don't work
+template < typename T_PointType >
+void CPointVisualization<T_PointType>::startThread(T_PointCloudPtr cloud_arg)
+{
+	M_cloud_->clear();
+	pcl::copyPointCloud(*cloud_arg,*M_cloud_);
+	cout << "size = " << M_cloud_->size() << endl;
+	M_thread = boost::thread(&CPointVisualization<T_PointType>::doThread, this);
+}
+
+//don't work
+template < typename T_PointType >
+void CPointVisualization<T_PointType>::doThread()
+{
+	//while (!M_viewer->wasStopped())
+	//{
+	//	cout << "not stoped" << endl;
+
+	//	M_viewer->spinOnce(100);
+	//	cout << "not stoped" << endl;
+
+	//	//mutex with no stop
+	//	boost::mutex::scoped_try_lock lock(M_mutex);
+	//	//cout << "bool:" << lock.owns_lock() << endl;
+	//	if (lock.owns_lock() && M_cloud_)
+	//	{
+	//		M_handler->setInputCloud(M_cloud_);
+	//		//update viewer
+	//		//if (!M_viewer->updatePointCloud(M_cloud_, *M_handler, "cloud"))
+	//		//	M_viewer->addPointCloud(M_cloud_, *M_handler, "cloud");
+	//		if (!M_viewer->updatePointCloud(M_cloud_, *M_handler, "cloud"))
+	//			M_viewer->addPointCloud(M_cloud_, *M_handler, "cloud");
+	//		cout << "thread" << endl;
+	//	}
+	//	break;
+	//}
+
+	while (1)
+	{
+		cout << "while start" << endl;
+		CTimeString time_;
+		string t1 = time_.getTimeString();
+		updateViewer();
+		string t2 = time_.getTimeString();
+		cout << "elapsed:" << time_.getTimeElapsefrom2Strings_millisec(t1,t2) << endl;
+	}
+}
+
+template < typename T_PointType >
+CPointVisualization<T_PointType>::~CPointVisualization()
+{
+	if(M_thread.joinable()) M_thread.join();
 }

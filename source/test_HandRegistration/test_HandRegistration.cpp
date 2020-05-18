@@ -25,22 +25,31 @@ int main()
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_1(new pcl::PointCloud<pcl::PointXYZ>());
 	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_2(new pcl::PointCloud<pcl::PointXYZI>());
-	pcl::io::loadPCDFile(s_filename_PC, *cloud_1);
+	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_3(new pcl::PointCloud<pcl::PointXYZI>());
+	//pcl::io::loadPCDFile(s_filename_PC, *cloud_1);
 	pcl::io::loadPCDFile(s_filename_PC, *cloud_2);
+	pcl::io::loadPCDFile(s_filename_PC, *cloud_3);
 
-	CPointVisualization<pcl::PointXYZ> pv1;
-	CPointVisualization<pcl::PointXYZI> pv2;
-	pv1.setWindowName("show XYZI");
-	pv2.setWindowName("show XYZI2");
+	//CPointVisualization<pcl::PointXYZ> pv1;
+	//CPointVisualization<pcl::PointXYZI> pv2;
+	CPointVisualization<pcl::PointXYZI> pv3;
+	//pv1.setWindowName("show XYZI");
+	//pv2.setWindowName("show XYZI2");
+	pv3.setWindowName("show XYZI3");
+	pv3.startThread(cloud_3);
 
 	while (1)
 	{
-	//	//update cloud_
+		//pv1.setPointCloud(cloud_1);
+		//pv1.updateViewer();
+		//pv2.setPointCloud(cloud_2);
+		//pv2.updateViewer();
+		cout << "aaa" << endl;
+	}
 
-		pv1.setPointCloud(cloud_1);
-		pv1.updateViewer();
-		pv2.setPointCloud(cloud_2);
-		pv2.updateViewer();
+	while (1)
+	{
+
 	}
 
 	cout << "finish" << endl;
