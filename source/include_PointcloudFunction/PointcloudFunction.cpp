@@ -1,7 +1,8 @@
 #include "PointcloudFunction.h"
 
 Eigen::Matrix4d CPointcloudFuction::calcHomogeneousMatrixFromVector6d(double X_, double Y_, double Z_,
-	double Roll_, double Pitch_, double Yaw_) {
+	double Roll_, double Pitch_, double Yaw_) 
+{
 	Eigen::Matrix4d	transformation_Position = Eigen::Matrix4d::Identity();
 	Eigen::Matrix4d T_mat = Eigen::Matrix4d::Identity();
 	Eigen::Matrix4d Roll_mat = Eigen::Matrix4d::Identity();
@@ -26,7 +27,8 @@ Eigen::Matrix4d CPointcloudFuction::calcHomogeneousMatrixFromVector6d(double X_,
 	return transformation_Position;
 }
 
-Eigen::Affine3f CPointcloudFuction::calcAffine3fFromHomogeneousMatrix(Eigen::Matrix4d input_Mat) {
+Eigen::Affine3f CPointcloudFuction::calcAffine3fFromHomogeneousMatrix(Eigen::Matrix4d input_Mat)
+{
 	Eigen::Affine3f Trans_Affine = Eigen::Affine3f::Identity();
 	Eigen::Vector6d Trans_Vec = Eigen::Vector6d::Identity();
 	Trans_Vec = calcVector6dFromHomogeneousMatrix(input_Mat);
@@ -37,32 +39,33 @@ Eigen::Affine3f CPointcloudFuction::calcAffine3fFromHomogeneousMatrix(Eigen::Mat
 	return Trans_Affine;
 }
 
-Eigen::Vector6d CPointcloudFuction::calcVector6dFromHomogeneousMatrix(Eigen::Matrix4d transformation_Node) {
+Eigen::Vector6d CPointcloudFuction::calcVector6dFromHomogeneousMatrix(Eigen::Matrix4d input_Mat) 
+{
 	Eigen::Vector6d XYZRPY = Eigen::Vector6d::Zero();
 	double X_, Y_, Z_, Roll_, Pitch_, Yaw_;
-	X_ = transformation_Node(0, 3);
-	Y_ = transformation_Node(1, 3);
-	Z_ = transformation_Node(2, 3);
-	if (transformation_Node(2, 0) == -1.) {
+	X_ = input_Mat(0, 3);
+	Y_ = input_Mat(1, 3);
+	Z_ = input_Mat(2, 3);
+	if (input_Mat(2, 0) == -1.) {
 		Pitch_ = M_PI / 2.0;
 		Roll_ = 0.;
-		Yaw_ = atan2(transformation_Node(1, 2), transformation_Node(1, 1));
+		Yaw_ = atan2(input_Mat(1, 2), input_Mat(1, 1));
 	}
-	else if (transformation_Node(2, 0) == 1.) {
+	else if (input_Mat(2, 0) == 1.) {
 		Pitch_ = -M_PI / 2.0;
 		Roll_ = 0.;
-		Yaw_ = atan2(-transformation_Node(1, 2), transformation_Node(1, 1));
+		Yaw_ = atan2(-input_Mat(1, 2), input_Mat(1, 1));
 	}
 	else {
-		Yaw_ = atan2(transformation_Node(1, 0), transformation_Node(0, 0));
-		Roll_ = atan2(transformation_Node(2, 1), transformation_Node(2, 2));
+		Yaw_ = atan2(input_Mat(1, 0), input_Mat(0, 0));
+		Roll_ = atan2(input_Mat(2, 1), input_Mat(2, 2));
 		double cos_Pitch;
 		if (cos(Yaw_) == 0.) {
-			cos_Pitch = transformation_Node(0, 0) / sin(Yaw_);
+			cos_Pitch = input_Mat(0, 0) / sin(Yaw_);
 		}
-		else 	cos_Pitch = transformation_Node(0, 0) / cos(Yaw_);
+		else 	cos_Pitch = input_Mat(0, 0) / cos(Yaw_);
 
-		Pitch_ = atan2(-transformation_Node(2, 0), cos_Pitch);
+		Pitch_ = atan2(-input_Mat(2, 0), cos_Pitch);
 	}
 	if (!(-M_PI < Roll_)) Roll_ += M_PI;
 	else if (!(Roll_ < M_PI)) Roll_ -= M_PI;
@@ -80,3 +83,4 @@ Eigen::Vector6d CPointcloudFuction::calcVector6dFromHomogeneousMatrix(Eigen::Mat
 	return XYZRPY;
 }
 
+//calcXYZRPYFromPositoinMatrix

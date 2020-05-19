@@ -50,7 +50,7 @@ public:
 
 	static Eigen::Affine3f calcAffine3fFromHomogeneousMatrix(Eigen::Matrix4d input_Mat);
 
-	static Eigen::Vector6d calcVector6dFromHomogeneousMatrix(Eigen::Matrix4d transformation_Node);
+	static Eigen::Vector6d calcVector6dFromHomogeneousMatrix(Eigen::Matrix4d input_Mat);
 
 	//pcl::visualization::PointCloudColorHandler<pcl::PointXYZ>::Ptr m_handler;
 	//pcl::visualization::PointCloudColorHandler<>::Ptr m_handler;

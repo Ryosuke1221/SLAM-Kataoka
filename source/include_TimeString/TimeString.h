@@ -6,7 +6,16 @@
 #include<vector>
 #include<typeinfo>
 
+//20200519
+#include <locale.h>
+#include <tchar.h>
+//
+#include <filesystem>
+#include <fstream>
+
 using namespace std;
+//namespace sys_ns = std::tr2::sys;	//occur error in JIROS
+namespace sys_ns = std::experimental::filesystem;
 
 class CTimeString {
 
@@ -89,9 +98,14 @@ public:
 
 	}
 
-	bool getFileNames(std::string folderPath, std::vector<std::string> &file_names);
+	static bool getFileNames(std::string folderPath, std::vector<std::string> &file_names, bool b_cout = true, bool b_getDir = false, bool b_check = true);
 	bool getFileNames_extension(std::string folderPath, std::vector<std::string> &file_names,string s_extension);
 
 	static int getTimeElapsefrom2Strings_millisec(string s_former, string s_latter);	//output  second
+
+private:
+	static bool getDirectoryExistance(string foder_Path);
+	static bool getDirectoryExistance_detail(string foder_Path, bool b_first);
+
 
 };

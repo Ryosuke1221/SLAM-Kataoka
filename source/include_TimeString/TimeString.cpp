@@ -1,4 +1,4 @@
-#include"TimeString.h"
+﻿#include"TimeString.h"
 
 string CTimeString::getTimeString() 
 {
@@ -206,37 +206,67 @@ std::vector<int> CTimeString::find_all(const std::string str, const std::string 
 	return result;
 }
 
-bool CTimeString::getFileNames(std::string folderPath, std::vector<std::string> &file_names)
+ bool CTimeString::getFileNames(std::string folderPath, std::vector<std::string> &file_names, bool b_cout, bool b_getDir, bool b_check)
 {
+	 //if (b_check)
+		// if (!getDirectoryExistance(folderPath))
+		//	 return false;
+	 if (b_check)
+		 if (!getDirectoryExistance_detail(folderPath,true))
+			 return false;
+
+	//only work in Multibyte Character Set (not in Unicode)
 	//https://qiita.com/tes2840/items/8d295b1caaf10eaf33ad
-	//#include <windows.h>
-	//#include <vector>
-	//#include <string>
-	//#include <iostream>
-	HANDLE hFind;
-	WIN32_FIND_DATA win32fd;
-	std::string search_name = folderPath + "\\*";
+	//HANDLE hFind;
+	//WIN32_FIND_DATA win32fd;
+	//std::string search_name = folderPath + "\\*";
+	//hFind = FindFirstFile(search_name.c_str(), &win32fd);
+	//if (hFind == INVALID_HANDLE_VALUE) {
+	//	throw std::runtime_error("file not found");
+	//	return false;
+	//}
+	//do
+	//{
+	//	if (win32fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+	//		cout << win32fd.cFileName << "(directory)" << endl;
+	//	}
+	//	else {
+	//		file_names.push_back(win32fd.cFileName);
+	//		//cout << file_names.back() << endl;
+	//	}
+	//} while (FindNextFile(hFind, &win32fd));
+	//FindClose(hFind);
 
-	hFind = FindFirstFile(search_name.c_str(), &win32fd);
-
-	if (hFind == INVALID_HANDLE_VALUE) {
-		throw std::runtime_error("file not found");
-		return false;
+	//work in Multibyte Character Set and Unicode
+	//https://qiita.com/takamon9/items/a9f1fccea740f2b79991
+	//https://qiita.com/episteme/items/0e3c2ee8a8c03780f01e
+	sys_ns::path fPath(folderPath);
+	sys_ns::directory_iterator itr(fPath), end;
+	std::error_code err;
+	file_names.clear();
+	for (itr; itr != end; itr.increment(err)) {
+		if (err != std::errc::operation_not_permitted) {
+			auto entry = *itr; // auto = std::experimental::filesystem::v1::path
+			string path_name = entry.path().generic_string();
+			//cout << "substr:dir:  = " << folderPath << endl;
+			//cout << "substr:file: = " << path_name << endl;
+			string path_relative = path_name.substr(folderPath.size() + 1, 
+				path_name.size() - folderPath.size() - 1);//startposition,size
+			//cout << "substr:path_relative = " << path_relative << endl;
+			if(b_cout)	cout << "getFileNames: ";
+			if (sys_ns::is_directory(entry.path()))
+			{
+				if (b_getDir) file_names.push_back(path_relative);
+				if (b_cout)	cout << path_relative << "(directory)" << endl;
+			}
+			else
+			{
+				file_names.push_back(path_relative); // add to the vector.
+				if (b_cout) cout << path_relative << endl;
+			}
+		}
+		else break;
 	}
-
-	do
-	{
-		if (win32fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-			cout << win32fd.cFileName << "(directory)" << endl;
-		}
-		else {
-			file_names.push_back(win32fd.cFileName);
-			//cout << file_names.back() << endl;
-		}
-	} while (FindNextFile(hFind, &win32fd));
-
-	FindClose(hFind);
-
 	return true;
 }
 
@@ -244,7 +274,7 @@ bool CTimeString::getFileNames_extension(std::string folderPath, std::vector<std
 {
 	//https://www.sejuku.net/blog/49318
 	vector<string> filenames_;
-	bool b_success = getFileNames(folderPath, filenames_);
+	bool b_success = getFileNames(folderPath, filenames_, true, false, true);
 	for (int i = 0; i < filenames_.size(); i++)
 	{
 		int i_find = filenames_[i].find(s_extension);
@@ -274,6 +304,64 @@ int CTimeString::getTimeElapsefrom2Strings_millisec(string s_former, string s_la
 		+ stoi(s_minute) * 1000 * 60;
 
 	return i_value;
+}
+
+//if upper directory path is wrong, return false
+bool CTimeString::getDirectoryExistance(string foder_Path)
+{
+	bool b_exist = false;
+	vector<int> find_vec = find_all(foder_Path, "/");
+	if (find_vec.size() == 0)
+		throw std::runtime_error("ERROR(CTimeString::getDirectoryExistance): folderPath not contains / \n");
+
+	string foder_Path_upper = foder_Path.substr(0, find_vec.back());
+	//cout << "checking: " << foder_Path << endl;
+
+	vector<string> s_vec;
+	CTimeString::getFileNames(foder_Path_upper, s_vec, false, true, false);
+
+	string foder_Path_relative = foder_Path.substr(find_vec.back()+1,
+		foder_Path.size() - foder_Path_upper.size() - 1);//startposition,size
+	//"xxx/yyyy" -> "8-3-1=3"
+	//cout << "foder_Path_relative: " << foder_Path_relative << endl;
+
+	//https://www.sejuku.net/blog/62561
+	for (int i = 0; i < s_vec.size(); i++)
+		if (s_vec[i] == foder_Path_relative) b_exist = true;
+
+	//if (!b_exist) cout << "NOT FOUND: " << foder_Path << endl;
+	return b_exist;
+}
+
+bool CTimeString::getDirectoryExistance_detail(string foder_Path,bool b_first)
+{
+	bool b_exist = false;
+
+	vector<int> find_vec = find_all(foder_Path, "/");
+	if (find_vec.size() == 0)
+		throw std::runtime_error("ERROR(CTimeString::getDirectoryExistance): folderPath not contains / \n");
+
+	if (b_first)
+	{
+		if (CTimeString::getDirectoryExistance(foder_Path)) b_exist = true;
+	}
+	else
+	{
+		if (CTimeString::getDirectoryExistance(foder_Path)) 
+		{
+			b_exist = true;
+			cout << "FOUND: " << foder_Path << endl;
+		}
+	}
+
+	if (!b_exist)
+	{
+		string foder_Path_upper = foder_Path.substr(0, find_vec.back());
+		if (!b_exist) cout << "NOT FOUND: " << foder_Path << endl;
+		CTimeString::getDirectoryExistance_detail(foder_Path_upper, false);
+	}
+
+	return b_exist;
 }
 
 
