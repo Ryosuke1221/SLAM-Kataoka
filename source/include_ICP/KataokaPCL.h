@@ -263,6 +263,12 @@ public:
 	float getCorrMedianDistance(CorrespondencesPtr_Spring1 correspondences);
 	float getCorrMedianDistance(CorrespondencesPtr_Spring2 correspondences);
 
+	//20200519
+	static Eigen::Matrix4d calcHomogeneousMatrixFromVector6d(double X_, double Y_, double Z_,
+		double Roll_, double Pitch_, double Yaw_);
+	static Eigen::Vector6d calcVector6dFromHomogeneousMatrix(Eigen::Matrix4d input_Mat);
+	static Eigen::Affine3f calcAffine3fFromHomogeneousMatrix(Eigen::Matrix4d input_Mat);
+	
 };
 
 
