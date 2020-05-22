@@ -84,3 +84,368 @@ Eigen::Vector6d CPointcloudFuction::calcVector6dFromHomogeneousMatrix(Eigen::Mat
 }
 
 //calcXYZRPYFromPositoinMatrix
+
+void CPointcloudFuction::all_process()
+{
+	//moveFile();
+
+	int WhichProcess = 0;
+	string filename1, filename2;
+	bool b_finish = false;
+	enum OPTION {
+		EN_escape = 0,
+		//EN_FreeSpace,
+		EN_sequentshow,
+		//EN_handregistration,
+		EN_GetPcdFromCSV
+	};
+
+	while (!b_finish)
+	{
+		cout << endl;
+		cout << "please input process number" << endl;
+		cout << EN_escape << ": escape" << endl;
+		//cout << EN_FreeSpace << ": free space" << endl;
+		cout << EN_sequentshow << ": sequent show" << endl;
+		//cout << EN_handregistration << ": hand registration" << endl;
+		cout << EN_GetPcdFromCSV << ": get .pcd from .csv" << endl;
+
+		cin >> WhichProcess;
+		switch (WhichProcess)
+		{
+		case EN_escape:
+			//escape
+			b_finish = true;
+			break;
+
+		case EN_sequentshow:
+			show_sequent();
+			break;
+
+		//case EN_handregistration:
+		//	initVisualizer();
+		//	//HandRegistration("../savedfolder/naraha summer/sequent");
+		//	//HandRegistration("../savedfolder/naraha summer/sequent");
+		//	HandRegistration("../savedfolder/temp");
+		//	break;
+
+		case EN_GetPcdFromCSV:
+			getPCDFromCSV_naraha();
+			break;
+
+		default:
+			break;
+		}
+	
+	}
+
+	//cout << "process finished (press:ESC)" << endl;
+	//GetAsyncKeyState(VK_ESCAPE);
+	//while (1)
+	//{
+	//	if ((GetAsyncKeyState(VK_ESCAPE) & 1) == 1) break;
+	//}
+
+}
+
+void CPointcloudFuction::show_sequent()
+{
+	string foldername_;
+	foldername_ = "../../data/temp";
+
+	typedef typename pcl::PointXYZI PointType_func;
+
+
+	//CPointVisualization<pcl::PointXYZI> pv;
+	CPointVisualization<PointType_func> pv;
+	//CPointVisualization<pcl::PointXYZRGB> pv_XYZRGB;
+	if (typeid(PointType_func) == typeid(pcl::PointXYZI))
+		pv.setWindowName("show XYZI");
+	else if (typeid(PointType_func) == typeid(pcl::PointXYZRGB))
+		pv.setWindowName("show XYZRGB");
+	else
+		throw std::runtime_error("This PointType is unsupported.");
+
+	vector<string> filenames_;
+	CTimeString::getFileNames_extension(foldername_, filenames_,".pcd");
+	cout << "file size: " << filenames_.size() << endl;
+
+	if (filenames_.size() == 0)
+	{
+		cout << "ERROR: no file found" << endl;
+		return ;
+	}
+
+	//pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>());
+	//pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_temp(new pcl::PointCloud<pcl::PointXYZI>());
+	pcl::PointCloud<PointType_func>::Ptr cloud_(new pcl::PointCloud<PointType_func>());
+	pcl::PointCloud<PointType_func>::Ptr cloud_temp(new pcl::PointCloud<PointType_func>());
+
+	//Eigen::Affine3f Trans_;
+	//Eigen::Matrix4d HM_free = Eigen::Matrix4d::Identity();
+
+	int index_ = 0;
+
+	vector<string> filename_use;
+
+	while (1)
+	{
+		//short key_num = GetAsyncKeyState(VK_SPACE);
+		if ((GetAsyncKeyState(VK_SPACE) & 1) == 1)
+		{
+			if (index_ == filenames_.size())
+			{
+				cout << "index over" << endl;
+				break;
+			}
+
+			cout << "index_: " << index_ << endl;
+			//cout << "reading:" << filenames_[index_] << endl;
+			pcl::io::loadPCDFile(foldername_ + "/" + filenames_[index_], *cloud_);
+			cout << "showing:" << filenames_[index_] << endl;
+
+			index_++;
+
+		}
+
+		//save
+		if ((GetAsyncKeyState(VK_RETURN) & 1) == 1)
+		{
+			filename_use.push_back(filenames_[index_ - 1]);
+			cout << "add: " << filenames_[index_ - 1] << endl;
+		}
+
+
+		//escape
+		//short key_num_esc = GetAsyncKeyState(VK_ESCAPE);
+		if ((GetAsyncKeyState(VK_ESCAPE) & 1) == 1) {
+			cout << "toggled!" << endl;
+			break;
+		}
+
+		pv.setPointCloud(cloud_);
+		pv.updateViewer();
+
+	}
+
+	pv.closeViewer();
+
+	for (int i = 0; i < filename_use.size(); i++)
+	{
+		//cout << "file " << i << ": " << filename_use[i] << endl;
+		cout<< filename_use[i] << endl;
+	}
+
+	vector<vector<string>> save_vec_vec;
+	for (int i = 0; i < filename_use.size(); i++)
+	{
+		vector<string> save_vec;
+		save_vec.push_back(filename_use[i]);
+		save_vec_vec.push_back(save_vec);
+	}
+	CTimeString::getCSVFromVecVec(save_vec_vec, foldername_ + "/_usePointCloud.csv");
+
+}
+
+void CPointcloudFuction::moveFile()
+{
+	//string foldername_;
+	//foldername_ = "../../data/temp";
+	//vector<string> filenames_;
+
+	////{
+	////	vector<vector<string>>
+	////}
+	////CTimeString::getVecVecFromCSV();
+
+	//CPointVisualization<pcl::PointXYZI> pv;
+	//pv.setWindowName("show XYZI");
+
+	//CTimeString::getFileNames_extension(foldername_, filenames_, ".pcd");
+	//cout << "file size: " << filenames_.size() << endl;
+
+	//if (filenames_.size() == 0)
+	//{
+	//	cout << "ERROR: no file found" << endl;
+	//	return;
+	//}
+
+	//pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>());
+	//pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_temp(new pcl::PointCloud<pcl::PointXYZI>());
+
+	////Eigen::Affine3f Trans_;
+	////Eigen::Matrix4d HM_free = Eigen::Matrix4d::Identity();
+
+	//int index_ = 0;
+
+	//vector<string> filename_use;
+
+	//while (1)
+	//{
+	//	//short key_num = GetAsyncKeyState(VK_SPACE);
+	//	if ((GetAsyncKeyState(VK_SPACE) & 1) == 1)
+	//	{
+	//		if (index_ == filenames_.size())
+	//		{
+	//			cout << "index over" << endl;
+	//			break;
+	//		}
+
+	//		cout << "index_: " << index_ << endl;
+	//		//cout << "reading:" << filenames_[index_] << endl;
+	//		pcl::io::loadPCDFile(foldername_ + "/" + filenames_[index_], *cloud_);
+	//		cout << "showing:" << filenames_[index_] << endl;
+
+	//		index_++;
+
+	//	}
+
+	//	//save
+	//	if ((GetAsyncKeyState(VK_RETURN) & 1) == 1)
+	//	{
+	//		filename_use.push_back(filenames_[index_ - 1]);
+	//		cout << "add: " << filenames_[index_ - 1] << endl;
+	//	}
+
+
+	//	//escape
+	//	//short key_num_esc = GetAsyncKeyState(VK_ESCAPE);
+	//	if ((GetAsyncKeyState(VK_ESCAPE) & 1) == 1) {
+	//		cout << "toggled!" << endl;
+	//		break;
+	//	}
+
+	//	pv.setPointCloud(cloud_);
+	//	pv.updateViewer();
+
+	//}
+
+	//pv.closeViewer();
+
+	//for (int i = 0; i < filename_use.size(); i++)
+	//{
+	//	//cout << "file " << i << ": " << filename_use[i] << endl;
+	//	cout << filename_use[i] << endl;
+	//}
+
+	//vector<vector<string>> save_vec_vec;
+	//for (int i = 0; i < filename_use.size(); i++)
+	//{
+	//	vector<string> save_vec;
+	//	save_vec.push_back(filename_use[i]);
+	//	save_vec_vec.push_back(save_vec);
+	//}
+	//CTimeString::getCSVFromVecVec(save_vec_vec, foldername_ + "/_usePointCloud.csv");
+}
+
+void CPointcloudFuction::getPCDFromCSV_gotFromPCAP(string dir_, string file_RelativePath_)
+{
+	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>());
+	vector<vector<string>> csv_vec_vec_string;
+	csv_vec_vec_string = CTimeString::getVecVecFromCSV_string(dir_ + "/" + file_RelativePath_);
+	cloud_->clear();
+	for (int j = 0; j < csv_vec_vec_string.size(); j++)
+	{
+		if (j == 0) continue;
+		pcl::PointXYZI point_;
+		point_.x = stod(csv_vec_vec_string[j][0]);
+		point_.y = stod(csv_vec_vec_string[j][1]);
+		point_.z = stod(csv_vec_vec_string[j][2]);
+		point_.intensity = stod(csv_vec_vec_string[j][6]);
+		cloud_->push_back(point_);
+
+	}
+	string filename_ = file_RelativePath_.substr(0, file_RelativePath_.size() - 4) + ".pcd";
+	pcl::io::savePCDFile<pcl::PointXYZI>(dir_ + "/_pointcloud/" + filename_, *cloud_);
+	cout << "saved: " << filename_ << endl;
+}
+
+
+void CPointcloudFuction::getPCDFromCSV_naraha()
+{
+	string file_dir;
+	file_dir = "../../data/temp/02 velo&nir all frame";
+	//file_dir = "../../data/temp";
+	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>());
+	int i_select;
+
+	//get filenames
+	vector<string> filenames;
+
+	cout << "select which .csv data is" << endl;
+	cout << "0: velodyne(no NIR), 1:velodyne(NIR), 2:NIR sensor(NIR)" << endl;
+	cout << "i_select:";
+	cin >> i_select;
+
+	switch (i_select)
+	{
+	case 0:
+		CTimeString::getFileNames_extension(file_dir, filenames, ").csv");
+		for (int i = 0; i < filenames.size(); i++)
+		{
+			cout << "i:" << i << " calc " << file_dir + "/" + filenames[i] << "..." << endl;
+			getPCDFromCSV_gotFromPCAP(file_dir, filenames[i]);
+		}
+
+		break;
+	case 1:
+		CTimeString::getFileNames_extension(file_dir, filenames, "velo.csv");
+		for (int i = 0; i < filenames.size(); i++)
+		{
+			cout << "i:" << i << " calc " << file_dir + "/" + filenames[i] << "..." << endl;
+			vector<vector<string>> csv_vec_vec_string;
+			csv_vec_vec_string = CTimeString::getVecVecFromCSV_string(file_dir + "/" + filenames[i], " ");
+			//PointCloud
+			cloud_->clear();
+			for (int j = 0; j < csv_vec_vec_string.size(); j++)
+			{
+				pcl::PointXYZI point_;
+				point_.x = stod(csv_vec_vec_string[j][0]);
+				point_.y = stod(csv_vec_vec_string[j][1]);
+				point_.z = stod(csv_vec_vec_string[j][2]);
+				point_.intensity = stod(csv_vec_vec_string[j][6]);
+				cloud_->push_back(point_);
+			}
+			string filename_ = filenames[i].substr(0, filenames[i].size() - 4) + ".pcd";
+			pcl::io::savePCDFile<pcl::PointXYZI>(file_dir + "/_pointcloud/" + filename_, *cloud_);
+			cout << "saved: " << filename_ << endl;
+		}
+
+		break;
+	case 2:
+		CTimeString::getFileNames_extension(file_dir, filenames, "nir.csv");
+		float max_, min_;
+		min_ = 255.;
+		max_ = 0.;
+
+		for (int i = 0; i < filenames.size(); i++)
+		{
+			cout << "i:" << i << " calc " << file_dir + "/" + filenames[i] << "..." << endl;
+			vector<vector<string>> csv_vec_vec_string;
+			csv_vec_vec_string = CTimeString::getVecVecFromCSV_string(file_dir + "/" + filenames[i], " ");
+			//PointCloud
+			cloud_->clear();
+			for (int j = 0; j < csv_vec_vec_string.size(); j++)
+			{
+				pcl::PointXYZI point_;
+				point_.x = stod(csv_vec_vec_string[j][0]);
+				point_.y = stod(csv_vec_vec_string[j][1]);
+				point_.z = stod(csv_vec_vec_string[j][2]);
+				double value_ = stod(csv_vec_vec_string[j][3]);
+				point_.intensity = value_;
+				cloud_->push_back(point_);
+				if (max_ < value_) max_ = value_;
+				if (min_ > value_) min_ = value_;
+			}
+			string filename_ = filenames[i].substr(0, filenames[i].size() - 4) + ".pcd";
+			pcl::io::savePCDFile<pcl::PointXYZI>(file_dir + "/_pointcloud/" + filename_, *cloud_);
+			cout << "saved: " << filename_ << endl;
+		}
+		cout << "min_ = " << min_ << endl;
+		cout << "max_ = " << max_ << endl;
+		//0~255
+		break;
+	}
+
+}
+

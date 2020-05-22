@@ -274,7 +274,7 @@ bool CTimeString::getFileNames_extension(std::string folderPath, std::vector<std
 {
 	//https://www.sejuku.net/blog/49318
 	vector<string> filenames_;
-	bool b_success = getFileNames(folderPath, filenames_, true, false, true);
+	bool b_success = getFileNames(folderPath, filenames_, false, false, true);
 	for (int i = 0; i < filenames_.size(); i++)
 	{
 		int i_find = filenames_[i].find(s_extension);
@@ -362,6 +362,65 @@ bool CTimeString::getDirectoryExistance_detail(string foder_Path,bool b_first)
 	}
 
 	return b_exist;
+}
+vector<vector<string>> CTimeString::getVecVecFromCSV_string(string filename_, string key_token)
+{
+	//double,float, int
+	//https://qiita.com/hal1437/items/b6deb22a88c76eeaf90c
+	//https://docs.oracle.com/cd/E19957-01/805-7887/6j7dsdhfl/index.html
+	//https://pknight.hatenablog.com/entry/20090826/1251303641
+	ifstream ifs_(filename_);
+	string str_;
+	int f_cnt = 0;
+	vector<vector<string>> all_observation_vec_vec;
+	if (ifs_.fail()) cout << "Error: file could not be read." << endl;
+	else
+	{
+		while (getline(ifs_, str_)) {//readed to string from file
+
+			vector<string> one_observation_vec;
+			vector<int> find_vec = CTimeString::find_all(str_, key_token);
+			if (find_vec.size() == 0)
+				one_observation_vec.push_back(str_);
+			else
+			{
+				one_observation_vec.push_back(str_.substr(0, find_vec[0]));
+				int s_pos = 0;
+				while (s_pos < find_vec.size() - 1)
+				{
+					one_observation_vec.push_back(
+						str_.substr(find_vec[s_pos] + 1, find_vec[s_pos + 1] - (find_vec[s_pos] + 1)));
+					s_pos++;
+				}
+				one_observation_vec.push_back(str_.substr(find_vec[s_pos] + 1, str_.size() - (find_vec[s_pos] + 1)));
+
+			}
+			all_observation_vec_vec.push_back(one_observation_vec);
+		}
+		ifs_.close();
+	}
+	return all_observation_vec_vec;
+}
+
+vector<vector<double>> CTimeString::getVecVecFromCSV(string filename_)
+{
+	vector<vector<double>> data_vec_vec;
+
+	vector<vector<string>> data_vec_vec_string;
+	data_vec_vec_string = CTimeString::getVecVecFromCSV_string(filename_);
+
+	for (int j = 0; j < data_vec_vec_string.size(); j++)
+	{
+		vector<double> data_vec;
+		for (int i = 0; i < data_vec_vec_string[j].size(); i++)
+		{
+			double value_ = stod(data_vec_vec_string[j][i]);
+			data_vec.push_back(value_);
+		}
+		data_vec_vec.push_back(data_vec);
+	}
+
+	return data_vec_vec;
 }
 
 

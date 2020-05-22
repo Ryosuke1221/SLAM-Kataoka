@@ -52,6 +52,12 @@ public:
 
 	static Eigen::Vector6d calcVector6dFromHomogeneousMatrix(Eigen::Matrix4d input_Mat);
 
+	void all_process();
+	void show_sequent();
+	void moveFile();
+	void getPCDFromCSV_naraha();
+	void getPCDFromCSV_gotFromPCAP(string dir_,string file_RelativePath_);
+
 	//pcl::visualization::PointCloudColorHandler<pcl::PointXYZ>::Ptr m_handler;
 	//pcl::visualization::PointCloudColorHandler<>::Ptr m_handler;
 
@@ -97,6 +103,7 @@ public:
 
 	void setPointCloud(T_PointCloudPtr cloud_arg);
 	void updateViewer();
+	void closeViewer();
 
 };
 
@@ -215,6 +222,12 @@ void CPointVisualization<T_PointType>::updateViewer()
 				M_viewer->addPointCloud(M_cloud_, *M_handler, "cloud");
 		}
 	}
+}
+
+template < typename T_PointType >
+void CPointVisualization<T_PointType>::closeViewer()
+{
+	M_viewer->close();
 }
 
 //don't work

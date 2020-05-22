@@ -18,6 +18,12 @@ using namespace std;
 
 int main()
 {
+	CPointcloudFuction func;
+	func.all_process();
+}
+
+int maint()
+{
 	string foldername_;
 	foldername_ = "../../data/temp";
 	string s_filename_PC;
