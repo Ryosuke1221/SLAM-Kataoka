@@ -83,8 +83,6 @@ Eigen::Vector6d CPointcloudFuction::calcVector6dFromHomogeneousMatrix(Eigen::Mat
 	return XYZRPY;
 }
 
-//calcXYZRPYFromPositoinMatrix
-
 void CPointcloudFuction::all_process()
 {
 	//moveFile();
@@ -94,10 +92,13 @@ void CPointcloudFuction::all_process()
 	bool b_finish = false;
 	enum OPTION {
 		EN_escape = 0,
-		//EN_FreeSpace,
-		EN_sequentshow,
-		//EN_handregistration,
-		EN_GetPcdFromCSV
+		EN_FreeSpace,
+		EN_SequentShow,
+		EN_handregistration,
+		EN_GetPcdFromCSV,
+		EN_FilterPointCloud,
+		EN_CombinePointCloud,
+		EN_CSV_FromPointCloud
 	};
 
 	while (!b_finish)
@@ -105,11 +106,15 @@ void CPointcloudFuction::all_process()
 		cout << endl;
 		cout << "please input process number" << endl;
 		cout << EN_escape << ": escape" << endl;
-		//cout << EN_FreeSpace << ": free space" << endl;
-		cout << EN_sequentshow << ": sequent show" << endl;
-		//cout << EN_handregistration << ": hand registration" << endl;
+		cout << EN_FreeSpace << ": free space" << endl;
+		cout << EN_SequentShow << ": sequent show" << endl;
+		cout << EN_handregistration << ": hand registration" << endl;
 		cout << EN_GetPcdFromCSV << ": get .pcd from .csv" << endl;
+		cout << EN_FilterPointCloud << ": filter PointCloud_naraha" << endl;
+		cout << EN_CombinePointCloud << ": CombinePointCloud" << endl;
+		cout << EN_CSV_FromPointCloud << ": CSV_FromPointCloud" << endl;
 
+		cout <<"WhichProcess: ";
 		cin >> WhichProcess;
 		switch (WhichProcess)
 		{
@@ -118,19 +123,32 @@ void CPointcloudFuction::all_process()
 			b_finish = true;
 			break;
 
-		case EN_sequentshow:
+		case EN_FreeSpace:
+			FreeSpace();
+			break;
+
+		case EN_SequentShow:
 			show_sequent();
 			break;
 
-		//case EN_handregistration:
-		//	initVisualizer();
-		//	//HandRegistration("../savedfolder/naraha summer/sequent");
-		//	//HandRegistration("../savedfolder/naraha summer/sequent");
-		//	HandRegistration("../savedfolder/temp");
-		//	break;
+		case EN_handregistration:
+			HandRegistration();
+			break;
 
 		case EN_GetPcdFromCSV:
 			getPCDFromCSV_naraha();
+			break;
+
+		case EN_FilterPointCloud:
+			filterNIRPointCloud_naraha();
+			break;
+
+		case EN_CSV_FromPointCloud:
+			getCSVFromPointCloud();
+			break;
+
+		case EN_CombinePointCloud:
+			combinatePointCloud_naraha();
 			break;
 
 		default:
@@ -153,12 +171,13 @@ void CPointcloudFuction::show_sequent()
 	string foldername_;
 	foldername_ = "../../data/temp";
 
-	typedef typename pcl::PointXYZI PointType_func;
+	//typedef typename pcl::PointXYZI PointType_func;
+	typedef typename pcl::PointXYZRGB PointType_func;
 
+	bool b_useTXT = false;
+	//b_useTXT = true;
 
-	//CPointVisualization<pcl::PointXYZI> pv;
 	CPointVisualization<PointType_func> pv;
-	//CPointVisualization<pcl::PointXYZRGB> pv_XYZRGB;
 	if (typeid(PointType_func) == typeid(pcl::PointXYZI))
 		pv.setWindowName("show XYZI");
 	else if (typeid(PointType_func) == typeid(pcl::PointXYZRGB))
@@ -209,7 +228,7 @@ void CPointcloudFuction::show_sequent()
 		}
 
 		//save
-		if ((GetAsyncKeyState(VK_RETURN) & 1) == 1)
+		if ((GetAsyncKeyState(VK_RETURN) & 1) == 1 && b_useTXT)
 		{
 			filename_use.push_back(filenames_[index_ - 1]);
 			cout << "add: " << filenames_[index_ - 1] << endl;
@@ -243,7 +262,8 @@ void CPointcloudFuction::show_sequent()
 		save_vec.push_back(filename_use[i]);
 		save_vec_vec.push_back(save_vec);
 	}
-	CTimeString::getCSVFromVecVec(save_vec_vec, foldername_ + "/_usePointCloud.csv");
+	if (b_useTXT)
+		CTimeString::getCSVFromVecVec(save_vec_vec, foldername_ + "/_usePointCloud.csv");
 
 }
 
@@ -446,6 +466,593 @@ void CPointcloudFuction::getPCDFromCSV_naraha()
 		//0~255
 		break;
 	}
+}
+
+void CPointcloudFuction::FreeSpace()
+{
+
+
+	
 
 }
 
+void CPointcloudFuction::filterNIRPointCloud_naraha()
+{
+	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>());
+	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_temp(new pcl::PointCloud<pcl::PointXYZI>());
+	pcl::ApproximateVoxelGrid<pcl::PointXYZI> VGFilter;
+	string dir_ = "../../data/temp";
+	double th_VGF = 0.01;
+
+	Eigen::Affine3f Trans_;
+	Eigen::Matrix4d HM_free = Eigen::Matrix4d::Identity();
+
+	//int index_PC_now = 0;
+	//bool b_makeNewPC = true;
+	//bool b_escaped = false;
+	//bool b_break = false;
+
+	bool b_RemoveGround = true;
+	bool b_nir = true;
+
+	vector<string> filenames_;
+	//CTimeString::getFileNames_extension(foldername_, filenames_, "nir.pcd");
+	CTimeString::getFileNames_extension(dir_, filenames_, "nir.pcd");
+
+	double pitch_init;
+	pitch_init = 22. * M_PI / 180.;
+
+	//area filter
+	for (int index_ = 0; index_ < filenames_.size(); index_++)
+	{
+		cout << "reanding: " << filenames_[index_] << endl;
+		if (-1 == pcl::io::loadPCDFile(dir_ + "/" + filenames_[index_], *cloud_))
+		{
+			cout << "ERROR: pointcloud couldn't read." << endl;
+			break;
+		}
+
+		//turn pitch(camera coordinate to robot one)
+		HM_free = Eigen::Matrix4d::Identity();
+		HM_free = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
+		Trans_ = Eigen::Affine3f::Identity();
+		Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
+		pcl::transformPointCloud(*cloud_, *cloud_, Trans_);
+
+		//range
+		if (b_nir)
+		{
+			bool b_modify = false;
+			b_modify = true;
+			double th_x, th_z;
+			th_x = 3.;
+			th_z = -1.2;
+			//th_x = 10.;
+			//th_z = -100.;
+			cloud_temp->clear();
+			pcl::copyPointCloud(*cloud_, *cloud_temp);
+			cloud_->clear();
+			for (int i = 0; i < cloud_temp->size(); i++)
+			{
+				pcl::PointXYZI point_ = cloud_temp->points[i];
+				if (point_.x > th_x && b_modify) continue;
+				if (point_.z < th_z && b_modify) continue;
+				cloud_->push_back(point_);
+			}
+		}
+
+		//voxel grid filter
+		cout << "PC(" << index_ << ") number :" << cloud_->size() << endl;
+		cout << "VGF" << endl;
+		VGFilter.setInputCloud(cloud_);
+		VGFilter.setLeafSize(th_VGF, th_VGF, th_VGF);
+		VGFilter.filter(*cloud_);
+		cout << "PC(" << index_ << ") number :" << cloud_->size() << endl;
+
+		//-turn pitch(camera coordinate)
+		HM_free = Eigen::Matrix4d::Identity();
+		HM_free = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., -pitch_init, 0.);
+		Trans_ = Eigen::Affine3f::Identity();
+		Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
+		pcl::transformPointCloud(*cloud_, *cloud_, Trans_);
+
+		string filename_save = filenames_[index_].substr(0, filenames_[index_].size() - 4) + "_filtered_nir.pcd";
+		pcl::io::savePCDFile<pcl::PointXYZI>(dir_ + "/_filtered/" + filename_save, *cloud_);
+
+	}
+}
+
+void CPointcloudFuction::getCSVFromPointCloud()
+{
+	cout << "start .csv method" << endl;
+	string dir_;
+	dir_ = "../../data/temp";
+	vector<string> filenames_;
+	//CTimeString::getFileNames_extension(file_dir, filenames_, "nir.pcd");
+	CTimeString::getFileNames_extension(dir_, filenames_, ".pcd");
+
+	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>());
+	for (int index_ = 0; index_ < filenames_.size(); index_++)
+	{
+		cout << "reanding: " << filenames_[index_] << endl;
+		cloud_->clear();
+		pcl::io::loadPCDFile(dir_ + "/" + filenames_[index_], *cloud_);
+		vector<vector<double>> data_vec_vec;
+		for (int i = 0; i < cloud_->size(); i++)
+		{
+			vector<double> data_vec;
+			data_vec.push_back(cloud_->points[i].x);
+			data_vec.push_back(cloud_->points[i].y);
+			data_vec.push_back(cloud_->points[i].z);
+			data_vec.push_back(cloud_->points[i].intensity);
+			data_vec_vec.push_back(data_vec);
+		}
+		string filename_save = filenames_[index_].substr(0, filenames_[index_].size() - 4) + "_csv.csv";
+
+		CTimeString::getCSVFromVecVec(data_vec_vec, dir_ + "/_csv/" + filename_save);
+	}
+	
+	cout << "finish .csv method" << endl;
+}
+
+void CPointcloudFuction::HandRegistration()
+{
+	//cout << "HandRegistration started!" << endl;
+	Sleep(1 * 1000);
+
+	string dir_;
+
+	//typedef typename pcl::PointXYZI PointType_func;
+	typedef typename pcl::PointXYZRGB PointType_func;
+
+
+	//CPointVisualization<pcl::PointXYZI> pv;
+	CPointVisualization<PointType_func> pv;
+	//CPointVisualization<pcl::PointXYZRGB> pv_XYZRGB;
+	if (typeid(PointType_func) == typeid(pcl::PointXYZI))
+		pv.setWindowName("show XYZI");
+	else if (typeid(PointType_func) == typeid(pcl::PointXYZRGB))
+		pv.setWindowName("show XYZRGB");
+	else
+		throw std::runtime_error("This PointType is unsupported.");
+
+
+	pcl::PointCloud<PointType_func>::Ptr cloud_show(new pcl::PointCloud<PointType_func>());
+	pcl::PointCloud<PointType_func>::Ptr cloud_show_static(new pcl::PointCloud<PointType_func>());
+	pcl::PointCloud<PointType_func>::Ptr cloud_moving(new pcl::PointCloud<PointType_func>());
+	pcl::PointCloud<PointType_func>::Ptr cloud_moving_before(new pcl::PointCloud<PointType_func>());
+	pcl::PointCloud<PointType_func>::Ptr cloud_temp(new pcl::PointCloud<PointType_func>());
+
+	Eigen::Affine3f Trans_;
+	Eigen::Matrix4d HM_free = Eigen::Matrix4d::Identity();
+	Eigen::Matrix4d HM_Trans_now = Eigen::Matrix4d::Identity();
+
+	double disp_translation = 0.;
+	double disp_rotation = 0.;
+	disp_translation = 0.05;
+	disp_rotation = 0.5 * M_PI / 180.;
+
+	int index_PC_now = 0;
+	bool b_makeNewPC = true;
+	bool b_first = true;
+	bool b_escaped = false;
+	bool b_break = false;
+
+	enum KEYNUM {
+		NONE,
+		UP,
+		DOWN,
+		RIGHT,
+		LEFT,
+		TURN_R,
+		TURN_L,
+		ENTER,
+		SUBTRACT
+	};
+	KEYNUM key_;
+
+	vector<string> filenames_;
+	CTimeString::getFileNames_extension(dir_, filenames_, ".pcd");
+
+	std::string filename_txt;
+
+	vector<Eigen::Matrix4d>	HM_displacement_vec;
+
+	{
+		vector<vector<double>> trajectory_vec_vec;
+
+		//input txt
+		vector<string> filenames__txt;
+		CTimeString::getFileNames_extension(dir_, filenames__txt, ".txt");
+
+		if (filenames__txt.size() == 0)
+		{
+			cout << "found no txt file and make it." << endl;
+
+			//generation
+			filename_txt = dir_ + "/transformation.txt";
+			for (int i = 0; i < filenames_.size(); i++)
+			{
+				vector<double> trajectory_vec;
+				trajectory_vec.push_back(i);
+				for (int j = 0; j < 6; j++) trajectory_vec.push_back(0.);
+				trajectory_vec_vec.push_back(trajectory_vec);
+			}
+
+		}
+
+		else if (filenames__txt.size() == 1)
+		{
+			trajectory_vec_vec = CTimeString::getVecVecFromCSV(dir_ + "/" + filenames__txt[0]);
+			filename_txt = dir_ + "/" + filenames__txt[0];
+		}
+
+		else
+		{
+			cout << "error:too many txt files exist." << endl;
+			return;
+		}
+
+		vector<Eigen::Matrix4d>	HM_trajectory_vec;
+		for (int i = 0; i < trajectory_vec_vec.size(); i++)
+		{
+			Eigen::Matrix4d HM_trajectory = Eigen::Matrix4d::Identity();
+			HM_trajectory = calcHomogeneousMatrixFromVector6d(
+				trajectory_vec_vec[i][1],
+				trajectory_vec_vec[i][2],
+				trajectory_vec_vec[i][3],
+				trajectory_vec_vec[i][4],
+				trajectory_vec_vec[i][5],
+				trajectory_vec_vec[i][6]);
+			HM_trajectory_vec.push_back(HM_trajectory);
+		}
+
+		for (int i = 0; i < HM_trajectory_vec.size(); i++)
+		{
+			if (i == 0)
+			{
+				HM_free = Eigen::Matrix4d::Identity();
+				//HM_displacement_vec.push_back(HM_trajectory_vec[i] * HM_free.inverse());
+				HM_displacement_vec.push_back(HM_free.inverse() * HM_trajectory_vec[i]);
+			}
+			else HM_displacement_vec.push_back(HM_trajectory_vec[i - 1].inverse() * HM_trajectory_vec[i]);
+		}
+		cout << "HM_displacement_vec size = " << HM_displacement_vec.size() << endl;
+	}
+
+	while (1) {
+		//input next PointCloud
+		if (b_makeNewPC) {
+
+			cloud_moving_before->clear();
+
+			string filename_PC;
+			filename_PC = filenames_[index_PC_now];
+			filename_PC = dir_ + "/" + filename_PC;
+
+			if (-1 == pcl::io::loadPCDFile(filename_PC, *cloud_moving_before)) break;
+
+			//turn pitch(camera axis)
+			{
+				double pitch_init;
+				pitch_init = 22. * M_PI / 180.;
+				HM_free = Eigen::Matrix4d::Identity();
+				HM_free = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
+				Trans_ = Eigen::Affine3f::Identity();
+				Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
+				pcl::transformPointCloud(*cloud_moving_before, *cloud_moving_before, Trans_);
+			}
+
+			//ground
+			bool b_RemoveGround = false;
+			b_RemoveGround = true;
+			if (b_RemoveGround)
+			{
+				double th_height;
+				//th_height = -0.1;	//naraha summer
+				th_height = -0.3;
+				cloud_temp->clear();
+				pcl::copyPointCloud(*cloud_moving_before, *cloud_temp);
+				cloud_moving_before->clear();
+				for (size_t i = 0; i < cloud_temp->size(); i++)
+				{
+					if (th_height > cloud_temp->points[i].z) continue;
+					cloud_moving_before->push_back(cloud_temp->points[i]);
+				}
+			}
+
+
+			cout << "PC(" << index_PC_now << ") number :" << cloud_moving_before->size() << endl;
+
+			cout << endl;
+			cout << "**********( key option )**********" << endl;
+			cout << "Use numpad" << endl;
+			cout << " TURN_LEFT:7    UP:8  TURN_RIGHT:9" << endl;
+			cout << "      LEFT:4    ----       RIGHT:6" << endl;
+			cout << "      ------  DOWN:2       -------" << endl;
+
+			cout << endl;
+			cout << "Reset:-(numpad)" << endl;
+
+			cout << "Switch:ENTER" << endl;
+			cout << "Escape:ESC" << endl;
+			cout << "**********************************" << endl;
+			cout << endl;
+
+			cloud_moving->clear();
+			Trans_ = Eigen::Affine3f::Identity();
+
+			HM_free = Eigen::Matrix4d::Identity();
+			for (int i = 0; i <= index_PC_now; i++) HM_free = HM_free * HM_displacement_vec[i];
+			HM_Trans_now = HM_free;
+			Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
+			pcl::transformPointCloud(*cloud_moving_before, *cloud_moving, Trans_);
+
+			b_makeNewPC = false;
+		}
+
+		//https://www.slideshare.net/masafuminoda/pcl-11030703
+		//Viewer
+		//左ドラッグ：視点の回転
+		//Shift+左ドラッグ：視点の平行移動．
+		//Ctrl+左ドラッグ：画面上の回転
+		//右ドラッグ：ズーム
+		//g：メジャーの表示
+		//j：スクリーンショットの保存
+
+		//input key
+		short key_num_up = GetAsyncKeyState(VK_NUMPAD8);
+		short key_num_down = GetAsyncKeyState(VK_NUMPAD2);
+		short key_num_right = GetAsyncKeyState(VK_NUMPAD6);
+		short key_num_left = GetAsyncKeyState(VK_NUMPAD4);
+		short key_num_turn_r = GetAsyncKeyState(VK_NUMPAD9);
+		short key_num_turn_l = GetAsyncKeyState(VK_NUMPAD7);
+		short key_num_enter = GetAsyncKeyState(VK_RETURN);
+		short key_num_escape = GetAsyncKeyState(VK_ESCAPE);
+		short key_num_subt_numpad = GetAsyncKeyState(VK_SUBTRACT);
+
+		if ((key_num_up & 1) == 1) key_ = UP;
+		else if ((key_num_down & 1) == 1) key_ = DOWN;
+		else if ((key_num_right & 1) == 1) key_ = RIGHT;
+		else if ((key_num_left & 1) == 1) key_ = LEFT;
+		else if ((key_num_turn_r & 1) == 1) key_ = TURN_R;
+		else if ((key_num_turn_l & 1) == 1) key_ = TURN_L;
+		else if ((key_num_enter & 1) == 1) key_ = ENTER;
+		else if ((key_num_subt_numpad & 1) == 1) key_ = SUBTRACT;
+		else if ((key_num_escape & 1) == 1)
+		{
+			cout << "ESC called" << endl;
+			b_escaped = true;
+			break;
+		}
+		else key_ = NONE;
+
+		if (b_first)
+		{
+			key_ = NONE;
+			b_first = false;
+		}
+
+		//if(key_ != NONE) cout << "key_ = " << key_ << endl;
+
+		//determine transformation by key
+		switch (key_) {
+		case UP:
+			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., disp_translation, 0., 0., 0., 0.)
+				* HM_Trans_now;
+			break;
+
+		case DOWN:
+			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., -disp_translation, 0., 0., 0., 0.)
+				* HM_Trans_now;
+			break;
+
+		case RIGHT:
+			HM_Trans_now = calcHomogeneousMatrixFromVector6d(disp_translation, 0., 0., 0., 0., 0.)
+				* HM_Trans_now;
+			break;
+
+		case LEFT:
+			HM_Trans_now = calcHomogeneousMatrixFromVector6d(-disp_translation, 0., 0., 0., 0., 0.)
+				* HM_Trans_now;
+			break;
+
+		case TURN_R:
+			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., -disp_rotation)
+				* HM_Trans_now;
+			break;
+
+		case TURN_L:
+			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., disp_rotation)
+				* HM_Trans_now;
+			break;
+
+		case ENTER:
+			*cloud_show_static += *cloud_moving;
+			HM_free = Eigen::Matrix4d::Identity();
+			for (int i = 0; i < index_PC_now; i++) HM_free = HM_free * HM_displacement_vec[i];
+			HM_displacement_vec[index_PC_now] = HM_free.inverse() * HM_Trans_now;
+			index_PC_now++;
+			if (index_PC_now == HM_displacement_vec.size()) b_break = true;
+			b_makeNewPC = true;
+			cout << "ENTER pressed" << endl;
+			break;
+
+		case SUBTRACT:
+			HM_free = Eigen::Matrix4d::Identity();
+			for (int i = 0; i <= index_PC_now; i++) HM_free = HM_free * HM_displacement_vec[i];
+			HM_Trans_now = HM_free;
+			cout << "-(numpad) pressed" << endl;
+			break;
+
+		default:
+			break;
+		}
+
+		if (!(key_ == NONE || key_ == ENTER)) {
+			cloud_moving->clear();
+			Trans_ = Eigen::Affine3f::Identity();
+			Trans_ = calcAffine3fFromHomogeneousMatrix(HM_Trans_now);
+			pcl::transformPointCloud(*cloud_moving_before, *cloud_moving, Trans_);
+		}
+		cloud_show->clear();
+		*cloud_show += *cloud_show_static;
+		*cloud_show += *cloud_moving;
+
+		if (cloud_show->size() != 0) {
+			pv.setPointCloud(cloud_show);
+			pv.updateViewer();
+		}
+
+		if (b_break) break;
+	}
+
+	//output txt
+	if (!b_escaped)
+	{
+		vector<vector<double>> trajectory_vec_vec;
+		HM_free = Eigen::Matrix4d::Identity();
+		for (int i = 0; i < HM_displacement_vec.size(); i++)
+		{
+			HM_free = HM_free * HM_displacement_vec[i];
+			Eigen::Vector6d State_;
+			State_ = calcVector6dFromHomogeneousMatrix(HM_free);
+			vector<double> trajectory_vec;
+			trajectory_vec.push_back(i);
+			trajectory_vec.push_back(State_[0]);
+			trajectory_vec.push_back(State_[1]);
+			trajectory_vec.push_back(State_[2]);
+			trajectory_vec.push_back(State_[3]);
+			trajectory_vec.push_back(State_[4]);
+			trajectory_vec.push_back(State_[5]);
+			trajectory_vec_vec.push_back(trajectory_vec);
+		}
+		CTimeString::getCSVFromVecVec(trajectory_vec_vec, filename_txt);
+		cout << "file has saved!" << endl;
+	}
+	else cout << "file has not saved!" << endl;
+
+	pv.closeViewer();
+}
+
+void CPointcloudFuction::combinatePointCloud_naraha()
+{
+	string dir_;
+	dir_ = "../../data/temp";
+	string dir_save_relativePath;
+	dir_save_relativePath = "_XYZRGB";
+	vector<string> filenames_velo_nonir;
+	vector<string> filenames_velo;
+	vector<string> filenames_nir;
+	//CTimeString::getFileNames_extension(file_dir, filenames_, "nir.pcd");
+	CTimeString::getFileNames_extension(dir_, filenames_velo_nonir, ").pcd");
+	CTimeString::getFileNames_extension(dir_, filenames_velo, "velo.pcd");
+	CTimeString::getFileNames_extension(dir_, filenames_nir, "nir.pcd");
+
+	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_velo(new pcl::PointCloud<pcl::PointXYZI>());
+	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_nir(new pcl::PointCloud<pcl::PointXYZI>());
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_save(new pcl::PointCloud<pcl::PointXYZRGB>());
+
+	int i_select;
+	bool b_transform = true;
+
+	Eigen::Affine3f Trans_;
+	Eigen::Matrix4d HM_free = Eigen::Matrix4d::Identity();
+	double pitch_init;
+	pitch_init = 22. * M_PI / 180.;
+
+	cout << "select no_nir_frame or nir_frame" << endl;
+	cout << "0: velodyne(no NIR), 1:velodyne(NIR)" << endl;
+	cout << "i_select:";
+	cin >> i_select;
+
+	switch (i_select)
+	{
+	case 0:
+		for (int index_ = 0; index_ < filenames_velo_nonir.size(); index_++)
+		{
+			cloud_velo->clear();
+			cout << "reading:" << filenames_velo_nonir[index_] << endl;
+			pcl::io::loadPCDFile(dir_ + "/" + filenames_velo_nonir[index_], *cloud_velo);
+
+			cloud_save->clear();
+			for (int i = 0; i < cloud_velo->size(); i++)
+			{
+				pcl::PointXYZRGB point_;
+				point_.x = cloud_velo->points[i].x;
+				point_.y = cloud_velo->points[i].y;
+				point_.z = cloud_velo->points[i].z;
+				point_.r = 0;
+				point_.g = cloud_velo->points[i].intensity;
+				point_.b = 0;
+				cloud_save->push_back(point_);
+			}
+
+			if (b_transform)
+			{
+				//turn pitch(camera coordinate to robot one)
+				HM_free = Eigen::Matrix4d::Identity();
+				HM_free = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
+				Trans_ = Eigen::Affine3f::Identity();
+				Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
+				pcl::transformPointCloud(*cloud_save, *cloud_save, Trans_);
+			}
+			
+			string filename_save = filenames_velo_nonir[index_].substr(0, 3) + "XYZRGB_naraha.pcd";
+			pcl::io::savePCDFile<pcl::PointXYZRGB>
+				(dir_ + "/" + dir_save_relativePath + "/" + filename_save, *cloud_save);
+		}
+		break;
+
+	case 1:
+		for (int index_ = 0; index_ < filenames_velo.size(); index_++)
+		{
+			cloud_velo->clear();
+			cout << "reading:" << filenames_velo[index_] << endl;
+			pcl::io::loadPCDFile(dir_ + "/" + filenames_velo[index_], *cloud_velo);
+			cloud_nir->clear();
+			cout << "reading:" << filenames_nir[index_] << endl;
+			pcl::io::loadPCDFile(dir_ + "/" + filenames_nir[index_], *cloud_nir);
+
+			cloud_save->clear();
+			for (int i = 0; i < cloud_velo->size(); i++)
+			{
+				pcl::PointXYZRGB point_;
+				point_.x = cloud_velo->points[i].x;
+				point_.y = cloud_velo->points[i].y;
+				point_.z = cloud_velo->points[i].z;
+				point_.r = 0;
+				point_.g = cloud_velo->points[i].intensity;
+				point_.b = 0;
+				cloud_save->push_back(point_);
+			}
+
+			for (int i = 0; i < cloud_nir->size(); i++)
+			{
+				pcl::PointXYZRGB point_;
+				point_.x = cloud_nir->points[i].x;
+				point_.y = cloud_nir->points[i].y;
+				point_.z = cloud_nir->points[i].z;
+				point_.r = cloud_nir->points[i].intensity;
+				point_.g = 0;
+				point_.b = 0;
+				cloud_save->push_back(point_);
+			}
+
+			if (b_transform)
+			{
+				//turn pitch(camera coordinate to robot one)
+				HM_free = Eigen::Matrix4d::Identity();
+				HM_free = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
+				Trans_ = Eigen::Affine3f::Identity();
+				Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
+				pcl::transformPointCloud(*cloud_save, *cloud_save, Trans_);
+			}
+
+			string filename_save = filenames_velo[index_].substr(0,3) +"XYZRGB_naraha.pcd";
+			pcl::io::savePCDFile<pcl::PointXYZRGB>
+				(dir_ + "/" + dir_save_relativePath + "/" + filename_save, *cloud_save);
+		}
+		break;
+	}
+}

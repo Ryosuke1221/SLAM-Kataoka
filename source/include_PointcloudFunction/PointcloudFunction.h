@@ -9,6 +9,8 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/registration/transforms.h>
 #include <pcl/visualization/cloud_viewer.h>
+#include <pcl/filters/approximate_voxel_grid.h>
+
 
 ////https://akio-tanaka.tumblr.com/page/2
 //#pragma comment(lib,"opengl32.lib")	
@@ -57,16 +59,11 @@ public:
 	void moveFile();
 	void getPCDFromCSV_naraha();
 	void getPCDFromCSV_gotFromPCAP(string dir_,string file_RelativePath_);
-
-	//pcl::visualization::PointCloudColorHandler<pcl::PointXYZ>::Ptr m_handler;
-	//pcl::visualization::PointCloudColorHandler<>::Ptr m_handler;
-
-
-	//CPointVisualization<pcl::PointXYZ> pointv;
-	//CPointVisualization<pcl::PointXYZ> pointv2("test");
-	//CPointVisualization<pcl::PointXYZ> pointv3(const_cast<string>("test"));
-	//CPointcloudFuction::CPointVisualization<pcl::PointXYZ> pointv4("test");
-
+	void FreeSpace();
+	void filterNIRPointCloud_naraha();
+	void getCSVFromPointCloud();
+	void HandRegistration();
+	void combinatePointCloud_naraha();
 };
 
 template <class T_PointType>
