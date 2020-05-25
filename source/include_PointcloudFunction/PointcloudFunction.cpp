@@ -597,25 +597,32 @@ void CPointcloudFuction::getCSVFromPointCloud()
 
 void CPointcloudFuction::HandRegistration()
 {
+	//"delta_T(i) = T(i-1).inverse() * T(i);",
+	//because relative displacement can accumulate correctly.
+	//When delta_T(i-1) changed, delta_T(i) should be able to work.
+
 	//cout << "HandRegistration started!" << endl;
-	Sleep(1 * 1000);
+	//Sleep(1 * 1000);
 
 	string dir_;
+	dir_ = "../../data/temp/_Hand";
+
+	bool b_RemoveGround = true;
+	//b_RemoveGround = false;
+
 
 	//typedef typename pcl::PointXYZI PointType_func;
 	typedef typename pcl::PointXYZRGB PointType_func;
 
 
-	//CPointVisualization<pcl::PointXYZI> pv;
 	CPointVisualization<PointType_func> pv;
-	//CPointVisualization<pcl::PointXYZRGB> pv_XYZRGB;
+
 	if (typeid(PointType_func) == typeid(pcl::PointXYZI))
 		pv.setWindowName("show XYZI");
 	else if (typeid(PointType_func) == typeid(pcl::PointXYZRGB))
 		pv.setWindowName("show XYZRGB");
 	else
 		throw std::runtime_error("This PointType is unsupported.");
-
 
 	pcl::PointCloud<PointType_func>::Ptr cloud_show(new pcl::PointCloud<PointType_func>());
 	pcl::PointCloud<PointType_func>::Ptr cloud_show_static(new pcl::PointCloud<PointType_func>());
@@ -658,12 +665,13 @@ void CPointcloudFuction::HandRegistration()
 
 	vector<Eigen::Matrix4d>	HM_displacement_vec;
 
+	//read txt (initial trajectory)
 	{
-		vector<vector<double>> trajectory_vec_vec;
+		vector<Eigen::Vector6d> trajectory_vec_vec;
 
 		//input txt
 		vector<string> filenames__txt;
-		CTimeString::getFileNames_extension(dir_, filenames__txt, ".txt");
+		CTimeString::getFileNames_extension(dir_, filenames__txt, ".csv");
 
 		if (filenames__txt.size() == 0)
 		{
@@ -673,17 +681,30 @@ void CPointcloudFuction::HandRegistration()
 			filename_txt = dir_ + "/transformation.txt";
 			for (int i = 0; i < filenames_.size(); i++)
 			{
-				vector<double> trajectory_vec;
-				trajectory_vec.push_back(i);
-				for (int j = 0; j < 6; j++) trajectory_vec.push_back(0.);
+				Eigen::Vector6d trajectory_vec = Eigen::Vector6d::Zero();
 				trajectory_vec_vec.push_back(trajectory_vec);
 			}
-
 		}
 
 		else if (filenames__txt.size() == 1)
 		{
-			trajectory_vec_vec = CTimeString::getVecVecFromCSV(dir_ + "/" + filenames__txt[0]);
+
+			//trajectory_vec_vec = CTimeString::getVecVecFromCSV(dir_ + "/" + filenames__txt[0]);
+			vector<vector<double>> trajectory_temp;
+			cout << "filename:" << dir_ + "/" + filenames__txt[0] << endl;
+			trajectory_temp = CTimeString::getVecVecFromCSV(dir_ + "/" + filenames__txt[0]);
+			for (int i = 0; i < trajectory_temp.size(); i++)
+			{
+				Eigen::Vector6d trajectory_vec = Eigen::Vector6d::Zero();
+				trajectory_vec <<
+					trajectory_temp[i][1],
+					trajectory_temp[i][2],
+					trajectory_temp[i][3],
+					trajectory_temp[i][4],
+					trajectory_temp[i][5],
+					trajectory_temp[i][6];
+				trajectory_vec_vec.push_back(trajectory_vec);
+			}
 			filename_txt = dir_ + "/" + filenames__txt[0];
 		}
 
@@ -698,12 +719,12 @@ void CPointcloudFuction::HandRegistration()
 		{
 			Eigen::Matrix4d HM_trajectory = Eigen::Matrix4d::Identity();
 			HM_trajectory = calcHomogeneousMatrixFromVector6d(
-				trajectory_vec_vec[i][1],
-				trajectory_vec_vec[i][2],
-				trajectory_vec_vec[i][3],
-				trajectory_vec_vec[i][4],
-				trajectory_vec_vec[i][5],
-				trajectory_vec_vec[i][6]);
+				trajectory_vec_vec[i](0, 0),
+				trajectory_vec_vec[i](1, 0),
+				trajectory_vec_vec[i](2, 0),
+				trajectory_vec_vec[i](3, 0),
+				trajectory_vec_vec[i](4, 0),
+				trajectory_vec_vec[i](5, 0));
 			HM_trajectory_vec.push_back(HM_trajectory);
 		}
 
@@ -732,36 +753,6 @@ void CPointcloudFuction::HandRegistration()
 
 			if (-1 == pcl::io::loadPCDFile(filename_PC, *cloud_moving_before)) break;
 
-			//turn pitch(camera axis)
-			{
-				double pitch_init;
-				pitch_init = 22. * M_PI / 180.;
-				HM_free = Eigen::Matrix4d::Identity();
-				HM_free = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
-				Trans_ = Eigen::Affine3f::Identity();
-				Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
-				pcl::transformPointCloud(*cloud_moving_before, *cloud_moving_before, Trans_);
-			}
-
-			//ground
-			bool b_RemoveGround = false;
-			b_RemoveGround = true;
-			if (b_RemoveGround)
-			{
-				double th_height;
-				//th_height = -0.1;	//naraha summer
-				th_height = -0.3;
-				cloud_temp->clear();
-				pcl::copyPointCloud(*cloud_moving_before, *cloud_temp);
-				cloud_moving_before->clear();
-				for (size_t i = 0; i < cloud_temp->size(); i++)
-				{
-					if (th_height > cloud_temp->points[i].z) continue;
-					cloud_moving_before->push_back(cloud_temp->points[i]);
-				}
-			}
-
-
 			cout << "PC(" << index_PC_now << ") number :" << cloud_moving_before->size() << endl;
 
 			cout << endl;
@@ -789,16 +780,32 @@ void CPointcloudFuction::HandRegistration()
 			pcl::transformPointCloud(*cloud_moving_before, *cloud_moving, Trans_);
 
 			b_makeNewPC = false;
+
+			if (b_RemoveGround)
+			{
+				double th_height;
+				//th_height = -0.1;	//naraha summer
+				th_height = -0.3;
+				cloud_temp->clear();
+				pcl::copyPointCloud(*cloud_moving, *cloud_temp);
+				cloud_moving->clear();
+				for (size_t i = 0; i < cloud_temp->size(); i++)
+				{
+					if (th_height > cloud_temp->points[i].z) continue;
+					cloud_moving->push_back(cloud_temp->points[i]);
+				}
+			}
+
 		}
 
 		//https://www.slideshare.net/masafuminoda/pcl-11030703
 		//Viewer
-		//左ドラッグ：視点の回転
-		//Shift+左ドラッグ：視点の平行移動．
-		//Ctrl+左ドラッグ：画面上の回転
-		//右ドラッグ：ズーム
-		//g：メジャーの表示
-		//j：スクリーンショットの保存
+		//left drag：rotation of view point
+		//Shift+left drag：translation of view point
+		//Ctrl+left drag：rotation in display
+		//right drag：zoom
+		//g：display measure
+		//j：save screenshot
 
 		//input key
 		short key_num_up = GetAsyncKeyState(VK_NUMPAD8);
@@ -833,9 +840,7 @@ void CPointcloudFuction::HandRegistration()
 			b_first = false;
 		}
 
-		//if(key_ != NONE) cout << "key_ = " << key_ << endl;
-
-		//determine transformation by key
+		//determine transformation by key input
 		switch (key_) {
 		case UP:
 			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., disp_translation, 0., 0., 0., 0.)
@@ -907,8 +912,18 @@ void CPointcloudFuction::HandRegistration()
 		if (b_break) break;
 	}
 
+	int i_save_txt = 0;
+	cout << "Do you save txt?  Yes:0 No:1" << endl;
+	cout << "->";
+	cin >> i_save_txt;
+	bool b_save_txt;
+	if (i_save_txt == 0)
+		b_save_txt = true;
+	else 
+		b_save_txt = false;
+
 	//output txt
-	if (!b_escaped)
+	if (b_save_txt)
 	{
 		vector<vector<double>> trajectory_vec_vec;
 		HM_free = Eigen::Matrix4d::Identity();
@@ -930,7 +945,7 @@ void CPointcloudFuction::HandRegistration()
 		CTimeString::getCSVFromVecVec(trajectory_vec_vec, filename_txt);
 		cout << "file has saved!" << endl;
 	}
-	else cout << "file has not saved!" << endl;
+	else cout << "file did not saved!" << endl;
 
 	pv.closeViewer();
 }
@@ -982,7 +997,7 @@ void CPointcloudFuction::combinatePointCloud_naraha()
 				point_.x = cloud_velo->points[i].x;
 				point_.y = cloud_velo->points[i].y;
 				point_.z = cloud_velo->points[i].z;
-				point_.r = 0;
+				point_.r = 255;
 				point_.g = cloud_velo->points[i].intensity;
 				point_.b = 0;
 				cloud_save->push_back(point_);
@@ -1021,7 +1036,7 @@ void CPointcloudFuction::combinatePointCloud_naraha()
 				point_.x = cloud_velo->points[i].x;
 				point_.y = cloud_velo->points[i].y;
 				point_.z = cloud_velo->points[i].z;
-				point_.r = 0;
+				point_.r = 255;
 				point_.g = cloud_velo->points[i].intensity;
 				point_.b = 0;
 				cloud_save->push_back(point_);
