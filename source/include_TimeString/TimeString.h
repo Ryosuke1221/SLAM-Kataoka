@@ -24,6 +24,8 @@ class CTimeString {
 	static void getTimeValueFromString(string string_, int &i_minute, int &i_second, int &i_millisecond);
 	void getTimeValueFromString(string string_, int &i_hour, int &i_minute, int &i_second, int &i_millisecond);
 
+	string getTElapsefrom2S(string s_former, string s_latter);
+
 public:
 
 	//can use "std::to_string" for it ...but detail is unknown
@@ -37,8 +39,6 @@ public:
 	static string getTimeString();
 
 	static string getTimeElapsefrom2Strings(string s_former, string s_latter);	//output  second
-
-	string getTElapsefrom2S(string s_former, string s_latter);
 
 	static std::vector<int> find_all(const std::string str, const std::string subStr);
 

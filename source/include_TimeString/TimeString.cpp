@@ -350,7 +350,7 @@ bool CTimeString::getDirectoryExistance_detail(string foder_Path,bool b_first)
 		if (CTimeString::getDirectoryExistance(foder_Path)) 
 		{
 			b_exist = true;
-			cout << "FOUND: " << foder_Path << endl;
+			cout << "FOUND:     " << foder_Path << endl;
 		}
 	}
 

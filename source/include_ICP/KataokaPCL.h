@@ -169,14 +169,8 @@ public:
 	void determineCorrespondences_argPC(pcl::Correspondences &correspondences, double max_distance,
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud_src, pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud_tgt);
 
-	vector<int> getCharacter(Eigen::Matrix4d TRUESensorPos, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_);
-	int do_exp_getCharaOfPoint_Naraha(double x_, double y_, double z_);
 	int do_exp_getCharaOfPoint_Todai(double x_, double y_, double z_);
 
-	void DecreasePointCloud_Area(Eigen::Matrix4d TRUESensorPos,
-		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_output);
-
-	bool do_exp_getIsRemovedPoint_Naraha(double x_, double y_, double z_);
 	bool do_exp_getIsRemovedPoint_Todai(double x_, double y_, double z_);
 
 	void determineCorrespondences_argPC_chara(pcl::Correspondences &correspondences, double max_distance,
@@ -266,6 +260,8 @@ public:
 	//20200519
 	static Eigen::Matrix4d calcHomogeneousMatrixFromVector6d(double X_, double Y_, double Z_,
 		double Roll_, double Pitch_, double Yaw_);
+	static Eigen::Matrix4d calcHomogeneousMatrixFromVector6d(Eigen::Vector6d XYZRPY_arg);
+
 	static Eigen::Vector6d calcVector6dFromHomogeneousMatrix(Eigen::Matrix4d input_Mat);
 	static Eigen::Affine3f calcAffine3fFromHomogeneousMatrix(Eigen::Matrix4d input_Mat);
 	

@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "KataokaPCL.h"
 
 CKataokaPCL::CKataokaPCL()
@@ -85,6 +86,32 @@ Eigen::Matrix4d CKataokaPCL::calcHomogeneousMatrixFromVector6d(double X_, double
 	return transformation_Position;
 }
 
+Eigen::Matrix4d CKataokaPCL::calcHomogeneousMatrixFromVector6d(Eigen::Vector6d XYZRPY_arg)
+{
+	Eigen::Matrix4d	transformation_Position = Eigen::Matrix4d::Identity();
+	Eigen::Matrix4d T_mat = Eigen::Matrix4d::Identity();
+	Eigen::Matrix4d Roll_mat = Eigen::Matrix4d::Identity();
+	Eigen::Matrix4d Pitch_mat = Eigen::Matrix4d::Identity();
+	Eigen::Matrix4d Yaw_mat = Eigen::Matrix4d::Identity();
+	T_mat(0, 3) = XYZRPY_arg(0, 0);
+	T_mat(1, 3) = XYZRPY_arg(1, 0);
+	T_mat(2, 3) = XYZRPY_arg(2, 0);
+	Roll_mat(1, 1) = cos(XYZRPY_arg(3, 0));
+	Roll_mat(1, 2) = -sin(XYZRPY_arg(3, 0));
+	Roll_mat(2, 1) = sin(XYZRPY_arg(3, 0));
+	Roll_mat(2, 2) = cos(XYZRPY_arg(3, 0));
+	Pitch_mat(0, 0) = cos(XYZRPY_arg(4, 0));
+	Pitch_mat(2, 0) = -sin(XYZRPY_arg(4, 0));
+	Pitch_mat(0, 2) = sin(XYZRPY_arg(4, 0));
+	Pitch_mat(2, 2) = cos(XYZRPY_arg(4, 0));
+	Yaw_mat(0, 0) = cos(XYZRPY_arg(5, 0));
+	Yaw_mat(0, 1) = -sin(XYZRPY_arg(5, 0));
+	Yaw_mat(1, 0) = sin(XYZRPY_arg(5, 0));
+	Yaw_mat(1, 1) = cos(XYZRPY_arg(5, 0));
+	transformation_Position = T_mat * Yaw_mat * Pitch_mat * Roll_mat;
+	return transformation_Position;
+}
+
 //Not very confident
 Eigen::Vector6d CKataokaPCL::calcVector6dFromHomogeneousMatrix(Eigen::Matrix4d input_Mat)
 {
@@ -142,7 +169,8 @@ Eigen::Affine3f CKataokaPCL::calcAffine3fFromHomogeneousMatrix(Eigen::Matrix4d i
 	return Trans_Affine;
 }
 
-void CKataokaPCL::align() {
+void CKataokaPCL::align()
+{
 
 	M_converged_ = false;
 
@@ -175,7 +203,8 @@ void CKataokaPCL::align() {
 	computeTransformation();
 }
 
-void CKataokaPCL::align(Eigen::Matrix4d init) {
+void CKataokaPCL::align(Eigen::Matrix4d init)
+{
 
 	//ÉÅÉìÉoïœêîÇ…ìnÇ∑ÅD
 	M_transformation_arg = init.cast<float>();
@@ -753,7 +782,8 @@ void CKataokaPCL::determineCorrespondences_argPC(pcl::Correspondences &correspon
 void CKataokaPCL::determineCorrespondences_argPC_chara(pcl::Correspondences &correspondences, double max_distance,
 	double penalty_chara, double dist_search_arg, double weight_dist_chara,
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr pPointCloud_src_arg, pcl::PointCloud<pcl::PointXYZRGB>::Ptr pPointCloud_tgt_arg,
-	vector<int> Chara_start_vec, vector<int> Chara_end_vec){
+	vector<int> Chara_start_vec, vector<int> Chara_end_vec)
+{
 
 	//cout << "determineCorrespondences" << endl;
 
@@ -962,7 +992,8 @@ void CKataokaPCL::determineCorrespondences_Spring2(Correspondences_Spring2 &corr
 }
 
 void CKataokaPCL::transformPointCloud(pcl::PointCloud<pcl::PointXYZRGB> &input_arg,
-	pcl::PointCloud<pcl::PointXYZRGB> &output_arg, Eigen::Matrix4f transformation_arg) {
+	pcl::PointCloud<pcl::PointXYZRGB> &output_arg, Eigen::Matrix4f transformation_arg)
+{
 
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_copy(new pcl::PointCloud<pcl::PointXYZRGB>());
 	pcl::copyPointCloud(input_arg, *input_copy);
@@ -973,7 +1004,8 @@ void CKataokaPCL::transformPointCloud(pcl::PointCloud<pcl::PointXYZRGB> &input_a
 
 }
 
-double CKataokaPCL::getFitnessScore() {
+double CKataokaPCL::getFitnessScore()
+{
 
 	double fitness_score = 0.0;
 
@@ -1009,7 +1041,8 @@ double CKataokaPCL::getFitnessScore() {
 
 }
 
-double CKataokaPCL::getFitnessScore_chara() {
+double CKataokaPCL::getFitnessScore_chara() 
+{
 
 	double fitness_score_chara = 0.0;
 
@@ -1060,7 +1093,8 @@ void CKataokaPCL::print4x4Matrix(const Eigen::Matrix4d & matrix)
 	printf("t = < %6.3f, %6.3f, %6.3f >\n\n", matrix(0, 3), matrix(1, 3), matrix(2, 3));
 }
 
-double CKataokaPCL::getDistanceOf2PointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud1_arg, pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud2_arg){
+double CKataokaPCL::getDistanceOf2PointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud1_arg, pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud2_arg)
+{
 
 
 	pcl::KdTreeFLANN<pcl::PointXYZRGB> match_search;
@@ -1138,79 +1172,8 @@ double CKataokaPCL::getDistanceOf2PointCloud(pcl::PointCloud<pcl::PointXYZRGB>::
 
 }
 
-vector<int> CKataokaPCL::getCharacter(Eigen::Matrix4d TRUESensorPos, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_) {
-	Eigen::Affine3f Trans_PC = Eigen::Affine3f::Identity();
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_temp(new pcl::PointCloud<pcl::PointXYZRGB>());
-	vector<int> chara_vec;
-	cloud_temp->clear();
-	Trans_PC = Eigen::Affine3f::Identity();
-	Trans_PC = calcAffine3fFromHomogeneousMatrix(TRUESensorPos);
-	pcl::transformPointCloud(*cloud_, *cloud_temp, Trans_PC);
-	int cnt_chara = 0;
-	for (size_t i = 0; i < cloud_temp->size(); i++) {
-		int chara_value = 0;
-		pcl::PointXYZRGB point_;
-		point_ = cloud_temp->points[i];
-		double x_, y_, z_;
-		x_ = point_.x;
-		y_ = point_.y;
-		z_ = point_.z;
-		//function
-		chara_value = do_exp_getCharaOfPoint_Naraha(x_, y_, z_);
-		if (chara_value != 0) cnt_chara++;
-		chara_vec.push_back(chara_value);
-	}
-	cout << "num_character = " << cnt_chara << endl;
-	return chara_vec;
-}
-
-
-int CKataokaPCL::do_exp_getCharaOfPoint_Naraha(double x_, double y_, double z_) {
-
-	int chara_value = 0;
-	int value_w = 1;
-	int value_h = 2;
-
-	double x1, x2, y1, y2;
-
-	{
-		x1 = -11.;
-		y1 = -10.;
-		x2 = -7.;
-		y2 = -5.;
-		if (x1 <= x_ && x_ <= x2 && y1 <= y_ && y_ <= y2) chara_value = value_w;
-
-		x1 = -2.;
-		y1 = -17.;
-		x2 = 5.;
-		y2 = -14.;
-		if (x1 <= x_ && x_ <= x2 && y1 <= y_ && y_ <= y2) chara_value = value_w;
-
-
-		x1 = 8.;
-		y1 = -11.;
-		x2 = 14.;
-		y2 = -6.;
-		if (x1 <= x_ && x_ <= x2 && y1 <= y_ && y_ <= y2) chara_value = value_h;
-
-		x1 = 1.;
-		y1 = -10.;
-		x2 = 6.;
-		y2 = -7.;
-		if (x1 <= x_ && x_ <= x2 && y1 <= y_ && y_ <= y2) chara_value = value_h;
-
-		x1 = 1.;
-		y1 = -7.;
-		x2 = 6.;
-		y2 = -4.;
-		if (x1 <= x_ && x_ <= x2 && y1 <= y_ && y_ <= y2) chara_value = value_w;
-
-	}
-
-	return chara_value;
-}
-
-int CKataokaPCL::do_exp_getCharaOfPoint_Todai(double x_, double y_, double z_) {
+int CKataokaPCL::do_exp_getCharaOfPoint_Todai(double x_, double y_, double z_)
+{
 
 	int chara_value = 0;
 
@@ -1394,75 +1357,8 @@ int CKataokaPCL::do_exp_getCharaOfPoint_Todai(double x_, double y_, double z_) {
 	return chara_value;
 }
 
-void CKataokaPCL::DecreasePointCloud_Area(Eigen::Matrix4d TRUESensorPos,
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_output) {
-
-	Eigen::Affine3f Trans_PC = Eigen::Affine3f::Identity();
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_temp(new pcl::PointCloud<pcl::PointXYZRGB>());
-	vector<int> chara_vec;
-	cloud_temp->clear();
-	Trans_PC = Eigen::Affine3f::Identity();
-	Trans_PC = calcAffine3fFromHomogeneousMatrix(TRUESensorPos);
-	pcl::transformPointCloud(*cloud_, *cloud_temp, Trans_PC);
-	int cnt_removed = 0;
-	vector<bool> index_remove_vec;
-	for (size_t i = 0; i < cloud_temp->size(); i++) {
-		pcl::PointXYZRGB point_;
-		bool b_remove = false;
-		point_ = cloud_temp->points[i];
-		if (do_exp_getIsRemovedPoint_Naraha(point_.x, point_.y, point_.z)) {
-			cnt_removed++;
-			b_remove = true;
-		}
-		index_remove_vec.push_back(b_remove);
-	}
-	cloud_temp->clear();
-	pcl::copyPointCloud(*cloud_, *cloud_temp);
-	cloud_output->clear();
-	for (size_t i = 0; i < cloud_temp->size(); i++) {
-		if (index_remove_vec[static_cast<int>(i)]) continue;
-		cloud_output->push_back(cloud_temp->points[i]);
-	}
-	cout << "cnt_removed = " << cnt_removed << endl;
-}
-
-
-bool CKataokaPCL::do_exp_getIsRemovedPoint_Naraha(double x_, double y_, double z_){
-
-	bool b_remove = false;
-
-	//Naraha
-	//the point on the boundary is removed
-	{
-		double x1, y1, x2, y2;
-
-		//"in" condition
-		x1 = -15.;
-		y1 = -17.;
-		x2 = 19.;
-		y2 = 7.;
-		if (!(x1 < x_ && x_ < x2 && y1 < y_ && y_ < y2)) b_remove = true;
-
-		//"out" condition
-		x1 = -15.;
-		y1 = -2.;
-		x2 = -7.;
-		y2 = 7.;
-		if ((x1 <= x_ && x_ <= x2 && y1 <= y_ && y_ <= y2)) b_remove = true;
-
-		//"out" condition
-		x1 = -7.;
-		y1 = 2.;
-		x2 = -2.;
-		y2 = 7.;
-		if ((x1 <= x_ && x_ <= x2 && y1 <= y_ && y_ <= y2)) b_remove = true;
-
-	}
-
-	return b_remove;
-}
-
-bool CKataokaPCL::do_exp_getIsRemovedPoint_Todai(double x_, double y_, double z_) {
+bool CKataokaPCL::do_exp_getIsRemovedPoint_Todai(double x_, double y_, double z_)
+{
 
 	bool b_remove = false;
 
@@ -1639,11 +1535,13 @@ bool CKataokaPCL::do_exp_getIsRemovedPoint_Todai(double x_, double y_, double z_
 
 //	vector<vector<double>> M_chara_src_vecvec;
 
-void CKataokaPCL::setSpring1VecVec_src(vector<vector<double>> spring1_src_vecvec) {
+void CKataokaPCL::setSpring1VecVec_src(vector<vector<double>> spring1_src_vecvec)
+{
 	M_spring_src_vecvec = spring1_src_vecvec;
 }
 
-void CKataokaPCL::setSpring1VecVec_tgt(vector<vector<double>> spring1_tgt_vecvec) {
+void CKataokaPCL::setSpring1VecVec_tgt(vector<vector<double>> spring1_tgt_vecvec)
+{
 	M_spring_tgt_vecvec = spring1_tgt_vecvec;
 }
 

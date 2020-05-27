@@ -227,6 +227,9 @@ void CPointcloudFuction::show_sequent()
 
 		}
 
+		//remove ground plane
+
+
 		//save
 		if ((GetAsyncKeyState(VK_RETURN) & 1) == 1 && b_useTXT)
 		{
