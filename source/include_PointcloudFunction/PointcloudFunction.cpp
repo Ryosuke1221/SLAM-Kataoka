@@ -148,7 +148,7 @@ void CPointcloudFuction::all_process()
 			break;
 
 		case EN_CombinePointCloud:
-			combinatePointCloud_naraha();
+			combinePointCloud_naraha();
 			break;
 
 		default:
@@ -169,7 +169,8 @@ void CPointcloudFuction::all_process()
 void CPointcloudFuction::show_sequent()
 {
 	string foldername_;
-	foldername_ = "../../data/temp";
+	//foldername_ = "../../data/temp";
+	foldername_ = "../../data/temp/_XYZRGB";
 
 	//typedef typename pcl::PointXYZI PointType_func;
 	typedef typename pcl::PointXYZRGB PointType_func;
@@ -223,11 +224,18 @@ void CPointcloudFuction::show_sequent()
 			pcl::io::loadPCDFile(foldername_ + "/" + filenames_[index_], *cloud_);
 			cout << "showing:" << filenames_[index_] << endl;
 
+
+			//remove ground plane
+			if (cloud_->size() != 0)
+			{
+				detectPlane<PointType_func>(*cloud_);
+
+			}
+
+
 			index_++;
 
 		}
-
-		//remove ground plane
 
 
 		//save
@@ -953,7 +961,7 @@ void CPointcloudFuction::HandRegistration()
 	pv.closeViewer();
 }
 
-void CPointcloudFuction::combinatePointCloud_naraha()
+void CPointcloudFuction::combinePointCloud_naraha()
 {
 	string dir_;
 	dir_ = "../../data/temp";
@@ -970,14 +978,24 @@ void CPointcloudFuction::combinatePointCloud_naraha()
 	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_velo(new pcl::PointCloud<pcl::PointXYZI>());
 	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_nir(new pcl::PointCloud<pcl::PointXYZI>());
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_save(new pcl::PointCloud<pcl::PointXYZRGB>());
+	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_temp(new pcl::PointCloud<pcl::PointXYZI>());
 
 	int i_select;
 	bool b_transform = true;
+	bool b_removeGround = true;
 
 	Eigen::Affine3f Trans_;
 	Eigen::Matrix4d HM_free = Eigen::Matrix4d::Identity();
 	double pitch_init;
-	pitch_init = 22. * M_PI / 180.;
+	//pitch_init = 22. * M_PI / 180.;
+	//pitch_init = 23.5 * M_PI / 180.;
+	//pitch_init = 23. * M_PI / 180.;
+	pitch_init = 24. * M_PI / 180.;
+	double th_z_velo;
+	//th_z_velo = -0.5;
+	//th_z_velo = -0.3;
+	//th_z_velo = -0.35;
+	th_z_velo = -0.4;
 
 	cout << "select no_nir_frame or nir_frame" << endl;
 	cout << "0: velodyne(no NIR), 1:velodyne(NIR)" << endl;
@@ -993,6 +1011,27 @@ void CPointcloudFuction::combinatePointCloud_naraha()
 			cout << "reading:" << filenames_velo_nonir[index_] << endl;
 			pcl::io::loadPCDFile(dir_ + "/" + filenames_velo_nonir[index_], *cloud_velo);
 
+			if (b_transform)
+			{
+				//turn pitch(camera coordinate to robot one)
+				HM_free = Eigen::Matrix4d::Identity();
+				HM_free = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
+				Trans_ = Eigen::Affine3f::Identity();
+				Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
+				pcl::transformPointCloud(*cloud_velo, *cloud_velo, Trans_);
+				if (b_removeGround)
+				{
+					cloud_temp->clear();
+					pcl::copyPointCloud(*cloud_velo, *cloud_temp);
+					cloud_velo->clear();
+					for (int i = 0; i < cloud_temp->size(); i++)
+					{
+						if (th_z_velo > cloud_temp->points[i].z) continue;
+						cloud_velo->push_back(cloud_temp->points[i]);
+					}
+				}
+			}
+
 			cloud_save->clear();
 			for (int i = 0; i < cloud_velo->size(); i++)
 			{
@@ -1004,16 +1043,6 @@ void CPointcloudFuction::combinatePointCloud_naraha()
 				point_.g = cloud_velo->points[i].intensity;
 				point_.b = 0;
 				cloud_save->push_back(point_);
-			}
-
-			if (b_transform)
-			{
-				//turn pitch(camera coordinate to robot one)
-				HM_free = Eigen::Matrix4d::Identity();
-				HM_free = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
-				Trans_ = Eigen::Affine3f::Identity();
-				Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
-				pcl::transformPointCloud(*cloud_save, *cloud_save, Trans_);
 			}
 			
 			string filename_save = filenames_velo_nonir[index_].substr(0, 3) + "XYZRGB_naraha.pcd";
@@ -1031,6 +1060,38 @@ void CPointcloudFuction::combinatePointCloud_naraha()
 			cloud_nir->clear();
 			cout << "reading:" << filenames_nir[index_] << endl;
 			pcl::io::loadPCDFile(dir_ + "/" + filenames_nir[index_], *cloud_nir);
+
+			if (b_transform)
+			{
+				//turn pitch(camera coordinate to robot one)
+				HM_free = Eigen::Matrix4d::Identity();
+				HM_free = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
+				Trans_ = Eigen::Affine3f::Identity();
+				Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
+				pcl::transformPointCloud(*cloud_velo, *cloud_velo, Trans_);
+				if (b_removeGround)
+				{
+					cloud_temp->clear();
+					pcl::copyPointCloud(*cloud_velo, *cloud_temp);
+					cloud_velo->clear();
+					for (int i = 0; i < cloud_temp->size(); i++)
+					{
+						if (th_z_velo > cloud_temp->points[i].z) continue;
+						cloud_velo->push_back(cloud_temp->points[i]);
+					}
+				}
+
+			}
+
+			if (b_transform)
+			{
+				//turn pitch(camera coordinate to robot one)
+				HM_free = Eigen::Matrix4d::Identity();
+				HM_free = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
+				Trans_ = Eigen::Affine3f::Identity();
+				Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
+				pcl::transformPointCloud(*cloud_nir, *cloud_nir, Trans_);
+			}
 
 			cloud_save->clear();
 			for (int i = 0; i < cloud_velo->size(); i++)
@@ -1057,16 +1118,6 @@ void CPointcloudFuction::combinatePointCloud_naraha()
 				cloud_save->push_back(point_);
 			}
 
-			if (b_transform)
-			{
-				//turn pitch(camera coordinate to robot one)
-				HM_free = Eigen::Matrix4d::Identity();
-				HM_free = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
-				Trans_ = Eigen::Affine3f::Identity();
-				Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
-				pcl::transformPointCloud(*cloud_save, *cloud_save, Trans_);
-			}
-
 			string filename_save = filenames_velo[index_].substr(0,3) +"XYZRGB_naraha.pcd";
 			pcl::io::savePCDFile<pcl::PointXYZRGB>
 				(dir_ + "/" + dir_save_relativePath + "/" + filename_save, *cloud_save);
@@ -1074,3 +1125,240 @@ void CPointcloudFuction::combinatePointCloud_naraha()
 		break;
 	}
 }
+
+void CPointcloudFuction::changeColor_plane(pcl::PointXYZRGB &point_)
+{
+	point_.r = 0;
+	point_.g = 0;
+	point_.b = 255;
+}
+
+void CPointcloudFuction::changeColor_plane(pcl::PointXYZI &point_)
+{
+	point_.intensity = 210;
+}
+
+void CPointcloudFuction::DynamicTranslation()
+{
+	//bool b_saveByTXT = false;
+	bool b_inputTranslation = false;
+
+	string dir_;
+	dir_ = "../../data/temp/_DynamicTranslation";
+
+	//typedef typename pcl::PointXYZI PointType_func;
+	typedef typename pcl::PointXYZRGB PointType_func;
+
+
+	CPointVisualization<PointType_func> pv;
+
+	if (typeid(PointType_func) == typeid(pcl::PointXYZI))
+		pv.setWindowName("show XYZI");
+	else if (typeid(PointType_func) == typeid(pcl::PointXYZRGB))
+		pv.setWindowName("show XYZRGB");
+	else
+		throw std::runtime_error("This PointType is unsupported.");
+
+	//pcl::PointCloud<PointType_func>::Ptr cloud_show(new pcl::PointCloud<PointType_func>());
+	//pcl::PointCloud<PointType_func>::Ptr cloud_show_static(new pcl::PointCloud<PointType_func>());
+	pcl::PointCloud<PointType_func>::Ptr cloud_moving(new pcl::PointCloud<PointType_func>());
+	pcl::PointCloud<PointType_func>::Ptr cloud_moving_before(new pcl::PointCloud<PointType_func>());
+	pcl::PointCloud<PointType_func>::Ptr cloud_temp(new pcl::PointCloud<PointType_func>());
+
+	Eigen::Affine3f Trans_;
+	Eigen::Matrix4d HM_free = Eigen::Matrix4d::Identity();
+	Eigen::Matrix4d HM_Trans_now = Eigen::Matrix4d::Identity();
+
+	double disp_translation = 0.;
+	double disp_rotation = 0.;
+	disp_translation = 0.05;
+	disp_rotation = 0.5 * M_PI / 180.;
+
+	int index_PC_now = 0;
+	bool b_makeNewPC = true;
+	bool b_first = true;
+	bool b_escaped = false;
+	bool b_break = false;
+
+	enum KEYNUM {
+		NONE,
+		//UP,
+		//DOWN,
+		//RIGHT,
+		//LEFT,
+		//TURN_R,
+		//TURN_L,
+		TRANSLATION,
+		ENTER,
+		SUBTRACT
+	};
+	KEYNUM key_;
+
+	vector<string> filenames_;
+	CTimeString::getFileNames_extension(dir_, filenames_, ".pcd");
+
+	while (1) {
+		//input next PointCloud
+		if (b_makeNewPC) {
+
+			cloud_moving_before->clear();
+			cloud_moving->clear();
+
+			string filename_PC;
+			filename_PC = filenames_[index_PC_now];
+			filename_PC = dir_ + "/" + filename_PC;
+
+			if (-1 == pcl::io::loadPCDFile(filename_PC, *cloud_moving_before)) break;
+			pcl::copyPointCloud(*cloud_moving_before, *cloud_moving);
+			if (-1 == pcl::io::loadPCDFile(filename_PC, *cloud_moving)) break;
+			pcl::copyPointCloud(*cloud_moving, *cloud_moving_before);
+
+			cout << "PC(" << index_PC_now << ") number :" << cloud_moving->size() << endl;
+
+			cout << endl;
+			cout << "**********( key option )**********" << endl;
+			//cout << "Use numpad" << endl;
+			//cout << " TURN_LEFT:7    UP:8  TURN_RIGHT:9" << endl;
+			//cout << "      LEFT:4    ----       RIGHT:6" << endl;
+			//cout << "      ------  DOWN:2       -------" << endl;
+			//cout << endl;
+
+			cout << "Reset:-(numpad)" << endl;
+			cout << "Switch:ENTER" << endl;
+			cout << "Escape:ESC" << endl;
+			cout << "**********************************" << endl;
+			cout << endl;
+
+			//cloud_moving->clear();
+			//Trans_ = Eigen::Affine3f::Identity();
+
+			//HM_free = Eigen::Matrix4d::Identity();
+			//for (int i = 0; i <= index_PC_now; i++) HM_free = HM_free * HM_displacement_vec[i];
+			//HM_Trans_now = HM_free;
+			//Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
+			//pcl::transformPointCloud(*cloud_moving_before, *cloud_moving, Trans_);
+
+			b_makeNewPC = false;
+
+		}
+
+		//https://www.slideshare.net/masafuminoda/pcl-11030703
+		//Viewer
+		//left drag：rotation of view point
+		//Shift+left drag：translation of view point
+		//Ctrl+left drag：rotation in display
+		//right drag：zoom
+		//g：display measure
+		//j：save screenshot
+
+		short key_num_enter = GetAsyncKeyState(VK_RETURN);
+		short key_num_escape = GetAsyncKeyState(VK_ESCAPE);
+		short key_num_subt_numpad = GetAsyncKeyState(VK_SUBTRACT);
+		short key_num_t = GetAsyncKeyState(0x54);//T
+
+		if ((key_num_enter & 1) == 1) key_ = ENTER;
+		else if ((key_num_subt_numpad & 1) == 1) key_ = SUBTRACT;
+		else if ((key_num_t & 1) == 1) key_ = TRANSLATION;
+		else if ((key_num_escape & 1) == 1)
+		{
+			cout << "ESC called" << endl;
+			b_escaped = true;
+			break;
+		}
+		else key_ = NONE;
+
+		if (b_first)
+		{
+			key_ = NONE;
+			b_first = false;
+		}
+
+		//determine transformation by key input
+		switch (key_) {
+		case ENTER:
+			//*cloud_show_static += *cloud_moving;
+			//HM_free = Eigen::Matrix4d::Identity();
+			//for (int i = 0; i < index_PC_now; i++) HM_free = HM_free * HM_displacement_vec[i];
+			//HM_displacement_vec[index_PC_now] = HM_free.inverse() * HM_Trans_now;
+			index_PC_now++;
+			if (index_PC_now == filenames_.size()) b_break = true;
+			b_makeNewPC = true;
+			cout << "ENTER pressed" << endl;
+			break;
+
+		case SUBTRACT:
+			HM_Trans_now = Eigen::Matrix4d::Identity();
+			cout << "-(numpad) pressed" << endl;
+			break;
+
+		case TRANSLATION:
+
+
+			enum Variable{
+				X_vr,
+				Y_vr,
+				Z_vr,
+				Roll_vr,
+				Pitch_vr,
+				Yaw_vr,
+				ESC_vr,
+				Other_vr
+			};
+			Variable var;
+
+			do
+			{
+				string s_input;
+				cout << "select: x y z roll pitch yaw, or ESC" << endl;
+				cout << "->";
+				cin >> s_input;
+				if (s_input == "x") var = X_vr;
+				else if (s_input == "y") var = Y_vr;
+				else if (s_input == "z") var = Z_vr;
+				else if (s_input == "roll") var = Roll_vr;
+				else if (s_input == "pitch") var = Pitch_vr;
+				else if (s_input == "yaw") var = Yaw_vr;
+				else if (s_input == "ESC") var = ESC_vr;
+				else var = Other_vr;
+
+			} while (var != Other_vr);
+
+			if (var == ESC_vr) break;
+
+			//HM_Trans_now
+
+			
+			break;
+
+		default:
+			break;
+		}
+
+		if (!(key_ == NONE || key_ == ENTER)) {
+			cloud_moving->clear();
+			Trans_ = Eigen::Affine3f::Identity();
+			Trans_ = calcAffine3fFromHomogeneousMatrix(HM_Trans_now);
+			pcl::transformPointCloud(*cloud_moving_before, *cloud_moving, Trans_);
+		}
+
+		if (cloud_moving->size() != 0) {
+			pv.setPointCloud(cloud_moving);
+			pv.updateViewer();
+		}
+
+		if (b_break) break;
+	}
+
+	int i_save_txt = 0;
+	cout << "Do you save txt?  Yes:0 No:1" << endl;
+	cout << "->";
+	cin >> i_save_txt;
+	bool b_save_txt;
+	if (i_save_txt == 0)
+		b_save_txt = true;
+	else
+		b_save_txt = false;
+
+	pv.closeViewer();
+}
+

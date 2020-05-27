@@ -11,6 +11,11 @@
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/filters/approximate_voxel_grid.h>
 
+#include <pcl/ModelCoefficients.h>  
+#include <pcl/sample_consensus/method_types.h>  
+#include <pcl/sample_consensus/model_types.h>  
+#include <pcl/segmentation/sac_segmentation.h>  
+
 
 ////https://akio-tanaka.tumblr.com/page/2
 //#pragma comment(lib,"opengl32.lib")	
@@ -63,7 +68,44 @@ public:
 	void filterNIRPointCloud_naraha();
 	void getCSVFromPointCloud();
 	void HandRegistration();
-	void combinatePointCloud_naraha();
+	void combinePointCloud_naraha();
+
+	template <class T_PointType>
+	void detectPlane(pcl::PointCloud<T_PointType> &cloud_)
+	{
+		//https://qiita.com/akachochin/items/47f1470565e76adb1880
+		pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+		pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+		// Create the segmentation object  
+		pcl::SACSegmentation<T_PointType> seg;
+		// Optional  
+		seg.setOptimizeCoefficients(true);
+		// Mandatory  
+		seg.setModelType(pcl::SACMODEL_PLANE);
+		seg.setMethodType(pcl::SAC_RANSAC);
+		seg.setMaxIterations(200);
+		seg.setDistanceThreshold(0.1);
+		seg.setInputCloud(cloud_.makeShared());
+		seg.segment(*inliers, *coefficients);
+		if (inliers->indices.size() == 0)
+			PCL_ERROR("Could not estimate a planar model for the given dataset.");
+		else
+		{
+			cout << "Model coefficients:";
+			for (int i = 0; i < coefficients->values.size(); i++)
+				cout << " " << coefficients->values[i];
+			cout << endl;
+			std::cerr << "Model inliers: " << inliers->indices.size() << std::endl;
+			for (size_t i = 0; i < inliers->indices.size(); ++i) 
+				changeColor_plane(cloud_.points[inliers->indices[i]]);
+		}
+	}
+
+	void changeColor_plane(pcl::PointXYZRGB &point_);
+	void changeColor_plane(pcl::PointXYZI &point_);
+
+	void DynamicTranslation();
+
 };
 
 template <class T_PointType>
@@ -101,7 +143,6 @@ public:
 	void setPointCloud(T_PointCloudPtr cloud_arg);
 	void updateViewer();
 	void closeViewer();
-
 };
 
 //int main()
