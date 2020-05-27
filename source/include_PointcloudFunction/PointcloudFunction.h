@@ -15,7 +15,7 @@
 #include <pcl/sample_consensus/method_types.h>  
 #include <pcl/sample_consensus/model_types.h>  
 #include <pcl/segmentation/sac_segmentation.h>  
-
+#include <pcl/filters/extract_indices.h>
 
 ////https://akio-tanaka.tumblr.com/page/2
 //#pragma comment(lib,"opengl32.lib")	
@@ -71,9 +71,10 @@ public:
 	void combinePointCloud_naraha();
 
 	template <class T_PointType>
-	void detectPlane(pcl::PointCloud<T_PointType> &cloud_)
+	void detectPlane(pcl::PointCloud<T_PointType> &cloud_, bool b_remove = false)
 	{
 		//https://qiita.com/akachochin/items/47f1470565e76adb1880
+		//https://www.slideshare.net/masafuminoda/pcl-11030703
 		pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
 		pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
 		// Create the segmentation object  
@@ -84,20 +85,30 @@ public:
 		seg.setModelType(pcl::SACMODEL_PLANE);
 		seg.setMethodType(pcl::SAC_RANSAC);
 		seg.setMaxIterations(200);
-		seg.setDistanceThreshold(0.1);
+		//seg.setDistanceThreshold(0.1);
+		//seg.setDistanceThreshold(0.05);	//velo
+		seg.setDistanceThreshold(0.01);		//nir	
 		seg.setInputCloud(cloud_.makeShared());
 		seg.segment(*inliers, *coefficients);
 		if (inliers->indices.size() == 0)
 			PCL_ERROR("Could not estimate a planar model for the given dataset.");
-		else
+
+		cout << "Model coefficients:";
+		for (int i = 0; i < coefficients->values.size(); i++)
+			cout << " " << coefficients->values[i];
+		cout << " (pitch[deg]: " << -asin(coefficients->values[0]) * 180. / M_PI << ")";
+		cout << endl;
+		std::cerr << "Model inliers: " << inliers->indices.size() << std::endl;
+		for (size_t i = 0; i < inliers->indices.size(); ++i)
+			changeColor_plane(cloud_.points[inliers->indices[i]]);
+
+		if (b_remove)
 		{
-			cout << "Model coefficients:";
-			for (int i = 0; i < coefficients->values.size(); i++)
-				cout << " " << coefficients->values[i];
-			cout << endl;
-			std::cerr << "Model inliers: " << inliers->indices.size() << std::endl;
-			for (size_t i = 0; i < inliers->indices.size(); ++i) 
-				changeColor_plane(cloud_.points[inliers->indices[i]]);
+			pcl::ExtractIndices<T_PointType> extract;
+			extract.setInputCloud(cloud_.makeShared());
+			extract.setIndices(inliers);
+			extract.setNegative(true); //true: removing plane, false: removing except plane
+			extract.filter(cloud_);
 		}
 	}
 

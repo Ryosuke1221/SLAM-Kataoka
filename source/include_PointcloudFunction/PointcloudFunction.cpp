@@ -98,7 +98,8 @@ void CPointcloudFuction::all_process()
 		EN_GetPcdFromCSV,
 		EN_FilterPointCloud,
 		EN_CombinePointCloud,
-		EN_CSV_FromPointCloud
+		EN_CSV_FromPointCloud,
+		EN_DynamicTranslation
 	};
 
 	while (!b_finish)
@@ -113,6 +114,7 @@ void CPointcloudFuction::all_process()
 		cout << EN_FilterPointCloud << ": filter PointCloud_naraha" << endl;
 		cout << EN_CombinePointCloud << ": CombinePointCloud" << endl;
 		cout << EN_CSV_FromPointCloud << ": CSV_FromPointCloud" << endl;
+		cout << EN_DynamicTranslation << ": DynamicTranslation" << endl;
 
 		cout <<"WhichProcess: ";
 		cin >> WhichProcess;
@@ -151,6 +153,10 @@ void CPointcloudFuction::all_process()
 			combinePointCloud_naraha();
 			break;
 
+		case EN_DynamicTranslation:
+			DynamicTranslation();
+			break;
+
 		default:
 			break;
 		}
@@ -169,14 +175,17 @@ void CPointcloudFuction::all_process()
 void CPointcloudFuction::show_sequent()
 {
 	string foldername_;
-	//foldername_ = "../../data/temp";
-	foldername_ = "../../data/temp/_XYZRGB";
+	foldername_ = "../../data/temp";
+	//foldername_ = "../../data/temp/_XYZRGB";
 
 	//typedef typename pcl::PointXYZI PointType_func;
 	typedef typename pcl::PointXYZRGB PointType_func;
 
 	bool b_useTXT = false;
 	//b_useTXT = true;
+
+	bool b_plane = true;
+	b_plane = false;
 
 	CPointVisualization<PointType_func> pv;
 	if (typeid(PointType_func) == typeid(pcl::PointXYZI))
@@ -223,18 +232,14 @@ void CPointcloudFuction::show_sequent()
 			//cout << "reading:" << filenames_[index_] << endl;
 			pcl::io::loadPCDFile(foldername_ + "/" + filenames_[index_], *cloud_);
 			cout << "showing:" << filenames_[index_] << endl;
+			cout << "size: " << cloud_->size() << endl;
 
 
 			//remove ground plane
-			if (cloud_->size() != 0)
-			{
+			if (cloud_->size() != 0 && b_plane)
 				detectPlane<PointType_func>(*cloud_);
-
-			}
-
-
+			
 			index_++;
-
 		}
 
 
@@ -493,7 +498,8 @@ void CPointcloudFuction::filterNIRPointCloud_naraha()
 	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_temp(new pcl::PointCloud<pcl::PointXYZI>());
 	pcl::ApproximateVoxelGrid<pcl::PointXYZI> VGFilter;
 	string dir_ = "../../data/temp";
-	double th_VGF = 0.01;
+	//double th_VGF = 0.01;
+	double th_VGF = 0.05;
 
 	Eigen::Affine3f Trans_;
 	Eigen::Matrix4d HM_free = Eigen::Matrix4d::Identity();
@@ -511,7 +517,7 @@ void CPointcloudFuction::filterNIRPointCloud_naraha()
 	CTimeString::getFileNames_extension(dir_, filenames_, "nir.pcd");
 
 	double pitch_init;
-	pitch_init = 22. * M_PI / 180.;
+	pitch_init = 24.4 * M_PI / 180.;
 
 	//area filter
 	for (int index_ = 0; index_ < filenames_.size(); index_++)
@@ -990,7 +996,7 @@ void CPointcloudFuction::combinePointCloud_naraha()
 	//pitch_init = 22. * M_PI / 180.;
 	//pitch_init = 23.5 * M_PI / 180.;
 	//pitch_init = 23. * M_PI / 180.;
-	pitch_init = 24. * M_PI / 180.;
+	pitch_init = 24.4 * M_PI / 180.;
 	double th_z_velo;
 	//th_z_velo = -0.5;
 	//th_z_velo = -0.3;
@@ -1146,8 +1152,8 @@ void CPointcloudFuction::DynamicTranslation()
 	string dir_;
 	dir_ = "../../data/temp/_DynamicTranslation";
 
-	//typedef typename pcl::PointXYZI PointType_func;
-	typedef typename pcl::PointXYZRGB PointType_func;
+	typedef typename pcl::PointXYZI PointType_func;
+	//typedef typename pcl::PointXYZRGB PointType_func;
 
 
 	CPointVisualization<PointType_func> pv;
@@ -1169,11 +1175,6 @@ void CPointcloudFuction::DynamicTranslation()
 	Eigen::Matrix4d HM_free = Eigen::Matrix4d::Identity();
 	Eigen::Matrix4d HM_Trans_now = Eigen::Matrix4d::Identity();
 
-	double disp_translation = 0.;
-	double disp_rotation = 0.;
-	disp_translation = 0.05;
-	disp_rotation = 0.5 * M_PI / 180.;
-
 	int index_PC_now = 0;
 	bool b_makeNewPC = true;
 	bool b_first = true;
@@ -1181,16 +1182,14 @@ void CPointcloudFuction::DynamicTranslation()
 	bool b_break = false;
 
 	enum KEYNUM {
-		NONE,
-		//UP,
-		//DOWN,
-		//RIGHT,
-		//LEFT,
-		//TURN_R,
-		//TURN_L,
-		TRANSLATION,
-		ENTER,
-		SUBTRACT
+		KEY_NONE,
+		KEY_TRANSLATION,
+		//ENTER,
+		KEY_SPACE,
+		KEY_SUBTRACT,
+		//KEY_CTRL
+		KEY_SHIFT
+
 	};
 	KEYNUM key_;
 
@@ -1206,37 +1205,28 @@ void CPointcloudFuction::DynamicTranslation()
 
 			string filename_PC;
 			filename_PC = filenames_[index_PC_now];
-			filename_PC = dir_ + "/" + filename_PC;
 
-			if (-1 == pcl::io::loadPCDFile(filename_PC, *cloud_moving_before)) break;
+			if (-1 == pcl::io::loadPCDFile(dir_ + "/" + filename_PC, *cloud_moving_before)) break;
+
+			cout << "PC(" << index_PC_now << "): ";
+			cout << filename_PC + " ";
+			cout << "number:" << cloud_moving->size() << endl;
+
+			//plane color
+			if (cloud_moving_before->size() != 0)
+				detectPlane<PointType_func>(*cloud_moving_before);
+
 			pcl::copyPointCloud(*cloud_moving_before, *cloud_moving);
-			if (-1 == pcl::io::loadPCDFile(filename_PC, *cloud_moving)) break;
-			pcl::copyPointCloud(*cloud_moving, *cloud_moving_before);
-
-			cout << "PC(" << index_PC_now << ") number :" << cloud_moving->size() << endl;
 
 			cout << endl;
 			cout << "**********( key option )**********" << endl;
-			//cout << "Use numpad" << endl;
-			//cout << " TURN_LEFT:7    UP:8  TURN_RIGHT:9" << endl;
-			//cout << "      LEFT:4    ----       RIGHT:6" << endl;
-			//cout << "      ------  DOWN:2       -------" << endl;
-			//cout << endl;
-
 			cout << "Reset:-(numpad)" << endl;
-			cout << "Switch:ENTER" << endl;
+			cout << "Switch:SPACE" << endl;
 			cout << "Escape:ESC" << endl;
 			cout << "**********************************" << endl;
 			cout << endl;
 
-			//cloud_moving->clear();
-			//Trans_ = Eigen::Affine3f::Identity();
-
-			//HM_free = Eigen::Matrix4d::Identity();
-			//for (int i = 0; i <= index_PC_now; i++) HM_free = HM_free * HM_displacement_vec[i];
-			//HM_Trans_now = HM_free;
-			//Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
-			//pcl::transformPointCloud(*cloud_moving_before, *cloud_moving, Trans_);
+			HM_Trans_now = Eigen::Matrix4d::Identity();
 
 			b_makeNewPC = false;
 
@@ -1251,31 +1241,39 @@ void CPointcloudFuction::DynamicTranslation()
 		//gFdisplay measure
 		//jFsave screenshot
 
-		short key_num_enter = GetAsyncKeyState(VK_RETURN);
+		short key_num_space = GetAsyncKeyState(VK_SPACE);
 		short key_num_escape = GetAsyncKeyState(VK_ESCAPE);
 		short key_num_subt_numpad = GetAsyncKeyState(VK_SUBTRACT);
-		short key_num_t = GetAsyncKeyState(0x54);//T
+		//short key_num_t = GetAsyncKeyState(0x54);//T
+		short key_num_alt = GetAsyncKeyState(VK_MENU);//T
+		//short key_num_ctrl = GetAsyncKeyState(VK_CONTROL);//T
+		short key_num_shift = GetAsyncKeyState(VK_SHIFT);//T
 
-		if ((key_num_enter & 1) == 1) key_ = ENTER;
-		else if ((key_num_subt_numpad & 1) == 1) key_ = SUBTRACT;
-		else if ((key_num_t & 1) == 1) key_ = TRANSLATION;
+		if ((key_num_space & 1) == 1) key_ = KEY_SPACE;
+		else if ((key_num_subt_numpad & 1) == 1) key_ = KEY_SUBTRACT;
+		else if ((key_num_alt & 1) == 1) key_ = KEY_TRANSLATION;
 		else if ((key_num_escape & 1) == 1)
 		{
 			cout << "ESC called" << endl;
 			b_escaped = true;
 			break;
 		}
-		else key_ = NONE;
+		else if ((key_num_shift & 1) == 1) key_ = KEY_SHIFT;
+		else key_ = KEY_NONE;
+
+		//GetAsyncKeyState(0x54);
+		//Sleep(0.5 * 1000);
+		//cout << " " << endl;
 
 		if (b_first)
 		{
-			key_ = NONE;
+			key_ = KEY_NONE;
 			b_first = false;
 		}
 
 		//determine transformation by key input
-		switch (key_) {
-		case ENTER:
+		if (key_ == KEY_SPACE)
+		{
 			//*cloud_show_static += *cloud_moving;
 			//HM_free = Eigen::Matrix4d::Identity();
 			//for (int i = 0; i < index_PC_now; i++) HM_free = HM_free * HM_displacement_vec[i];
@@ -1284,17 +1282,39 @@ void CPointcloudFuction::DynamicTranslation()
 			if (index_PC_now == filenames_.size()) b_break = true;
 			b_makeNewPC = true;
 			cout << "ENTER pressed" << endl;
-			break;
-
-		case SUBTRACT:
+		}
+		else if (key_ == KEY_SUBTRACT)
+		{
 			HM_Trans_now = Eigen::Matrix4d::Identity();
 			cout << "-(numpad) pressed" << endl;
-			break;
+		}
+		else if (key_ == KEY_SHIFT)
+		{
+			//calc plane parameter
+			bool b_remove_plane = false;
 
-		case TRANSLATION:
+			cout << "removing plane? 1:Yes 0:No ->";
+			cin >> b_remove_plane;
+			//b_remove_plane = true;
 
-
-			enum Variable{
+			if (b_remove_plane)
+			{
+				if (cloud_moving->size() != 0)
+					detectPlane<PointType_func>(*cloud_moving_before, b_remove_plane);
+				cloud_moving->clear();
+				Trans_ = Eigen::Affine3f::Identity();
+				Trans_ = calcAffine3fFromHomogeneousMatrix(HM_Trans_now);
+				pcl::transformPointCloud(*cloud_moving_before, *cloud_moving, Trans_);
+			}
+			else
+			{
+				if (cloud_moving->size() != 0)
+					detectPlane<PointType_func>(*cloud_moving, b_remove_plane);
+			}
+		}
+		else if (key_ == KEY_TRANSLATION)
+		{
+			enum Variable {
 				X_vr,
 				Y_vr,
 				Z_vr,
@@ -1306,9 +1326,13 @@ void CPointcloudFuction::DynamicTranslation()
 			};
 			Variable var;
 
+			//input variable
 			do
 			{
 				string s_input;
+				//cout << endl;
+				//cout.flush();
+				//cout << " " << endl;
 				cout << "select: x y z roll pitch yaw, or ESC" << endl;
 				cout << "->";
 				cin >> s_input;
@@ -1320,21 +1344,66 @@ void CPointcloudFuction::DynamicTranslation()
 				else if (s_input == "yaw") var = Yaw_vr;
 				else if (s_input == "ESC") var = ESC_vr;
 				else var = Other_vr;
+				GetAsyncKeyState(VK_RETURN);
+				cout << "s_input: " << s_input << endl;
+			} while (var == Other_vr);
+			if (var == ESC_vr)
+			{
+				cout << "ESC called" << endl;
+				continue;
+			}
 
-			} while (var != Other_vr);
+			//input value
+			string s_value_;
+			double d_value_ = 0.;;
+			cout << endl;
+			cout << "input value: translation[m] or rotation[deg]" << endl;
+			cout << "->";
+			cin >> s_value_;
+			d_value_ = stod(s_value_);		//should detect invarid value
+			GetAsyncKeyState(VK_RETURN);
 
-			if (var == ESC_vr) break;
+			//move pointcloud
+			switch (var)
+			{
+			case X_vr:
+				HM_Trans_now = calcHomogeneousMatrixFromVector6d(d_value_, 0., 0., 0., 0., 0.)
+					* HM_Trans_now;
+				break;
+			case Y_vr:
+				HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., d_value_, 0., 0., 0., 0.)
+					* HM_Trans_now;
+				break;
+			case Z_vr:
+				HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., d_value_, 0., 0., 0.)
+					* HM_Trans_now;
+				break;
+			case Roll_vr:
+				HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., d_value_ * M_PI / 180., 0., 0.)
+					* HM_Trans_now;
+				break;
+			case Pitch_vr:
+				HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., d_value_ * M_PI / 180., 0.)
+					* HM_Trans_now;
+				break;
+			case Yaw_vr:
+				HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., d_value_ * M_PI / 180.)
+					* HM_Trans_now;
+				break;
+			default:
+				break;
+			}
 
-			//HM_Trans_now
-
-			
-			break;
-
-		default:
-			break;
+			cout << endl;
+			cout << "**********( key option )**********" << endl;
+			cout << "Reset:-(numpad)" << endl;
+			cout << "Switch:ENTER" << endl;
+			cout << "Escape:ESC" << endl;
+			cout << "**********************************" << endl;
+			cout << endl;
 		}
-
-		if (!(key_ == NONE || key_ == ENTER)) {
+			
+		if (!(key_ == KEY_NONE || key_ == KEY_SPACE)) {
 			cloud_moving->clear();
 			Trans_ = Eigen::Affine3f::Identity();
 			Trans_ = calcAffine3fFromHomogeneousMatrix(HM_Trans_now);
