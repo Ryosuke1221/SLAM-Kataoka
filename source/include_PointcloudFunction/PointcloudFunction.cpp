@@ -120,6 +120,11 @@ void CPointcloudFuction::all_process()
 
 		cout <<"WhichProcess: ";
 		cin >> WhichProcess;
+
+		cout << endl;
+		cout << "//////////////////////////////////" << endl;
+		cout << endl;
+
 		switch (WhichProcess)
 		{
 		case EN_escape:
@@ -132,7 +137,7 @@ void CPointcloudFuction::all_process()
 			break;
 
 		case EN_FileProcess:
-
+			FileProcess();
 			break;
 
 		case EN_SequentShow:
@@ -1444,5 +1449,194 @@ void CPointcloudFuction::DynamicTranslation()
 void CPointcloudFuction::FileProcess()
 {
 
+	string dir_;
+	//dir_ = "../../data/temp/_DynamicTranslation";
+	dir_ = "../../data";
+
+	vector<string> filenames_folder;
+
+	enum Process
+	{
+		EN_SHOW_DEEPLY,
+		EN_COPY,
+		EN_DELETE,
+		EN_EVACUATE,
+		EN_ESPACE
+	};
+
+	while (1)
+	{
+		//show get folder name
+		{
+			vector<string> filenames_temp;
+			CTimeString::getFileNames(dir_, filenames_temp, false, true, false);
+
+			for (int i = 0; i < filenames_temp.size(); i++)
+			{
+				cout << "i:" << i << " " << filenames_temp[i];
+				vector<int> pos_period;
+				pos_period = CTimeString::find_all(filenames_temp[i], ".");
+				vector<string> files_infolder_vec;
+				CTimeString::getFileNames(dir_ + "/" + filenames_temp[i], files_infolder_vec, false, true, false);
+				if (pos_period.size() == 0)
+				{
+					//check in folder
+					vector<string> filenames_folder_folder;
+					CTimeString::getFileNames(dir_ + "/" + filenames_temp[i], filenames_folder_folder, false, true, false);
+					if (filenames_folder_folder.size() == 0) cout << "(blank)";
+					filenames_folder.push_back(filenames_temp[i]);
+				}
+				cout << endl;
+			}
+		}
+
+		cout << endl;
+		cout << "select:";
+		cout << "  show deeply:" << EN_SHOW_DEEPLY;
+		cout << "  copy file(.pcd):" << EN_COPY;
+		cout << "  delete file(.pcd):" << EN_DELETE;
+		cout << "  escape this function:" << EN_ESPACE;
+		cout << endl;
+		cout << "->";
+		int i_select = 0;
+		cin >> i_select;
+		cout << endl;
+
+		if (i_select == EN_SHOW_DEEPLY)
+		{
+			int i_show = -1;
+
+			cout << endl;
+
+			cout << "show (index) ->";
+			cin >> i_show;
+			if (!(-1 < i_show && i_show < filenames_folder.size())) return;
+			cout << i_show << "(" << filenames_folder[i_show] << ")" << endl;
+			cout << endl;
+
+			vector<string> filenames_show;
+			CTimeString::getFileNames(dir_ + "/" + filenames_folder[i_show], filenames_show, false, true, false);
+			for (int i = 0; i < filenames_show.size(); i++) cout << filenames_show[i] << endl;
+		}
+
+		else if (i_select == EN_COPY) FileProcess_copy(dir_, filenames_folder);
+
+		else if (i_select == EN_DELETE) FileProcess_delete(dir_, filenames_folder);
+
+		else if (i_select == EN_EVACUATE);
+
+		else if (i_select == EN_ESPACE) break;
+	}
+
+}
+
+void CPointcloudFuction::FileProcess_copy(string dir, vector<string> folders_vec)
+{
+	int i_copy_to = -1;
+	int i_copy_from = -1;
+
+	cout << endl;
+
+	cout << "copy to (index) ->";
+	cin >> i_copy_to;
+	if (!(-1 < i_copy_to && i_copy_to < folders_vec.size())) return;
+	cout << i_copy_to << "(" << folders_vec[i_copy_to] << ")" << endl;
+
+	cout << "copy from (index) ->";
+	cin >> i_copy_from;
+	if (!(-1 < i_copy_from && i_copy_from < folders_vec.size())) return;
+	cout << i_copy_from << "(" << folders_vec[i_copy_from] << ")" << endl;
+
+	vector<string> filenames_copy;
+	//check it can copy file
+	{
+		vector<string> filenames_from;
+		CTimeString::getFileNames_extension(dir + "/" + folders_vec[i_copy_from], filenames_from, ".pcd");
+		vector<string> filenames_to;
+		CTimeString::getFileNames_extension(dir + "/" + folders_vec[i_copy_to], filenames_to, ".pcd");
+
+		for (int j = 0; j < filenames_from.size(); j++)
+		{
+			bool b_copy = true;
+			for (int i = 0; i < filenames_to.size(); i++)
+			{
+				if (filenames_from[j] == filenames_to[i])
+				{
+					cout << "ALERT: " << filenames_from[j] << " exist in each folder" << endl;
+					b_copy = false;
+					break;
+				}
+			}
+			if (b_copy) filenames_copy.push_back(filenames_from[j]);
+		}
+	}
+
+
+	//copy
+	for (int i = 0; i < filenames_copy.size(); i++)
+	{
+		string s_filefrom = dir + "/" + folders_vec[i_copy_from] + "/" + filenames_copy[i];
+		string s_fileto = dir + "/" + folders_vec[i_copy_to] + "/" + filenames_copy[i];
+		cout << "s_filefrom: " << s_filefrom << endl;
+		cout << "s_fileto: " << s_fileto << endl;
+		CTimeString::copyfile(s_filefrom, s_fileto);
+
+		//check whether copying succeeded
+		vector<string> check_vec;
+		bool b_succeeded = false;
+		CTimeString::getFileNames_extension(dir + "/" + folders_vec[i_copy_to], check_vec, filenames_copy[i]);
+		if (check_vec.size() == 1) b_succeeded = true;
+		if (!b_succeeded)
+		{
+			cout << "ERROR: " << filenames_copy[i] << " was failed to copy" << endl;
+			return;
+		}
+	}
+}
+
+void CPointcloudFuction::FileProcess_delete(string dir, vector<string> folders_vec)
+{
+	int i_delete;
+	cout << "delete file in folder (index) ->";
+	cin >> i_delete;
+	cout << i_delete << "(" << folders_vec[i_delete] << ")" << endl;
+
+	//check
+	bool b_canDelete = true;
+	vector<string> filenames_delete;
+	CTimeString::getFileNames_extension(dir + "/" + folders_vec[i_delete], filenames_delete, ".pcd");
+	if (filenames_delete.size() == 0) b_canDelete = false;
+	if (!b_canDelete)
+	{
+		cout << "ERROR: " << folders_vec[i_delete] << " has no file" << endl;
+		return;
+	}
+
+	{
+		cout << "Do you delete it realy?  yes:1  no:0" << endl;
+		cout << "->";
+		bool b_decision = false;
+		cin >> b_decision;
+		if (!b_decision) return;
+	}
+
+	//delete
+	for (int i = 0; i < filenames_delete.size(); i++)
+	{
+		string s_filedelete = dir + "/" + folders_vec[i_delete] + "/" + filenames_delete[i];
+		cout << "s_filedelete: " << s_filedelete << endl;
+		CTimeString::deletefile(s_filedelete);
+
+		//check whether deleting succeeded
+		vector<string> check_vec;
+		bool b_succeeded = false;
+		CTimeString::getFileNames_extension(dir + "/" + folders_vec[i_delete], check_vec, filenames_delete[i]);
+		if (check_vec.size() == 0) b_succeeded = true;
+		if (!b_succeeded)
+		{
+			cout << "ERROR: " << filenames_delete[i] << " was failed to delete" << endl;
+			return;
+		}
+	}
 }
 

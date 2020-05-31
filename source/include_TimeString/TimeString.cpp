@@ -423,4 +423,17 @@ vector<vector<double>> CTimeString::getVecVecFromCSV(string filename_)
 	return data_vec_vec;
 }
 
+void CTimeString::copyfile(string filename_from, string filename_to)
+{
+	//https://hakase0274.hatenablog.com/entry/2019/09/03/235304
+	sys_ns::copy(filename_from, filename_to);
+	//sys_ns::copy_file
+	//std::filesystem::copy();
+}
+
+void CTimeString::deletefile(string filename_delete)
+{
+	sys_ns::remove_all(filename_delete);
+}
+
 

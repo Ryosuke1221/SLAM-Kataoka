@@ -68,6 +68,8 @@ public:
 	static vector<vector<string>> getVecVecFromCSV_string(string filename_, string key_token = ",");
 	static vector<vector<double>> getVecVecFromCSV(string filename_);
 	
+	static void copyfile(string filename_from, string filename_to);//full path
+	static void deletefile(string filename_delete);//full path
 
 private:
 	static bool getDirectoryExistance(string foder_Path);

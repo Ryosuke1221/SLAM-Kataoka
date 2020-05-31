@@ -116,7 +116,10 @@ public:
 	void changeColor_plane(pcl::PointXYZI &point_);
 
 	void DynamicTranslation();
+
 	void FileProcess();
+	void FileProcess_copy(string dir, vector<string> folders_vec);
+	void FileProcess_delete(string dir, vector<string> folders_vec);
 
 };
 
