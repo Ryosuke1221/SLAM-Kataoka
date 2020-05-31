@@ -2070,6 +2070,25 @@ CKataokaPCL::estimateRigidTransformation(
 
 }
 
+float CKataokaPCL::getCorrMedianDistance(pcl::Correspondences correspondences)
+{
+	vector<float> distance_vec;
+	int size = correspondences.size();
+	for (int i = 0; i < size; i++)
+	{
+		distance_vec.push_back(correspondences.at(i).distance);
+	}
+	sort(distance_vec.begin(), distance_vec.end());
+
+	if (size % 2 == 1) {
+		return distance_vec[(size - 1) / 2];
+	}
+	else {
+		return (distance_vec[(size / 2) - 1] + distance_vec[size / 2]) / 2;
+	}
+
+}
+
 float CKataokaPCL::getCorrMedianDistance(CorrespondencesPtr_Kataoka correspondences)
 {
 	vector<float> distance_vec;

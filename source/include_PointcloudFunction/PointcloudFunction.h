@@ -116,6 +116,7 @@ public:
 	void changeColor_plane(pcl::PointXYZI &point_);
 
 	void DynamicTranslation();
+	void FileProcess();
 
 };
 

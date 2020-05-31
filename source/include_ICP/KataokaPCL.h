@@ -256,6 +256,8 @@ public:
 	float getCorrMedianDistance(CorrespondencesPtr_Kataoka correspondences);
 	float getCorrMedianDistance(CorrespondencesPtr_Spring1 correspondences);
 	float getCorrMedianDistance(CorrespondencesPtr_Spring2 correspondences);
+	static float getCorrMedianDistance(pcl::Correspondences correspondences);
+
 
 	//20200519
 	static Eigen::Matrix4d calcHomogeneousMatrixFromVector6d(double X_, double Y_, double Z_,
@@ -264,7 +266,58 @@ public:
 
 	static Eigen::Vector6d calcVector6dFromHomogeneousMatrix(Eigen::Matrix4d input_Mat);
 	static Eigen::Affine3f calcAffine3fFromHomogeneousMatrix(Eigen::Matrix4d input_Mat);
-	
+
+	template <class T_PointType>
+	static Eigen::Vector3d getWeightPoint(pcl::PointCloud<T_PointType> cloud_)
+	{
+		Eigen::Vector3d sum_vec = Eigen::Vector3d::Zero();
+		Eigen::Vector3d weight_vec = Eigen::Vector3d::Zero();
+		if (cloud_.size() == 0)
+		{
+			cout << "ERROR: no point found" << endl;
+			return weight_vec;
+		}
+		for (size_t i = 0; i < cloud_.size(); i++)
+		{
+			sum_vec(0, 0) = sum_vec(0, 0) + cloud_.points[i].x;
+			sum_vec(1, 0) = sum_vec(1, 0) + cloud_.points[i].y;
+			sum_vec(2, 0) = sum_vec(2, 0) + cloud_.points[i].z;
+		}
+		weight_vec(0, 0) = sum_vec(0, 0) / cloud_.size();
+		weight_vec(1, 0) = sum_vec(1, 0) / cloud_.size();
+		weight_vec(2, 0) = sum_vec(2, 0) / cloud_.size();
+		return weight_vec;
+	}
+
+	template <class T_PointType>
+	static float getMedianDistance(
+		pcl::PointCloud<T_PointType> cloud_src, pcl::PointCloud<T_PointType> cloud_tgt)
+	{
+		//corr
+		pcl::Correspondences correspondences;
+		{
+			correspondences.resize(cloud_src.size());
+			std::vector<int> index(1);
+			std::vector<float> distance(1);
+			unsigned int nr_valid_correspondences = 0;
+			pcl::KdTreeFLANN<T_PointType> match_search;
+			match_search.setInputCloud(cloud_tgt.makeShared());
+			for (size_t i = 0; i < cloud_src.size(); ++i)
+			{
+				int found_neighs = match_search.nearestKSearch(cloud_src.at(i), 1, index, distance);
+				pcl::Correspondence corr;
+				corr.index_query = i;
+				corr.index_match = index[0];
+				corr.distance = distance[0];
+				correspondences[nr_valid_correspondences++] = corr;
+			}
+			correspondences.resize(nr_valid_correspondences);
+			cout << "correspondences size = " << nr_valid_correspondences << endl;
+		}
+		//call median function
+		return getCorrMedianDistance(correspondences);
+	}
+
 };
 
 

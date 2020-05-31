@@ -93,6 +93,7 @@ void CPointcloudFuction::all_process()
 	enum OPTION {
 		EN_escape = 0,
 		EN_FreeSpace,
+		EN_FileProcess,
 		EN_SequentShow,
 		EN_handregistration,
 		EN_GetPcdFromCSV,
@@ -108,6 +109,7 @@ void CPointcloudFuction::all_process()
 		cout << "please input process number" << endl;
 		cout << EN_escape << ": escape" << endl;
 		cout << EN_FreeSpace << ": free space" << endl;
+		cout << EN_FileProcess << ": FileProcess" << endl;
 		cout << EN_SequentShow << ": sequent show" << endl;
 		cout << EN_handregistration << ": hand registration" << endl;
 		cout << EN_GetPcdFromCSV << ": get .pcd from .csv" << endl;
@@ -127,6 +129,10 @@ void CPointcloudFuction::all_process()
 
 		case EN_FreeSpace:
 			FreeSpace();
+			break;
+
+		case EN_FileProcess:
+
 			break;
 
 		case EN_SequentShow:
@@ -588,7 +594,8 @@ void CPointcloudFuction::getCSVFromPointCloud()
 	//CTimeString::getFileNames_extension(file_dir, filenames_, "nir.pcd");
 	CTimeString::getFileNames_extension(dir_, filenames_, ".pcd");
 
-	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>());
+	//pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>());
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZRGB>());
 	for (int index_ = 0; index_ < filenames_.size(); index_++)
 	{
 		cout << "reanding: " << filenames_[index_] << endl;
@@ -601,7 +608,9 @@ void CPointcloudFuction::getCSVFromPointCloud()
 			data_vec.push_back(cloud_->points[i].x);
 			data_vec.push_back(cloud_->points[i].y);
 			data_vec.push_back(cloud_->points[i].z);
-			data_vec.push_back(cloud_->points[i].intensity);
+			//data_vec.push_back(cloud_->points[i].intensity);
+			//data_vec.push_back(cloud_->points[i].r);
+			data_vec.push_back(cloud_->points[i].g);
 			data_vec_vec.push_back(data_vec);
 		}
 		string filename_save = filenames_[index_].substr(0, filenames_[index_].size() - 4) + "_csv.csv";
@@ -622,7 +631,8 @@ void CPointcloudFuction::HandRegistration()
 	//Sleep(1 * 1000);
 
 	string dir_;
-	dir_ = "../../data/temp/_Hand";
+	//dir_ = "../../data/temp/_Hand";
+	dir_ = "../../data/process_handregistration";
 
 	bool b_RemoveGround = true;
 	//b_RemoveGround = false;
@@ -1046,7 +1056,7 @@ void CPointcloudFuction::combinePointCloud_naraha()
 				point_.y = cloud_velo->points[i].y;
 				point_.z = cloud_velo->points[i].z;
 				point_.r = 255;
-				point_.g = cloud_velo->points[i].intensity;
+				point_.g = (unsigned char)((int)cloud_velo->points[i].intensity);
 				point_.b = 0;
 				cloud_save->push_back(point_);
 			}
@@ -1107,7 +1117,7 @@ void CPointcloudFuction::combinePointCloud_naraha()
 				point_.y = cloud_velo->points[i].y;
 				point_.z = cloud_velo->points[i].z;
 				point_.r = 255;
-				point_.g = cloud_velo->points[i].intensity;
+				point_.g = (unsigned char)((int)cloud_velo->points[i].intensity);
 				point_.b = 0;
 				cloud_save->push_back(point_);
 			}
@@ -1118,7 +1128,7 @@ void CPointcloudFuction::combinePointCloud_naraha()
 				point_.x = cloud_nir->points[i].x;
 				point_.y = cloud_nir->points[i].y;
 				point_.z = cloud_nir->points[i].z;
-				point_.r = cloud_nir->points[i].intensity;
+				point_.r = (unsigned char)((int)cloud_nir->points[i].intensity);
 				point_.g = 0;
 				point_.b = 0;
 				cloud_save->push_back(point_);
@@ -1429,5 +1439,10 @@ void CPointcloudFuction::DynamicTranslation()
 		b_save_txt = false;
 
 	pv.closeViewer();
+}
+
+void CPointcloudFuction::FileProcess()
+{
+
 }
 
