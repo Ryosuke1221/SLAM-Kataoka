@@ -61,7 +61,8 @@ public:
 	}
 
 	static bool getFileNames(std::string folderPath, std::vector<std::string> &file_names, bool b_cout = true, bool b_getDir = false, bool b_check = true);
-	static bool getFileNames_extension(std::string folderPath, std::vector<std::string> &file_names,string s_extension);
+	static bool getFileNames_extension(std::string folderPath, std::vector<std::string> &file_names, string s_extension);
+	static bool getFileNames_folder(std::string folderPath, std::vector<std::string> &file_names);
 
 	static int getTimeElapsefrom2Strings_millisec(string s_former, string s_latter);	//output  second
 
@@ -70,6 +71,7 @@ public:
 	
 	static void copyfile(string filename_from, string filename_to);//full path
 	static void deletefile(string filename_delete);//full path
+	static void makenewfolder(string dir, string newfoldername);//relative path
 
 private:
 	static bool getDirectoryExistance(string foder_Path);

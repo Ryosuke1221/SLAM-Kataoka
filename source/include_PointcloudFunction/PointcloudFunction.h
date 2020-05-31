@@ -118,9 +118,9 @@ public:
 	void DynamicTranslation();
 
 	void FileProcess();
-	void FileProcess_copy(string dir, vector<string> folders_vec);
-	void FileProcess_delete(string dir, vector<string> folders_vec);
-
+	void FileProcess_copy(string dir_from, string dir_to);
+	void FileProcess_delete(string dir);
+	void FileProcess_evacuate(string dir);
 };
 
 template <class T_PointType>

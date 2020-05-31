@@ -107,16 +107,16 @@ void CPointcloudFuction::all_process()
 	{
 		cout << endl;
 		cout << "please input process number" << endl;
-		cout << EN_escape << ": escape" << endl;
-		cout << EN_FreeSpace << ": free space" << endl;
-		cout << EN_FileProcess << ": FileProcess" << endl;
-		cout << EN_SequentShow << ": sequent show" << endl;
-		cout << EN_handregistration << ": hand registration" << endl;
-		cout << EN_GetPcdFromCSV << ": get .pcd from .csv" << endl;
-		cout << EN_FilterPointCloud << ": filter PointCloud_naraha" << endl;
-		cout << EN_CombinePointCloud << ": CombinePointCloud" << endl;
-		cout << EN_CSV_FromPointCloud << ": CSV_FromPointCloud" << endl;
-		cout << EN_DynamicTranslation << ": DynamicTranslation" << endl;
+		cout << " " << EN_escape << ": escape" << endl;
+		cout << " " << EN_FreeSpace << ": free space" << endl;
+		cout << " " << EN_FileProcess << ": FileProcess" << endl;
+		cout << " " << EN_SequentShow << ": sequent show" << endl;
+		cout << " " << EN_handregistration << ": hand registration" << endl;
+		cout << " " << EN_GetPcdFromCSV << ": get .pcd from .csv" << endl;
+		cout << " " << EN_FilterPointCloud << ": filter PointCloud_naraha" << endl;
+		cout << " " << EN_CombinePointCloud << ": CombinePointCloud" << endl;
+		cout << " " << EN_CSV_FromPointCloud << ": CSV_FromPointCloud" << endl;
+		cout << " " << EN_DynamicTranslation << ": DynamicTranslation" << endl;
 
 		cout <<"WhichProcess: ";
 		cin >> WhichProcess;
@@ -1455,6 +1455,8 @@ void CPointcloudFuction::FileProcess()
 
 	vector<string> filenames_folder;
 
+	string s_index;
+
 	enum Process
 	{
 		EN_SHOW_DEEPLY,
@@ -1464,39 +1466,68 @@ void CPointcloudFuction::FileProcess()
 		EN_ESPACE
 	};
 
+	////debug
+	//{
+	//	vector<string> files_temp;
+	//	//CTimeString::getFileNames(dir_, files_temp, false, true, false);
+	//	CTimeString::getFileNames(dir_, files_temp, true, true, true);
+	//	cout << "files_temp.size():"<< files_temp.size() << endl;
+	//}
+
 	while (1)
 	{
 		//show get folder name
 		{
-			vector<string> filenames_temp;
-			CTimeString::getFileNames(dir_, filenames_temp, false, true, false);
+			//filenames_folder
 
-			for (int i = 0; i < filenames_temp.size(); i++)
+			vector<string> filenames_folder_temp;
+			CTimeString::getFileNames_folder(dir_, filenames_folder_temp);
+
+			////debug
+			//cout << "size: " << filenames_folder_temp.size() << endl;
+
+			int num_folder = 0;
+			for (int i = 0; i < filenames_folder_temp.size(); i++)
 			{
-				cout << "i:" << i << " " << filenames_temp[i];
-				vector<int> pos_period;
-				pos_period = CTimeString::find_all(filenames_temp[i], ".");
-				vector<string> files_infolder_vec;
-				CTimeString::getFileNames(dir_ + "/" + filenames_temp[i], files_infolder_vec, false, true, false);
-				if (pos_period.size() == 0)
-				{
-					//check in folder
-					vector<string> filenames_folder_folder;
-					CTimeString::getFileNames(dir_ + "/" + filenames_temp[i], filenames_folder_folder, false, true, false);
-					if (filenames_folder_folder.size() == 0) cout << "(blank)";
-					filenames_folder.push_back(filenames_temp[i]);
-				}
+				filenames_folder.push_back(filenames_folder_temp[i]);
+				s_index = to_string(num_folder);
+				if (s_index.size() != 2) s_index = " " + s_index;
+				cout << "i:" << s_index;
+				cout << " " << filenames_folder_temp[i];
+				vector<string> filenames_folder_folder;
+				CTimeString::getFileNames_folder(dir_ + "/" + filenames_folder_temp[i], filenames_folder_folder);
+				//if (filenames_folder_folder.size() == 0) cout << " (blank)" << endl;
+				//else cout << endl;
 				cout << endl;
+				num_folder++;
+
+				for (int j = 0; j < filenames_folder_folder.size(); j++)
+				{
+					filenames_folder.push_back(
+						filenames_folder_temp[i] + "/" + filenames_folder_folder[j]);
+
+					s_index = to_string(num_folder);
+					if (s_index.size() != 2) s_index = " " + s_index;
+					cout << "i:" << s_index;
+					cout << " " << filenames_folder_temp[i] + "/" + filenames_folder_folder[j];
+					vector<string> filenames_folder_folder_folder;
+					CTimeString::getFileNames(
+						dir_ + "/" + filenames_folder_temp[i] + "/" + filenames_folder_folder[j],
+						filenames_folder_folder_folder,false,true,false);
+					if (filenames_folder_folder_folder.size() == 0) cout << " (blank)";
+					cout << endl;
+					num_folder++;
+				}
 			}
 		}
 
 		cout << endl;
-		cout << "select:";
-		cout << "  show deeply:" << EN_SHOW_DEEPLY;
-		cout << "  copy file(.pcd):" << EN_COPY;
-		cout << "  delete file(.pcd):" << EN_DELETE;
-		cout << "  escape this function:" << EN_ESPACE;
-		cout << endl;
+		cout << "select:" << endl;
+		cout << "  show deeply:" << EN_SHOW_DEEPLY << endl;
+		cout << "  copy file(.pcd):" << EN_COPY << endl;
+		cout << "  delete file(.pcd):" << EN_DELETE << endl;
+		cout << "  evacuate file(.pcd) in folder A to new folder B in A:" << EN_EVACUATE << endl;
+		cout << "  escape this function:" << EN_ESPACE << endl;
 		cout << "->";
 		int i_select = 0;
 		cin >> i_select;
@@ -1504,56 +1535,74 @@ void CPointcloudFuction::FileProcess()
 
 		if (i_select == EN_SHOW_DEEPLY)
 		{
-			int i_show = -1;
-
-			cout << endl;
-
-			cout << "show (index) ->";
-			cin >> i_show;
-			if (!(-1 < i_show && i_show < filenames_folder.size())) return;
-			cout << i_show << "(" << filenames_folder[i_show] << ")" << endl;
-			cout << endl;
-
-			vector<string> filenames_show;
-			CTimeString::getFileNames(dir_ + "/" + filenames_folder[i_show], filenames_show, false, true, false);
-			for (int i = 0; i < filenames_show.size(); i++) cout << filenames_show[i] << endl;
+			for (int i = 0; i < filenames_folder.size(); i++)
+			{
+				string s_filename = dir_ + "/" + filenames_folder[i];
+				vector<string> temp_;
+				CTimeString::getFileNames(s_filename, temp_, false, true, false);
+				cout << s_filename << endl;
+				for (int j = 0; j < temp_.size(); j++)
+					cout << "     " << temp_[j] << endl;
+			}
 		}
 
-		else if (i_select == EN_COPY) FileProcess_copy(dir_, filenames_folder);
+		else if (i_select == EN_COPY)
+		{
+			int i_copy_to = -1;
+			int i_copy_from = -1;
 
-		else if (i_select == EN_DELETE) FileProcess_delete(dir_, filenames_folder);
+			cout << endl;
 
-		else if (i_select == EN_EVACUATE);
+			cout << "copy to (index) ->";
+			cin >> i_copy_to;
+			//if (!(-1 < i_copy_to && i_copy_to < filenames_folder.size())) return;
+			cout << i_copy_to << "(" << filenames_folder[i_copy_to] << ")" << endl;
+
+			cout << "copy from (index) ->";
+			cin >> i_copy_from;
+			//if (!(-1 < i_copy_from && i_copy_from < filenames_folder.size())) return;
+			cout << i_copy_from << "(" << filenames_folder[i_copy_from] << ")" << endl;
+
+			FileProcess_copy(
+				dir_ + "/" + filenames_folder[i_copy_from], 
+				dir_ + "/" + filenames_folder[i_copy_to]);
+
+		}
+
+		else if (i_select == EN_DELETE)
+		{
+			int i_select_2;
+			cout << "delete file in folder (index) ->";
+			cin >> i_select_2;
+			cout << i_select_2 << "(" << filenames_folder[i_select_2] << ")" << endl;
+			FileProcess_delete(dir_ + "/" + filenames_folder[i_select_2]);
+		}
+
+		else if (i_select == EN_EVACUATE)
+		{
+			int i_select_2;
+			cout << "evaculate files in folder (index) ->";
+			cin >> i_select_2;
+			cout << i_select_2 << "(" << filenames_folder[i_select_2] << ")" << endl;
+			FileProcess_evacuate(dir_ + "/" + filenames_folder[i_select_2]);
+		}
 
 		else if (i_select == EN_ESPACE) break;
+
+		else return;
 	}
 
 }
 
-void CPointcloudFuction::FileProcess_copy(string dir, vector<string> folders_vec)
+void CPointcloudFuction::FileProcess_copy(string dir_from, string dir_to)
 {
-	int i_copy_to = -1;
-	int i_copy_from = -1;
-
-	cout << endl;
-
-	cout << "copy to (index) ->";
-	cin >> i_copy_to;
-	if (!(-1 < i_copy_to && i_copy_to < folders_vec.size())) return;
-	cout << i_copy_to << "(" << folders_vec[i_copy_to] << ")" << endl;
-
-	cout << "copy from (index) ->";
-	cin >> i_copy_from;
-	if (!(-1 < i_copy_from && i_copy_from < folders_vec.size())) return;
-	cout << i_copy_from << "(" << folders_vec[i_copy_from] << ")" << endl;
-
 	vector<string> filenames_copy;
 	//check it can copy file
 	{
 		vector<string> filenames_from;
-		CTimeString::getFileNames_extension(dir + "/" + folders_vec[i_copy_from], filenames_from, ".pcd");
+		CTimeString::getFileNames_extension(dir_from, filenames_from, ".pcd");
 		vector<string> filenames_to;
-		CTimeString::getFileNames_extension(dir + "/" + folders_vec[i_copy_to], filenames_to, ".pcd");
+		CTimeString::getFileNames_extension(dir_to, filenames_to, ".pcd");
 
 		for (int j = 0; j < filenames_from.size(); j++)
 		{
@@ -1575,8 +1624,8 @@ void CPointcloudFuction::FileProcess_copy(string dir, vector<string> folders_vec
 	//copy
 	for (int i = 0; i < filenames_copy.size(); i++)
 	{
-		string s_filefrom = dir + "/" + folders_vec[i_copy_from] + "/" + filenames_copy[i];
-		string s_fileto = dir + "/" + folders_vec[i_copy_to] + "/" + filenames_copy[i];
+		string s_filefrom = dir_from + "/" + filenames_copy[i];
+		string s_fileto = dir_to + "/" + filenames_copy[i];
 		cout << "s_filefrom: " << s_filefrom << endl;
 		cout << "s_fileto: " << s_fileto << endl;
 		CTimeString::copyfile(s_filefrom, s_fileto);
@@ -1584,7 +1633,7 @@ void CPointcloudFuction::FileProcess_copy(string dir, vector<string> folders_vec
 		//check whether copying succeeded
 		vector<string> check_vec;
 		bool b_succeeded = false;
-		CTimeString::getFileNames_extension(dir + "/" + folders_vec[i_copy_to], check_vec, filenames_copy[i]);
+		CTimeString::getFileNames_extension(dir_to, check_vec, filenames_copy[i]);
 		if (check_vec.size() == 1) b_succeeded = true;
 		if (!b_succeeded)
 		{
@@ -1594,21 +1643,17 @@ void CPointcloudFuction::FileProcess_copy(string dir, vector<string> folders_vec
 	}
 }
 
-void CPointcloudFuction::FileProcess_delete(string dir, vector<string> folders_vec)
+void CPointcloudFuction::FileProcess_delete(string dir)
 {
-	int i_delete;
-	cout << "delete file in folder (index) ->";
-	cin >> i_delete;
-	cout << i_delete << "(" << folders_vec[i_delete] << ")" << endl;
 
 	//check
 	bool b_canDelete = true;
 	vector<string> filenames_delete;
-	CTimeString::getFileNames_extension(dir + "/" + folders_vec[i_delete], filenames_delete, ".pcd");
+	CTimeString::getFileNames_extension(dir, filenames_delete, ".pcd");
 	if (filenames_delete.size() == 0) b_canDelete = false;
 	if (!b_canDelete)
 	{
-		cout << "ERROR: " << folders_vec[i_delete] << " has no file" << endl;
+		cout << "ERROR: " << dir << " has no file" << endl;
 		return;
 	}
 
@@ -1623,14 +1668,14 @@ void CPointcloudFuction::FileProcess_delete(string dir, vector<string> folders_v
 	//delete
 	for (int i = 0; i < filenames_delete.size(); i++)
 	{
-		string s_filedelete = dir + "/" + folders_vec[i_delete] + "/" + filenames_delete[i];
+		string s_filedelete = dir + "/" + filenames_delete[i];
 		cout << "s_filedelete: " << s_filedelete << endl;
 		CTimeString::deletefile(s_filedelete);
 
 		//check whether deleting succeeded
 		vector<string> check_vec;
 		bool b_succeeded = false;
-		CTimeString::getFileNames_extension(dir + "/" + folders_vec[i_delete], check_vec, filenames_delete[i]);
+		CTimeString::getFileNames_extension(dir, check_vec, filenames_delete[i]);
 		if (check_vec.size() == 0) b_succeeded = true;
 		if (!b_succeeded)
 		{
@@ -1640,3 +1685,60 @@ void CPointcloudFuction::FileProcess_delete(string dir, vector<string> folders_v
 	}
 }
 
+void CPointcloudFuction::FileProcess_evacuate(string dir)
+{
+	vector<string> filenames_main;
+	CTimeString::getFileNames_extension(dir, filenames_main, ".pcd");
+	{
+		vector<string> filenames_show;
+		CTimeString::getFileNames_extension(dir, filenames_show, ".pcd");
+		cout << "show files" << endl;
+		for (int i = 0; i < filenames_show.size(); i++) cout << filenames_show[i] << endl;
+	}
+
+	//make new folder
+	string s_newfoldername;
+	cout << endl;
+	cout << "write new folder name (don't use SPACE)" << endl;
+	cout << "->";
+	cin >> s_newfoldername;
+	CTimeString::makenewfolder(dir, s_newfoldername);
+
+	//copy
+	for (int i = 0; i < filenames_main.size(); i++)
+	{
+		string s_filefrom = dir + "/" + filenames_main[i];
+		string s_fileto = dir + "/" + s_newfoldername + "/" + filenames_main[i];
+		cout << "s_filefrom: " << s_filefrom << endl;
+		cout << "s_fileto: " << s_fileto << endl;
+		CTimeString::copyfile(s_filefrom, s_fileto);
+		//check whether copying succeeded
+		vector<string> check_vec;
+		bool b_succeeded = false;
+		CTimeString::getFileNames_extension(dir + "/" + s_newfoldername, check_vec, filenames_main[i]);
+		if (check_vec.size() == 1) b_succeeded = true;
+		if (!b_succeeded)
+		{
+			cout << "ERROR: " << filenames_main[i] << " was failed to copy" << endl;
+			return;
+		}
+	}
+
+	//delete
+	for (int i = 0; i < filenames_main.size(); i++)
+	{
+		string s_filedelete = dir + "/" + filenames_main[i];
+		cout << "s_filedelete: " << s_filedelete << endl;
+		CTimeString::deletefile(s_filedelete);
+		//check whether deleting succeeded
+		vector<string> check_vec;
+		bool b_succeeded = false;
+		CTimeString::getFileNames_extension(dir, check_vec, filenames_main[i]);
+		if (check_vec.size() == 0) b_succeeded = true;
+		if (!b_succeeded)
+		{
+			cout << "ERROR: " << filenames_main[i] << " was failed to delete" << endl;
+			return;
+		}
+	}
+}

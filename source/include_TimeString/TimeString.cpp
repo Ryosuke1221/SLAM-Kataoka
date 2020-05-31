@@ -436,4 +436,22 @@ void CTimeString::deletefile(string filename_delete)
 	sys_ns::remove_all(filename_delete);
 }
 
+void CTimeString::makenewfolder(string dir, string newfoldername)
+{
+	sys_ns::create_directory(dir + "/" + newfoldername);
+}
+
+bool CTimeString::getFileNames_folder(std::string folderPath, std::vector<std::string> &file_names)
+{
+	vector<string> filenames_;
+	bool b_success = getFileNames(folderPath, filenames_, false, true, true);
+	for (int i = 0; i < filenames_.size(); i++)
+	{
+		vector<int> find_vec = CTimeString::find_all(filenames_[i], ".");
+		if (find_vec.size() != 0) continue;
+		file_names.push_back(filenames_[i]);
+		//cout << file_names.back() << endl;
+	}
+	return b_success;
+}
 
