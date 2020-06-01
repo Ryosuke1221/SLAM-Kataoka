@@ -63,7 +63,7 @@ public:
 	void show_sequent();
 	void moveFile();
 	void getPCDFromCSV_naraha();
-	void getPCDFromCSV_gotFromPCAP(string dir_,string file_RelativePath_);
+	void getPCDFromCSV_gotFromPCAP(string dir_save, string dir_data, string file_RelativePath_);
 	void FreeSpace();
 	void filterNIRPointCloud_naraha();
 	void getCSVFromPointCloud();

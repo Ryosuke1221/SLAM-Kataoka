@@ -186,8 +186,7 @@ void CPointcloudFuction::all_process()
 void CPointcloudFuction::show_sequent()
 {
 	string foldername_;
-	foldername_ = "../../data/temp";
-	//foldername_ = "../../data/temp/_XYZRGB";
+	foldername_ = "../../data/process_show_sequent";
 
 	//typedef typename pcl::PointXYZI PointType_func;
 	typedef typename pcl::PointXYZRGB PointType_func;
@@ -385,11 +384,11 @@ void CPointcloudFuction::moveFile()
 	//CTimeString::getCSVFromVecVec(save_vec_vec, foldername_ + "/_usePointCloud.csv");
 }
 
-void CPointcloudFuction::getPCDFromCSV_gotFromPCAP(string dir_, string file_RelativePath_)
+void CPointcloudFuction::getPCDFromCSV_gotFromPCAP(string dir_save, string dir_data, string file_RelativePath_)
 {
 	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>());
 	vector<vector<string>> csv_vec_vec_string;
-	csv_vec_vec_string = CTimeString::getVecVecFromCSV_string(dir_ + "/" + file_RelativePath_);
+	csv_vec_vec_string = CTimeString::getVecVecFromCSV_string(dir_data + "/" + file_RelativePath_);
 	cloud_->clear();
 	for (int j = 0; j < csv_vec_vec_string.size(); j++)
 	{
@@ -403,7 +402,7 @@ void CPointcloudFuction::getPCDFromCSV_gotFromPCAP(string dir_, string file_Rela
 
 	}
 	string filename_ = file_RelativePath_.substr(0, file_RelativePath_.size() - 4) + ".pcd";
-	pcl::io::savePCDFile<pcl::PointXYZI>(dir_ + "/_pointcloud/" + filename_, *cloud_);
+	pcl::io::savePCDFile<pcl::PointXYZI>(dir_save + "/" + filename_, *cloud_);
 	cout << "saved: " << filename_ << endl;
 }
 
@@ -411,8 +410,27 @@ void CPointcloudFuction::getPCDFromCSV_gotFromPCAP(string dir_, string file_Rela
 void CPointcloudFuction::getPCDFromCSV_naraha()
 {
 	string file_dir;
-	file_dir = "../../data/temp/02 velo&nir all frame";
+	//file_dir = "../../data/temp/02 velo&nir all frame";
 	//file_dir = "../../data/temp";
+	file_dir = "../../data/process_GetPcdFromCSV";
+
+	string s_csv = "02 velo&nir all frame";
+
+	{
+		vector<string> temp_;
+		CTimeString::getFileNames_extension(file_dir,temp_,"pcd");
+		if (temp_.size() != 0)
+		{
+			bool b_delete = true;
+			cout << "some .pcd already exist" << endl;
+			cout << "select delete them or not  1:yes  0:no" << endl;
+			cin >> b_delete;
+			if (b_delete)
+			{
+				FileProcess_delete(file_dir);
+			}
+		}
+	}
 	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>());
 	int i_select;
 
@@ -427,21 +445,21 @@ void CPointcloudFuction::getPCDFromCSV_naraha()
 	switch (i_select)
 	{
 	case 0:
-		CTimeString::getFileNames_extension(file_dir, filenames, ").csv");
+		CTimeString::getFileNames_extension(file_dir + "/" + s_csv, filenames, ").csv");
 		for (int i = 0; i < filenames.size(); i++)
 		{
-			cout << "i:" << i << " calc " << file_dir + "/" + filenames[i] << "..." << endl;
-			getPCDFromCSV_gotFromPCAP(file_dir, filenames[i]);
+			cout << "i:" << i << " calc " << file_dir + "/" + s_csv + "/" + filenames[i] << "..." << endl;
+			getPCDFromCSV_gotFromPCAP(file_dir, file_dir + "/" + s_csv, filenames[i]);
 		}
 
 		break;
 	case 1:
-		CTimeString::getFileNames_extension(file_dir, filenames, "velo.csv");
+		CTimeString::getFileNames_extension(file_dir + "/" + s_csv, filenames, "velo.csv");
 		for (int i = 0; i < filenames.size(); i++)
 		{
-			cout << "i:" << i << " calc " << file_dir + "/" + filenames[i] << "..." << endl;
+			cout << "i:" << i << " calc " << file_dir + "/" + s_csv + "/" + filenames[i] << "..." << endl;
 			vector<vector<string>> csv_vec_vec_string;
-			csv_vec_vec_string = CTimeString::getVecVecFromCSV_string(file_dir + "/" + filenames[i], " ");
+			csv_vec_vec_string = CTimeString::getVecVecFromCSV_string(file_dir + "/" + s_csv + "/" + filenames[i], " ");
 			//PointCloud
 			cloud_->clear();
 			for (int j = 0; j < csv_vec_vec_string.size(); j++)
@@ -454,22 +472,22 @@ void CPointcloudFuction::getPCDFromCSV_naraha()
 				cloud_->push_back(point_);
 			}
 			string filename_ = filenames[i].substr(0, filenames[i].size() - 4) + ".pcd";
-			pcl::io::savePCDFile<pcl::PointXYZI>(file_dir + "/_pointcloud/" + filename_, *cloud_);
+			pcl::io::savePCDFile<pcl::PointXYZI>(file_dir + "/" + filename_, *cloud_);
 			cout << "saved: " << filename_ << endl;
 		}
 
 		break;
 	case 2:
-		CTimeString::getFileNames_extension(file_dir, filenames, "nir.csv");
+		CTimeString::getFileNames_extension(file_dir + "/" + s_csv, filenames, "nir.csv");
 		float max_, min_;
 		min_ = 255.;
 		max_ = 0.;
 
 		for (int i = 0; i < filenames.size(); i++)
 		{
-			cout << "i:" << i << " calc " << file_dir + "/" + filenames[i] << "..." << endl;
+			cout << "i:" << i << " calc " << file_dir + "/" + s_csv + "/" + filenames[i] << "..." << endl;
 			vector<vector<string>> csv_vec_vec_string;
-			csv_vec_vec_string = CTimeString::getVecVecFromCSV_string(file_dir + "/" + filenames[i], " ");
+			csv_vec_vec_string = CTimeString::getVecVecFromCSV_string(file_dir + "/" + s_csv + "/" + filenames[i], " ");
 			//PointCloud
 			cloud_->clear();
 			for (int j = 0; j < csv_vec_vec_string.size(); j++)
@@ -485,7 +503,7 @@ void CPointcloudFuction::getPCDFromCSV_naraha()
 				if (min_ > value_) min_ = value_;
 			}
 			string filename_ = filenames[i].substr(0, filenames[i].size() - 4) + ".pcd";
-			pcl::io::savePCDFile<pcl::PointXYZI>(file_dir + "/_pointcloud/" + filename_, *cloud_);
+			pcl::io::savePCDFile<pcl::PointXYZI>(file_dir + "/" + filename_, *cloud_);
 			cout << "saved: " << filename_ << endl;
 		}
 		cout << "min_ = " << min_ << endl;
@@ -508,9 +526,27 @@ void CPointcloudFuction::filterNIRPointCloud_naraha()
 	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>());
 	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_temp(new pcl::PointCloud<pcl::PointXYZI>());
 	pcl::ApproximateVoxelGrid<pcl::PointXYZI> VGFilter;
-	string dir_ = "../../data/temp";
+	string dir_ = "../../data/process_FilterPointCloud";
+	string s_subdir = "_before";
 	//double th_VGF = 0.01;
 	double th_VGF = 0.05;
+
+	{
+		vector<string> temp_;
+		CTimeString::getFileNames_extension(dir_, temp_, "pcd");
+		if (temp_.size() != 0)
+		{
+			bool b_delete = true;
+			cout << "some .pcd already exist" << endl;
+			cout << "select delete them or not  1:yes  0:no" << endl;
+			cin >> b_delete;
+			if (b_delete)
+			{
+				FileProcess_delete(dir_);
+			}
+		}
+	}
+
 
 	Eigen::Affine3f Trans_;
 	Eigen::Matrix4d HM_free = Eigen::Matrix4d::Identity();
@@ -525,7 +561,7 @@ void CPointcloudFuction::filterNIRPointCloud_naraha()
 
 	vector<string> filenames_;
 	//CTimeString::getFileNames_extension(foldername_, filenames_, "nir.pcd");
-	CTimeString::getFileNames_extension(dir_, filenames_, "nir.pcd");
+	CTimeString::getFileNames_extension(dir_ + "/" + s_subdir, filenames_, "nir.pcd");
 
 	double pitch_init;
 	pitch_init = 24.4 * M_PI / 180.;
@@ -534,7 +570,7 @@ void CPointcloudFuction::filterNIRPointCloud_naraha()
 	for (int index_ = 0; index_ < filenames_.size(); index_++)
 	{
 		cout << "reanding: " << filenames_[index_] << endl;
-		if (-1 == pcl::io::loadPCDFile(dir_ + "/" + filenames_[index_], *cloud_))
+		if (-1 == pcl::io::loadPCDFile(dir_ + "/" + s_subdir + "/" + filenames_[index_], *cloud_))
 		{
 			cout << "ERROR: pointcloud couldn't read." << endl;
 			break;
@@ -585,7 +621,7 @@ void CPointcloudFuction::filterNIRPointCloud_naraha()
 		pcl::transformPointCloud(*cloud_, *cloud_, Trans_);
 
 		string filename_save = filenames_[index_].substr(0, filenames_[index_].size() - 4) + "_filtered_nir.pcd";
-		pcl::io::savePCDFile<pcl::PointXYZI>(dir_ + "/_filtered/" + filename_save, *cloud_);
+		pcl::io::savePCDFile<pcl::PointXYZI>(dir_ + "/" + filename_save, *cloud_);
 
 	}
 }
@@ -985,16 +1021,33 @@ void CPointcloudFuction::HandRegistration()
 void CPointcloudFuction::combinePointCloud_naraha()
 {
 	string dir_;
-	dir_ = "../../data/temp";
-	string dir_save_relativePath;
-	dir_save_relativePath = "_XYZRGB";
+	dir_ = "../../data/process_CombinePointCloud";
+	string subdir_;
+	subdir_ = "_before";
+
+	{
+		vector<string> temp_;
+		CTimeString::getFileNames_extension(dir_, temp_, "pcd");
+		if (temp_.size() != 0)
+		{
+			bool b_delete = true;
+			cout << "some .pcd already exist" << endl;
+			cout << "select delete them or not  1:yes  0:no" << endl;
+			cin >> b_delete;
+			if (b_delete)
+			{
+				FileProcess_delete(dir_);
+			}
+		}
+	}
+
 	vector<string> filenames_velo_nonir;
 	vector<string> filenames_velo;
 	vector<string> filenames_nir;
 	//CTimeString::getFileNames_extension(file_dir, filenames_, "nir.pcd");
-	CTimeString::getFileNames_extension(dir_, filenames_velo_nonir, ").pcd");
-	CTimeString::getFileNames_extension(dir_, filenames_velo, "velo.pcd");
-	CTimeString::getFileNames_extension(dir_, filenames_nir, "nir.pcd");
+	CTimeString::getFileNames_extension(dir_ + "/" + subdir_, filenames_velo_nonir, ").pcd");
+	CTimeString::getFileNames_extension(dir_ + "/" + subdir_, filenames_velo, "velo.pcd");
+	CTimeString::getFileNames_extension(dir_ + "/" + subdir_, filenames_nir, "nir.pcd");
 
 	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_velo(new pcl::PointCloud<pcl::PointXYZI>());
 	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_nir(new pcl::PointCloud<pcl::PointXYZI>());
@@ -1030,7 +1083,7 @@ void CPointcloudFuction::combinePointCloud_naraha()
 		{
 			cloud_velo->clear();
 			cout << "reading:" << filenames_velo_nonir[index_] << endl;
-			pcl::io::loadPCDFile(dir_ + "/" + filenames_velo_nonir[index_], *cloud_velo);
+			pcl::io::loadPCDFile(dir_ + "/" + subdir_ + "/" + filenames_velo_nonir[index_], *cloud_velo);
 
 			if (b_transform)
 			{
@@ -1068,19 +1121,30 @@ void CPointcloudFuction::combinePointCloud_naraha()
 			
 			string filename_save = filenames_velo_nonir[index_].substr(0, 3) + "XYZRGB_naraha.pcd";
 			pcl::io::savePCDFile<pcl::PointXYZRGB>
-				(dir_ + "/" + dir_save_relativePath + "/" + filename_save, *cloud_save);
+				(dir_  + "/" + filename_save, *cloud_save);
 		}
 		break;
 
 	case 1:
 		for (int index_ = 0; index_ < filenames_velo.size(); index_++)
 		{
+			if (filenames_velo.size() == 0)
+			{
+				cout << "ERROR: no velodyne(NIR) pointcloud found" << endl;
+				return;
+			}
+
+			if (filenames_nir.size() == 0)
+			{
+				cout << "ERROR: no NIR pointcloud found" << endl;
+				return;
+			}
 			cloud_velo->clear();
 			cout << "reading:" << filenames_velo[index_] << endl;
-			pcl::io::loadPCDFile(dir_ + "/" + filenames_velo[index_], *cloud_velo);
+			pcl::io::loadPCDFile(dir_ + "/" + subdir_ + "/" + filenames_velo[index_], *cloud_velo);
 			cloud_nir->clear();
 			cout << "reading:" << filenames_nir[index_] << endl;
-			pcl::io::loadPCDFile(dir_ + "/" + filenames_nir[index_], *cloud_nir);
+			pcl::io::loadPCDFile(dir_ + "/" + subdir_ + "/" + filenames_nir[index_], *cloud_nir);
 
 			if (b_transform)
 			{
@@ -1141,7 +1205,7 @@ void CPointcloudFuction::combinePointCloud_naraha()
 
 			string filename_save = filenames_velo[index_].substr(0,3) +"XYZRGB_naraha.pcd";
 			pcl::io::savePCDFile<pcl::PointXYZRGB>
-				(dir_ + "/" + dir_save_relativePath + "/" + filename_save, *cloud_save);
+				(dir_ + "/" + filename_save, *cloud_save);
 		}
 		break;
 	}
