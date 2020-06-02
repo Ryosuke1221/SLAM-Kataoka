@@ -343,6 +343,11 @@ CPointVisualization<T_PointType>::~CPointVisualization()
 //u
 //e
 //o
+//ka
+//ki
+//ku
+//ke
+//ko
 //sa
 //shi
 //su
