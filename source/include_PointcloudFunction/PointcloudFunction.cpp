@@ -719,8 +719,8 @@ void CPointcloudFuction::HandRegistration()
 		DOWN,
 		RIGHT,
 		LEFT,
-		TURN_R,
-		TURN_L,
+		TURN_RU,
+		TURN_LU,
 		ENTER,
 		SUBTRACT
 	};
@@ -880,8 +880,8 @@ void CPointcloudFuction::HandRegistration()
 		short key_num_down = GetAsyncKeyState(VK_NUMPAD2);
 		short key_num_right = GetAsyncKeyState(VK_NUMPAD6);
 		short key_num_left = GetAsyncKeyState(VK_NUMPAD4);
-		short key_num_turn_r = GetAsyncKeyState(VK_NUMPAD9);
-		short key_num_turn_l = GetAsyncKeyState(VK_NUMPAD7);
+		short key_num_turn_ru = GetAsyncKeyState(VK_NUMPAD9);
+		short key_num_turn_lu = GetAsyncKeyState(VK_NUMPAD7);
 		short key_num_enter = GetAsyncKeyState(VK_RETURN);
 		short key_num_escape = GetAsyncKeyState(VK_ESCAPE);
 		short key_num_subt_numpad = GetAsyncKeyState(VK_SUBTRACT);
@@ -890,8 +890,8 @@ void CPointcloudFuction::HandRegistration()
 		else if ((key_num_down & 1) == 1) key_ = DOWN;
 		else if ((key_num_right & 1) == 1) key_ = RIGHT;
 		else if ((key_num_left & 1) == 1) key_ = LEFT;
-		else if ((key_num_turn_r & 1) == 1) key_ = TURN_R;
-		else if ((key_num_turn_l & 1) == 1) key_ = TURN_L;
+		else if ((key_num_turn_ru & 1) == 1) key_ = TURN_RU;
+		else if ((key_num_turn_lu & 1) == 1) key_ = TURN_LU;
 		else if ((key_num_enter & 1) == 1) key_ = ENTER;
 		else if ((key_num_subt_numpad & 1) == 1) key_ = SUBTRACT;
 		else if ((key_num_escape & 1) == 1)
@@ -930,12 +930,12 @@ void CPointcloudFuction::HandRegistration()
 				* HM_Trans_now;
 			break;
 
-		case TURN_R:
+		case TURN_RU:
 			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., -disp_rotation)
 				* HM_Trans_now;
 			break;
 
-		case TURN_L:
+		case TURN_LU:
 			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., disp_rotation)
 				* HM_Trans_now;
 			break;

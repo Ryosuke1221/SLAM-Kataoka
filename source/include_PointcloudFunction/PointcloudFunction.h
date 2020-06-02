@@ -336,3 +336,5 @@ CPointVisualization<T_PointType>::~CPointVisualization()
 {
 	if(M_thread.joinable()) M_thread.join();
 }
+
+//merge 6:05
