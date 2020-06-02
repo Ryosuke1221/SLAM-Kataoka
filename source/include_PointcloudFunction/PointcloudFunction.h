@@ -338,4 +338,5 @@ CPointVisualization<T_PointType>::~CPointVisualization()
 }
 
 //merge:6:47
+//aiueo
 //kakikukeko
