@@ -337,9 +337,14 @@ CPointVisualization<T_PointType>::~CPointVisualization()
 	if(M_thread.joinable()) M_thread.join();
 }
 
-//merge 6:21
+//merge 6:23
 //a
 //i
 //u
 //e
 //o
+//ka
+//ki
+//ku
+//ke
+//ko
