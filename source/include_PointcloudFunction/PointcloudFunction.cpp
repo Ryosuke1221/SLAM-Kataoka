@@ -516,7 +516,6 @@ void CPointcloudFuction::getPCDFromCSV_naraha()
 void CPointcloudFuction::FreeSpace()
 {
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZRGB>());
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_temp(new pcl::PointCloud<pcl::PointXYZRGB>());
 	pcl::PointXYZRGB point1_;
 	pcl::PointXYZRGB point2_;
 
@@ -530,22 +529,46 @@ void CPointcloudFuction::FreeSpace()
 	point1_.b = 0;
 
 	point2_ = point1_;
-	point1_.x = 10.;
-	point1_.y = 20.;
-	point1_.z = 0.;
+	point2_.x = 10.;
+	point2_.y = 20.;
+	point2_.z = 0.;
 
-	cout << "point1: " << point1_.x << " " << point1_.y << " " << point1_.z << endl;
-	cout << "point2: " << point2_.x << " " << point2_.y << " " << point2_.z << endl;
+	//cout << "point1: " << point1_.x << " " << point1_.y << " " << point1_.z << endl;
+	//cout << "point2: " << point2_.x << " " << point2_.y << " " << point2_.z << endl;
 
-	cloud_temp = CPV::drawLine(point1_, point2_);
-	cout << "cloud_temp size:" << cloud_temp->size() << endl;
-	
-	for (int i = 0; i < cloud_temp->size(); i++)
+	cloud_ = CPV::drawLine(point1_, point2_);
+
+	pcl::PointXYZRGB point3_;
+	point3_ = point2_;
+	point3_.r = 255;
+	point3_.g = 0;
+	point3_.b = 255;
+	*cloud_ += *CPV::drawArrow(point3_, 0., 0., 30.*D2R);
+	//cout << "point3_: " << point3_.x << " " << point3_.y << " " << point3_.z << endl;
+
+	pcl::PointXYZRGB point4_;
+	point4_ = point2_;
+	point4_.x = 10.;
+	point4_.y = 10;
+	point4_.z = 1.;
+	point4_.r = 255;
+	point4_.g = 255;
+	point4_.b = 0;
+	for (int i = 0; i < 10; i++)
 	{
-		//*cloud_ += *CPointVisualization<pcl::PointXYZRGB>::proliferation_rand(cloud_temp->points[i], 10);
-		*cloud_ += *CPV::proliferation_rand(cloud_temp->points[i], 10);
+		*cloud_ += *CPV::drawNumber_OnetoNine(point4_, i, 0.5);
+		point4_.x += 0.8;
+
 	}
 
+	point4_.x = 10.;
+	point4_.y = 10;
+	point4_.z = 5.;
+	*cloud_ += *CPV::drawNumber(point4_, 55555);
+
+
+	cout << "cloud_ size:" << cloud_->size() << endl;
+	
 	CPointVisualization<pcl::PointXYZRGB> pv;
 	pv.setWindowName("draw line");
 

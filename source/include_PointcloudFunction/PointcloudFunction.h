@@ -2,6 +2,7 @@
 
 #include<iostream>
 #include <vector>
+#include <random>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -186,6 +187,14 @@ public:
 	static pcl::PointCloud<pcl::PointXYZRGB>::Ptr proliferation_rand(pcl::PointXYZRGB point_arg, int times);
 	static  bool isPointOutOnLineSegmant(
 		pcl::PointXYZRGB point1_, pcl::PointXYZRGB point2_, pcl::PointXYZRGB point3_);
+	static pcl::PointCloud<pcl::PointXYZRGB>::Ptr drawArrow(
+		pcl::PointXYZRGB point_arg, double Roll_, double Pitch_, double Yaw);
+	static pcl::PointCloud<pcl::PointXYZRGB>::Ptr expandDiagram(
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, float times_);
+	static pcl::PointCloud<pcl::PointXYZRGB>::Ptr drawNumber_OnetoNine(
+		pcl::PointXYZRGB point_center,int num_arg, double length_horizontal_arg);
+	static pcl::PointCloud<pcl::PointXYZRGB>::Ptr drawNumber(
+		pcl::PointXYZRGB point_center, int num_arg);
 
 };
 
@@ -369,7 +378,7 @@ CPointVisualization<T_PointType>::~CPointVisualization()
 template < typename T_PointType >
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr CPointVisualization<T_PointType>::drawLine(pcl::PointXYZRGB point1_, pcl::PointXYZRGB point2_)
 {
-	double distance_ = 0.01;//:distance point to point :0.01[m]
+	double distance_ = 0.01;//:distance point to point [m]
 	Eigen::Vector3d direction_vec = Eigen::Vector3d::Zero();
 	direction_vec <<
 		point2_.x - point1_.x,
@@ -381,7 +390,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr CPointVisualization<T_PointType>::drawLin
 		direction_vec(1, 0) / direction_vec.norm(),
 		direction_vec(2, 0) / direction_vec.norm();
 
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZRGB>());
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_temp(new pcl::PointCloud<pcl::PointXYZRGB>());
 	int index_ = 0;
 
 	while (1)
@@ -391,10 +400,14 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr CPointVisualization<T_PointType>::drawLin
 		point_.x = point1_.x + index_ * distance_ * direction_vec(0, 0);
 		point_.y = point1_.y + index_ * distance_ * direction_vec(1, 0);
 		point_.z = point1_.z + index_ * distance_ * direction_vec(2, 0);
-		cloud_->push_back(point_);
-		index_++;
 		if (isPointOutOnLineSegmant(point1_, point2_, point_)) break;
+		cloud_temp->push_back(point_);
+		index_++;
 	}
+
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZRGB>());
+	for (int i = 0; i < cloud_temp->size(); i++)
+		*cloud_ += *proliferation_rand(cloud_temp->points[i], 2);
 
 	return cloud_;
 }
@@ -409,19 +422,29 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr CPointVisualization<T_PointType>::prolife
 	boost::variate_generator< boost::mt19937&, boost::uniform_real<> > rand(gen, dst);// óêêîê∂ê¨
 	//rand();// 47
 
+	std::random_device seed_gen;
+	std::default_random_engine engine(seed_gen());
+	double sigma_x;
+	sigma_x = 0.01;
+	normal_distribution<> dist(0., sigma_x);
+
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZRGB>());
 	int index_ = 0;
 	while (1)
 	{
 		pcl::PointXYZRGB point_;
 		point_ = point_arg;
-		point_.x += rand();
-		point_.y += rand();
-		point_.z += rand();
+		//point_.x += rand();
+		//point_.y += rand();
+		//point_.z += rand();
+		point_.x += dist(engine);
+		point_.y += dist(engine);
+		point_.z += dist(engine);
 		cloud_->push_back(point_);
 		index_++;
-		if (index_ > times) break;
+		if (index_ == times) break;
 	}
+
 	return cloud_;
 }
 
@@ -464,4 +487,247 @@ bool CPointVisualization<T_PointType>::isPointOutOnLineSegmant(
 		}
 	}
 	return false;
+}
+
+template < typename T_PointType >
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr CPointVisualization<T_PointType>::drawArrow(
+	pcl::PointXYZRGB point_arg, double Roll_, double Pitch_, double Yaw_)
+{
+	//drawing 4 lines. a line and a triangle.
+	//First, root to center of bottom of triangle.
+	//Second, left point of bottom to right.
+	//Third, right point of bottom to top.
+	//Fourth, left point of bottom to top.
+
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZRGB>());
+
+	pcl::PointXYZRGB point_Root;
+	point_Root = point_arg;
+	point_Root.x = 0.;
+	point_Root.y = 0.;
+	point_Root.z = 0.;
+
+	pcl::PointXYZRGB point_BottomCenter;
+	point_BottomCenter = point_Root;
+	point_BottomCenter.x = 0.25;
+
+	pcl::PointXYZRGB point_BottomLeft;
+	point_BottomLeft = point_BottomCenter;
+	point_BottomLeft.y = 0.125;
+
+	pcl::PointXYZRGB point_BottomRight;
+	point_BottomRight = point_BottomCenter;
+	point_BottomRight.y = -0.125;
+
+	pcl::PointXYZRGB point_Top;
+	point_Top = point_BottomCenter;
+	point_Top.x = 0.5;
+
+	*cloud_ += *drawLine(point_Root, point_BottomCenter);
+	*cloud_ += *drawLine(point_BottomLeft, point_BottomRight);
+	*cloud_ += *drawLine(point_BottomRight, point_Top);
+	*cloud_ += *drawLine(point_BottomLeft, point_Top);
+
+	{
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_temp(new pcl::PointCloud<pcl::PointXYZRGB>());
+		pcl::copyPointCloud(*cloud_, *cloud_temp);
+		cloud_->clear();
+		for (int i = 0; i < cloud_temp->size(); i++)
+			*cloud_ += *proliferation_rand(cloud_temp->points[i], 3);
+	}
+	cloud_ = expandDiagram(cloud_, 5.);
+
+	Eigen::Affine3f Trans_ = Eigen::Affine3f::Identity();
+	Trans_ = CPointcloudFuction::calcAffine3fFromHomogeneousMatrix(
+		CPointcloudFuction::calcHomogeneousMatrixFromVector6d(
+			point_arg.x, point_arg.y, point_arg.z, Roll_, Pitch_, Yaw_));
+	pcl::transformPointCloud(*cloud_, *cloud_, Trans_);
+
+	return cloud_;
+}
+
+template < typename T_PointType >
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr CPointVisualization<T_PointType>::expandDiagram(
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, float times_)
+{
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZRGB>());
+	for (int i = 0; i < cloud_arg->size(); i++)
+	{
+		pcl::PointXYZRGB point_;
+		point_ = cloud_arg->points[i];
+		point_.x = cloud_arg->points[i].x * times_;
+		point_.y = cloud_arg->points[i].y * times_;
+		point_.z = cloud_arg->points[i].z * times_;
+		cloud_->push_back(point_);
+	}
+
+	return cloud_;
+}
+
+template < typename T_PointType >
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr CPointVisualization<T_PointType>::drawNumber(
+	pcl::PointXYZRGB point_center, int num_arg)
+{
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZRGB>());
+	double length_horizontal_ = 0.5;
+	int index_ = 0;
+	double range_ = 0.8;
+	while (1)
+	{
+		*cloud_ += *drawNumber_OnetoNine(point_center, num_arg % 10, length_horizontal_);
+		num_arg /= 10;
+		if (num_arg == 0) break;
+		point_center.x += -range_;
+		index_++;
+	}
+	return cloud_;
+}
+
+template < typename T_PointType >
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr CPointVisualization<T_PointType>::drawNumber_OnetoNine(
+	pcl::PointXYZRGB point_center, int num_arg, double length_horizontal_arg)
+{
+	//minus atomawashi
+
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZRGB>());
+	//double length_half_vertical = 0.25;
+	//double length_horizontal = 0.3;
+	double length_horizontal = length_horizontal_arg;
+	double length_half_vertical = length_horizontal / 1.2;
+
+	if (!(0 <= num_arg && num_arg <= 9))
+	{
+		throw std::runtime_error("ERROR: Given number is out of range.");
+	}
+
+	pcl::PointXYZRGB point_LeftUp;
+	pcl::PointXYZRGB point_LeftCenter;
+	pcl::PointXYZRGB point_LeftDown;
+	pcl::PointXYZRGB point_RightUp;
+	pcl::PointXYZRGB point_RightCenter;
+	pcl::PointXYZRGB point_RightDown;
+
+	point_LeftUp = point_center;
+	point_LeftCenter = point_center;
+	point_LeftDown = point_center;
+	point_RightUp = point_center;
+	point_RightCenter = point_center;
+	point_RightDown = point_center;
+
+	point_LeftUp.x = 0.;
+	point_LeftCenter.x = 0.;
+	point_LeftDown.x = 0.;
+	point_LeftUp.y = length_half_vertical * 2;
+	point_LeftCenter.y = length_half_vertical;
+	point_LeftDown.y = 0.;
+	point_RightUp.x = length_horizontal;
+	point_RightCenter.x = length_horizontal;
+	point_RightDown.x = length_horizontal;
+	point_RightUp.y = length_half_vertical * 2;
+	point_RightCenter.y = length_half_vertical;
+	point_RightDown.y = 0.;
+
+	//https://qiita.com/hiloki@github/items/647cd302616d57ac84ec
+	switch (num_arg)
+	{
+	case 0:
+		*cloud_ += *drawLine(point_LeftDown, point_RightDown);
+		//*cloud_ += *drawLine(point_LeftCenter, point_RightCenter);
+		*cloud_ += *drawLine(point_LeftUp, point_RightUp);
+		*cloud_ += *drawLine(point_LeftDown, point_LeftCenter);
+		*cloud_ += *drawLine(point_LeftCenter, point_LeftUp);
+		*cloud_ += *drawLine(point_RightDown, point_RightCenter);
+		*cloud_ += *drawLine(point_RightCenter, point_RightUp);
+		break;
+	case 1:
+		//*cloud_ += *drawLine(point_LeftDown, point_RightDown);
+		//*cloud_ += *drawLine(point_LeftCenter, point_RightCenter);
+		//*cloud_ += *drawLine(point_LeftUp, point_RightUp);
+		//*cloud_ += *drawLine(point_LeftDown, point_LeftCenter);
+		//*cloud_ += *drawLine(point_LeftCenter, point_LeftUp);
+		*cloud_ += *drawLine(point_RightDown, point_RightCenter);
+		*cloud_ += *drawLine(point_RightCenter, point_RightUp);
+		break;
+	case 2:
+		*cloud_ += *drawLine(point_LeftDown, point_RightDown);
+		*cloud_ += *drawLine(point_LeftCenter, point_RightCenter);
+		*cloud_ += *drawLine(point_LeftUp, point_RightUp);
+		*cloud_ += *drawLine(point_LeftDown, point_LeftCenter);
+		//*cloud_ += *drawLine(point_LeftCenter, point_LeftUp);
+		//*cloud_ += *drawLine(point_RightDown, point_RightCenter);
+		*cloud_ += *drawLine(point_RightCenter, point_RightUp);
+		break;
+	case 3:
+		*cloud_ += *drawLine(point_LeftDown, point_RightDown);
+		*cloud_ += *drawLine(point_LeftCenter, point_RightCenter);
+		*cloud_ += *drawLine(point_LeftUp, point_RightUp);
+		//*cloud_ += *drawLine(point_LeftDown, point_LeftCenter);
+		//*cloud_ += *drawLine(point_LeftCenter, point_LeftUp);
+		*cloud_ += *drawLine(point_RightDown, point_RightCenter);
+		*cloud_ += *drawLine(point_RightCenter, point_RightUp);
+		break;
+	case 4:
+		//*cloud_ += *drawLine(point_LeftDown, point_RightDown);
+		*cloud_ += *drawLine(point_LeftCenter, point_RightCenter);
+		//*cloud_ += *drawLine(point_LeftUp, point_RightUp);
+		//*cloud_ += *drawLine(point_LeftDown, point_LeftCenter);
+		*cloud_ += *drawLine(point_LeftCenter, point_LeftUp);
+		*cloud_ += *drawLine(point_RightDown, point_RightCenter);
+		*cloud_ += *drawLine(point_RightCenter, point_RightUp);
+		break;
+	case 5:
+		*cloud_ += *drawLine(point_LeftDown, point_RightDown);
+		*cloud_ += *drawLine(point_LeftCenter, point_RightCenter);
+		*cloud_ += *drawLine(point_LeftUp, point_RightUp);
+		//*cloud_ += *drawLine(point_LeftDown, point_LeftCenter);
+		*cloud_ += *drawLine(point_LeftCenter, point_LeftUp);
+		*cloud_ += *drawLine(point_RightDown, point_RightCenter);
+		//*cloud_ += *drawLine(point_RightCenter, point_RightUp);
+		break;
+	case 6:
+		*cloud_ += *drawLine(point_LeftDown, point_RightDown);
+		*cloud_ += *drawLine(point_LeftCenter, point_RightCenter);
+		*cloud_ += *drawLine(point_LeftUp, point_RightUp);
+		*cloud_ += *drawLine(point_LeftDown, point_LeftCenter);
+		*cloud_ += *drawLine(point_LeftCenter, point_LeftUp);
+		*cloud_ += *drawLine(point_RightDown, point_RightCenter);
+		//*cloud_ += *drawLine(point_RightCenter, point_RightUp);
+		break;
+	case 7:
+		//*cloud_ += *drawLine(point_LeftDown, point_RightDown);
+		//*cloud_ += *drawLine(point_LeftCenter, point_RightCenter);
+		*cloud_ += *drawLine(point_LeftUp, point_RightUp);
+		//*cloud_ += *drawLine(point_LeftDown, point_LeftCenter);
+		//*cloud_ += *drawLine(point_LeftCenter, point_LeftUp);
+		*cloud_ += *drawLine(point_RightDown, point_RightCenter);
+		*cloud_ += *drawLine(point_RightCenter, point_RightUp);
+		break;
+	case 8:
+		*cloud_ += *drawLine(point_LeftDown, point_RightDown);
+		*cloud_ += *drawLine(point_LeftCenter, point_RightCenter);
+		*cloud_ += *drawLine(point_LeftUp, point_RightUp);
+		*cloud_ += *drawLine(point_LeftDown, point_LeftCenter);
+		*cloud_ += *drawLine(point_LeftCenter, point_LeftUp);
+		*cloud_ += *drawLine(point_RightDown, point_RightCenter);
+		*cloud_ += *drawLine(point_RightCenter, point_RightUp);
+		break;
+	case 9:
+		*cloud_ += *drawLine(point_LeftDown, point_RightDown);
+		*cloud_ += *drawLine(point_LeftCenter, point_RightCenter);
+		*cloud_ += *drawLine(point_LeftUp, point_RightUp);
+		//*cloud_ += *drawLine(point_LeftDown, point_LeftCenter);
+		*cloud_ += *drawLine(point_LeftCenter, point_LeftUp);
+		*cloud_ += *drawLine(point_RightDown, point_RightCenter);
+		*cloud_ += *drawLine(point_RightCenter, point_RightUp);
+		break;
+	}
+
+	Eigen::Affine3f Trans_ = Eigen::Affine3f::Identity();
+	Trans_ = CPointcloudFuction::calcAffine3fFromHomogeneousMatrix(
+		CPointcloudFuction::calcHomogeneousMatrixFromVector6d(
+			-length_horizontal+point_center.x, -length_half_vertical+ point_center.y,
+			point_center.z, 0., 0., 0.));
+	pcl::transformPointCloud(*cloud_, *cloud_, Trans_);
+
+	return cloud_;
 }
