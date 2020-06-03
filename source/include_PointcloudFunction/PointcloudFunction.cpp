@@ -702,29 +702,17 @@ void CPointcloudFuction::HandRegistration()
 	Eigen::Matrix4d HM_free = Eigen::Matrix4d::Identity();
 	Eigen::Matrix4d HM_Trans_now = Eigen::Matrix4d::Identity();
 
-	double disp_translation = 0.;
-	double disp_rotation = 0.;
-	disp_translation = 0.05;
-	disp_rotation = 0.5 * M_PI / 180.;
+	double resolution_translation = 0.;
+	double resolution_rotation = 0.;
+	resolution_translation = 0.05;
+	resolution_rotation = 0.5 * M_PI / 180.;
+	float sign = 1.;
 
 	int index_PC_now = 0;
 	bool b_makeNewPC = true;
 	bool b_first = true;
 	bool b_escaped = false;
 	bool b_break = false;
-
-	enum KEYNUM {
-		NONE,
-		UP,
-		DOWN,
-		RIGHT,
-		LEFT,
-		TURN_RU,
-		TURN_LU,
-		ENTER,
-		SUBTRACT
-	};
-	KEYNUM key_;
 
 	vector<string> filenames_;
 	CTimeString::getFileNames_extension(dir_, filenames_, ".pcd");
@@ -816,24 +804,22 @@ void CPointcloudFuction::HandRegistration()
 			cloud_moving_before->clear();
 
 			string filename_PC;
-			filename_PC = filenames_[index_PC_now];
-			filename_PC = dir_ + "/" + filename_PC;
+			filename_PC = dir_ + "/" + filenames_[index_PC_now];
 
 			if (-1 == pcl::io::loadPCDFile(filename_PC, *cloud_moving_before)) break;
 
-			cout << "PC(" << index_PC_now << ") number :" << cloud_moving_before->size() << endl;
+			cout << "i:" << index_PC_now << " number:" << cloud_moving_before->size();
+			cout << " finename: " << filenames_[index_PC_now] << endl;
 
 			cout << endl;
 			cout << "**********( key option )**********" << endl;
-			cout << "Use numpad" << endl;
-			cout << " TURN_LEFT:7    UP:8  TURN_RIGHT:9" << endl;
-			cout << "      LEFT:4    ----       RIGHT:6" << endl;
-			cout << "      ------  DOWN:2       -------" << endl;
-
-			cout << endl;
-			cout << "Reset:-(numpad)" << endl;
-
-			cout << "Switch:ENTER" << endl;
+			cout << "(plus mode)   +X:1  +Y:2  +Z:3  +Roll:4  +Pitch:5  +Yaw:6" << endl;
+			cout << "(minus mode)  -X:1  -Y:2  -Z:3  -Roll:4  -Pitch:5  -Yaw:6" << endl;
+			cout << "Resolution: translation:" << resolution_translation;
+			cout << "[m] rotation:" << resolution_rotation * R2D << "[deg]" << endl;
+			cout << "change plus mode and minus mode:-" << endl;
+			cout << "Reset:0" << endl;
+			cout << "Next:ENTER" << endl;
 			cout << "Escape:ESC" << endl;
 			cout << "**********************************" << endl;
 			cout << endl;
@@ -866,80 +852,48 @@ void CPointcloudFuction::HandRegistration()
 
 		}
 
-		//https://www.slideshare.net/masafuminoda/pcl-11030703
-		//Viewer
-		//left drag：rotation of view point
-		//Shift+left drag：translation of view point
-		//Ctrl+left drag：rotation in display
-		//right drag：zoom
-		//g：display measure
-		//j：save screenshot
-
-		//input key
-		short key_num_up = GetAsyncKeyState(VK_NUMPAD8);
-		short key_num_down = GetAsyncKeyState(VK_NUMPAD2);
-		short key_num_right = GetAsyncKeyState(VK_NUMPAD6);
-		short key_num_left = GetAsyncKeyState(VK_NUMPAD4);
-		short key_num_turn_ru = GetAsyncKeyState(VK_NUMPAD9);
-		short key_num_turn_lu = GetAsyncKeyState(VK_NUMPAD7);
-		short key_num_enter = GetAsyncKeyState(VK_RETURN);
-		short key_num_escape = GetAsyncKeyState(VK_ESCAPE);
-		short key_num_subt_numpad = GetAsyncKeyState(VK_SUBTRACT);
-
-		if ((key_num_up & 1) == 1) key_ = UP;
-		else if ((key_num_down & 1) == 1) key_ = DOWN;
-		else if ((key_num_right & 1) == 1) key_ = RIGHT;
-		else if ((key_num_left & 1) == 1) key_ = LEFT;
-		else if ((key_num_turn_ru & 1) == 1) key_ = TURN_RU;
-		else if ((key_num_turn_lu & 1) == 1) key_ = TURN_LU;
-		else if ((key_num_enter & 1) == 1) key_ = ENTER;
-		else if ((key_num_subt_numpad & 1) == 1) key_ = SUBTRACT;
-		else if ((key_num_escape & 1) == 1)
-		{
-			cout << "ESC called" << endl;
-			b_escaped = true;
-			break;
-		}
-		else key_ = NONE;
+		KEYNUM key_;
+		key_ = getKEYNUM();
 
 		if (b_first)
 		{
 			key_ = NONE;
 			b_first = false;
 		}
-
+		
 		//determine transformation by key input
-		switch (key_) {
-		case UP:
-			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., disp_translation, 0., 0., 0., 0.)
+		switch (key_)
+		{
+		case X_:
+			HM_Trans_now = calcHomogeneousMatrixFromVector6d(sign * resolution_translation, 0., 0., 0., 0., 0.)
 				* HM_Trans_now;
 			break;
-
-		case DOWN:
-			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., -disp_translation, 0., 0., 0., 0.)
+		case Y_:
+			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., sign * resolution_translation, 0., 0., 0., 0.)
 				* HM_Trans_now;
 			break;
-
-		case RIGHT:
-			HM_Trans_now = calcHomogeneousMatrixFromVector6d(disp_translation, 0., 0., 0., 0., 0.)
+		case Z_:
+			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., sign * resolution_translation, 0., 0., 0.)
 				* HM_Trans_now;
 			break;
-
-		case LEFT:
-			HM_Trans_now = calcHomogeneousMatrixFromVector6d(-disp_translation, 0., 0., 0., 0., 0.)
+		case ROLL_:
+			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., sign * resolution_rotation, 0., 0.)
 				* HM_Trans_now;
 			break;
-
-		case TURN_RU:
-			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., -disp_rotation)
+		case PITCH_:
+			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., sign * resolution_rotation, 0.)
 				* HM_Trans_now;
 			break;
-
-		case TURN_LU:
-			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., disp_rotation)
+		case YAW_:
+			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., sign * resolution_rotation)
 				* HM_Trans_now;
 			break;
-
+		case ZERO:
+			HM_free = Eigen::Matrix4d::Identity();
+			for (int i = 0; i <= index_PC_now; i++) HM_free = HM_free * HM_displacement_vec[i];
+			HM_Trans_now = HM_free;
+			cout << "0(numpad) pressed and reset" << endl;
+			break;
 		case ENTER:
 			*cloud_show_static += *cloud_moving;
 			HM_free = Eigen::Matrix4d::Identity();
@@ -950,12 +904,15 @@ void CPointcloudFuction::HandRegistration()
 			b_makeNewPC = true;
 			cout << "ENTER pressed" << endl;
 			break;
-
 		case SUBTRACT:
-			HM_free = Eigen::Matrix4d::Identity();
-			for (int i = 0; i <= index_PC_now; i++) HM_free = HM_free * HM_displacement_vec[i];
-			HM_Trans_now = HM_free;
-			cout << "-(numpad) pressed" << endl;
+			sign *= -1.;
+			if (sign == 1.) cout << "plus(+) mode" << endl;
+			else if (sign == -1.) cout << "minus(-) mode" << endl;
+			break;
+		case ESC:
+			cout << "ESC called" << endl;
+			b_break = true;
+			b_escaped = true;
 			break;
 
 		default:
@@ -980,15 +937,10 @@ void CPointcloudFuction::HandRegistration()
 		if (b_break) break;
 	}
 
-	int i_save_txt = 0;
-	cout << "Do you save txt?  Yes:0 No:1" << endl;
-	cout << "->";
-	cin >> i_save_txt;
 	bool b_save_txt;
-	if (i_save_txt == 0)
-		b_save_txt = true;
-	else 
-		b_save_txt = false;
+	cout << "Do you save txt?  Yes:1 No:0" << endl;
+	cout << "->";
+	cin >> b_save_txt;
 
 	//output txt
 	if (b_save_txt)
@@ -1017,6 +969,86 @@ void CPointcloudFuction::HandRegistration()
 
 	pv.closeViewer();
 }
+
+CPointcloudFuction::KEYNUM CPointcloudFuction::getKEYNUM()
+{
+	//http://kts.sakaiweb.com/virtualkeycodes.html
+
+	KEYNUM key_;
+	bool b_PChasNUMPAD = true;
+	b_PChasNUMPAD = false;
+
+	//https://www.slideshare.net/masafuminoda/pcl-11030703
+		//Viewer
+		//left drag：rotation of view point
+		//Shift+left drag：translation of view point
+		//Ctrl+left drag：rotation in display
+		//right drag：zoom
+		//g：display measure
+		//j：save screenshot
+
+		//input key
+	short key_num_X_;
+	short key_num_Y_;
+	short key_num_Z_;
+	short key_num_ROLL_;
+	short key_num_PITCH_;
+	short key_num_YAW_;
+	short key_num_ZERO;
+	short key_num_ENTER;
+	short key_num_ESC;
+	short key_num_SUBTRACT;
+
+	if (b_PChasNUMPAD)
+	{
+		key_num_X_ = GetAsyncKeyState(VK_NUMPAD7);
+		key_num_Y_ = GetAsyncKeyState(VK_NUMPAD8);
+		key_num_Z_ = GetAsyncKeyState(VK_NUMPAD9);
+		key_num_ROLL_ = GetAsyncKeyState(VK_NUMPAD4);
+		key_num_PITCH_ = GetAsyncKeyState(VK_NUMPAD5);
+		key_num_YAW_ = GetAsyncKeyState(VK_NUMPAD6);
+		key_num_ZERO = GetAsyncKeyState(VK_NUMPAD0);
+		key_num_ENTER = GetAsyncKeyState(VK_RETURN);
+		key_num_ESC = GetAsyncKeyState(VK_ESCAPE);
+		key_num_SUBTRACT = GetAsyncKeyState(VK_SUBTRACT);
+
+	}
+
+	else
+	{
+		key_num_X_ = GetAsyncKeyState(0x31);	//1
+		key_num_Y_ = GetAsyncKeyState(0x32);	//2
+		key_num_Z_ = GetAsyncKeyState(0x33);	//3
+		key_num_ROLL_ = GetAsyncKeyState(0x34);	//4
+		key_num_PITCH_ = GetAsyncKeyState(0x35);//5
+		key_num_YAW_ = GetAsyncKeyState(0x36);	//6
+		key_num_ZERO = GetAsyncKeyState(0x30);	//0
+		key_num_ENTER = GetAsyncKeyState(VK_RETURN);
+		key_num_ESC = GetAsyncKeyState(VK_ESCAPE);
+		key_num_SUBTRACT = GetAsyncKeyState(VK_OEM_MINUS);
+
+	}
+
+	if ((key_num_X_ & 1) == 1) key_ = X_;
+	else if ((key_num_Y_ & 1) == 1) key_ = Y_;
+	else if ((key_num_Z_ & 1) == 1) key_ = Z_;
+	else if ((key_num_ROLL_ & 1) == 1) key_ = ROLL_;
+	else if ((key_num_PITCH_ & 1) == 1) key_ = PITCH_;
+	else if ((key_num_YAW_ & 1) == 1) key_ = YAW_;
+	else if ((key_num_ZERO & 1) == 1) key_ = ZERO;
+	else if ((key_num_ENTER & 1) == 1) key_ = ENTER;
+	else if ((key_num_SUBTRACT & 1) == 1) key_ = SUBTRACT;
+	else if ((key_num_ESC & 1) == 1) key_ = ESC;
+	//{
+	//	cout << "ESC called" << endl;
+	//	b_escaped = true;
+	//	break;
+	//}
+	else key_ = NONE;
+
+	return key_;
+}
+
 
 void CPointcloudFuction::combinePointCloud_naraha()
 {

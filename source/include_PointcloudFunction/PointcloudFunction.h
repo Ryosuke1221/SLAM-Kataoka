@@ -29,6 +29,8 @@
 
 
 #define M_PI 3.14159265359
+#define D2R 0.017453288888889
+#define R2D 57.29579143313326
 
 
 using namespace std;
@@ -121,6 +123,26 @@ public:
 	void FileProcess_copy(string dir_from, string dir_to);
 	void FileProcess_delete(string dir);
 	void FileProcess_evacuate(string dir);
+
+private:
+	enum KEYNUM {
+		NONE,
+		ZERO,
+		X_,
+		Y_,
+		Z_,
+		ROLL_,
+		PITCH_,
+		YAW_,
+		ENTER,
+		SUBTRACT,
+		ESC
+	};
+public:
+	//should declare under enum type declaration
+	KEYNUM getKEYNUM();
+
+
 };
 
 template <class T_PointType>
