@@ -23,6 +23,8 @@
 //VTK_MODULE_INIT(vtkRenderingOpenGL);
 //VTK_MODULE_INIT(vtkInteractionStyle);
 
+//#include "KataokaPCL.h"
+
 //should be under pcl includes
 #include<windows.h>
 #include "TimeString.h"
@@ -180,6 +182,11 @@ public:
 	void setPointCloud(T_PointCloudPtr cloud_arg);
 	void updateViewer();
 	void closeViewer();
+	static pcl::PointCloud<pcl::PointXYZRGB>::Ptr drawLine(pcl::PointXYZRGB point1_, pcl::PointXYZRGB point2_);
+	static pcl::PointCloud<pcl::PointXYZRGB>::Ptr proliferation_rand(pcl::PointXYZRGB point_arg, int times);
+	static  bool isPointOutOnLineSegmant(
+		pcl::PointXYZRGB point1_, pcl::PointXYZRGB point2_, pcl::PointXYZRGB point3_);
+
 };
 
 //int main()
@@ -357,4 +364,104 @@ template < typename T_PointType >
 CPointVisualization<T_PointType>::~CPointVisualization()
 {
 	if(M_thread.joinable()) M_thread.join();
+}
+
+template < typename T_PointType >
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr CPointVisualization<T_PointType>::drawLine(pcl::PointXYZRGB point1_, pcl::PointXYZRGB point2_)
+{
+	double distance_ = 0.01;//:distance point to point :0.01[m]
+	Eigen::Vector3d direction_vec = Eigen::Vector3d::Zero();
+	direction_vec <<
+		point2_.x - point1_.x,
+		point2_.y - point1_.y,
+		point2_.z - point1_.z;
+
+	direction_vec <<
+		direction_vec(0, 0) / direction_vec.norm(),
+		direction_vec(1, 0) / direction_vec.norm(),
+		direction_vec(2, 0) / direction_vec.norm();
+
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZRGB>());
+	int index_ = 0;
+
+	while (1)
+	{
+		pcl::PointXYZRGB point_;
+		point_ = point1_;
+		point_.x = point1_.x + index_ * distance_ * direction_vec(0, 0);
+		point_.y = point1_.y + index_ * distance_ * direction_vec(1, 0);
+		point_.z = point1_.z + index_ * distance_ * direction_vec(2, 0);
+		cloud_->push_back(point_);
+		index_++;
+		if (isPointOutOnLineSegmant(point1_, point2_, point_)) break;
+	}
+
+	return cloud_;
+}
+
+template < typename T_PointType >
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr CPointVisualization<T_PointType>::proliferation_rand(pcl::PointXYZRGB point_arg, int times)
+{
+	//îCà”ÇÃóêêîê∂ê¨äÌÅAï™ïzÇê›íËâ¬î\
+	boost::mt19937 gen(static_cast<unsigned long>(time(0)));
+	//boost::uniform_real<> dst(-0.1, 0.1);
+	boost::uniform_real<> dst(-0.01, 0.01);
+	boost::variate_generator< boost::mt19937&, boost::uniform_real<> > rand(gen, dst);// óêêîê∂ê¨
+	//rand();// 47
+
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZRGB>());
+	int index_ = 0;
+	while (1)
+	{
+		pcl::PointXYZRGB point_;
+		point_ = point_arg;
+		point_.x += rand();
+		point_.y += rand();
+		point_.z += rand();
+		cloud_->push_back(point_);
+		index_++;
+		if (index_ > times) break;
+	}
+	return cloud_;
+}
+
+template < typename T_PointType >
+bool CPointVisualization<T_PointType>::isPointOutOnLineSegmant(
+	pcl::PointXYZRGB point1_, pcl::PointXYZRGB point2_, pcl::PointXYZRGB point3_)
+{
+	if (point1_.x < point2_.x)
+	{
+		if (point3_.x > point2_.x) return true;
+	}
+	else if (point1_.x > point2_.x)
+	{
+		if (point3_.x < point2_.x) return true;
+	}
+	else
+	{
+		if (point1_.y < point2_.y)
+		{
+			if (point3_.y > point2_.y) return true;
+		}
+		else if (point1_.y > point2_.y)
+		{
+			if (point3_.y < point2_.y) return true;
+		}
+		else
+		{
+			if (point1_.z < point2_.z)
+			{
+				if (point3_.z > point2_.z) return true;
+			}
+			else if (point1_.z > point2_.z)
+			{
+				if (point3_.z < point2_.z) return true;
+			}
+			else
+			{
+				throw std::runtime_error("ERROR: invalid positon of the points which making line.");
+			}
+		}
+	}
+	return false;
 }

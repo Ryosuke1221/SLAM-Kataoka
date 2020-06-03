@@ -515,8 +515,46 @@ void CPointcloudFuction::getPCDFromCSV_naraha()
 
 void CPointcloudFuction::FreeSpace()
 {
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZRGB>());
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_temp(new pcl::PointCloud<pcl::PointXYZRGB>());
+	pcl::PointXYZRGB point1_;
+	pcl::PointXYZRGB point2_;
 
+	typedef typename CPointVisualization<pcl::PointXYZRGB> CPV;
 
+	point1_.x = 0.;
+	point1_.y = 0.;
+	point1_.z = 0.;
+	point1_.r = 255;
+	point1_.g = 0;
+	point1_.b = 0;
+
+	point2_ = point1_;
+	point1_.x = 10.;
+	point1_.y = 20.;
+	point1_.z = 0.;
+
+	cout << "point1: " << point1_.x << " " << point1_.y << " " << point1_.z << endl;
+	cout << "point2: " << point2_.x << " " << point2_.y << " " << point2_.z << endl;
+
+	cloud_temp = CPV::drawLine(point1_, point2_);
+	cout << "cloud_temp size:" << cloud_temp->size() << endl;
+	
+	for (int i = 0; i < cloud_temp->size(); i++)
+	{
+		//*cloud_ += *CPointVisualization<pcl::PointXYZRGB>::proliferation_rand(cloud_temp->points[i], 10);
+		*cloud_ += *CPV::proliferation_rand(cloud_temp->points[i], 10);
+	}
+
+	CPointVisualization<pcl::PointXYZRGB> pv;
+	pv.setWindowName("draw line");
+
+	while (1)
+	{
+		pv.setPointCloud(cloud_);
+		pv.updateViewer();
+		if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
+	}
 	
 
 }
