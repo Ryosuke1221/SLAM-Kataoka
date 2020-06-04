@@ -66,7 +66,6 @@ public:
 
 	void all_process();
 	void show_sequent();
-	void moveFile();
 	void getPCDFromCSV_naraha();
 	void getPCDFromCSV_gotFromPCAP(string dir_save, string dir_data, string file_RelativePath_);
 	void FreeSpace();
@@ -144,7 +143,7 @@ private:
 public:
 	//should declare under enum type declaration
 	KEYNUM getKEYNUM();
-
+	void DrawTrajectory();
 
 };
 
@@ -172,7 +171,12 @@ class CPointVisualization
 
 	void startThread(T_PointCloudPtr cloud_arg);
 	void doThread();
+	static pcl::PointCloud<pcl::PointXYZRGB>::Ptr drawNumber_OnetoNine(
+		pcl::PointXYZRGB point_center, int num_arg, double length_horizontal_arg);
+	static pcl::PointCloud<pcl::PointXYZRGB>::Ptr expandDiagram(
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, float times_);
 
+	int num_NumberPointcloud;
 public:
 
 	CPointVisualization();
@@ -189,11 +193,7 @@ public:
 		pcl::PointXYZRGB point1_, pcl::PointXYZRGB point2_, pcl::PointXYZRGB point3_);
 	static pcl::PointCloud<pcl::PointXYZRGB>::Ptr drawArrow(
 		pcl::PointXYZRGB point_arg, double Roll_, double Pitch_, double Yaw);
-	static pcl::PointCloud<pcl::PointXYZRGB>::Ptr expandDiagram(
-		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, float times_);
-	static pcl::PointCloud<pcl::PointXYZRGB>::Ptr drawNumber_OnetoNine(
-		pcl::PointXYZRGB point_center,int num_arg, double length_horizontal_arg);
-	static pcl::PointCloud<pcl::PointXYZRGB>::Ptr drawNumber(
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr drawNumber(
 		pcl::PointXYZRGB point_center, int num_arg);
 
 };
@@ -262,6 +262,7 @@ CPointVisualization<T_PointType>::CPointVisualization()
 
 	M_cloud_ = (new pcl::PointCloud<T_PointType>)->makeShared();
 
+	num_NumberPointcloud = 0;
 }
 
 template < typename T_PointType >
@@ -498,6 +499,10 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr CPointVisualization<T_PointType>::drawArr
 	//Second, left point of bottom to right.
 	//Third, right point of bottom to top.
 	//Fourth, left point of bottom to top.
+	
+	double length_arraw = 0.3 * 5.;
+	double lenght_half_arraw;
+	lenght_half_arraw = length_arraw / 2.;
 
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZRGB>());
 
@@ -509,19 +514,19 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr CPointVisualization<T_PointType>::drawArr
 
 	pcl::PointXYZRGB point_BottomCenter;
 	point_BottomCenter = point_Root;
-	point_BottomCenter.x = 0.25;
+	point_BottomCenter.x = lenght_half_arraw;
 
 	pcl::PointXYZRGB point_BottomLeft;
 	point_BottomLeft = point_BottomCenter;
-	point_BottomLeft.y = 0.125;
+	point_BottomLeft.y = lenght_half_arraw / 3.;
 
 	pcl::PointXYZRGB point_BottomRight;
 	point_BottomRight = point_BottomCenter;
-	point_BottomRight.y = -0.125;
+	point_BottomRight.y = -lenght_half_arraw / 3.;
 
 	pcl::PointXYZRGB point_Top;
 	point_Top = point_BottomCenter;
-	point_Top.x = 0.5;
+	point_Top.x = lenght_half_arraw * 2.;
 
 	*cloud_ += *drawLine(point_Root, point_BottomCenter);
 	*cloud_ += *drawLine(point_BottomLeft, point_BottomRight);
@@ -533,9 +538,9 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr CPointVisualization<T_PointType>::drawArr
 		pcl::copyPointCloud(*cloud_, *cloud_temp);
 		cloud_->clear();
 		for (int i = 0; i < cloud_temp->size(); i++)
-			*cloud_ += *proliferation_rand(cloud_temp->points[i], 3);
+			*cloud_ += *proliferation_rand(cloud_temp->points[i], 2);
 	}
-	cloud_ = expandDiagram(cloud_, 5.);
+	//cloud_ = expandDiagram(cloud_, 5.);
 
 	Eigen::Affine3f Trans_ = Eigen::Affine3f::Identity();
 	Trans_ = CPointcloudFuction::calcAffine3fFromHomogeneousMatrix(
@@ -572,6 +577,8 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr CPointVisualization<T_PointType>::drawNum
 	double length_horizontal_ = 0.5;
 	int index_ = 0;
 	double range_ = 0.8;
+	double height_gap = 0.1;
+	point_center.z += height_gap * num_NumberPointcloud;
 	while (1)
 	{
 		*cloud_ += *drawNumber_OnetoNine(point_center, num_arg % 10, length_horizontal_);
@@ -580,6 +587,9 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr CPointVisualization<T_PointType>::drawNum
 		point_center.x += -range_;
 		index_++;
 	}
+
+	num_NumberPointcloud++;
+
 	return cloud_;
 }
 
@@ -725,7 +735,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr CPointVisualization<T_PointType>::drawNum
 	Eigen::Affine3f Trans_ = Eigen::Affine3f::Identity();
 	Trans_ = CPointcloudFuction::calcAffine3fFromHomogeneousMatrix(
 		CPointcloudFuction::calcHomogeneousMatrixFromVector6d(
-			-length_horizontal+point_center.x, -length_half_vertical+ point_center.y,
+			-length_horizontal / 2. + point_center.x, -length_half_vertical + point_center.y,
 			point_center.z, 0., 0., 0.));
 	pcl::transformPointCloud(*cloud_, *cloud_, Trans_);
 

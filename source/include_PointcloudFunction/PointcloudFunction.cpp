@@ -100,7 +100,8 @@ void CPointcloudFuction::all_process()
 		EN_FilterPointCloud,
 		EN_CombinePointCloud,
 		EN_CSV_FromPointCloud,
-		EN_DynamicTranslation
+		EN_DynamicTranslation,
+		EN_DrawTrajectory
 	};
 
 	while (!b_finish)
@@ -117,6 +118,7 @@ void CPointcloudFuction::all_process()
 		cout << " " << EN_CombinePointCloud << ": CombinePointCloud" << endl;
 		cout << " " << EN_CSV_FromPointCloud << ": CSV_FromPointCloud" << endl;
 		cout << " " << EN_DynamicTranslation << ": DynamicTranslation" << endl;
+		cout << " " << EN_DrawTrajectory << ": DrawTrajectory" << endl;
 
 		cout <<"WhichProcess: ";
 		cin >> WhichProcess;
@@ -166,6 +168,10 @@ void CPointcloudFuction::all_process()
 
 		case EN_DynamicTranslation:
 			DynamicTranslation();
+			break;
+
+		case EN_DrawTrajectory:
+			DrawTrajectory();
 			break;
 
 		default:
@@ -291,97 +297,6 @@ void CPointcloudFuction::show_sequent()
 	if (b_useTXT)
 		CTimeString::getCSVFromVecVec(save_vec_vec, foldername_ + "/_usePointCloud.csv");
 
-}
-
-void CPointcloudFuction::moveFile()
-{
-	//string foldername_;
-	//foldername_ = "../../data/temp";
-	//vector<string> filenames_;
-
-	////{
-	////	vector<vector<string>>
-	////}
-	////CTimeString::getVecVecFromCSV();
-
-	//CPointVisualization<pcl::PointXYZI> pv;
-	//pv.setWindowName("show XYZI");
-
-	//CTimeString::getFileNames_extension(foldername_, filenames_, ".pcd");
-	//cout << "file size: " << filenames_.size() << endl;
-
-	//if (filenames_.size() == 0)
-	//{
-	//	cout << "ERROR: no file found" << endl;
-	//	return;
-	//}
-
-	//pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>());
-	//pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_temp(new pcl::PointCloud<pcl::PointXYZI>());
-
-	////Eigen::Affine3f Trans_;
-	////Eigen::Matrix4d HM_free = Eigen::Matrix4d::Identity();
-
-	//int index_ = 0;
-
-	//vector<string> filename_use;
-
-	//while (1)
-	//{
-	//	//short key_num = GetAsyncKeyState(VK_SPACE);
-	//	if ((GetAsyncKeyState(VK_SPACE) & 1) == 1)
-	//	{
-	//		if (index_ == filenames_.size())
-	//		{
-	//			cout << "index over" << endl;
-	//			break;
-	//		}
-
-	//		cout << "index_: " << index_ << endl;
-	//		//cout << "reading:" << filenames_[index_] << endl;
-	//		pcl::io::loadPCDFile(foldername_ + "/" + filenames_[index_], *cloud_);
-	//		cout << "showing:" << filenames_[index_] << endl;
-
-	//		index_++;
-
-	//	}
-
-	//	//save
-	//	if ((GetAsyncKeyState(VK_RETURN) & 1) == 1)
-	//	{
-	//		filename_use.push_back(filenames_[index_ - 1]);
-	//		cout << "add: " << filenames_[index_ - 1] << endl;
-	//	}
-
-
-	//	//escape
-	//	//short key_num_esc = GetAsyncKeyState(VK_ESCAPE);
-	//	if ((GetAsyncKeyState(VK_ESCAPE) & 1) == 1) {
-	//		cout << "toggled!" << endl;
-	//		break;
-	//	}
-
-	//	pv.setPointCloud(cloud_);
-	//	pv.updateViewer();
-
-	//}
-
-	//pv.closeViewer();
-
-	//for (int i = 0; i < filename_use.size(); i++)
-	//{
-	//	//cout << "file " << i << ": " << filename_use[i] << endl;
-	//	cout << filename_use[i] << endl;
-	//}
-
-	//vector<vector<string>> save_vec_vec;
-	//for (int i = 0; i < filename_use.size(); i++)
-	//{
-	//	vector<string> save_vec;
-	//	save_vec.push_back(filename_use[i]);
-	//	save_vec_vec.push_back(save_vec);
-	//}
-	//CTimeString::getCSVFromVecVec(save_vec_vec, foldername_ + "/_usePointCloud.csv");
 }
 
 void CPointcloudFuction::getPCDFromCSV_gotFromPCAP(string dir_save, string dir_data, string file_RelativePath_)
@@ -515,70 +430,6 @@ void CPointcloudFuction::getPCDFromCSV_naraha()
 
 void CPointcloudFuction::FreeSpace()
 {
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZRGB>());
-	pcl::PointXYZRGB point1_;
-	pcl::PointXYZRGB point2_;
-
-	typedef typename CPointVisualization<pcl::PointXYZRGB> CPV;
-
-	point1_.x = 0.;
-	point1_.y = 0.;
-	point1_.z = 0.;
-	point1_.r = 255;
-	point1_.g = 0;
-	point1_.b = 0;
-
-	point2_ = point1_;
-	point2_.x = 10.;
-	point2_.y = 20.;
-	point2_.z = 0.;
-
-	//cout << "point1: " << point1_.x << " " << point1_.y << " " << point1_.z << endl;
-	//cout << "point2: " << point2_.x << " " << point2_.y << " " << point2_.z << endl;
-
-	cloud_ = CPV::drawLine(point1_, point2_);
-
-	pcl::PointXYZRGB point3_;
-	point3_ = point2_;
-	point3_.r = 255;
-	point3_.g = 0;
-	point3_.b = 255;
-	*cloud_ += *CPV::drawArrow(point3_, 0., 0., 30.*D2R);
-	//cout << "point3_: " << point3_.x << " " << point3_.y << " " << point3_.z << endl;
-
-	pcl::PointXYZRGB point4_;
-	point4_ = point2_;
-	point4_.x = 10.;
-	point4_.y = 10;
-	point4_.z = 1.;
-	point4_.r = 255;
-	point4_.g = 255;
-	point4_.b = 0;
-	for (int i = 0; i < 10; i++)
-	{
-		*cloud_ += *CPV::drawNumber_OnetoNine(point4_, i, 0.5);
-		point4_.x += 0.8;
-
-	}
-
-	point4_.x = 10.;
-	point4_.y = 10;
-	point4_.z = 5.;
-	*cloud_ += *CPV::drawNumber(point4_, 55555);
-
-
-	cout << "cloud_ size:" << cloud_->size() << endl;
-	
-	CPointVisualization<pcl::PointXYZRGB> pv;
-	pv.setWindowName("draw line");
-
-	while (1)
-	{
-		pv.setPointCloud(cloud_);
-		pv.updateViewer();
-		if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
-	}
-	
 
 }
 
@@ -1898,4 +1749,104 @@ void CPointcloudFuction::FileProcess_evacuate(string dir)
 			return;
 		}
 	}
+}
+
+void CPointcloudFuction::DrawTrajectory()
+{
+	//read file name
+	string dir = "../../data/process_DrawTrajectory";
+	vector<string> filenames_txt;
+	CTimeString::getFileNames_extension(dir, filenames_txt, ".csv");
+
+	if (filenames_txt.size() == 0)
+	{
+		cout << "ERROR: no file has found" << endl;
+		return;
+	}
+
+	//select file
+	cout << "select file:" << endl;
+	int i_readfile = 0;
+	for (int i = 0; i < filenames_txt.size(); i++)
+		cout << i << ": " << filenames_txt[i] << endl;
+	cout << "->";
+	cin >> i_readfile;
+
+	//input trajectory
+	vector<Eigen::Vector6d> trajectory_vec_vec;
+	{
+		vector<vector<double>> trajectory_temp;
+		trajectory_temp = CTimeString::getVecVecFromCSV(dir + "/" + filenames_txt[i_readfile]);
+
+		for (int i = 0; i < trajectory_temp.size(); i++)
+		{
+			Eigen::Vector6d trajectory_vec = Eigen::Vector6d::Zero();
+			trajectory_vec <<
+				trajectory_temp[i][1],
+				trajectory_temp[i][2],
+				trajectory_temp[i][3],
+				trajectory_temp[i][4],
+				trajectory_temp[i][5],
+				trajectory_temp[i][6];
+			trajectory_vec_vec.push_back(trajectory_vec);
+		}
+	}
+
+	//bool read_sequently = true;
+	//cout << "select: read_sequently  1:YES  0:NO" << endl;
+	//cout << "->";
+	//cin >> read_sequently;
+
+	typedef typename CPointVisualization<pcl::PointXYZRGB> CPV;
+	CPV pv;
+	pv.setWindowName("trajectory: " + filenames_txt[i_readfile]);
+
+	//draw trajectory
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZRGB>());
+	for (int i = 0; i < trajectory_vec_vec.size(); i++)
+	{
+		//draw arraw
+		pcl::PointXYZRGB point_pose_arraw;
+		point_pose_arraw.x = trajectory_vec_vec[i](0, 0);
+		point_pose_arraw.y = trajectory_vec_vec[i](1, 0);
+		point_pose_arraw.z = trajectory_vec_vec[i](2, 0);
+		point_pose_arraw.r = 255;
+		point_pose_arraw.g = 150;
+		point_pose_arraw.b = 0;
+		*cloud_ += *CPV::drawArrow(point_pose_arraw,
+			trajectory_vec_vec[i](3, 0), trajectory_vec_vec[i](4, 0), trajectory_vec_vec[i](5, 0));
+
+		//draw frame number
+		pcl::PointXYZRGB point_frame;
+		point_frame = point_pose_arraw;
+		point_frame.z += 1.;
+		point_frame.r = 255;
+		point_frame.g = 255;
+		point_frame.b = 0;
+		*cloud_ += *pv.drawNumber(point_frame, i);
+
+		if (i == 0) continue;
+
+		//draw line
+		pcl::PointXYZRGB point_pose_current;
+		point_pose_current = point_pose_arraw;
+		point_pose_current.r = 255;
+		point_pose_current.g = 0;
+		point_pose_current.b = 255;
+		pcl::PointXYZRGB point_pose_before;
+		point_pose_before = point_pose_current;
+		point_pose_before.x = trajectory_vec_vec[i - 1](0, 0);
+		point_pose_before.y = trajectory_vec_vec[i - 1](1, 0);
+		point_pose_before.z = trajectory_vec_vec[i - 1](2, 0);
+		*cloud_ += *CPV::drawLine(point_pose_before, point_pose_current);
+	}
+
+	pv.setPointCloud(cloud_);
+
+	while (1)
+	{
+		pv.updateViewer();
+		if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
+	}
+	pv.closeViewer();
 }
