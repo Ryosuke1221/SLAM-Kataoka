@@ -10,10 +10,10 @@ if( PCL_FOUND )
 	target_link_libraries(test_SLAM ${PCL_LIBRARIES} )
 endif()
 
-#OpenCV 3.4.1
-find_package( OpenCV REQUIRED PATHS "C:/Program Files/OpenCV-3.4.1")
-include_directories(${OpenCV_INCLUDE_DIRS} )
-target_link_libraries(test_SLAM ${OpenCV_LIBS} )
+##OpenCV 3.4.1
+#find_package( OpenCV REQUIRED PATHS "C:/Program Files/OpenCV-3.4.1")
+#include_directories(${OpenCV_INCLUDE_DIRS} )
+#target_link_libraries(test_SLAM ${OpenCV_LIBS} )
 
 #TimeString
 include_directories("${CMAKE_SOURCE_DIR}/include_TimeString")
