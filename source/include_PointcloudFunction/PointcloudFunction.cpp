@@ -101,7 +101,8 @@ void CPointcloudFuction::all_process()
 		EN_CombinePointCloud,
 		EN_CSV_FromPointCloud,
 		EN_DynamicTranslation,
-		EN_DrawTrajectory
+		EN_DrawTrajectory,
+		EN_Segmentation
 	};
 
 	while (!b_finish)
@@ -119,6 +120,7 @@ void CPointcloudFuction::all_process()
 		cout << " " << EN_CSV_FromPointCloud << ": CSV_FromPointCloud" << endl;
 		cout << " " << EN_DynamicTranslation << ": DynamicTranslation" << endl;
 		cout << " " << EN_DrawTrajectory << ": DrawTrajectory" << endl;
+		cout << " " << EN_Segmentation << ": Segmentation" << endl;
 
 		cout <<"WhichProcess: ";
 		cin >> WhichProcess;
@@ -172,6 +174,10 @@ void CPointcloudFuction::all_process()
 
 		case EN_DrawTrajectory:
 			DrawTrajectory();
+			break;
+
+		case EN_Segmentation:
+			DoSegmentation();
 			break;
 
 		default:
@@ -430,129 +436,7 @@ void CPointcloudFuction::getPCDFromCSV_naraha()
 
 void CPointcloudFuction::FreeSpace()
 {
-	//typedef typename pcl::PointXYZI PointType_func;
-	typedef typename pcl::PointXYZRGB PointType_func;
-
-	// Read in the cloud data
-	pcl::PointCloud<PointType_func>::Ptr cloud(new pcl::PointCloud<PointType_func>), cloud_f(new pcl::PointCloud<PointType_func>);
-	string filename_PC = "../../data/000XYZRGB_naraha.pcd";
-	pcl::io::loadPCDFile(filename_PC, *cloud);
-	std::cout << "PointCloud before filtering has: " << cloud->points.size() << " data points." << std::endl; //*
-
-	// Create the filtering object: downsample the dataset using a leaf size of 1cm
-	pcl::VoxelGrid<PointType_func> vg;
-	pcl::PointCloud<PointType_func>::Ptr cloud_filtered(new pcl::PointCloud<PointType_func>);
-	vg.setInputCloud(cloud);
-	vg.setLeafSize(0.01f, 0.01f, 0.01f);
-	//vg.filter(*cloud_filtered);
-	pcl::ApproximateVoxelGrid<PointType_func> VGFilter;
-	VGFilter.setInputCloud(cloud);
-	VGFilter.setLeafSize(0.01, 0.01, 0.01);
-	VGFilter.filter(*cloud_filtered);
-
-	std::cout << "PointCloud after filtering has: " << cloud_filtered->points.size() << " data points." << std::endl; //*
-
-
-	// Create the segmentation object for the planar model and set all the parameters
-	pcl::SACSegmentation<PointType_func> seg;
-	pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
-	pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
-	pcl::PointCloud<PointType_func>::Ptr cloud_plane(new pcl::PointCloud<PointType_func>());
-	//pcl::PCDWriter writer;
-	seg.setOptimizeCoefficients(true);
-	seg.setModelType(pcl::SACMODEL_PLANE);
-	seg.setMethodType(pcl::SAC_RANSAC);
-	seg.setMaxIterations(100);
-	seg.setDistanceThreshold(0.02);
-
-	int index = 0, nr_points = (int)cloud_filtered->points.size();
-	//while (cloud_filtered->points.size() > 0.3 * nr_points)
-	//{
-	//	// Segment the largest planar component from the remaining cloud
-	//	seg.setInputCloud(cloud_filtered);
-	//	seg.segment(*inliers, *coefficients);
-	//	if (inliers->indices.size() == 0)
-	//	{
-	//		std::cout << "Could not estimate a planar model for the given dataset." << std::endl;
-	//		break;
-	//	}
-
-	//	// Extract the planar inliers from the input cloud
-	//	pcl::ExtractIndices<PointType_func> extract;
-	//	extract.setInputCloud(cloud_filtered);
-	//	extract.setIndices(inliers);
-	//	extract.setNegative(false);
-
-	//	// Write the planar inliers to disk
-	//	extract.filter(*cloud_plane);
-	//	std::cout << "PointCloud representing the planar component: " << cloud_plane->points.size() << " data points." << std::endl;
-
-	//	// Remove the planar inliers, extract the rest
-	//	extract.setNegative(true);
-	//	extract.filter(*cloud_f);
-	//	cloud_filtered = cloud_f;
-	//}
-
-	cout << "cloud_filtered->size(): " << cloud_filtered->size()<< endl;
-
-	// Creating the KdTree object for the search method of the extraction
-	pcl::search::KdTree<PointType_func>::Ptr tree(new pcl::search::KdTree<PointType_func>);
-	tree->setInputCloud(cloud_filtered);
-
-	std::vector<pcl::PointIndices> cluster_indices;
-	pcl::EuclideanClusterExtraction<PointType_func> ec;
-	//ec.setClusterTolerance(0.02); // 2cm
-	ec.setClusterTolerance(3.);
-	ec.setMinClusterSize(100);	//threshold; distance of clusters 
-	ec.setMaxClusterSize(25000);
-	ec.setSearchMethod(tree);
-	ec.setInputCloud(cloud_filtered);
-	ec.extract(cluster_indices);
-	cout << "cluster_indices.size(): " << cluster_indices.size() << endl;
-
-	int j = 0;
-	vector < pcl::PointCloud<PointType_func>::Ptr > cloud_cluster_vec;
-	for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin(); it != cluster_indices.end(); ++it)
-	{
-		pcl::PointCloud<PointType_func>::Ptr cloud_cluster(new pcl::PointCloud<PointType_func>);
-		for (std::vector<int>::const_iterator pit = it->indices.begin(); pit != it->indices.end(); pit++)
-			cloud_cluster->points.push_back(cloud_filtered->points[*pit]); //*
-		cloud_cluster->width = cloud_cluster->points.size();
-		cloud_cluster->height = 1;
-		cloud_cluster->is_dense = true;
-
-		std::cout << "PointCloud representing the Cluster: " << cloud_cluster->points.size() << " data points." << std::endl;
-		std::stringstream ss;
-		ss << "cloud_cluster_" << j << ".pcd";
-		//writer.write<PointType_func>(ss.str(), *cloud_cluster, false); //*
-		j++;
-		cloud_cluster_vec.push_back(cloud_cluster);
-	}
-
-	CPointVisualization<PointType_func> pv;
-	int index_cluster = 0;
-	cout << "cloud_cluster_vec.size(): " << cloud_cluster_vec.size() << endl;
-
-	while (1)
-	{
-		if (cloud_cluster_vec.size() != 0)
-		{
-			pv.setPointCloud(cloud_cluster_vec[index_cluster]);
-
-		}
-		pv.updateViewer();
-		if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
-		if ((GetAsyncKeyState(VK_SPACE) & 1) && (cloud_cluster_vec.size() - 1 > index_cluster))
-		{
-			index_cluster++;
-			cout << "showing index:" << index_cluster << " size:" << cloud_cluster_vec[index_cluster]->size() << endl;
-		}
-
-	}
-	pv.closeViewer();
-
-
-	return;
+	
 }
 
 void CPointcloudFuction::filterNIRPointCloud_naraha()
@@ -1976,4 +1860,129 @@ void CPointcloudFuction::DrawTrajectory()
 		if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
 	}
 	pv.closeViewer();
+}
+
+void CPointcloudFuction::DoSegmentation()
+{
+	//typedef typename pcl::PointXYZI PointType_func;
+	typedef typename pcl::PointXYZRGB PointType_func;
+
+	// Read in the cloud data
+	pcl::PointCloud<PointType_func>::Ptr cloud(new pcl::PointCloud<PointType_func>), cloud_f(new pcl::PointCloud<PointType_func>);
+	string filename_PC = "../../data/000XYZRGB_naraha.pcd";
+	pcl::io::loadPCDFile(filename_PC, *cloud);
+	std::cout << "PointCloud before filtering has: " << cloud->points.size() << " data points." << std::endl; //*
+
+	// Create the filtering object: downsample the dataset using a leaf size of 1cm
+	pcl::VoxelGrid<PointType_func> vg;
+	pcl::PointCloud<PointType_func>::Ptr cloud_filtered(new pcl::PointCloud<PointType_func>);
+	vg.setInputCloud(cloud);
+	vg.setLeafSize(0.01f, 0.01f, 0.01f);
+	//vg.filter(*cloud_filtered);
+	pcl::ApproximateVoxelGrid<PointType_func> VGFilter;
+	VGFilter.setInputCloud(cloud);
+	VGFilter.setLeafSize(0.01, 0.01, 0.01);
+	VGFilter.filter(*cloud_filtered);
+
+	std::cout << "PointCloud after filtering has: " << cloud_filtered->points.size() << " data points." << std::endl; //*
+
+
+	// Create the segmentation object for the planar model and set all the parameters
+	pcl::SACSegmentation<PointType_func> seg;
+	pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+	pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+	pcl::PointCloud<PointType_func>::Ptr cloud_plane(new pcl::PointCloud<PointType_func>());
+	//pcl::PCDWriter writer;
+	seg.setOptimizeCoefficients(true);
+	seg.setModelType(pcl::SACMODEL_PLANE);
+	seg.setMethodType(pcl::SAC_RANSAC);
+	seg.setMaxIterations(100);
+	seg.setDistanceThreshold(0.02);
+
+	int index = 0, nr_points = (int)cloud_filtered->points.size();
+	//while (cloud_filtered->points.size() > 0.3 * nr_points)
+	//{
+	//	// Segment the largest planar component from the remaining cloud
+	//	seg.setInputCloud(cloud_filtered);
+	//	seg.segment(*inliers, *coefficients);
+	//	if (inliers->indices.size() == 0)
+	//	{
+	//		std::cout << "Could not estimate a planar model for the given dataset." << std::endl;
+	//		break;
+	//	}
+
+	//	// Extract the planar inliers from the input cloud
+	//	pcl::ExtractIndices<PointType_func> extract;
+	//	extract.setInputCloud(cloud_filtered);
+	//	extract.setIndices(inliers);
+	//	extract.setNegative(false);
+
+	//	// Write the planar inliers to disk
+	//	extract.filter(*cloud_plane);
+	//	std::cout << "PointCloud representing the planar component: " << cloud_plane->points.size() << " data points." << std::endl;
+
+	//	// Remove the planar inliers, extract the rest
+	//	extract.setNegative(true);
+	//	extract.filter(*cloud_f);
+	//	cloud_filtered = cloud_f;
+	//}
+
+	cout << "cloud_filtered->size(): " << cloud_filtered->size() << endl;
+
+	// Creating the KdTree object for the search method of the extraction
+	pcl::search::KdTree<PointType_func>::Ptr tree(new pcl::search::KdTree<PointType_func>);
+	tree->setInputCloud(cloud_filtered);
+
+	std::vector<pcl::PointIndices> cluster_indices;
+	pcl::EuclideanClusterExtraction<PointType_func> ec;
+	//ec.setClusterTolerance(0.02); // 2cm
+	ec.setClusterTolerance(3.);
+	ec.setMinClusterSize(100);	//threshold; distance of clusters 
+	ec.setMaxClusterSize(25000);
+	ec.setSearchMethod(tree);
+	ec.setInputCloud(cloud_filtered);
+	ec.extract(cluster_indices);
+	cout << "cluster_indices.size(): " << cluster_indices.size() << endl;
+
+	int j = 0;
+	vector < pcl::PointCloud<PointType_func>::Ptr > cloud_cluster_vec;
+	for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin(); it != cluster_indices.end(); ++it)
+	{
+		pcl::PointCloud<PointType_func>::Ptr cloud_cluster(new pcl::PointCloud<PointType_func>);
+		for (std::vector<int>::const_iterator pit = it->indices.begin(); pit != it->indices.end(); pit++)
+			cloud_cluster->points.push_back(cloud_filtered->points[*pit]); //*
+		cloud_cluster->width = cloud_cluster->points.size();
+		cloud_cluster->height = 1;
+		cloud_cluster->is_dense = true;
+
+		std::cout << "PointCloud representing the Cluster: " << cloud_cluster->points.size() << " data points." << std::endl;
+		std::stringstream ss;
+		ss << "cloud_cluster_" << j << ".pcd";
+		//writer.write<PointType_func>(ss.str(), *cloud_cluster, false); //*
+		j++;
+		cloud_cluster_vec.push_back(cloud_cluster);
+	}
+
+	CPointVisualization<PointType_func> pv;
+	int index_cluster = 0;
+	cout << "cloud_cluster_vec.size(): " << cloud_cluster_vec.size() << endl;
+
+	while (1)
+	{
+		if (cloud_cluster_vec.size() != 0)
+		{
+			pv.setPointCloud(cloud_cluster_vec[index_cluster]);
+
+		}
+		pv.updateViewer();
+		if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
+		if ((GetAsyncKeyState(VK_SPACE) & 1) && (cloud_cluster_vec.size() - 1 > index_cluster))
+		{
+			index_cluster++;
+			cout << "showing index:" << index_cluster << " size:" << cloud_cluster_vec[index_cluster]->size() << endl;
+		}
+
+	}
+	pv.closeViewer();
+
 }
