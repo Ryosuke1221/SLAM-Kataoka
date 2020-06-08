@@ -596,6 +596,7 @@ void CPointcloudFuction::HandRegistration()
 
 
 	CPointVisualization<PointType_func> pv;
+	CPointVisualization<PointType_func> pv_2frame;
 
 	if (typeid(PointType_func) == typeid(pcl::PointXYZI))
 		pv.setWindowName("show XYZI");
@@ -604,11 +605,15 @@ void CPointcloudFuction::HandRegistration()
 	else
 		throw std::runtime_error("This PointType is unsupported.");
 
+	pv_2frame.setWindowName("show 2 frame");
+
 	pcl::PointCloud<PointType_func>::Ptr cloud_show(new pcl::PointCloud<PointType_func>());
 	pcl::PointCloud<PointType_func>::Ptr cloud_show_static(new pcl::PointCloud<PointType_func>());
 	pcl::PointCloud<PointType_func>::Ptr cloud_moving(new pcl::PointCloud<PointType_func>());
 	pcl::PointCloud<PointType_func>::Ptr cloud_moving_init(new pcl::PointCloud<PointType_func>());
 	pcl::PointCloud<PointType_func>::Ptr cloud_temp(new pcl::PointCloud<PointType_func>());
+	pcl::PointCloud<PointType_func>::Ptr cloud_before(new pcl::PointCloud<PointType_func>());//final state in frame before now one
+	pcl::PointCloud<PointType_func>::Ptr cloud_show_2frame(new pcl::PointCloud<PointType_func>());
 
 	Eigen::Affine3f Trans_;
 	Eigen::Matrix4d HM_free = Eigen::Matrix4d::Identity();
@@ -808,6 +813,8 @@ void CPointcloudFuction::HandRegistration()
 			break;
 		case ENTER:
 			*cloud_show_static += *cloud_moving;
+			cloud_before->clear();
+			pcl::copyPointCloud(*cloud_moving, *cloud_before);
 			HM_free = Eigen::Matrix4d::Identity();
 			for (int i = 0; i < index_PC_now; i++) HM_free = HM_free * HM_displacement_vec[i];
 			HM_displacement_vec[index_PC_now] = HM_free.inverse() * HM_Trans_now;
@@ -840,10 +847,16 @@ void CPointcloudFuction::HandRegistration()
 		cloud_show->clear();
 		*cloud_show += *cloud_show_static;
 		*cloud_show += *cloud_moving;
+		cloud_show_2frame->clear();
+		*cloud_show_2frame += *cloud_before;
+		*cloud_show_2frame += *cloud_moving;
 
 		if (cloud_show->size() != 0) {
 			pv.setPointCloud(cloud_show);
 			pv.updateViewer();
+			pv_2frame.setPointCloud(cloud_show_2frame);
+			pv_2frame.updateViewer();
+
 		}
 
 		if (b_break) break;
