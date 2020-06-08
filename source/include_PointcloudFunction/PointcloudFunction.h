@@ -24,7 +24,7 @@
 //VTK_MODULE_INIT(vtkRenderingOpenGL);
 //VTK_MODULE_INIT(vtkInteractionStyle);
 
-//#include "KataokaPCL.h"
+#include "../include_ICP/KataokaPCL.h"
 
 //should be under pcl includes
 #include<windows.h>
@@ -138,6 +138,7 @@ private:
 		YAW_,
 		ENTER,
 		SUBTRACT,
+		RSHIFT,
 		ESC
 	};
 public:

@@ -833,6 +833,14 @@ void CPointcloudFuction::HandRegistration()
 			b_break = true;
 			b_escaped = true;
 			break;
+		case RSHIFT:
+			if (cloud_before->size() != 0 && cloud_moving->size() != 0)
+			{
+				cout << "median of this frame and before frame:";
+				cout << CKataokaPCL::getMedianDistance(*cloud_before, *cloud_moving) << endl;
+			}
+			else cout << "ERROR: couldn't show median because empty pointcloud" << endl;
+			break;
 
 		default:
 			break;
@@ -856,7 +864,6 @@ void CPointcloudFuction::HandRegistration()
 			pv.updateViewer();
 			pv_2frame.setPointCloud(cloud_show_2frame);
 			pv_2frame.updateViewer();
-
 		}
 
 		if (b_break) break;
@@ -923,36 +930,19 @@ CPointcloudFuction::KEYNUM CPointcloudFuction::getKEYNUM()
 	short key_num_ENTER;
 	short key_num_ESC;
 	short key_num_SUBTRACT;
+	short key_num_LSHIFT;
 
-	if (b_PChasNUMPAD)
-	{
-		key_num_X_ = GetAsyncKeyState(VK_NUMPAD7);
-		key_num_Y_ = GetAsyncKeyState(VK_NUMPAD8);
-		key_num_Z_ = GetAsyncKeyState(VK_NUMPAD9);
-		key_num_ROLL_ = GetAsyncKeyState(VK_NUMPAD4);
-		key_num_PITCH_ = GetAsyncKeyState(VK_NUMPAD5);
-		key_num_YAW_ = GetAsyncKeyState(VK_NUMPAD6);
-		key_num_ZERO = GetAsyncKeyState(VK_NUMPAD0);
-		key_num_ENTER = GetAsyncKeyState(VK_RETURN);
-		key_num_ESC = GetAsyncKeyState(VK_ESCAPE);
-		key_num_SUBTRACT = GetAsyncKeyState(VK_SUBTRACT);
-
-	}
-
-	else
-	{
-		key_num_X_ = GetAsyncKeyState(0x31);	//1
-		key_num_Y_ = GetAsyncKeyState(0x32);	//2
-		key_num_Z_ = GetAsyncKeyState(0x33);	//3
-		key_num_ROLL_ = GetAsyncKeyState(0x34);	//4
-		key_num_PITCH_ = GetAsyncKeyState(0x35);//5
-		key_num_YAW_ = GetAsyncKeyState(0x36);	//6
-		key_num_ZERO = GetAsyncKeyState(0x30);	//0
-		key_num_ENTER = GetAsyncKeyState(VK_RETURN);
-		key_num_ESC = GetAsyncKeyState(VK_ESCAPE);
-		key_num_SUBTRACT = GetAsyncKeyState(VK_OEM_MINUS);
-
-	}
+	key_num_X_ = GetAsyncKeyState(0x31);	//1
+	key_num_Y_ = GetAsyncKeyState(0x32);	//2
+	key_num_Z_ = GetAsyncKeyState(0x33);	//3
+	key_num_ROLL_ = GetAsyncKeyState(0x34);	//4
+	key_num_PITCH_ = GetAsyncKeyState(0x35);//5
+	key_num_YAW_ = GetAsyncKeyState(0x36);	//6
+	key_num_ZERO = GetAsyncKeyState(0x30);	//0
+	key_num_ENTER = GetAsyncKeyState(VK_RETURN);
+	key_num_ESC = GetAsyncKeyState(VK_ESCAPE);
+	key_num_SUBTRACT = GetAsyncKeyState(VK_OEM_MINUS);
+	key_num_LSHIFT = GetAsyncKeyState(VK_RSHIFT);
 
 	if ((key_num_X_ & 1) == 1) key_ = X_;
 	else if ((key_num_Y_ & 1) == 1) key_ = Y_;
@@ -964,6 +954,7 @@ CPointcloudFuction::KEYNUM CPointcloudFuction::getKEYNUM()
 	else if ((key_num_ENTER & 1) == 1) key_ = ENTER;
 	else if ((key_num_SUBTRACT & 1) == 1) key_ = SUBTRACT;
 	else if ((key_num_ESC & 1) == 1) key_ = ESC;
+	else if ((key_num_LSHIFT & 1) == 1) key_ = RSHIFT;
 	//{
 	//	cout << "ESC called" << endl;
 	//	b_escaped = true;
