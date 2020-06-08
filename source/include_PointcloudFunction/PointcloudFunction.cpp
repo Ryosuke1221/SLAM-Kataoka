@@ -607,7 +607,7 @@ void CPointcloudFuction::HandRegistration()
 	pcl::PointCloud<PointType_func>::Ptr cloud_show(new pcl::PointCloud<PointType_func>());
 	pcl::PointCloud<PointType_func>::Ptr cloud_show_static(new pcl::PointCloud<PointType_func>());
 	pcl::PointCloud<PointType_func>::Ptr cloud_moving(new pcl::PointCloud<PointType_func>());
-	pcl::PointCloud<PointType_func>::Ptr cloud_moving_before(new pcl::PointCloud<PointType_func>());
+	pcl::PointCloud<PointType_func>::Ptr cloud_moving_init(new pcl::PointCloud<PointType_func>());
 	pcl::PointCloud<PointType_func>::Ptr cloud_temp(new pcl::PointCloud<PointType_func>());
 
 	Eigen::Affine3f Trans_;
@@ -713,14 +713,14 @@ void CPointcloudFuction::HandRegistration()
 		//input next PointCloud
 		if (b_makeNewPC) {
 
-			cloud_moving_before->clear();
+			cloud_moving_init->clear();
 
 			string filename_PC;
 			filename_PC = dir_ + "/" + filenames_[index_PC_now];
 
-			if (-1 == pcl::io::loadPCDFile(filename_PC, *cloud_moving_before)) break;
+			if (-1 == pcl::io::loadPCDFile(filename_PC, *cloud_moving_init)) break;
 
-			cout << "i:" << index_PC_now << " number:" << cloud_moving_before->size();
+			cout << "i:" << index_PC_now << " number:" << cloud_moving_init->size();
 			cout << " finename: " << filenames_[index_PC_now] << endl;
 
 			cout << endl;
@@ -743,7 +743,7 @@ void CPointcloudFuction::HandRegistration()
 			for (int i = 0; i <= index_PC_now; i++) HM_free = HM_free * HM_displacement_vec[i];
 			HM_Trans_now = HM_free;
 			Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
-			pcl::transformPointCloud(*cloud_moving_before, *cloud_moving, Trans_);
+			pcl::transformPointCloud(*cloud_moving_init, *cloud_moving, Trans_);
 
 			b_makeNewPC = false;
 
@@ -835,7 +835,7 @@ void CPointcloudFuction::HandRegistration()
 			cloud_moving->clear();
 			Trans_ = Eigen::Affine3f::Identity();
 			Trans_ = calcAffine3fFromHomogeneousMatrix(HM_Trans_now);
-			pcl::transformPointCloud(*cloud_moving_before, *cloud_moving, Trans_);
+			pcl::transformPointCloud(*cloud_moving_init, *cloud_moving, Trans_);
 		}
 		cloud_show->clear();
 		*cloud_show += *cloud_show_static;
