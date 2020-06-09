@@ -7,6 +7,6 @@ add_subdirectory(include_RobotState)
 add_subdirectory(include_TimeString)
 add_subdirectory(include_PointcloudFunction)
 add_subdirectory(test_GlobalRegistration)
-add_subdirectory(test_HandRegistration)
+add_subdirectory(test_PointcloudFunction)
 add_subdirectory(test_SLAM)
 
