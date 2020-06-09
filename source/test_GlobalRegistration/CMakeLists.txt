@@ -1,4 +1,4 @@
-add_executable(test_GlobalRegistration test_GlobalRegistration.cpp )
+add_executable(test_GlobalRegistration main.cpp )
 
 #PCL 1.8
 find_package( PCL 1.8 REQUIRED )

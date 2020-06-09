@@ -1,4 +1,4 @@
-add_executable(test_PointcloudFunction test_PointcloudFunction.cpp )
+add_executable(test_PointcloudFunction main.cpp )
 
 #PCL 1.8
 find_package( PCL 1.8 REQUIRED )
