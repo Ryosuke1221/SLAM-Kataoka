@@ -87,7 +87,7 @@ public:
 	void combinePointCloud_naraha();
 
 	template <class T_PointType>
-	void detectPlane(pcl::PointCloud<T_PointType> &cloud_, bool b_remove = false)
+	void detectPlane(pcl::PointCloud<T_PointType> &cloud_,double th_distance, bool b_cout = false, bool b_remove = false)
 	{
 		//https://qiita.com/akachochin/items/47f1470565e76adb1880
 		//https://www.slideshare.net/masafuminoda/pcl-11030703
@@ -101,20 +101,21 @@ public:
 		seg.setModelType(pcl::SACMODEL_PLANE);
 		seg.setMethodType(pcl::SAC_RANSAC);
 		seg.setMaxIterations(200);
-		//seg.setDistanceThreshold(0.1);
-		//seg.setDistanceThreshold(0.05);	//velo
-		seg.setDistanceThreshold(0.01);		//nir	
+		seg.setDistanceThreshold(th_distance);	
 		seg.setInputCloud(cloud_.makeShared());
 		seg.segment(*inliers, *coefficients);
 		if (inliers->indices.size() == 0)
 			PCL_ERROR("Could not estimate a planar model for the given dataset.");
 
-		cout << "Model coefficients:";
-		for (int i = 0; i < coefficients->values.size(); i++)
-			cout << " " << coefficients->values[i];
-		cout << " (pitch[deg]: " << -asin(coefficients->values[0]) * 180. / M_PI << ")";
-		cout << endl;
-		std::cerr << "Model inliers: " << inliers->indices.size() << std::endl;
+		if (b_cout)
+		{
+			cout << "Model coefficients:";
+			for (int i = 0; i < coefficients->values.size(); i++)
+				cout << " " << coefficients->values[i];
+			cout << " (pitch[deg]: " << -asin(coefficients->values[0]) * 180. / M_PI << ")";
+			cout << endl;
+			std::cerr << "Model inliers: " << inliers->indices.size() << std::endl;
+		}
 		for (size_t i = 0; i < inliers->indices.size(); ++i)
 			changeColor_plane(cloud_.points[inliers->indices[i]]);
 
@@ -157,7 +158,8 @@ public:
 	//should declare under enum type declaration
 	KEYNUM getKEYNUM();
 	void DrawTrajectory();
-
+	void DoSegmentation();
+	vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> getSegmentation(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, double th_tolerance);
 };
 
 template <class T_PointType>
