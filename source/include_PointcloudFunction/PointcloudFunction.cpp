@@ -1555,6 +1555,7 @@ void CPointcloudFuction::FileProcess()
 			//cout << "size: " << filenames_folder_temp.size() << endl;
 
 			int num_folder = 0;
+			cout << endl;
 			for (int i = 0; i < filenames_folder_temp.size(); i++)
 			{
 				filenames_folder.push_back(filenames_folder_temp[i]);
@@ -1608,6 +1609,7 @@ void CPointcloudFuction::FileProcess()
 				string s_filename = dir_ + "/" + filenames_folder[i];
 				vector<string> temp_;
 				CTimeString::getFileNames(s_filename, temp_, false, true, false);
+				cout << endl;
 				cout << s_filename << endl;
 				for (int j = 0; j < temp_.size(); j++)
 					cout << "     " << temp_[j] << endl;
