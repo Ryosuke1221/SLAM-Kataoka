@@ -160,6 +160,10 @@ public:
 	void DrawTrajectory();
 	void DoSegmentation();
 	vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> getSegmentation(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, double th_tolerance);
+	vector<pcl::PointIndices> getSegmentation_indices(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, double th_tolerance);
+	vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> getSegmentation_rest(
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_rest, double th_tolerance);
+
 };
 
 template <class T_PointType>
@@ -210,6 +214,7 @@ public:
 		pcl::PointXYZRGB point_arg, double Roll_, double Pitch_, double Yaw);
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr drawNumber(
 		pcl::PointXYZRGB point_center, int num_arg);
+	static vector<std::uint8_t> getRGBwithValuebyHSV(double value_, double value_max, double value_min);
 
 };
 
@@ -755,4 +760,54 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr CPointVisualization<T_PointType>::drawNum
 	pcl::transformPointCloud(*cloud_, *cloud_, Trans_);
 
 	return cloud_;
+}
+
+template < typename T_PointType >
+vector<std::uint8_t> CPointVisualization<T_PointType>::getRGBwithValuebyHSV(double value_, double value_max, double value_min)
+{
+	//digital gazou shori(2020/2/26), pp. 81-82.
+	float H_; 
+	int h_;
+	H_ = ((float)value_ - (float)value_min) / ((float)value_max - (float)value_min) * 2. * M_PI;
+	if (H_ == 2. * M_PI) H_ = 0.;
+	//cout << "H_:" << H_ * R2D << "[deg]" << endl;
+	h_ = (int)(3. / M_PI * H_);
+	float I_, P_, Q_, S_, T_;
+	I_ = 1.;
+	S_ = 1.;
+	P_ = I_ * (1. - S_);
+	Q_ = I_ * (1. - S_ * (3. / M_PI * H_ - (float)h_));
+	T_ = I_ * (1. - S_ * (1. - 3. / M_PI * H_ + (float)h_));
+	std::uint8_t I_uint8, P_uint8, Q_uint8, T_uint8;
+	I_uint8 = (std::uint8_t)(int)(255 * I_);
+	P_uint8 = (std::uint8_t)(int)(255 * P_);
+	Q_uint8 = (std::uint8_t)(int)(255 * Q_);
+	T_uint8 = (std::uint8_t)(int)(255 * T_);
+	std::uint8_t R_, G_, B_;
+	switch (h_)
+	{
+	case 0:
+		R_ = I_uint8; G_ = T_uint8; B_ = P_uint8;
+		break;
+	case 1:
+		R_ = Q_uint8; G_ = I_uint8; B_ = P_uint8;
+		break;
+	case 2:
+		R_ = P_uint8; G_ = I_uint8; B_ = T_uint8;
+		break;
+	case 3:
+		R_ = P_uint8; G_ = Q_uint8; B_ = I_uint8;
+		break;
+	case 4:
+		R_ = T_uint8; G_ = P_uint8; B_ = I_uint8;
+		break;
+	case 5:
+		R_ = I_uint8; G_ = P_uint8; B_ = Q_uint8;
+		break;
+	}
+	vector<std::uint8_t> color_vec;
+	color_vec.push_back(R_);
+	color_vec.push_back(G_);
+	color_vec.push_back(B_);
+	return color_vec;
 }

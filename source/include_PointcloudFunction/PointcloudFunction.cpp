@@ -1878,101 +1878,120 @@ void CPointcloudFuction::DrawTrajectory()
 void CPointcloudFuction::DoSegmentation()
 {
 	//typedef typename pcl::PointXYZI PointType_func;
-	typedef typename pcl::PointXYZRGB PointType_func;
+	typedef typename pcl::PointXYZRGB T_PointType;
 
 	// Read in the cloud data
-	pcl::PointCloud<PointType_func>::Ptr cloud(new pcl::PointCloud<PointType_func>);
+	pcl::PointCloud<T_PointType>::Ptr cloud(new pcl::PointCloud<T_PointType>);
 	string filename_PC = "../../data/000XYZRGB_naraha.pcd";
 	pcl::io::loadPCDFile(filename_PC, *cloud);
-	std::cout << "PointCloud before filtering has: " << cloud->points.size() << " data points." << std::endl; //*
 
-	vector < pcl::PointCloud<PointType_func>::Ptr > cloud_cluster_vec;
-	//cloud_cluster_vec = getSegmentation(cloud, 3.);
-	cloud_cluster_vec = getSegmentation(cloud, 2.);
-
-	CPointVisualization<PointType_func> pv;
-	int index_cluster = 0;
-	cout << "cloud_cluster_vec.size(): " << cloud_cluster_vec.size() << endl;
-	for (int i = 0; i < cloud_cluster_vec.size(); i++)
-	{
-		cout << "i:" << i << " cloud size:" << cloud_cluster_vec[i]->size() << endl;
-	}
-
-	pcl::PointCloud<PointType_func>::Ptr cloud_sum(new pcl::PointCloud<PointType_func>);
-	for (int i = 0; i < cloud_cluster_vec.size(); i++)
-	{
-		*cloud_sum += *cloud_cluster_vec[i];
-	}
-
-	while (1)
-	{
-		if (cloud_cluster_vec.size() != 0)
-		{
-			pv.setPointCloud(cloud_cluster_vec[index_cluster]);
-
-		}
-		pv.updateViewer();
-		if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
-		if ((GetAsyncKeyState(VK_SPACE) & 1) && (cloud_cluster_vec.size() - 1 > index_cluster))
-		{
-			index_cluster++;
-			cout << "showing index:" << index_cluster << " size:" << cloud_cluster_vec[index_cluster]->size() << endl;
-		}
-
-	}
-
-	//show sum pointcloud
-	while (1)
-	{
-		if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
-		pv.setPointCloud(cloud_sum);
-		pv.updateViewer();
-
-	}
-
-	pv.closeViewer();
-
-}
-
-vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> CPointcloudFuction::getSegmentation(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, double th_tolerance)
-{
-	//https://vml.sakura.ne.jp/koeda/PCL/tutorials/html/cluster_extraction.html#cluster-extraction
-
-	//typedef typename pcl::PointXYZI T_PointType;
-	typedef typename pcl::PointXYZRGB T_PointType;
-	bool b_removePlane = true;
-
-	pcl::PointCloud<T_PointType>::Ptr cloud(new pcl::PointCloud<T_PointType>);
-	pcl::copyPointCloud(*cloud_arg, *cloud);
-	std::cout << "PointCloud before filtering has: " << cloud->points.size() << " data points." << std::endl; //*
-
-	// Create the filtering object: downsample the dataset using a leaf size of 1cm
+	// Create the filtering object: downsample the dataset
 	pcl::ApproximateVoxelGrid<T_PointType> VGFilter;
 	float leaf_ = 0.01;
 	VGFilter.setInputCloud(cloud);
 	VGFilter.setLeafSize(leaf_, leaf_, leaf_);
 	VGFilter.filter(*cloud);
 
-	if (b_removePlane)
+	detectPlane<T_PointType>(*cloud, 0.05, false, true);	//velo
+	//detectPlane<T_PointType>(*cloud, 0.01, false, true);	//nir
+
+	cout << "PointCloud size:" << cloud->size() << endl;
+
+
+	vector < pcl::PointCloud<T_PointType>::Ptr > cloud_cluster_vec;
+	pcl::PointCloud<T_PointType>::Ptr cloud_rest(new pcl::PointCloud<T_PointType>);
+	//cloud_cluster_vec = getSegmentation(cloud, 3.);
+	//cloud_cluster_vec = getSegmentation(cloud, 1.);
+	//cloud_cluster_vec = getSegmentation(cloud, 0.5);
+	//cloud_cluster_vec = getSegmentation_rest(cloud, cloud_rest, 0.5);
+	cloud_cluster_vec = getSegmentation_rest(cloud, cloud_rest, 1.);
+
+	//next clustering
 	{
-		detectPlane<T_PointType>(*cloud, 0.05, false, true);	//velo
-		//detectPlane<T_PointType>(*cloud, 0.01, false, true);	//nir
+		vector < pcl::PointCloud<T_PointType>::Ptr > cloud_cluster_vec_next;
+		pcl::PointCloud<T_PointType>::Ptr cloud_rest_next(new pcl::PointCloud<T_PointType>);
+		cloud_cluster_vec_next = getSegmentation_rest(cloud_rest, cloud_rest_next, 2.);
+		for (int i = 0; i < cloud_cluster_vec_next.size(); i++)
+			cloud_cluster_vec.push_back(cloud_cluster_vec_next[i]);
+		cloud_rest->clear();
+		pcl::copyPointCloud(*cloud_rest_next, *cloud_rest);
 	}
 
+	cout << "cloud_cluster_vec.size(): " << cloud_cluster_vec.size() << endl;
+	for (int i = 0; i < cloud_cluster_vec.size(); i++)
+	{
+		cout << "i:" << i << " cloud size:" << cloud_cluster_vec[i]->size() << endl;
+	}
 
-	// Creating the KdTree object for the search method of the extraction
-	pcl::search::KdTree<T_PointType>::Ptr tree(new pcl::search::KdTree<T_PointType>);
-	tree->setInputCloud(cloud);
+	//getRGBwithValuebyHSV
+	for (int j = 0; j < cloud_cluster_vec.size(); j++)
+	{
+		vector<std::uint8_t> color_vec;
+		color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyHSV(j, cloud_cluster_vec.size(), 0);
+		cout << "j:" << j << " r:" << (int)color_vec[0] << " g:" << (int)color_vec[1] << " b:" << (int)color_vec[2] << endl;
+		for (int i = 0; i < cloud_cluster_vec[j]->size(); i++)
+		{
+			cloud_cluster_vec[j]->points[i].r = color_vec[0];
+			cloud_cluster_vec[j]->points[i].g = color_vec[1];
+			cloud_cluster_vec[j]->points[i].b = color_vec[2];
+		}
+	}
+
+	pcl::PointCloud<T_PointType>::Ptr cloud_sum(new pcl::PointCloud<T_PointType>);
+	for (int i = 0; i < cloud_cluster_vec.size(); i++)
+	{
+		*cloud_sum += *cloud_cluster_vec[i];
+	}
+
+	cout << "cloud size:" << cloud->size() << endl;
+	cout << "cloud_sum size:" << cloud_sum->size() << endl;
+	cout << "cloud_rest size:" << cloud_rest->size() << endl;
+
+	CPointVisualization<T_PointType> pv;
+	int index_cluster = 0;
+	//cout << "Press SPACE then show PointCloud" << endl;
+	//while (1)
+	//{
+	//	if ((GetAsyncKeyState(VK_SPACE) & 1) && (cloud_cluster_vec.size() - 1 > index_cluster) && cloud_cluster_vec.size() != 0)
+	//	{
+	//		pv.setPointCloud(cloud_cluster_vec[index_cluster]);
+	//		cout << "showing index:" << index_cluster << " size:" << cloud_cluster_vec[index_cluster]->size() << endl;
+	//		index_cluster++;
+	//	}
+	//	pv.updateViewer();
+	//	if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
+	//}
+
+	cout << "show sum pointcloud" << endl;
+	while (1)
+	{
+		if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
+		pv.setPointCloud(cloud_sum);
+		pv.updateViewer();
+	}
+
+	cout << "show rest pointcloud" << endl;
+	while (1)
+	{
+		if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
+		pv.setPointCloud(cloud_rest);
+		pv.updateViewer();
+	}
+
+	pv.closeViewer();
+}
+
+vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> CPointcloudFuction::getSegmentation(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, double th_tolerance)
+{
+	//typedef typename pcl::PointXYZI T_PointType;
+	typedef typename pcl::PointXYZRGB T_PointType;
+
+	pcl::PointCloud<T_PointType>::Ptr cloud(new pcl::PointCloud<T_PointType>);
+	pcl::copyPointCloud(*cloud_arg, *cloud);
+	std::cout << "PointCloud before filtering has: " << cloud->points.size() << " data points." << std::endl; //*
 
 	std::vector<pcl::PointIndices> cluster_indices;
-	pcl::EuclideanClusterExtraction<T_PointType> ec;
-	ec.setClusterTolerance(th_tolerance);
-	ec.setMinClusterSize(100);	//threshold; distance of clusters 
-	ec.setMaxClusterSize(25000);
-	ec.setSearchMethod(tree);
-	ec.setInputCloud(cloud);
-	ec.extract(cluster_indices);
-	//cout << "cluster_indices.size(): " << cluster_indices.size() << endl;
+	cluster_indices = getSegmentation_indices(cloud_arg, th_tolerance);
 
 	vector < pcl::PointCloud<T_PointType>::Ptr > cloud_cluster_vec;
 	////old
@@ -2005,6 +2024,85 @@ vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> CPointcloudFuction::getSegmentati
 		cloud_cluster->is_dense = true;
 		std::cout << "PointCloud representing the Cluster: " << cloud_cluster->points.size() << " data points." << std::endl;
 		cloud_cluster_vec.push_back(cloud_cluster);
+	}
+
+	return cloud_cluster_vec;
+}
+
+vector<pcl::PointIndices> CPointcloudFuction::getSegmentation_indices(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, double th_tolerance)
+{
+	//https://vml.sakura.ne.jp/koeda/PCL/tutorials/html/cluster_extraction.html#cluster-extraction
+
+	//typedef typename pcl::PointXYZI T_PointType;
+	typedef typename pcl::PointXYZRGB T_PointType;
+
+	pcl::PointCloud<T_PointType>::Ptr cloud(new pcl::PointCloud<T_PointType>);
+	pcl::copyPointCloud(*cloud_arg, *cloud);
+	std::cout << "PointCloud before filtering has: " << cloud->points.size() << " data points." << std::endl; //*
+
+	// Creating the KdTree object for the search method of the extraction
+	pcl::search::KdTree<T_PointType>::Ptr tree(new pcl::search::KdTree<T_PointType>);
+	tree->setInputCloud(cloud);
+
+	std::vector<pcl::PointIndices> cluster_indices;
+	pcl::EuclideanClusterExtraction<T_PointType> ec;
+	ec.setClusterTolerance(th_tolerance);
+	ec.setMinClusterSize(100);	//threshold; distance of clusters 
+	ec.setMaxClusterSize(25000);
+	ec.setSearchMethod(tree);
+	ec.setInputCloud(cloud);
+	ec.extract(cluster_indices);
+
+	return cluster_indices;
+}
+
+vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> CPointcloudFuction::getSegmentation_rest(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_rest, double th_tolerance)
+{
+	//typedef typename pcl::PointXYZI T_PointType;
+	typedef typename pcl::PointXYZRGB T_PointType;
+
+	pcl::PointCloud<T_PointType>::Ptr cloud(new pcl::PointCloud<T_PointType>);
+	pcl::copyPointCloud(*cloud_arg, *cloud);
+
+	std::vector<pcl::PointIndices> cluster_indices;
+	cluster_indices = getSegmentation_indices(cloud_arg, th_tolerance);
+
+	vector<bool> b_rest_vec;
+
+	for (int i = 0; i < cloud_arg->size(); i++)
+		b_rest_vec.push_back(true);
+
+	for (int j = 0; j < cluster_indices.size(); j++)
+	{
+		for (int i = 0; i < cluster_indices[j].indices.size(); i++)
+		{
+			b_rest_vec[cluster_indices[j].indices[i]] = false;
+		}
+	}
+
+	vector < pcl::PointCloud<T_PointType>::Ptr > cloud_cluster_vec;
+
+	//new
+	for (int j = 0; j < cluster_indices.size(); j++)
+	{
+		pcl::PointCloud<T_PointType>::Ptr cloud_cluster(new pcl::PointCloud<T_PointType>);
+		for (int i = 0; i < cluster_indices[j].indices.size(); i++)
+			cloud_cluster->push_back(cloud->points[cluster_indices[j].indices[i]]);
+		cloud_cluster->width = cloud_cluster->points.size();
+		cloud_cluster->height = 1;
+		cloud_cluster->is_dense = true;
+		std::cout << "PointCloud representing the Cluster: " << cloud_cluster->points.size() << " data points." << std::endl;
+		cloud_cluster_vec.push_back(cloud_cluster);
+	}
+
+	cloud_rest->clear();
+	for (int i = 0; i < cloud_arg->size(); i++)
+	{
+		if (b_rest_vec[i] == true)
+		{
+			auto point = cloud_arg->points[i];
+			cloud_rest->push_back(point);
+		}
 	}
 
 	return cloud_cluster_vec;
