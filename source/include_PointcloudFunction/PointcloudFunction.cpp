@@ -1155,7 +1155,7 @@ void CPointcloudFuction::combinePointCloud_naraha()
 				point_.y = cloud_nir->points[i].y;
 				point_.z = cloud_nir->points[i].z;
 				point_.r = (unsigned char)((int)cloud_nir->points[i].intensity);
-				point_.g = 0;
+				point_.g = 255;
 				point_.b = 0;
 				cloud_save->push_back(point_);
 			}
