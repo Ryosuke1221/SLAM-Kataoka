@@ -157,6 +157,7 @@ private:
 		YAW_MINUS,
 		ENTER,
 		RSHIFT,
+		RCTRL,
 		ESC
 	};
 public:

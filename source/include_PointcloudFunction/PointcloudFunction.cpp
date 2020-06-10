@@ -645,6 +645,15 @@ void CPointcloudFuction::HandRegistration()
 
 	vector<Eigen::Matrix4d>	HM_displacement_vec;
 
+	CKataokaPCL kataokaPCL;
+	int MaximumIterations;
+	double MaxCorrespondenceDistance, EuclideanFitnessEpsilon, TransformationEpsilon;
+	kataokaPCL.setMothodInt(0);
+	MaximumIterations = 50000;
+	MaxCorrespondenceDistance = 1.;
+	EuclideanFitnessEpsilon = 1e-5;
+	TransformationEpsilon = 1e-6;
+
 	//read txt (initial trajectory)
 	{
 		vector<Eigen::Vector6d> trajectory_vec_vec;
@@ -737,11 +746,12 @@ void CPointcloudFuction::HandRegistration()
 
 			cout << endl;
 			cout << "**********( key option )**********" << endl;
-			cout << "(plus mode)   +X:1  +Y:2  +Z:3  +Roll:4  +Pitch:5  +Yaw:6" << endl;
-			cout << "(minus mode)  -X:1  -Y:2  -Z:3  -Roll:4  -Pitch:5  -Yaw:6" << endl;
+			cout << " +X:1  +Y:2  +Z:3  +Roll:4  +Pitch:5  +Yaw:6" << endl;
+			cout << " -X:Q  -Y:W  -Z:E  -Roll:R  -Pitch:T  -Yaw:Y" << endl;
 			cout << "Resolution: translation:" << resolution_translation;
 			cout << "[m] rotation:" << resolution_rotation * R2D << "[deg]" << endl;
-			cout << "change plus mode and minus mode:-" << endl;
+			cout << "calc median: Left SHIFT" << endl;
+			cout << "Registration: Left CTRL" << endl;
 			cout << "Reset:0" << endl;
 			cout << "Next:ENTER" << endl;
 			cout << "Escape:ESC" << endl;
@@ -786,63 +796,76 @@ void CPointcloudFuction::HandRegistration()
 		}
 		
 		//determine transformation by key input
-		switch (key_)
+		if (key_ == X_)
 		{
-		case X_:
 			HM_Trans_now = calcHomogeneousMatrixFromVector6d(resolution_translation, 0., 0., 0., 0., 0.)
 				* HM_Trans_now;
-			break;
-		case Y_:
+		}
+		else if (key_ == Y_)
+		{
 			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., resolution_translation, 0., 0., 0., 0.)
 				* HM_Trans_now;
-			break;
-		case Z_:
+		}
+		else if (key_ == Z_)
+		{
 			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., resolution_translation, 0., 0., 0.)
 				* HM_Trans_now;
-			break;
-		case ROLL_:
+		}
+		else if (key_ == ROLL_)
+		{
 			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., resolution_rotation, 0., 0.)
 				* HM_Trans_now;
-			break;
-		case PITCH_:
+		}
+		else if (key_ == PITCH_)
+		{
 			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., resolution_rotation, 0.)
 				* HM_Trans_now;
-			break;
-		case YAW_:
+		}
+		else if (key_ == YAW_)
+		{
 			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., resolution_rotation)
 				* HM_Trans_now;
-			break;
-		case X_MINUS:
+		}
+		else if (key_ == X_MINUS)
+		{
 			HM_Trans_now = calcHomogeneousMatrixFromVector6d(-resolution_translation, 0., 0., 0., 0., 0.)
 				* HM_Trans_now;
-			break;
-		case Y_MINUS:
+
+		}
+		else if (key_ == Y_MINUS)
+		{
 			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., -resolution_translation, 0., 0., 0., 0.)
 				* HM_Trans_now;
-			break;
-		case Z_MINUS:
+		}
+		else if (key_ == Z_MINUS)
+		{
 			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., -resolution_translation, 0., 0., 0.)
 				* HM_Trans_now;
-			break;
-		case ROLL_MINUS:
+		}
+		else if (key_ == ROLL_MINUS)
+		{
 			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., -resolution_rotation, 0., 0.)
 				* HM_Trans_now;
-			break;
-		case PITCH_MINUS:
+		}
+		else if (key_ == PITCH_MINUS)
+		{
 			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., -resolution_rotation, 0.)
 				* HM_Trans_now;
-			break;
-		case YAW_MINUS:
+		}
+		else if (key_ == YAW_MINUS)
+		{
 			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., -resolution_rotation)
 				* HM_Trans_now;
-			break;
-		case ZERO:
+		}
+		else if (key_ == ZERO)
+		{
 			HM_free = Eigen::Matrix4d::Identity();
 			for (int i = 0; i <= index_PC_now; i++) HM_free = HM_free * HM_displacement_vec[i];
 			HM_Trans_now = HM_free;
 			cout << "0(numpad) pressed and reset" << endl;
-			break;
-		case ENTER:
+		}
+		else if (key_ == ENTER)
+		{
 			*cloud_show_static += *cloud_moving;
 			cloud_before->clear();
 			pcl::copyPointCloud(*cloud_moving, *cloud_before);
@@ -853,23 +876,82 @@ void CPointcloudFuction::HandRegistration()
 			if (index_PC_now == HM_displacement_vec.size()) b_break = true;
 			b_makeNewPC = true;
 			cout << "ENTER pressed" << endl;
-			break;
-		case ESC:
+		}
+		else if (key_ == ESC)
+		{
 			cout << "ESC called" << endl;
 			b_break = true;
 			b_escaped = true;
-			break;
-		case RSHIFT:
+
+		}
+		else if (key_ == RSHIFT)
+		{
 			if (cloud_before->size() != 0 && cloud_moving->size() != 0)
 			{
 				cout << "median of this frame and before frame:";
 				cout << CKataokaPCL::getMedianDistance(*cloud_before, *cloud_moving) << endl;
 			}
 			else cout << "ERROR: couldn't show median because empty pointcloud" << endl;
-			break;
 
-		default:
-			break;
+		}
+		else if (key_ == RCTRL)
+		{
+			Eigen::Vector6d Registration_Vec = Eigen::Vector6d::Zero();
+			//GetAsyncKeyState(VK_RETURN);
+			cout << endl;
+			cout << "Registration" << endl;
+			cout << "select additional option:" << endl;
+			cout << " 0:ICP" << endl;
+			cout << " 1:ICP(only X,Y,Yaw)" << endl;
+			cout << " 2:Global Registration" << endl;
+			cout << " 3:Global Registration(only X,Y,Yaw)" << endl;
+			cout << " 4:Configuration(ICP parameter)" << endl;
+			cout << " 5:Configuration(GR parameter)" << endl;
+			cout << "->";
+			int i_select;
+			cin >> i_select;
+			if (i_select == 0 || i_select == 1)
+			{
+				kataokaPCL.setMaximumIterations(MaximumIterations);
+				kataokaPCL.setMaxCorrespondenceDistance(MaxCorrespondenceDistance);
+				kataokaPCL.setEuclideanFitnessEpsilon(EuclideanFitnessEpsilon);
+				kataokaPCL.setTransformationEpsilon(TransformationEpsilon);
+				kataokaPCL.setInputSource(cloud_moving);
+				kataokaPCL.setInputTarget(cloud_before);
+				kataokaPCL.align();
+				Registration_Vec = kataokaPCL.getFinalTransformation_Vec();
+				if (i_select == 0)
+				{
+					HM_Trans_now = calcHomogeneousMatrixFromVector6d(
+						Registration_Vec(0, 0), Registration_Vec(1, 0), Registration_Vec(2, 0),
+						Registration_Vec(3, 0), Registration_Vec(4, 0), Registration_Vec(5, 0))
+						* HM_Trans_now;
+					cout << "X:" << Registration_Vec(0, 0) << " Y:" << Registration_Vec(1, 0) << " Z:" << Registration_Vec(2, 0) << endl;
+					cout << "Roll:" << Registration_Vec(3, 0) << " Pitch:" << Registration_Vec(4, 0) << " Yaw:" << Registration_Vec(5, 0) << endl;
+				}
+				else
+				{
+					HM_Trans_now = calcHomogeneousMatrixFromVector6d(
+						Registration_Vec(0, 0), Registration_Vec(1, 0), 0.,
+						0., 0., Registration_Vec(5, 0))
+						* HM_Trans_now;
+					cout << "X:" << Registration_Vec(0, 0) << " Y:" << Registration_Vec(1, 0) << " Yaw:" << Registration_Vec(5, 0) << endl;
+				}
+			}
+			else if (i_select == 2) {}
+			else if (i_select == 3) {}
+			else if (i_select == 4)
+			{
+				cout << "input MaxCorrespondenceDistance (double)" << endl;
+				cout << "->";
+				cin >> MaxCorrespondenceDistance;
+			}
+			else
+			{
+				cout << "ERROR: cin cought invalid value" << endl;
+			}
+			GetAsyncKeyState(VK_RETURN);
+			cout << endl;
 		}
 
 		if (!(key_ == NONE || key_ == ENTER)) {
@@ -963,7 +1045,8 @@ CPointcloudFuction::KEYNUM CPointcloudFuction::getKEYNUM()
 	short key_num_ENTER;
 	short key_num_ESC;
 	//short key_num_SUBTRACT;
-	short key_num_LSHIFT;
+	short key_num_RSHIFT;
+	short key_num_RCTRL;
 
 	key_num_X_ = GetAsyncKeyState(0x31);	//1
 	key_num_Y_ = GetAsyncKeyState(0x32);	//2
@@ -981,7 +1064,8 @@ CPointcloudFuction::KEYNUM CPointcloudFuction::getKEYNUM()
 	key_num_ENTER = GetAsyncKeyState(VK_RETURN);
 	key_num_ESC = GetAsyncKeyState(VK_ESCAPE);
 	//key_num_SUBTRACT = GetAsyncKeyState(VK_OEM_MINUS);
-	key_num_LSHIFT = GetAsyncKeyState(VK_RSHIFT);
+	key_num_RSHIFT = GetAsyncKeyState(VK_RSHIFT);
+	key_num_RCTRL = GetAsyncKeyState(VK_RCONTROL);
 
 	if ((key_num_X_ & 1) == 1) key_ = X_;
 	else if ((key_num_Y_ & 1) == 1) key_ = Y_;
@@ -999,7 +1083,8 @@ CPointcloudFuction::KEYNUM CPointcloudFuction::getKEYNUM()
 	else if ((key_num_ENTER & 1) == 1) key_ = ENTER;
 	//else if ((key_num_SUBTRACT & 1) == 1) key_ = SUBTRACT;
 	else if ((key_num_ESC & 1) == 1) key_ = ESC;
-	else if ((key_num_LSHIFT & 1) == 1) key_ = RSHIFT;
+	else if ((key_num_RSHIFT & 1) == 1) key_ = RSHIFT;
+	else if ((key_num_RCTRL & 1) == 1) key_ = RCTRL;
 	//{
 	//	cout << "ESC called" << endl;
 	//	b_escaped = true;
