@@ -149,8 +149,13 @@ private:
 		ROLL_,
 		PITCH_,
 		YAW_,
+		X_MINUS,
+		Y_MINUS,
+		Z_MINUS,
+		ROLL_MINUS,
+		PITCH_MINUS,
+		YAW_MINUS,
 		ENTER,
-		SUBTRACT,
 		RSHIFT,
 		ESC
 	};

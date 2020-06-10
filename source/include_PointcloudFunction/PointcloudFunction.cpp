@@ -631,7 +631,6 @@ void CPointcloudFuction::HandRegistration()
 	double resolution_rotation = 0.;
 	resolution_translation = 0.05;
 	resolution_rotation = 0.5 * M_PI / 180.;
-	float sign = 1.;
 
 	int index_PC_now = 0;
 	bool b_makeNewPC = true;
@@ -790,27 +789,51 @@ void CPointcloudFuction::HandRegistration()
 		switch (key_)
 		{
 		case X_:
-			HM_Trans_now = calcHomogeneousMatrixFromVector6d(sign * resolution_translation, 0., 0., 0., 0., 0.)
+			HM_Trans_now = calcHomogeneousMatrixFromVector6d(resolution_translation, 0., 0., 0., 0., 0.)
 				* HM_Trans_now;
 			break;
 		case Y_:
-			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., sign * resolution_translation, 0., 0., 0., 0.)
+			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., resolution_translation, 0., 0., 0., 0.)
 				* HM_Trans_now;
 			break;
 		case Z_:
-			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., sign * resolution_translation, 0., 0., 0.)
+			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., resolution_translation, 0., 0., 0.)
 				* HM_Trans_now;
 			break;
 		case ROLL_:
-			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., sign * resolution_rotation, 0., 0.)
+			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., resolution_rotation, 0., 0.)
 				* HM_Trans_now;
 			break;
 		case PITCH_:
-			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., sign * resolution_rotation, 0.)
+			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., resolution_rotation, 0.)
 				* HM_Trans_now;
 			break;
 		case YAW_:
-			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., sign * resolution_rotation)
+			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., resolution_rotation)
+				* HM_Trans_now;
+			break;
+		case X_MINUS:
+			HM_Trans_now = calcHomogeneousMatrixFromVector6d(-resolution_translation, 0., 0., 0., 0., 0.)
+				* HM_Trans_now;
+			break;
+		case Y_MINUS:
+			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., -resolution_translation, 0., 0., 0., 0.)
+				* HM_Trans_now;
+			break;
+		case Z_MINUS:
+			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., -resolution_translation, 0., 0., 0.)
+				* HM_Trans_now;
+			break;
+		case ROLL_MINUS:
+			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., -resolution_rotation, 0., 0.)
+				* HM_Trans_now;
+			break;
+		case PITCH_MINUS:
+			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., -resolution_rotation, 0.)
+				* HM_Trans_now;
+			break;
+		case YAW_MINUS:
+			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., -resolution_rotation)
 				* HM_Trans_now;
 			break;
 		case ZERO:
@@ -830,11 +853,6 @@ void CPointcloudFuction::HandRegistration()
 			if (index_PC_now == HM_displacement_vec.size()) b_break = true;
 			b_makeNewPC = true;
 			cout << "ENTER pressed" << endl;
-			break;
-		case SUBTRACT:
-			sign *= -1.;
-			if (sign == 1.) cout << "plus(+) mode" << endl;
-			else if (sign == -1.) cout << "minus(-) mode" << endl;
 			break;
 		case ESC:
 			cout << "ESC called" << endl;
@@ -935,10 +953,16 @@ CPointcloudFuction::KEYNUM CPointcloudFuction::getKEYNUM()
 	short key_num_ROLL_;
 	short key_num_PITCH_;
 	short key_num_YAW_;
+	short key_num_X_minus;
+	short key_num_Y_minus;
+	short key_num_Z_minus;
+	short key_num_ROLL_minus;
+	short key_num_PITCH_minus;
+	short key_num_YAW_minus;
 	short key_num_ZERO;
 	short key_num_ENTER;
 	short key_num_ESC;
-	short key_num_SUBTRACT;
+	//short key_num_SUBTRACT;
 	short key_num_LSHIFT;
 
 	key_num_X_ = GetAsyncKeyState(0x31);	//1
@@ -947,10 +971,16 @@ CPointcloudFuction::KEYNUM CPointcloudFuction::getKEYNUM()
 	key_num_ROLL_ = GetAsyncKeyState(0x34);	//4
 	key_num_PITCH_ = GetAsyncKeyState(0x35);//5
 	key_num_YAW_ = GetAsyncKeyState(0x36);	//6
+	key_num_X_minus = GetAsyncKeyState(0x51);	//Q
+	key_num_Y_minus = GetAsyncKeyState(0x57);	//W
+	key_num_Z_minus = GetAsyncKeyState(0x45);	//E
+	key_num_ROLL_minus = GetAsyncKeyState(0x52);	//R
+	key_num_PITCH_minus = GetAsyncKeyState(0x54);//T
+	key_num_YAW_minus = GetAsyncKeyState(0x59);	//Y
 	key_num_ZERO = GetAsyncKeyState(0x30);	//0
 	key_num_ENTER = GetAsyncKeyState(VK_RETURN);
 	key_num_ESC = GetAsyncKeyState(VK_ESCAPE);
-	key_num_SUBTRACT = GetAsyncKeyState(VK_OEM_MINUS);
+	//key_num_SUBTRACT = GetAsyncKeyState(VK_OEM_MINUS);
 	key_num_LSHIFT = GetAsyncKeyState(VK_RSHIFT);
 
 	if ((key_num_X_ & 1) == 1) key_ = X_;
@@ -959,9 +989,15 @@ CPointcloudFuction::KEYNUM CPointcloudFuction::getKEYNUM()
 	else if ((key_num_ROLL_ & 1) == 1) key_ = ROLL_;
 	else if ((key_num_PITCH_ & 1) == 1) key_ = PITCH_;
 	else if ((key_num_YAW_ & 1) == 1) key_ = YAW_;
+	else if ((key_num_X_minus & 1) == 1) key_ = X_MINUS;
+	else if ((key_num_Y_minus & 1) == 1) key_ = Y_MINUS;
+	else if ((key_num_Z_minus & 1) == 1) key_ = Z_MINUS;
+	else if ((key_num_ROLL_minus & 1) == 1) key_ = ROLL_MINUS;
+	else if ((key_num_PITCH_minus & 1) == 1) key_ = PITCH_MINUS;
+	else if ((key_num_YAW_minus & 1) == 1) key_ = YAW_MINUS;
 	else if ((key_num_ZERO & 1) == 1) key_ = ZERO;
 	else if ((key_num_ENTER & 1) == 1) key_ = ENTER;
-	else if ((key_num_SUBTRACT & 1) == 1) key_ = SUBTRACT;
+	//else if ((key_num_SUBTRACT & 1) == 1) key_ = SUBTRACT;
 	else if ((key_num_ESC & 1) == 1) key_ = ESC;
 	else if ((key_num_LSHIFT & 1) == 1) key_ = RSHIFT;
 	//{
