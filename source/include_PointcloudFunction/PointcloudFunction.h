@@ -188,7 +188,12 @@ class CPointVisualization
 	boost::mutex M_mutex;
 	static boost::mutex M_mutex_viewer;
 	T_PointCloudPtr M_cloud_;
-	T_PointType M_point;
+
+	pcl::PointCloud<pcl::Normal>::Ptr M_cloud_normal;
+	bool M_b_useNormal;
+	double M_radius_nor;
+	int M_level_nor_vis;
+	float M_scale_nor_vis;
 
 	boost::thread M_thread;
 
@@ -221,6 +226,7 @@ public:
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr drawNumber(
 		pcl::PointXYZRGB point_center, int num_arg);
 	static vector<std::uint8_t> getRGBwithValuebyHSV(double value_, double value_max, double value_min);
+	void useNormal(double radius_arg, int leven_arg, float scale_arg);
 
 };
 
@@ -287,6 +293,10 @@ CPointVisualization<T_PointType>::CPointVisualization()
 	}
 
 	M_cloud_ = (new pcl::PointCloud<T_PointType>)->makeShared();
+	M_cloud_normal = (new pcl::PointCloud<pcl::Normal>)->makeShared();
+
+	M_b_useNormal = false;
+
 
 	num_NumberPointcloud = 0;
 }
@@ -315,6 +325,26 @@ void CPointVisualization<T_PointType>::setPointCloud(T_PointCloudPtr cloud_arg)
 	//update pointcloud
 	M_cloud_->clear();
 	pcl::copyPointCloud(*cloud_arg, *M_cloud_);
+
+	if (!M_b_useNormal || M_cloud_->size() == 0) return;
+	//http://virtuemarket-lab.blogspot.com/2015/02/blog-post_35.html
+	pcl::NormalEstimation<T_PointType, pcl::Normal> ne;
+	ne.setInputCloud(M_cloud_);
+	pcl::search::KdTree<T_PointType>::Ptr tree(new pcl::search::KdTree<T_PointType>());
+	ne.setSearchMethod(tree);
+	ne.setRadiusSearch(M_radius_nor);
+	ne.compute(*M_cloud_normal);
+	cout << "M_cloud_normal->size():" << M_cloud_normal->size() << endl;
+	static int index_normal = 0;
+
+	if (M_b_useNormal && M_cloud_->size() != 0 && M_cloud_normal->size() != 0)
+	{
+		if (index_normal != 0)
+			M_viewer->removePointCloud("normals " + to_string(index_normal - 1));
+		M_viewer->addPointCloudNormals<T_PointType, pcl::Normal>(
+			M_cloud_, M_cloud_normal, M_level_nor_vis, M_scale_nor_vis, "normals " + to_string(index_normal));
+		index_normal++;
+	}
 }
 
 template < typename T_PointType >
@@ -816,4 +846,13 @@ vector<std::uint8_t> CPointVisualization<T_PointType>::getRGBwithValuebyHSV(doub
 	color_vec.push_back(G_);
 	color_vec.push_back(B_);
 	return color_vec;
+}
+
+template < typename T_PointType >
+void CPointVisualization<T_PointType>::useNormal(double radius_arg, int leven_arg, float scale_arg)
+{
+	M_radius_nor = radius_arg;
+	M_level_nor_vis = leven_arg;
+	M_scale_nor_vis = scale_arg;
+	M_b_useNormal = true;
 }

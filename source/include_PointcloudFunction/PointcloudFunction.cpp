@@ -217,6 +217,9 @@ void CPointcloudFuction::show_sequent()
 	else
 		throw std::runtime_error("This PointType is unsupported.");
 
+	////show normal
+	//pv.useNormal(0.3, 10, 0.1);
+
 	vector<string> filenames_;
 	CTimeString::getFileNames_extension(foldername_, filenames_,".pcd");
 	cout << "file size: " << filenames_.size() << endl;
@@ -256,6 +259,7 @@ void CPointcloudFuction::show_sequent()
 			cout << "showing:" << filenames_[index_] << endl;
 			cout << "size: " << cloud_->size() << endl;
 
+			pv.setPointCloud(cloud_);
 
 			//remove ground plane
 			if (cloud_->size() != 0 && b_plane)
@@ -282,7 +286,6 @@ void CPointcloudFuction::show_sequent()
 			break;
 		}
 
-		pv.setPointCloud(cloud_);
 		pv.updateViewer();
 
 	}
