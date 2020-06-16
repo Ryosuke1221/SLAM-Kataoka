@@ -169,6 +169,7 @@ public:
 	vector<pcl::PointIndices> getSegmentation_indices(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, double th_tolerance);
 	vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> getSegmentation_rest(
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_rest, double th_tolerance);
+	void GR_FPFH_SAC_IA();
 
 };
 

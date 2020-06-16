@@ -525,4 +525,137 @@ public:
 		return transform_;
 	}
 
+	template <class T_PointType>
+	static bool align_SAC_AI(
+		Eigen::Matrix4d &transformation_result, vector<int> &Inlier_, float &FitnessScore,
+		pcl::PointCloud<T_PointType> cloud_src, pcl::PointCloud<pcl::FPFHSignature33> fpfh_src,
+		pcl::PointCloud<T_PointType> cloud_tgt,	pcl::PointCloud<pcl::FPFHSignature33> fpfh_tgt,
+		float voxel_size, float MaxCorrespondenceDistance, float SimilarityThreshold,
+		float InlierFraction, int MaximumIterations, int NumberOfSamples, int CorrespondenceRandomness)
+	{
+		//VGF
+		cout << "cloud_src.size():" << cloud_src.size() << endl;
+		cout << "cloud_tgt.size():" << cloud_tgt.size() << endl;
+		const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
+		sor->setLeafSize(voxel_size, voxel_size, voxel_size);
+		sor->setInputCloud(cloud_src.makeShared());
+		sor->filter(cloud_src);
+		cout << "cloud_src.size():" << cloud_src.size() << endl;
+		sor->setInputCloud(cloud_tgt.makeShared());
+		sor->filter(cloud_tgt);
+		cout << "cloud_tgt.size():" << cloud_tgt.size() << endl;
+
+		//align
+		pcl::PointCloud<T_PointType> temp_;
+		pcl::SampleConsensusPrerejective<T_PointType, T_PointType, pcl::FPFHSignature33> align;
+		align.setInputSource(cloud_src.makeShared());
+		align.setSourceFeatures(fpfh_src.makeShared());
+		align.setInputTarget(cloud_tgt.makeShared());
+		align.setTargetFeatures(fpfh_tgt.makeShared());
+		align.setMaximumIterations(MaximumIterations);
+		align.setNumberOfSamples(NumberOfSamples);
+		align.setCorrespondenceRandomness(CorrespondenceRandomness);
+		align.setSimilarityThreshold(SimilarityThreshold);				//th of corr rejecter
+		align.setMaxCorrespondenceDistance(MaxCorrespondenceDistance);	//related to th of computing fitness score
+		align.setInlierFraction(InlierFraction);						//th of inlier number
+		//align->setMinSampleDistance(min_sample_distance_);	//function not found
+		align.align(temp_);
+
+		//result
+		transformation_result = align.getFinalTransformation().cast<double>();
+		Inlier_ = align.getInliers();
+		FitnessScore = align.getFitnessScore();
+
+		bool b_hasConverged = false;
+		if (1 == align.hasConverged()) b_hasConverged = true;
+		return b_hasConverged;
+	}
+
+	template <class T_PointType>
+	static bool align_SAC_AI_RANSAC(
+		Eigen::Matrix4d &transformation_result, vector<int> &Inlier_, float &FitnessScore,
+		pcl::PointCloud<T_PointType> cloud_src, pcl::PointCloud<pcl::FPFHSignature33> fpfh_src,
+		pcl::PointCloud<T_PointType> cloud_tgt, pcl::PointCloud<pcl::FPFHSignature33> fpfh_tgt,
+		float voxel_size, float MaxCorrespondenceDistance, float SimilarityThreshold,
+		float InlierFraction, int MaximumIterations, int NumberOfSamples, int CorrespondenceRandomness)
+	{
+		cout << "RANSAC" << endl;
+		int max_RANSAC = 50;
+		int index_RANSAC = 0;
+		int frame_failed = 0;
+		vector<pair<float, Eigen::Matrix4d>> output_vec;
+		vector<vector<int>> inlier_vec;
+		vector<float> fitnessscore_vec;
+
+		while (1)
+		{
+			Eigen::Matrix4d transform_ = Eigen::Matrix4d::Identity();
+			bool b_hasConverged = false;
+			vector<int> inlier_;
+			float fitnessscore;
+
+			b_hasConverged = CKataokaPCL::align_SAC_AI<T_PointType>(transform_, inlier_, fitnessscore,
+				cloud_src, fpfh_src, cloud_tgt, fpfh_tgt,
+				voxel_size, MaxCorrespondenceDistance, SimilarityThreshold,
+				InlierFraction, MaximumIterations, NumberOfSamples, CorrespondenceRandomness);
+
+			cout << "index_RANSAC:" << index_RANSAC << endl;
+			cout << "b_hasConverged:" << b_hasConverged << endl;
+			cout << "fitnessscore:" << fitnessscore << endl;
+			cout << "inlier_.size():" << inlier_.size() << endl;
+
+			if (b_hasConverged)
+			{
+				output_vec.push_back(make_pair((float)inlier_.size() / (float)fpfh_src.size(), transform_));
+				inlier_vec.push_back(inlier_);
+				fitnessscore_vec.push_back(fitnessscore);
+			}
+			else
+				frame_failed++;
+
+			index_RANSAC++;
+			if (index_RANSAC >= max_RANSAC) break;
+
+		}
+
+		for (int i = 0; i < output_vec.size(); i++)
+		{
+			cout << "i:" << i << " score:" << output_vec[i].first << endl;
+			cout << output_vec[i].second << endl;
+			cout << endl;
+		}
+
+		//select most good value
+		float score_min = 100.;
+		int i_RANSAC;
+		for (int i = 0; i < output_vec.size(); i++)
+		{
+			if (output_vec[i].first < score_min)
+			{
+				score_min = output_vec[i].first;
+				i_RANSAC = i;
+			}
+		}
+
+		cout << "Show Result" << endl;
+		cout << "frame_failed:" << frame_failed << "(/" << max_RANSAC << ")" << endl;
+		if (output_vec.size() != 0)
+		{
+			cout << "converged final transformation" << endl;
+			cout << "i:" << i_RANSAC << " score:" << output_vec[i_RANSAC].first << endl;
+			cout << output_vec[i_RANSAC].second << endl;
+			transformation_result = output_vec[i_RANSAC].second;
+			Inlier_ = inlier_vec[i_RANSAC];
+			FitnessScore = fitnessscore_vec[i_RANSAC];
+		}
+		else
+			transformation_result = Eigen::Matrix4d::Identity();
+
+		cout << "align finished" << endl;
+
+		bool b_hasConverged = false;
+		if(output_vec.size() != 0) b_hasConverged = true;
+		return b_hasConverged;
+	}
+
 };

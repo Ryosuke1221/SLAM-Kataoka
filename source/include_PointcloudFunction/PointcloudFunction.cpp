@@ -102,7 +102,8 @@ void CPointcloudFuction::all_process()
 		EN_CSV_FromPointCloud,
 		EN_DynamicTranslation,
 		EN_DrawTrajectory,
-		EN_Segmentation
+		EN_Segmentation,
+		EN_GR_FPFH_SAC_IA
 	};
 
 	while (!b_finish)
@@ -121,6 +122,7 @@ void CPointcloudFuction::all_process()
 		cout << " " << EN_DynamicTranslation << ": DynamicTranslation" << endl;
 		cout << " " << EN_DrawTrajectory << ": DrawTrajectory" << endl;
 		cout << " " << EN_Segmentation << ": Segmentation" << endl;
+		cout << " " << EN_GR_FPFH_SAC_IA << ": GR_FPFH_SAC_IA" << endl;
 
 		cout <<"WhichProcess: ";
 		cin >> WhichProcess;
@@ -178,6 +180,10 @@ void CPointcloudFuction::all_process()
 
 		case EN_Segmentation:
 			DoSegmentation();
+			break;
+			
+		case EN_GR_FPFH_SAC_IA:
+			GR_FPFH_SAC_IA();
 			break;
 
 		default:
@@ -441,73 +447,7 @@ void CPointcloudFuction::getPCDFromCSV_naraha()
 
 void CPointcloudFuction::FreeSpace()
 {
-	//typedef pcl::PointXYZ T_PointType;
-	typedef pcl::PointXYZRGB T_PointType;
-
-	pcl::PointCloud<T_PointType>::Ptr scene1(new pcl::PointCloud<T_PointType>());
-	pcl::PointCloud<T_PointType>::Ptr scene2(new pcl::PointCloud<T_PointType>());
-	pcl::io::loadPCDFile("../../data/008XYZRGB_naraha.pcd", *scene1);
-	//pcl::io::loadPCDFile("../../data/008XYZRGB_naraha.pcd", *scene2);
-	pcl::io::loadPCDFile("../../data/009XYZRGB_naraha.pcd", *scene2);
-
-	if (typeid(T_PointType) == typeid(pcl::PointXYZRGB))
-	{
-		for (int i = 0; i < scene1->size(); i++)
-		{
-			scene1->points[i].r = 0;
-			scene1->points[i].g = 0;
-			scene1->points[i].b = 255;
-		}
-
-		for (int i = 0; i < scene2->size(); i++)
-		{
-			scene2->points[i].r = 255;
-			scene2->points[i].g = 255;
-			scene2->points[i].b = 0;
-		}
-
-	}
-
-	// scene2 を適当に回転・並進
-	Eigen::Matrix4f transform_matrix;
-	transform_matrix <<
-		1.0, 0.0, 0.0, -0.1,
-		0.0, 0.0, -1.0, 0.1,
-		0.0, 1.0, 0.0, -0.1,
-		0.0, 0.0, 0.0, 1;
-	//pcl::transformPointCloud(*scene2, *scene2, transform_matrix);
-
-	//visualization
-	pcl::PointCloud<T_PointType>::Ptr cloud_show_init(new pcl::PointCloud<T_PointType>());
-	pcl::PointCloud<T_PointType>::Ptr cloud_show_global(new pcl::PointCloud<T_PointType>());
-
-	CPointVisualization<T_PointType> pv_init;
-	pv_init.setWindowName("Initial");
-	CPointVisualization<T_PointType> pv_global;
-	pv_global.setWindowName("Global");
-
-	*cloud_show_init += *scene1;
-	*cloud_show_init += *scene2;
-	Eigen::Affine3f Trans_ = Eigen::Affine3f::Identity();
-	Eigen::Matrix4d transform_ = Eigen::Matrix4d::Identity();
-	transform_ = CKataokaPCL::align_FPFH_SAC_AI<T_PointType>(*scene1, *scene2);
-	Trans_ = calcAffine3fFromHomogeneousMatrix(transform_);
-	pcl::transformPointCloud(*scene1, *scene1, Trans_);
-	*cloud_show_global += *scene1;
-	*cloud_show_global += *scene2;
-
-	pv_init.setPointCloud(cloud_show_init);
-	pv_global.setPointCloud(cloud_show_global);
-
-	while (1)
-	{
-		pv_init.updateViewer();
-		pv_global.updateViewer();
-		if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
-
-	}
-	pv_init.closeViewer();
-	pv_global.closeViewer();
+	
 }
 
 void CPointcloudFuction::filterNIRPointCloud_naraha()
@@ -2320,4 +2260,126 @@ vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> CPointcloudFuction::getSegmentati
 	}
 
 	return cloud_cluster_vec;
+}
+
+void CPointcloudFuction::GR_FPFH_SAC_IA()
+{
+	//typedef pcl::PointXYZ T_PointType;
+	typedef pcl::PointXYZRGB T_PointType;
+
+	pcl::PointCloud<T_PointType>::Ptr scene1(new pcl::PointCloud<T_PointType>());
+	pcl::PointCloud<T_PointType>::Ptr scene2(new pcl::PointCloud<T_PointType>());
+	pcl::io::loadPCDFile("../../data/008XYZRGB_naraha.pcd", *scene1);
+	//pcl::io::loadPCDFile("../../data/008XYZRGB_naraha.pcd", *scene2);
+	pcl::io::loadPCDFile("../../data/009XYZRGB_naraha.pcd", *scene2);
+
+	if (typeid(T_PointType) == typeid(pcl::PointXYZRGB))
+	{
+		for (int i = 0; i < scene1->size(); i++)
+		{
+			scene1->points[i].r = 0;
+			scene1->points[i].g = 0;
+			scene1->points[i].b = 255;
+		}
+
+		for (int i = 0; i < scene2->size(); i++)
+		{
+			scene2->points[i].r = 255;
+			scene2->points[i].g = 255;
+			scene2->points[i].b = 0;
+		}
+
+	}
+
+	// scene2 を適当に回転・並進
+	Eigen::Matrix4f transform_matrix;
+	transform_matrix <<
+		1.0, 0.0, 0.0, -0.1,
+		0.0, 0.0, -1.0, 0.1,
+		0.0, 1.0, 0.0, -0.1,
+		0.0, 0.0, 0.0, 1;
+	//pcl::transformPointCloud(*scene2, *scene2, transform_matrix);
+
+	//visualization
+	pcl::PointCloud<T_PointType>::Ptr cloud_show_init(new pcl::PointCloud<T_PointType>());
+	pcl::PointCloud<T_PointType>::Ptr cloud_show_global(new pcl::PointCloud<T_PointType>());
+
+	CPointVisualization<T_PointType> pv_init;
+	pv_init.setWindowName("Initial");
+	CPointVisualization<T_PointType> pv_global;
+	pv_global.setWindowName("Global");
+
+	*cloud_show_init += *scene1;
+	*cloud_show_init += *scene2;
+
+	float voxel_size;
+	//voxel_size = 0.01;
+	//voxel_size = 0.05;
+	voxel_size = 0.1;
+
+	float radius_normal_FPFH, radius_FPFH;
+	radius_normal_FPFH = voxel_size * 2.0;
+	radius_FPFH = voxel_size * 5.0;
+
+	float MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC, InlierFraction_SAC;
+	MaxCorrespondenceDistance_SAC = voxel_size * 2.5;
+	int MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC;
+	//MaximumIterations_SAC = 500000;
+	//MaximumIterations_SAC = 50;	//8 & 8
+	//MaximumIterations_SAC = 1000;
+	MaximumIterations_SAC = 500;
+	//NumberOfSamples_SAC = 4;//8 & 8
+	//NumberOfSamples_SAC = 10;
+	NumberOfSamples_SAC = 100;
+	//CorrespondenceRandomness_SAC = 2;
+	CorrespondenceRandomness_SAC = 10;
+	//SimilarityThreshold_SAC = 0.9f;
+	SimilarityThreshold_SAC = 0.01f;
+	//InlierFraction_SAC = 0.25f;
+	InlierFraction_SAC = 0.15f;
+	cout << "fill InlierFraction_SAC ->";
+	cin >> InlierFraction_SAC;
+
+	Eigen::Matrix4d transform_ = Eigen::Matrix4d::Identity();
+	pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src(new pcl::PointCloud<pcl::FPFHSignature33>);
+	pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt(new pcl::PointCloud<pcl::FPFHSignature33>);
+	fpfh_src = CKataokaPCL::computeFPFH<T_PointType>(*scene1, voxel_size, radius_normal_FPFH, radius_FPFH);
+	fpfh_tgt = CKataokaPCL::computeFPFH<T_PointType>(*scene2, voxel_size, radius_normal_FPFH, radius_FPFH);
+
+
+	cout << "RANSAC" << endl;
+	int max_RANSAC = 50;
+	int index_RANSAC = 0;
+	int frame_failed = 0;
+	vector<pair<float, Eigen::Matrix4d>> output_vec;
+
+	bool b_hasConverged = false;
+	vector<int> inlier_;
+	float fitnessscore;
+
+	b_hasConverged = CKataokaPCL::align_SAC_AI_RANSAC<T_PointType>(transform_, inlier_, fitnessscore,
+		*scene1, *fpfh_src, *scene2, *fpfh_tgt,
+		voxel_size, MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC,
+		InlierFraction_SAC, MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC);
+
+	//transform_ = CKataokaPCL::align_FPFH_SAC_AI<T_PointType>(*scene1, *scene2);
+	   	 
+	Eigen::Affine3f Trans_ = Eigen::Affine3f::Identity();
+	Trans_ = calcAffine3fFromHomogeneousMatrix(transform_);
+	pcl::transformPointCloud(*scene1, *scene1, Trans_);
+	*cloud_show_global += *scene1;
+	*cloud_show_global += *scene2;
+
+	pv_init.setPointCloud(cloud_show_init);
+	pv_global.setPointCloud(cloud_show_global);
+
+	while (1)
+	{
+		pv_init.updateViewer();
+		pv_global.updateViewer();
+		if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
+
+	}
+	pv_init.closeViewer();
+	pv_global.closeViewer();
 }
