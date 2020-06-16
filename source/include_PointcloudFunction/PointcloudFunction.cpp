@@ -447,8 +447,8 @@ void CPointcloudFuction::FreeSpace()
 	pcl::PointCloud<T_PointType>::Ptr scene1(new pcl::PointCloud<T_PointType>());
 	pcl::PointCloud<T_PointType>::Ptr scene2(new pcl::PointCloud<T_PointType>());
 	pcl::io::loadPCDFile("../../data/008XYZRGB_naraha.pcd", *scene1);
-	pcl::io::loadPCDFile("../../data/008XYZRGB_naraha.pcd", *scene2);
-	//pcl::io::loadPCDFile("../../data/009XYZRGB_naraha.pcd", *scene2);
+	//pcl::io::loadPCDFile("../../data/008XYZRGB_naraha.pcd", *scene2);
+	pcl::io::loadPCDFile("../../data/009XYZRGB_naraha.pcd", *scene2);
 
 	if (typeid(T_PointType) == typeid(pcl::PointXYZRGB))
 	{
@@ -475,7 +475,7 @@ void CPointcloudFuction::FreeSpace()
 		0.0, 0.0, -1.0, 0.1,
 		0.0, 1.0, 0.0, -0.1,
 		0.0, 0.0, 0.0, 1;
-	pcl::transformPointCloud(*scene2, *scene2, transform_matrix);
+	//pcl::transformPointCloud(*scene2, *scene2, transform_matrix);
 
 	//visualization
 	pcl::PointCloud<T_PointType>::Ptr cloud_show_init(new pcl::PointCloud<T_PointType>());
