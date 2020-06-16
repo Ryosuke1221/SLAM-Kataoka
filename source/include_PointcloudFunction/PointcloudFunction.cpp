@@ -441,7 +441,73 @@ void CPointcloudFuction::getPCDFromCSV_naraha()
 
 void CPointcloudFuction::FreeSpace()
 {
-	
+	//typedef pcl::PointXYZ T_PointType;
+	typedef pcl::PointXYZRGB T_PointType;
+
+	pcl::PointCloud<T_PointType>::Ptr scene1(new pcl::PointCloud<T_PointType>());
+	pcl::PointCloud<T_PointType>::Ptr scene2(new pcl::PointCloud<T_PointType>());
+	pcl::io::loadPCDFile("../../data/008XYZRGB_naraha.pcd", *scene1);
+	pcl::io::loadPCDFile("../../data/008XYZRGB_naraha.pcd", *scene2);
+	//pcl::io::loadPCDFile("../../data/009XYZRGB_naraha.pcd", *scene2);
+
+	if (typeid(T_PointType) == typeid(pcl::PointXYZRGB))
+	{
+		for (int i = 0; i < scene1->size(); i++)
+		{
+			scene1->points[i].r = 0;
+			scene1->points[i].g = 0;
+			scene1->points[i].b = 255;
+		}
+
+		for (int i = 0; i < scene2->size(); i++)
+		{
+			scene2->points[i].r = 255;
+			scene2->points[i].g = 255;
+			scene2->points[i].b = 0;
+		}
+
+	}
+
+	// scene2 ÇìKìñÇ…âÒì]ÅEï¿êi
+	Eigen::Matrix4f transform_matrix;
+	transform_matrix <<
+		1.0, 0.0, 0.0, -0.1,
+		0.0, 0.0, -1.0, 0.1,
+		0.0, 1.0, 0.0, -0.1,
+		0.0, 0.0, 0.0, 1;
+	pcl::transformPointCloud(*scene2, *scene2, transform_matrix);
+
+	//visualization
+	pcl::PointCloud<T_PointType>::Ptr cloud_show_init(new pcl::PointCloud<T_PointType>());
+	pcl::PointCloud<T_PointType>::Ptr cloud_show_global(new pcl::PointCloud<T_PointType>());
+
+	CPointVisualization<T_PointType> pv_init;
+	pv_init.setWindowName("Initial");
+	CPointVisualization<T_PointType> pv_global;
+	pv_global.setWindowName("Global");
+
+	*cloud_show_init += *scene1;
+	*cloud_show_init += *scene2;
+	Eigen::Affine3f Trans_ = Eigen::Affine3f::Identity();
+	Eigen::Matrix4d transform_ = Eigen::Matrix4d::Identity();
+	transform_ = CKataokaPCL::align_FPFH_SAC_AI<T_PointType>(*scene1, *scene2);
+	Trans_ = calcAffine3fFromHomogeneousMatrix(transform_);
+	pcl::transformPointCloud(*scene1, *scene1, Trans_);
+	*cloud_show_global += *scene1;
+	*cloud_show_global += *scene2;
+
+	pv_init.setPointCloud(cloud_show_init);
+	pv_global.setPointCloud(cloud_show_global);
+
+	while (1)
+	{
+		pv_init.updateViewer();
+		pv_global.updateViewer();
+		if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
+
+	}
+	pv_init.closeViewer();
+	pv_global.closeViewer();
 }
 
 void CPointcloudFuction::filterNIRPointCloud_naraha()

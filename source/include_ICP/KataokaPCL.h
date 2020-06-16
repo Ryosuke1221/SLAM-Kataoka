@@ -7,6 +7,7 @@
 #include <sstream>
 #include <iostream>
 #include <fstream>
+#include <random>
 
 #include <pcl/common/io.h>
 #include <pcl/common/copy_point.h>
@@ -23,7 +24,16 @@
 
 #include <pcl/registration/icp.h>
 
-#include <random>
+#include <pcl/io/ply_io.h>
+#include <pcl/common/transforms.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/features/fpfh.h>
+#include <pcl/sample_consensus/ransac.h>
+#include <pcl/registration/sample_consensus_prerejective.h>
+//#include <pcl/registration/icp.h>
+#include <pcl/io/pcd_io.h>
+
 
 #include"KataokaCorrespondence.h"
 #include"KataokaConvergence.h"
@@ -318,6 +328,128 @@ public:
 		return getCorrMedianDistance(correspondences);
 	}
 
+	template <class T_PointType>
+	static pcl::PointCloud<pcl::FPFHSignature33>::Ptr computeFPFH(
+		pcl::PointCloud<T_PointType> cloud_, float radius_normal, float radius_FPFH)
+	{
+		//const float radius_normal = voxel_size * 2.0;
+		const auto view_point = T_PointType(0.0, 10.0, 10.0);
+
+		const pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
+		const pcl::NormalEstimation<T_PointType, pcl::Normal>::Ptr ne(new pcl::NormalEstimation<T_PointType, pcl::Normal>);
+		const pcl::search::KdTree<T_PointType>::Ptr kdtree(new pcl::search::KdTree<T_PointType>);
+		ne->setInputCloud(cloud_.makeShared());
+		ne->setRadiusSearch(radius_normal);
+		ne->setSearchMethod(kdtree);
+		ne->setViewPoint(view_point.x, view_point.y, view_point.z);
+		ne->compute(*normals);
+
+		//const float radius_FPFH = voxel_size * 5.0;
+		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh(new pcl::PointCloud<pcl::FPFHSignature33>);
+		const pcl::FPFHEstimation<T_PointType, pcl::Normal, pcl::FPFHSignature33>::Ptr fpfhe(new pcl::FPFHEstimation<T_PointType, pcl::Normal, pcl::FPFHSignature33>);
+		fpfhe->setInputCloud(cloud_.makeShared());
+		fpfhe->setSearchSurface(cloud_.makeShared());
+		fpfhe->setInputNormals(normals);
+		fpfhe->setSearchMethod(kdtree);
+		fpfhe->setRadiusSearch(radius_FPFH);
+		fpfhe->compute(*fpfh);
+
+		//cout << "fpfh->size:" << fpfh->size() << endl;
+		//vector<vector<double>> hist_vecvec;
+		//for (int j = 0; j < fpfh->size(); j++)
+		//{
+		//	//if (j % 1000 != 0) continue;
+		//	//cout << "j:" << j << " fpfh->points[j].descriptorSize:" << (int)fpfh->points[j].descriptorSize << endl;
+		//	//cout << "j:" << j << " fpfh->points[j].descriptorSize:" << fpfh->points[j].descriptorSize << endl;
+
+		//	int size_array = sizeof(fpfh->points[j].histogram);
+		//	vector<double> hist_vec;
+		//	for (int i = 0; i < size_array; i++)
+		//	{
+		//		hist_vec.push_back(fpfh->points[j].histogram[i]);
+		//	}
+		//	hist_vecvec.push_back(hist_vec);
+		//}
+		//cout << "hist_vecvec[0].size()" << hist_vecvec[0].size() << endl;
+		//string filename = "../../data/" + CTimeString::getTimeString() + "hist.csv";
+
+		return fpfh;
+	}
+
+	template <class T_PointType>
+	static Eigen::Matrix4d align_FPFH_SAC_AI(pcl::PointCloud<T_PointType> cloud_src, pcl::PointCloud<T_PointType> cloud_tgt)
+	{
+		cout << "preprocess" << endl;
+
+		//pcl::PointCloud<T_PointType>::Ptr src_(new pcl::PointCloud<T_PointType>());
+		//pcl::PointCloud<T_PointType>::Ptr tgt_(new pcl::PointCloud<T_PointType>());
+		pcl::PointCloud<T_PointType> src_;
+		pcl::PointCloud<T_PointType> tgt_;
+		pcl::copyPointCloud(cloud_src, src_);
+		pcl::copyPointCloud(cloud_tgt, tgt_);
+
+		float voxel_size;
+		//voxel_size = 0.01;
+		//voxel_size = 0.05;
+		voxel_size = 0.1;
+
+		float radius_normal_FPFH, radius_FPFH;
+		radius_normal_FPFH = voxel_size * 2.0;
+		radius_FPFH = voxel_size * 5.0;
+
+		float distance_th_evaluation_SAC, SimilarityThreshold_SAC, InlierFraction_SAC;
+		distance_th_evaluation_SAC = voxel_size * 2.5;
+		int MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC;
+		//MaximumIterations_SAC = 500000;
+		//MaximumIterations_SAC = 50;	//8 & 8
+		MaximumIterations_SAC = 200;
+		NumberOfSamples_SAC = 4;//8 & 8
+		//NumberOfSamples_SAC = 10;
+		CorrespondenceRandomness_SAC = 2;
+		SimilarityThreshold_SAC = 0.9f;
+		InlierFraction_SAC = 0.25f;
+
+
+		const pcl::PointCloud<T_PointType>::Ptr keypoints(new pcl::PointCloud<T_PointType>);
+		const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>); // ‚È‚º‚©Ptr‚ªprotected‚È‚Ì‚Å
+		sor->setLeafSize(voxel_size, voxel_size, voxel_size);
+		sor->setInputCloud(src_.makeShared());
+		sor->filter(src_);
+		cout << "cloud_src.size():" << cloud_src.size() << endl;
+		cout << "src_->size():" << src_.size() << endl;
+		sor->setInputCloud(tgt_.makeShared());
+		sor->filter(tgt_);
+		cout << "cloud_tgt.size():" << cloud_tgt.size() << endl;
+		cout << "tgt_->size():" << tgt_.size() << endl;
+
+		//compute fpfh
+		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src(new pcl::PointCloud<pcl::FPFHSignature33>);
+		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt(new pcl::PointCloud<pcl::FPFHSignature33>);
+		fpfh_src = computeFPFH(src_, radius_normal_FPFH, radius_FPFH);
+		fpfh_tgt = computeFPFH(tgt_, radius_normal_FPFH, radius_FPFH);
+		//void* align;
+		pcl::PointCloud<T_PointType> temp_;
+		Eigen::Matrix4d transform_ = Eigen::Matrix4d::Identity();
+		cout << "RANSAC" << endl;
+
+		pcl::SampleConsensusPrerejective<T_PointType, T_PointType, pcl::FPFHSignature33> align;
+		align.setInputSource(src_.makeShared());
+		align.setSourceFeatures(fpfh_src);
+		align.setInputTarget(tgt_.makeShared());
+		align.setTargetFeatures(fpfh_tgt);
+		align.setMaximumIterations(MaximumIterations_SAC);
+		align.setNumberOfSamples(NumberOfSamples_SAC);
+		align.setCorrespondenceRandomness(CorrespondenceRandomness_SAC);
+		align.setSimilarityThreshold(SimilarityThreshold_SAC);				//th of corr rejecter
+		align.setMaxCorrespondenceDistance(distance_th_evaluation_SAC);	//related to th of computing fitness score
+		align.setInlierFraction(InlierFraction_SAC);						//th of inlier number
+		//align->setMinSampleDistance(min_sample_distance_);	//function not found
+		align.align(temp_);
+		cout << "align.getFitnessScore():" << align.getFitnessScore() << endl;
+		cout << "align.hasConverged():" << align.hasConverged() << endl;
+		transform_ = align.getFinalTransformation().cast<double>();
+
+		return transform_;
+	}
+
 };
-
-
