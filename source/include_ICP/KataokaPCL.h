@@ -534,16 +534,16 @@ public:
 		float InlierFraction, int MaximumIterations, int NumberOfSamples, int CorrespondenceRandomness)
 	{
 		//VGF
-		cout << "cloud_src.size():" << cloud_src.size() << endl;
-		cout << "cloud_tgt.size():" << cloud_tgt.size() << endl;
+		//cout << "cloud_src.size():" << cloud_src.size() << endl;
+		//cout << "cloud_tgt.size():" << cloud_tgt.size() << endl;
 		const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
 		sor->setLeafSize(voxel_size, voxel_size, voxel_size);
 		sor->setInputCloud(cloud_src.makeShared());
 		sor->filter(cloud_src);
-		cout << "cloud_src.size():" << cloud_src.size() << endl;
+		//cout << "cloud_src.size():" << cloud_src.size() << endl;
 		sor->setInputCloud(cloud_tgt.makeShared());
 		sor->filter(cloud_tgt);
-		cout << "cloud_tgt.size():" << cloud_tgt.size() << endl;
+		//cout << "cloud_tgt.size():" << cloud_tgt.size() << endl;
 
 		//align
 		pcl::PointCloud<T_PointType> temp_;
@@ -604,6 +604,7 @@ public:
 			cout << "b_hasConverged:" << b_hasConverged << endl;
 			cout << "fitnessscore:" << fitnessscore << endl;
 			cout << "inlier_.size():" << inlier_.size() << endl;
+			cout << endl;
 
 			if (b_hasConverged)
 			{

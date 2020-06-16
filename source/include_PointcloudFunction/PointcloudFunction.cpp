@@ -2406,6 +2406,10 @@ void CPointcloudFuction::GR_FPFH_SAC_IA()
 		vector<string> filenames_;
 		CTimeString::getFileNames_extension(dir_, filenames_, ".pcd");
 
+		//make new folder
+		string s_newfoldername = time_start;
+		CTimeString::makenewfolder(dir_, s_newfoldername);
+
 		vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec;
 		vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> fpfh_vec;
 		vector<vector<string>> s_output_vecvec;
@@ -2447,9 +2451,7 @@ void CPointcloudFuction::GR_FPFH_SAC_IA()
 		{
 			vector<string> s_temp_vec;
 			s_temp_vec.push_back("voxel_size");
-			s_temp_vec.push_back("");
-			s_temp_vec.push_back("");
-			s_temp_vec.push_back("");
+			s_temp_vec.push_back(""); s_temp_vec.push_back(""); s_temp_vec.push_back("");
 			s_temp_vec.push_back(to_string(voxel_size));
 			s_output_vecvec.push_back(s_temp_vec);
 		}
@@ -2555,9 +2557,15 @@ void CPointcloudFuction::GR_FPFH_SAC_IA()
 			s_temp_vec.push_back("inlier size");
 			s_temp_vec.push_back("inlier rate");
 			s_temp_vec.push_back("convergence");
-			s_temp_vec.push_back("frame_success");
+			s_temp_vec.push_back("success_frame");
 			s_temp_vec.push_back("fitness");
 			s_temp_vec.push_back("time");
+			s_temp_vec.push_back("X");
+			s_temp_vec.push_back("Y");
+			s_temp_vec.push_back("Z");
+			s_temp_vec.push_back("ROLL");
+			s_temp_vec.push_back("PITCH");
+			s_temp_vec.push_back("YAW");
 			s_output_vecvec.push_back(s_temp_vec);
 		}
 
@@ -2601,10 +2609,11 @@ void CPointcloudFuction::GR_FPFH_SAC_IA()
 					voxel_size, MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC,	InlierFraction_SAC,
 					MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC, max_RANSAC);
 
-				//output
+				//output csv
+				Eigen::Vector6d transform_vec = Eigen::Vector6d::Zero();
+				transform_vec = calcVector6dFromHomogeneousMatrix(transform_);
 				string time_end_frame = CTimeString::getTimeString();
 				string time_elapsed_frame = CTimeString::getTimeElapsefrom2Strings(time_start_frame, time_end_frame);
-
 				vector<string> s_temp_vec;
 				s_temp_vec.push_back(to_string(i_tgt));
 				s_temp_vec.push_back(to_string(i_src));
@@ -2618,9 +2627,64 @@ void CPointcloudFuction::GR_FPFH_SAC_IA()
 				s_temp_vec.push_back(to_string(max_RANSAC - frame_failed) + "(/" + to_string(max_RANSAC) + ")");
 				s_temp_vec.push_back(to_string(fitnessscore));
 				s_temp_vec.push_back(time_elapsed_frame);
-				s_output_vecvec.push_back(s_temp_vec);
-			}
+				s_temp_vec.push_back(to_string(transform_vec(0, 0)));	//X
+				s_temp_vec.push_back(to_string(transform_vec(1, 0)));	//Y
+				s_temp_vec.push_back(to_string(transform_vec(2, 0)));	//Z
+				s_temp_vec.push_back(to_string(transform_vec(3, 0)));	//ROLL
+				s_temp_vec.push_back(to_string(transform_vec(4, 0)));	//PITCH
+				s_temp_vec.push_back(to_string(transform_vec(5, 0)));	//YAW
 
+				s_output_vecvec.push_back(s_temp_vec);
+
+				//save pointcloud
+				pcl::PointCloud<T_PointType>::Ptr cloud_src(new pcl::PointCloud<T_PointType>());
+				pcl::PointCloud<T_PointType>::Ptr cloud_tgt(new pcl::PointCloud<T_PointType>());
+				//VGF
+				const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
+				sor->setLeafSize(voxel_size, voxel_size, voxel_size);
+				sor->setInputCloud(cloud_vec[i_src]);
+				sor->filter(*cloud_src);
+				sor->setInputCloud(cloud_vec[i_tgt]);
+				sor->filter(*cloud_tgt);
+				//color
+				for (int i = 0; i < cloud_tgt->size(); i++)
+				{
+					cloud_tgt->points[i].r = 255;
+					cloud_tgt->points[i].g = 0;
+					cloud_tgt->points[i].b = 0;
+				}
+				for (int i = 0; i < cloud_src->size(); i++)
+				{
+					cloud_src->points[i].r = 0;
+					cloud_src->points[i].g = 255;
+					cloud_src->points[i].b = 0;
+				}
+				//transform
+				{
+					Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
+					Trans_temp = calcAffine3fFromHomogeneousMatrix(transform_);
+					pcl::transformPointCloud(*cloud_src, *cloud_src, Trans_temp);
+				}
+				//add
+				*cloud_tgt += *cloud_src;
+				//filename
+				string s_filename_output;
+				{
+					string s_src;
+					s_src = to_string(i_src);
+					if (s_src.size() < 3) s_src = "0" + s_src;
+					if (s_src.size() < 3) s_src = "0" + s_src;
+					string s_tgt;
+					s_tgt = to_string(i_tgt);
+					if (s_tgt.size() < 3) s_tgt = "0" + s_tgt;
+					if (s_tgt.size() < 3) s_tgt = "0" + s_tgt;
+					s_filename_output = "t" + s_tgt + "s" + s_src + "XYZRGB.pcd";
+				}
+				//save
+				pcl::io::savePCDFile<T_PointType>(dir_ + "/" + s_newfoldername + "/" + s_filename_output, *cloud_tgt);
+				cout << endl;
+				cout << endl;
+			}
 		}
 
 		string time_end = CTimeString::getTimeString();
@@ -2643,7 +2707,9 @@ void CPointcloudFuction::GR_FPFH_SAC_IA()
 			s_output_vecvec.push_back(s_temp_vec);
 		}
 
-		CTimeString::getCSVFromVecVec(s_output_vecvec, "../../data/process_GR_FPFH_SAC_IA/"+ time_start+ "_output.csv");
+		//CTimeString::getCSVFromVecVec(s_output_vecvec, "../../data/process_GR_FPFH_SAC_IA/"+ time_start+ "_output.csv");
+		CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + s_newfoldername + "/" + time_start + "_output.csv");
+
 
 		return;
 	}
