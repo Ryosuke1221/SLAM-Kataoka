@@ -2267,119 +2267,406 @@ void CPointcloudFuction::GR_FPFH_SAC_IA()
 	//typedef pcl::PointXYZ T_PointType;
 	typedef pcl::PointXYZRGB T_PointType;
 
-	pcl::PointCloud<T_PointType>::Ptr scene1(new pcl::PointCloud<T_PointType>());
-	pcl::PointCloud<T_PointType>::Ptr scene2(new pcl::PointCloud<T_PointType>());
-	pcl::io::loadPCDFile("../../data/008XYZRGB_naraha.pcd", *scene1);
-	//pcl::io::loadPCDFile("../../data/008XYZRGB_naraha.pcd", *scene2);
-	pcl::io::loadPCDFile("../../data/009XYZRGB_naraha.pcd", *scene2);
+	int i_method;
+	i_method = 0;//registration of 2 cloud
+	i_method = 1;//registration of all frames and output files
+	//i_method = 2;//debug
 
-	if (typeid(T_PointType) == typeid(pcl::PointXYZRGB))
+	//0.15	0
+	//0.1	29 / 50
+	//0.125	1 / 50
+
+
+	if (i_method == 0)
 	{
-		for (int i = 0; i < scene1->size(); i++)
+		pcl::PointCloud<T_PointType>::Ptr scene1(new pcl::PointCloud<T_PointType>());
+		pcl::PointCloud<T_PointType>::Ptr scene2(new pcl::PointCloud<T_PointType>());
+		pcl::io::loadPCDFile("../../data/008XYZRGB_naraha.pcd", *scene1);
+		//pcl::io::loadPCDFile("../../data/008XYZRGB_naraha.pcd", *scene2);
+		pcl::io::loadPCDFile("../../data/009XYZRGB_naraha.pcd", *scene2);
+
+		if (typeid(T_PointType) == typeid(pcl::PointXYZRGB))
 		{
-			scene1->points[i].r = 0;
-			scene1->points[i].g = 0;
-			scene1->points[i].b = 255;
+			for (int i = 0; i < scene1->size(); i++)
+			{
+				scene1->points[i].r = 0;
+				scene1->points[i].g = 0;
+				scene1->points[i].b = 255;
+			}
+
+			for (int i = 0; i < scene2->size(); i++)
+			{
+				scene2->points[i].r = 255;
+				scene2->points[i].g = 255;
+				scene2->points[i].b = 0;
+			}
+
 		}
 
-		for (int i = 0; i < scene2->size(); i++)
+		// scene2 を適当に回転・並進
+		Eigen::Matrix4f transform_matrix;
+		transform_matrix <<
+			1.0, 0.0, 0.0, -0.1,
+			0.0, 0.0, -1.0, 0.1,
+			0.0, 1.0, 0.0, -0.1,
+			0.0, 0.0, 0.0, 1;
+		//pcl::transformPointCloud(*scene2, *scene2, transform_matrix);
+
+		//visualization
+		pcl::PointCloud<T_PointType>::Ptr cloud_show_init(new pcl::PointCloud<T_PointType>());
+		pcl::PointCloud<T_PointType>::Ptr cloud_show_global(new pcl::PointCloud<T_PointType>());
+
+		CPointVisualization<T_PointType> pv_init;
+		pv_init.setWindowName("Initial");
+		CPointVisualization<T_PointType> pv_global;
+		pv_global.setWindowName("Global");
+
+		*cloud_show_init += *scene1;
+		*cloud_show_init += *scene2;
+
+		float voxel_size;
+		//voxel_size = 0.01;
+		//voxel_size = 0.05;
+		voxel_size = 0.1;
+
+		float radius_normal_FPFH, radius_FPFH;
+		radius_normal_FPFH = voxel_size * 2.0;
+		radius_FPFH = voxel_size * 5.0;
+
+		float MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC, InlierFraction_SAC;
+		MaxCorrespondenceDistance_SAC = voxel_size * 2.5;
+		int MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC;
+		//MaximumIterations_SAC = 500000;
+		//MaximumIterations_SAC = 50;	//8 & 8
+		//MaximumIterations_SAC = 1000;
+		MaximumIterations_SAC = 500;
+		//NumberOfSamples_SAC = 4;//8 & 8
+		//NumberOfSamples_SAC = 10;
+		NumberOfSamples_SAC = 100;
+		//CorrespondenceRandomness_SAC = 2;
+		CorrespondenceRandomness_SAC = 10;
+		//SimilarityThreshold_SAC = 0.9f;
+		SimilarityThreshold_SAC = 0.01f;
+		//InlierFraction_SAC = 0.25f;
+		InlierFraction_SAC = 0.15f;
+		cout << "fill InlierFraction_SAC ->";
+		cin >> InlierFraction_SAC;
+
+		Eigen::Matrix4d transform_ = Eigen::Matrix4d::Identity();
+		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src(new pcl::PointCloud<pcl::FPFHSignature33>);
+		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt(new pcl::PointCloud<pcl::FPFHSignature33>);
+		fpfh_src = CKataokaPCL::computeFPFH<T_PointType>(*scene1, voxel_size, radius_normal_FPFH, radius_FPFH);
+		fpfh_tgt = CKataokaPCL::computeFPFH<T_PointType>(*scene2, voxel_size, radius_normal_FPFH, radius_FPFH);
+
+		cout << "RANSAC" << endl;
+		int max_RANSAC = 50;
+		int index_RANSAC = 0;
+		int frame_failed = 0;
+		vector<pair<float, Eigen::Matrix4d>> output_vec;
+
+		bool b_hasConverged = false;
+		vector<int> inlier_;
+		float fitnessscore;
+
+		b_hasConverged = CKataokaPCL::align_SAC_AI_RANSAC<T_PointType>(transform_, inlier_, fitnessscore, frame_failed,
+			*scene1, *fpfh_src, *scene2, *fpfh_tgt,
+			voxel_size, MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC, InlierFraction_SAC, 
+			MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC, max_RANSAC);
+
+		//transform_ = CKataokaPCL::align_FPFH_SAC_AI<T_PointType>(*scene1, *scene2);
+
+		Eigen::Affine3f Trans_ = Eigen::Affine3f::Identity();
+		Trans_ = calcAffine3fFromHomogeneousMatrix(transform_);
+		pcl::transformPointCloud(*scene1, *scene1, Trans_);
+		*cloud_show_global += *scene1;
+		*cloud_show_global += *scene2;
+
+		pv_init.setPointCloud(cloud_show_init);
+		pv_global.setPointCloud(cloud_show_global);
+
+		while (1)
 		{
-			scene2->points[i].r = 255;
-			scene2->points[i].g = 255;
-			scene2->points[i].b = 0;
+			pv_init.updateViewer();
+			pv_global.updateViewer();
+			if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
 		}
+		pv_init.closeViewer();
+		pv_global.closeViewer();
+
+		return;
+	}
+	else if (i_method == 1)
+	{
+		string dir_;
+		dir_ = "../../data/process_GR_FPFH_SAC_IA";
+
+		string time_start = CTimeString::getTimeString();
+		cout << "time_start:" << time_start << endl;
+
+		vector<string> filenames_;
+		CTimeString::getFileNames_extension(dir_, filenames_, ".pcd");
+
+		vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec;
+		vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> fpfh_vec;
+		vector<vector<string>> s_output_vecvec;
+
+		float voxel_size;
+		//voxel_size = 0.01;
+		//voxel_size = 0.05;
+		voxel_size = 0.1;
+
+		float radius_normal_FPFH, radius_FPFH;
+		radius_normal_FPFH = voxel_size * 2.0;
+		radius_FPFH = voxel_size * 5.0;
+
+		float MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC, InlierFraction_SAC;
+		MaxCorrespondenceDistance_SAC = voxel_size * 2.5;
+		int MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC;
+		//MaximumIterations_SAC = 500000;
+		//MaximumIterations_SAC = 50;	//8 & 8
+		//MaximumIterations_SAC = 1000;
+		MaximumIterations_SAC = 500;
+		//NumberOfSamples_SAC = 4;//8 & 8
+		//NumberOfSamples_SAC = 10;
+		NumberOfSamples_SAC = 100;
+		//CorrespondenceRandomness_SAC = 2;
+		CorrespondenceRandomness_SAC = 10;
+		//SimilarityThreshold_SAC = 0.9f;
+		SimilarityThreshold_SAC = 0.01f;
+		//InlierFraction_SAC = 0.25f;
+		InlierFraction_SAC = 0.15f;
+
+		int max_RANSAC = 50;
+
+		//s_output_vecvec
+		{
+			vector<string> s_temp_vec;
+			s_temp_vec.push_back("Parameter");
+			s_output_vecvec.push_back(s_temp_vec);
+		}
+		{
+			vector<string> s_temp_vec;
+			s_temp_vec.push_back("voxel_size");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back(to_string(voxel_size));
+			s_output_vecvec.push_back(s_temp_vec);
+		}
+		{
+			vector<string> s_temp_vec;
+			s_temp_vec.push_back("radius_normal_FPFH");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back(to_string(radius_normal_FPFH));
+			s_output_vecvec.push_back(s_temp_vec);
+		}
+		{
+			vector<string> s_temp_vec;
+			s_temp_vec.push_back("radius_FPFH");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back(to_string(radius_FPFH));
+			s_output_vecvec.push_back(s_temp_vec);
+		}
+		{
+			vector<string> s_temp_vec;
+			s_temp_vec.push_back("MaxCorrespondenceDistance_SAC");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back(to_string(MaxCorrespondenceDistance_SAC));
+			s_output_vecvec.push_back(s_temp_vec);
+		}
+		{
+			vector<string> s_temp_vec;
+			s_temp_vec.push_back("SimilarityThreshold_SAC");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back(to_string(SimilarityThreshold_SAC));
+			s_output_vecvec.push_back(s_temp_vec);
+		}
+		{
+			vector<string> s_temp_vec;
+			s_temp_vec.push_back("InlierFraction_SAC");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back(to_string(InlierFraction_SAC));
+			s_output_vecvec.push_back(s_temp_vec);
+		}
+		{
+			vector<string> s_temp_vec;
+			s_temp_vec.push_back("MaximumIterations_SAC");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back(to_string(MaximumIterations_SAC));
+			s_output_vecvec.push_back(s_temp_vec);
+		}
+		{
+			vector<string> s_temp_vec;
+			s_temp_vec.push_back("NumberOfSamples_SAC");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back(to_string(NumberOfSamples_SAC));
+			s_output_vecvec.push_back(s_temp_vec);
+		}
+		{
+			vector<string> s_temp_vec;
+			s_temp_vec.push_back("CorrespondenceRandomness_SAC");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back(to_string(CorrespondenceRandomness_SAC));
+			s_output_vecvec.push_back(s_temp_vec);
+		}
+		{
+			vector<string> s_temp_vec;
+			s_temp_vec.push_back("max_RANSAC");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back(to_string(max_RANSAC));
+			s_output_vecvec.push_back(s_temp_vec);
+		}
+		{
+			vector<string> s_temp_vec;
+			s_temp_vec.push_back("");
+			s_output_vecvec.push_back(s_temp_vec);
+		}
+		{
+			vector<string> s_temp_vec;
+			s_temp_vec.push_back("Result");
+			s_output_vecvec.push_back(s_temp_vec);
+		}
+		{
+			vector<string> s_temp_vec;
+			s_temp_vec.push_back("target");
+			s_temp_vec.push_back("source");
+			s_temp_vec.push_back("tgt size");
+			s_temp_vec.push_back("src size");
+			s_temp_vec.push_back("tgt VGF size");
+			s_temp_vec.push_back("src VGF size");
+			s_temp_vec.push_back("inlier size");
+			s_temp_vec.push_back("inlier rate");
+			s_temp_vec.push_back("convergence");
+			s_temp_vec.push_back("frame_success");
+			s_temp_vec.push_back("fitness");
+			s_temp_vec.push_back("time");
+			s_output_vecvec.push_back(s_temp_vec);
+		}
+
+		for (int i = 0; i < filenames_.size(); i++)
+		{
+			pcl::PointCloud<T_PointType>::Ptr cloud(new pcl::PointCloud<T_PointType>());
+			pcl::io::loadPCDFile(dir_ + "/" + filenames_[i], *cloud);
+			cloud_vec.push_back(cloud);
+		}
+
+		for (int i = 0; i < filenames_.size(); i++)
+		{
+			pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh(new pcl::PointCloud<pcl::FPFHSignature33>);
+			fpfh = CKataokaPCL::computeFPFH<T_PointType>(*cloud_vec[i], voxel_size, radius_normal_FPFH, radius_FPFH);
+			fpfh_vec.push_back(fpfh);
+		}
+
+		string time_end_FPFH = CTimeString::getTimeString();
+		cout << "time_end_FPFH:" << time_end_FPFH << endl;
+
+		for (int i_tgt = 0; i_tgt < cloud_vec.size() - 1; i_tgt++)
+		{
+			for (int i_src = 1; i_src < cloud_vec.size(); i_src++)
+			{
+				if (i_tgt == i_src) continue;
+
+				string time_start_frame = CTimeString::getTimeString();
+
+				vector<pair<float, Eigen::Matrix4d>> output_vec;
+
+				bool b_hasConverged = false;
+				vector<int> inlier_;
+				float fitnessscore;
+				int frame_failed = 0;
+				Eigen::Matrix4d transform_ = Eigen::Matrix4d::Identity();
+
+				cout << "i_tgt:" << i_tgt << " i_src" << i_src << endl;
+
+				b_hasConverged = CKataokaPCL::align_SAC_AI_RANSAC<T_PointType>(transform_, inlier_, fitnessscore, frame_failed,
+					*cloud_vec[i_src], *fpfh_vec[i_src], *cloud_vec[i_tgt], *fpfh_vec[i_tgt],
+					voxel_size, MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC,	InlierFraction_SAC,
+					MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC, max_RANSAC);
+
+				//output
+				string time_end_frame = CTimeString::getTimeString();
+				string time_elapsed_frame = CTimeString::getTimeElapsefrom2Strings(time_start_frame, time_end_frame);
+
+				vector<string> s_temp_vec;
+				s_temp_vec.push_back(to_string(i_tgt));
+				s_temp_vec.push_back(to_string(i_src));
+				s_temp_vec.push_back(to_string(cloud_vec[i_tgt]->size()));
+				s_temp_vec.push_back(to_string(cloud_vec[i_src]->size()));
+				s_temp_vec.push_back(to_string(fpfh_vec[i_tgt]->size()));
+				s_temp_vec.push_back(to_string(fpfh_vec[i_src]->size()));
+				s_temp_vec.push_back(to_string(inlier_.size()));
+				s_temp_vec.push_back(to_string((float)inlier_.size()/ (float)fpfh_vec[i_src]->size()));
+				s_temp_vec.push_back(to_string((int)b_hasConverged));
+				s_temp_vec.push_back(to_string(max_RANSAC - frame_failed) + "(/" + to_string(max_RANSAC) + ")");
+				s_temp_vec.push_back(to_string(fitnessscore));
+				s_temp_vec.push_back(time_elapsed_frame);
+				s_output_vecvec.push_back(s_temp_vec);
+			}
+
+		}
+
+		string time_end = CTimeString::getTimeString();
+		string time_elapsed = CTimeString::getTimeElapsefrom2Strings(time_start, time_end);
+		cout << "time_elapsed:" << time_elapsed << endl;
+
+		{
+			vector<string> s_temp_vec;
+			s_temp_vec.push_back("");
+			s_output_vecvec.push_back(s_temp_vec);
+		}
+		{
+			vector<string> s_temp_vec;
+			s_temp_vec.push_back("Sum elapsed time");
+			s_output_vecvec.push_back(s_temp_vec);
+		}
+		{
+			vector<string> s_temp_vec;
+			s_temp_vec.push_back(time_elapsed);
+			s_output_vecvec.push_back(s_temp_vec);
+		}
+
+		CTimeString::getCSVFromVecVec(s_output_vecvec, "../../data/process_GR_FPFH_SAC_IA/"+ time_start+ "_output.csv");
+
+		return;
+	}
+	else if (i_method == 2)
+	{
+		string aa;
+		vector<vector<string>> s_vecvec;
+
+		for (int j = 0; j < 3 ; j++)
+		{
+			vector<string> s_vec;
+			s_vec.push_back("A");
+			s_vec.push_back("B");
+			s_vec.push_back("C");
+			s_vecvec.push_back(s_vec);
+		}
+
+		CTimeString::getCSVFromVecVec(s_vecvec,"../../data/process_GR_FPFH_SAC_IA/test.csv");
 
 	}
 
-	// scene2 を適当に回転・並進
-	Eigen::Matrix4f transform_matrix;
-	transform_matrix <<
-		1.0, 0.0, 0.0, -0.1,
-		0.0, 0.0, -1.0, 0.1,
-		0.0, 1.0, 0.0, -0.1,
-		0.0, 0.0, 0.0, 1;
-	//pcl::transformPointCloud(*scene2, *scene2, transform_matrix);
 
-	//visualization
-	pcl::PointCloud<T_PointType>::Ptr cloud_show_init(new pcl::PointCloud<T_PointType>());
-	pcl::PointCloud<T_PointType>::Ptr cloud_show_global(new pcl::PointCloud<T_PointType>());
+ 
 
-	CPointVisualization<T_PointType> pv_init;
-	pv_init.setWindowName("Initial");
-	CPointVisualization<T_PointType> pv_global;
-	pv_global.setWindowName("Global");
-
-	*cloud_show_init += *scene1;
-	*cloud_show_init += *scene2;
-
-	float voxel_size;
-	//voxel_size = 0.01;
-	//voxel_size = 0.05;
-	voxel_size = 0.1;
-
-	float radius_normal_FPFH, radius_FPFH;
-	radius_normal_FPFH = voxel_size * 2.0;
-	radius_FPFH = voxel_size * 5.0;
-
-	float MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC, InlierFraction_SAC;
-	MaxCorrespondenceDistance_SAC = voxel_size * 2.5;
-	int MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC;
-	//MaximumIterations_SAC = 500000;
-	//MaximumIterations_SAC = 50;	//8 & 8
-	//MaximumIterations_SAC = 1000;
-	MaximumIterations_SAC = 500;
-	//NumberOfSamples_SAC = 4;//8 & 8
-	//NumberOfSamples_SAC = 10;
-	NumberOfSamples_SAC = 100;
-	//CorrespondenceRandomness_SAC = 2;
-	CorrespondenceRandomness_SAC = 10;
-	//SimilarityThreshold_SAC = 0.9f;
-	SimilarityThreshold_SAC = 0.01f;
-	//InlierFraction_SAC = 0.25f;
-	InlierFraction_SAC = 0.15f;
-	cout << "fill InlierFraction_SAC ->";
-	cin >> InlierFraction_SAC;
-
-	Eigen::Matrix4d transform_ = Eigen::Matrix4d::Identity();
-	pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src(new pcl::PointCloud<pcl::FPFHSignature33>);
-	pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt(new pcl::PointCloud<pcl::FPFHSignature33>);
-	fpfh_src = CKataokaPCL::computeFPFH<T_PointType>(*scene1, voxel_size, radius_normal_FPFH, radius_FPFH);
-	fpfh_tgt = CKataokaPCL::computeFPFH<T_PointType>(*scene2, voxel_size, radius_normal_FPFH, radius_FPFH);
-
-
-	cout << "RANSAC" << endl;
-	int max_RANSAC = 50;
-	int index_RANSAC = 0;
-	int frame_failed = 0;
-	vector<pair<float, Eigen::Matrix4d>> output_vec;
-
-	bool b_hasConverged = false;
-	vector<int> inlier_;
-	float fitnessscore;
-
-	b_hasConverged = CKataokaPCL::align_SAC_AI_RANSAC<T_PointType>(transform_, inlier_, fitnessscore,
-		*scene1, *fpfh_src, *scene2, *fpfh_tgt,
-		voxel_size, MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC,
-		InlierFraction_SAC, MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC);
-
-	//transform_ = CKataokaPCL::align_FPFH_SAC_AI<T_PointType>(*scene1, *scene2);
-	   	 
-	Eigen::Affine3f Trans_ = Eigen::Affine3f::Identity();
-	Trans_ = calcAffine3fFromHomogeneousMatrix(transform_);
-	pcl::transformPointCloud(*scene1, *scene1, Trans_);
-	*cloud_show_global += *scene1;
-	*cloud_show_global += *scene2;
-
-	pv_init.setPointCloud(cloud_show_init);
-	pv_global.setPointCloud(cloud_show_global);
-
-	while (1)
-	{
-		pv_init.updateViewer();
-		pv_global.updateViewer();
-		if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
-
-	}
-	pv_init.closeViewer();
-	pv_global.closeViewer();
+	
 }

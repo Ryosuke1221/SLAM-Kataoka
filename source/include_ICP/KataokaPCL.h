@@ -573,16 +573,17 @@ public:
 
 	template <class T_PointType>
 	static bool align_SAC_AI_RANSAC(
-		Eigen::Matrix4d &transformation_result, vector<int> &Inlier_, float &FitnessScore,
+		Eigen::Matrix4d &transformation_result, vector<int> &Inlier_, float &FitnessScore, int &frame_failed,
 		pcl::PointCloud<T_PointType> cloud_src, pcl::PointCloud<pcl::FPFHSignature33> fpfh_src,
 		pcl::PointCloud<T_PointType> cloud_tgt, pcl::PointCloud<pcl::FPFHSignature33> fpfh_tgt,
 		float voxel_size, float MaxCorrespondenceDistance, float SimilarityThreshold,
-		float InlierFraction, int MaximumIterations, int NumberOfSamples, int CorrespondenceRandomness)
+		float InlierFraction, int MaximumIterations, int NumberOfSamples, int CorrespondenceRandomness, int max_RANSAC)
 	{
-		cout << "RANSAC" << endl;
-		int max_RANSAC = 50;
+		//cout << "RANSAC" << endl;
+		//int max_RANSAC = 50;
 		int index_RANSAC = 0;
-		int frame_failed = 0;
+		//int frame_failed = 0;
+		frame_failed = 0;
 		vector<pair<float, Eigen::Matrix4d>> output_vec;
 		vector<vector<int>> inlier_vec;
 		vector<float> fitnessscore_vec;
@@ -649,7 +650,11 @@ public:
 			FitnessScore = fitnessscore_vec[i_RANSAC];
 		}
 		else
+		{
 			transformation_result = Eigen::Matrix4d::Identity();
+			Inlier_.clear();
+			FitnessScore = 1000.;
+		}
 
 		cout << "align finished" << endl;
 
