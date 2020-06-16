@@ -330,15 +330,28 @@ public:
 
 	template <class T_PointType>
 	static pcl::PointCloud<pcl::FPFHSignature33>::Ptr computeFPFH(
-		pcl::PointCloud<T_PointType> cloud_, float radius_normal, float radius_FPFH)
+		pcl::PointCloud<T_PointType> cloud_, float voxel_size, float radius_normal, float radius_FPFH)
 	{
 		//const float radius_normal = voxel_size * 2.0;
 		const auto view_point = T_PointType(0.0, 10.0, 10.0);
 
+		bool useBeforeVGF = false;
+		useBeforeVGF = true;
+
+		pcl::PointCloud<T_PointType> cloud_VGF;
+		const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
+		sor->setLeafSize(voxel_size, voxel_size, voxel_size);
+		sor->setInputCloud(cloud_.makeShared());
+		sor->filter(cloud_VGF);
+
 		const pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
 		const pcl::NormalEstimation<T_PointType, pcl::Normal>::Ptr ne(new pcl::NormalEstimation<T_PointType, pcl::Normal>);
 		const pcl::search::KdTree<T_PointType>::Ptr kdtree(new pcl::search::KdTree<T_PointType>);
-		ne->setInputCloud(cloud_.makeShared());
+		//ne->setInputCloud(cloud_.makeShared());
+		if(useBeforeVGF)
+			ne->setInputCloud(cloud_.makeShared());
+		else
+			ne->setInputCloud(cloud_VGF.makeShared());
 		ne->setRadiusSearch(radius_normal);
 		ne->setSearchMethod(kdtree);
 		ne->setViewPoint(view_point.x, view_point.y, view_point.z);
@@ -347,8 +360,11 @@ public:
 		//const float radius_FPFH = voxel_size * 5.0;
 		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh(new pcl::PointCloud<pcl::FPFHSignature33>);
 		const pcl::FPFHEstimation<T_PointType, pcl::Normal, pcl::FPFHSignature33>::Ptr fpfhe(new pcl::FPFHEstimation<T_PointType, pcl::Normal, pcl::FPFHSignature33>);
-		fpfhe->setInputCloud(cloud_.makeShared());
-		fpfhe->setSearchSurface(cloud_.makeShared());
+		fpfhe->setInputCloud(cloud_VGF.makeShared());
+		if (useBeforeVGF)
+			fpfhe->setSearchSurface(cloud_.makeShared());
+		else
+		{}
 		fpfhe->setInputNormals(normals);
 		fpfhe->setSearchMethod(kdtree);
 		fpfhe->setRadiusSearch(radius_FPFH);
@@ -410,8 +426,7 @@ public:
 		InlierFraction_SAC = 0.25f;
 
 
-		const pcl::PointCloud<T_PointType>::Ptr keypoints(new pcl::PointCloud<T_PointType>);
-		const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>); // ‚È‚º‚©Ptr‚ªprotected‚È‚Ì‚Å
+		const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
 		sor->setLeafSize(voxel_size, voxel_size, voxel_size);
 		sor->setInputCloud(src_.makeShared());
 		sor->filter(src_);
@@ -425,8 +440,8 @@ public:
 		//compute fpfh
 		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src(new pcl::PointCloud<pcl::FPFHSignature33>);
 		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt(new pcl::PointCloud<pcl::FPFHSignature33>);
-		fpfh_src = computeFPFH(src_, radius_normal_FPFH, radius_FPFH);
-		fpfh_tgt = computeFPFH(tgt_, radius_normal_FPFH, radius_FPFH);
+		fpfh_src = computeFPFH(cloud_src, voxel_size, radius_normal_FPFH, radius_FPFH);
+		fpfh_tgt = computeFPFH(cloud_tgt, voxel_size, radius_normal_FPFH, radius_FPFH);
 		//void* align;
 		pcl::PointCloud<T_PointType> temp_;
 		Eigen::Matrix4d transform_ = Eigen::Matrix4d::Identity();
