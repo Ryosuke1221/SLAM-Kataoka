@@ -2401,6 +2401,7 @@ void CPointcloudFuction::GR_FPFH_SAC_IA()
 		dir_ = "../../data/process_GR_FPFH_SAC_IA";
 
 		string time_start = CTimeString::getTimeString();
+		string time_regular = time_start;
 		cout << "time_start:" << time_start << endl;
 
 		vector<string> filenames_;
@@ -2586,9 +2587,12 @@ void CPointcloudFuction::GR_FPFH_SAC_IA()
 		string time_end_FPFH = CTimeString::getTimeString();
 		cout << "time_end_FPFH:" << time_end_FPFH << endl;
 
-		for (int i_tgt = 0; i_tgt < cloud_vec.size() - 1; i_tgt++)
+		const int i_tgt_start = 0;
+		//const int i_src_start = 1;
+
+		for (int i_tgt = i_tgt_start; i_tgt < cloud_vec.size() - 1; i_tgt++)
 		{
-			for (int i_src = 1; i_src < cloud_vec.size(); i_src++)
+			for (int i_src = i_tgt + 1; i_src < cloud_vec.size(); i_src++)
 			{
 				if (i_tgt == i_src) continue;
 
@@ -2684,6 +2688,42 @@ void CPointcloudFuction::GR_FPFH_SAC_IA()
 				pcl::io::savePCDFile<T_PointType>(dir_ + "/" + s_newfoldername + "/" + s_filename_output, *cloud_tgt);
 				cout << endl;
 				cout << endl;
+
+				//regular saving csv
+				{
+					int elapsed_millisec = CTimeString::getTimeElapsefrom2Strings_millisec(time_regular, time_end_frame);
+					int elapsed_minute =(int) (((float)elapsed_millisec / 1000.) / 60.);
+					const int th_minute = 5;
+					if (elapsed_minute >= th_minute)
+					{
+						//save
+						CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + s_newfoldername + "/" + time_regular + "_output.csv");
+						time_regular = CTimeString::getTimeString();
+						//clear s_output_vecvec
+						s_output_vecvec.clear();
+						vector<string> s_temp_vec;
+						s_temp_vec.push_back("target");
+						s_temp_vec.push_back("source");
+						s_temp_vec.push_back("tgt size");
+						s_temp_vec.push_back("src size");
+						s_temp_vec.push_back("tgt VGF size");
+						s_temp_vec.push_back("src VGF size");
+						s_temp_vec.push_back("inlier size");
+						s_temp_vec.push_back("inlier rate");
+						s_temp_vec.push_back("convergence");
+						s_temp_vec.push_back("success_frame");
+						s_temp_vec.push_back("fitness");
+						s_temp_vec.push_back("time");
+						s_temp_vec.push_back("X");
+						s_temp_vec.push_back("Y");
+						s_temp_vec.push_back("Z");
+						s_temp_vec.push_back("ROLL");
+						s_temp_vec.push_back("PITCH");
+						s_temp_vec.push_back("YAW");
+						s_output_vecvec.push_back(s_temp_vec);
+					}
+				}
+				//time_regular, time_end_frame
 			}
 		}
 
@@ -2708,8 +2748,7 @@ void CPointcloudFuction::GR_FPFH_SAC_IA()
 		}
 
 		//CTimeString::getCSVFromVecVec(s_output_vecvec, "../../data/process_GR_FPFH_SAC_IA/"+ time_start+ "_output.csv");
-		CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + s_newfoldername + "/" + time_start + "_output.csv");
-
+		CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + s_newfoldername + "/" + time_end + "_output.csv");
 
 		return;
 	}
