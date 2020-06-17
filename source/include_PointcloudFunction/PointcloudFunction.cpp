@@ -447,7 +447,15 @@ void CPointcloudFuction::getPCDFromCSV_naraha()
 
 void CPointcloudFuction::FreeSpace()
 {
-	
+	string t1 = CTimeString::getTimeString();
+	Sleep(1 * 1000);
+	string t2 = CTimeString::getTimeString();
+
+	string diff = CTimeString::getTimeElapsefrom2Strings(t1, t2);
+	cout << "diff:" << diff << endl;
+	int i_diff = CTimeString::getTimeElapsefrom2Strings_millisec(t1, t2);
+	cout << "i_diff:" << i_diff << endl;
+
 }
 
 void CPointcloudFuction::filterNIRPointCloud_naraha()

@@ -20,11 +20,7 @@ namespace sys_ns = std::experimental::filesystem;
 class CTimeString {
 
 	static void setTime(int& i_year, int& i_month, int& i_day, int& i_hour, int& i_minute, int& i_second, int& i_milliseconds);
-
-	static void getTimeValueFromString(string string_, int &i_minute, int &i_second, int &i_millisecond);
-	void getTimeValueFromString(string string_, int &i_hour, int &i_minute, int &i_second, int &i_millisecond);
-
-	string getTElapsefrom2S(string s_former, string s_latter);
+	static void getTimeValueFromString(string string_, int &i_hour, int &i_minute, int &i_second, int &i_millisecond);
 
 public:
 
