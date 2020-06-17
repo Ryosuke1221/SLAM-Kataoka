@@ -392,140 +392,6 @@ public:
 	}
 
 	template <class T_PointType>
-	static Eigen::Matrix4d align_FPFH_SAC_AI(pcl::PointCloud<T_PointType> cloud_src, pcl::PointCloud<T_PointType> cloud_tgt)
-	{
-		cout << "preprocess" << endl;
-
-		//pcl::PointCloud<T_PointType>::Ptr src_(new pcl::PointCloud<T_PointType>());
-		//pcl::PointCloud<T_PointType>::Ptr tgt_(new pcl::PointCloud<T_PointType>());
-		pcl::PointCloud<T_PointType> src_;
-		pcl::PointCloud<T_PointType> tgt_;
-		pcl::copyPointCloud(cloud_src, src_);
-		pcl::copyPointCloud(cloud_tgt, tgt_);
-
-		float voxel_size;
-		//voxel_size = 0.01;
-		//voxel_size = 0.05;
-		voxel_size = 0.1;
-
-		float radius_normal_FPFH, radius_FPFH;
-		radius_normal_FPFH = voxel_size * 2.0;
-		radius_FPFH = voxel_size * 5.0;
-
-		float MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC, InlierFraction_SAC;
-		MaxCorrespondenceDistance_SAC = voxel_size * 2.5;
-		int MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC;
-		//MaximumIterations_SAC = 500000;
-		//MaximumIterations_SAC = 50;	//8 & 8
-		//MaximumIterations_SAC = 1000;
-		MaximumIterations_SAC = 500;
-		//NumberOfSamples_SAC = 4;//8 & 8
-		//NumberOfSamples_SAC = 10;
-		NumberOfSamples_SAC = 100;
-		//CorrespondenceRandomness_SAC = 2;
-		CorrespondenceRandomness_SAC = 10;
-		//SimilarityThreshold_SAC = 0.9f;
-		SimilarityThreshold_SAC = 0.01f;
-		//InlierFraction_SAC = 0.25f;
-		InlierFraction_SAC = 0.15f;
-		cout << "fill InlierFraction_SAC ->";
-		cin >> InlierFraction_SAC;
-
-
-		const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
-		sor->setLeafSize(voxel_size, voxel_size, voxel_size);
-		sor->setInputCloud(src_.makeShared());
-		sor->filter(src_);
-		cout << "cloud_src.size():" << cloud_src.size() << endl;
-		cout << "src_->size():" << src_.size() << endl;
-		sor->setInputCloud(tgt_.makeShared());
-		sor->filter(tgt_);
-		cout << "cloud_tgt.size():" << cloud_tgt.size() << endl;
-		cout << "tgt_->size():" << tgt_.size() << endl;
-
-		//compute fpfh
-		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src(new pcl::PointCloud<pcl::FPFHSignature33>);
-		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt(new pcl::PointCloud<pcl::FPFHSignature33>);
-		fpfh_src = computeFPFH(cloud_src, voxel_size, radius_normal_FPFH, radius_FPFH);
-		fpfh_tgt = computeFPFH(cloud_tgt, voxel_size, radius_normal_FPFH, radius_FPFH);
-		//void* align;
-		pcl::PointCloud<T_PointType> temp_;
-		Eigen::Matrix4d transform_ = Eigen::Matrix4d::Identity();
-
-		cout << "RANSAC" << endl;
-		int max_RANSAC = 50;
-		int index_RANSAC = 0;
-		int frame_failed = 0;
-		//float th_RANSAC = 0.5f;
-		vector<pair<float, Eigen::Matrix4d>> output_vec;
-		while (1)
-		{
-			pcl::SampleConsensusPrerejective<T_PointType, T_PointType, pcl::FPFHSignature33> align;
-			align.setInputSource(src_.makeShared());
-			align.setSourceFeatures(fpfh_src);
-			align.setInputTarget(tgt_.makeShared());
-			align.setTargetFeatures(fpfh_tgt);
-			align.setMaximumIterations(MaximumIterations_SAC);
-			align.setNumberOfSamples(NumberOfSamples_SAC);
-			align.setCorrespondenceRandomness(CorrespondenceRandomness_SAC);
-			align.setSimilarityThreshold(SimilarityThreshold_SAC);				//th of corr rejecter
-			align.setMaxCorrespondenceDistance(MaxCorrespondenceDistance_SAC);	//related to th of computing fitness score
-			align.setInlierFraction(InlierFraction_SAC);						//th of inlier number
-			//align->setMinSampleDistance(min_sample_distance_);	//function not found
-			align.align(temp_);
-			cout << "i:" << index_RANSAC << endl;
-			cout << "align.getFitnessScore():" << align.getFitnessScore() << endl;
-			cout << "align.hasConverged():" << align.hasConverged() << endl;
-			cout << "align.getInliers().size():" << align.getInliers().size() << endl;
-			transform_ = align.getFinalTransformation().cast<double>();
-
-			if (align.hasConverged() == 1)
-				output_vec.push_back(make_pair((float)align.getInliers().size() / (float)src_.size(), transform_));
-			else 
-				frame_failed++;
-
-			index_RANSAC++;
-			if (index_RANSAC >= max_RANSAC) break;
-		}
-
-		for (int i = 0; i < output_vec.size(); i++)
-		{
-			cout << "i:" << i << " score:" << output_vec[i].first << endl;
-			cout << output_vec[i].second << endl;
-			cout << endl;
-		}
-
-		//select most good value
-		float score_min = 100.;
-		int i_RANSAC;
-		for (int i = 0; i < output_vec.size(); i++)
-		{
-			if (output_vec[i].first < score_min)
-			{
-				score_min = output_vec[i].first;
-				i_RANSAC = i;
-			}
-		}
-
-		cout << "Show Result" << endl;
-		cout << "frame_failed:" << frame_failed << "(/" << max_RANSAC << ")" << endl;
-		if (output_vec.size() != 0)
-		{
-			transform_ = output_vec[i_RANSAC].second;
-			cout << "converged final transformation" << endl;
-			cout << "i:" << i_RANSAC << " score:" << output_vec[i_RANSAC].first << endl;
-			cout << transform_ << endl;
-		}
-		else 
-			transform_ = Eigen::Matrix4d::Identity();
-
-
-		cout << "align finished" << endl;
-
-		return transform_;
-	}
-
-	template <class T_PointType>
 	static bool align_SAC_AI(
 		Eigen::Matrix4d &transformation_result, vector<int> &Inlier_, float &FitnessScore,
 		pcl::PointCloud<T_PointType> cloud_src, pcl::PointCloud<pcl::FPFHSignature33> fpfh_src,
@@ -577,7 +443,7 @@ public:
 		pcl::PointCloud<T_PointType> cloud_src, pcl::PointCloud<pcl::FPFHSignature33> fpfh_src,
 		pcl::PointCloud<T_PointType> cloud_tgt, pcl::PointCloud<pcl::FPFHSignature33> fpfh_tgt,
 		float voxel_size, float MaxCorrespondenceDistance, float SimilarityThreshold,
-		float InlierFraction, int MaximumIterations, int NumberOfSamples, int CorrespondenceRandomness, int max_RANSAC)
+		float InlierFraction, int MaximumIterations, int NumberOfSamples, int CorrespondenceRandomness, int max_RANSAC, bool b_cout)
 	{
 		//cout << "RANSAC" << endl;
 		//int max_RANSAC = 50;
@@ -601,11 +467,13 @@ public:
 				InlierFraction, MaximumIterations, NumberOfSamples, CorrespondenceRandomness);
 
 			cout << "index_RANSAC:" << index_RANSAC << endl;
-			cout << "b_hasConverged:" << b_hasConverged << endl;
-			cout << "fitnessscore:" << fitnessscore << endl;
-			cout << "inlier_.size():" << inlier_.size() << endl;
-			cout << endl;
-
+			if (b_cout)
+			{
+				cout << "b_hasConverged:" << b_hasConverged << endl;
+				cout << "fitnessscore:" << fitnessscore << endl;
+				cout << "inlier_.size():" << inlier_.size() << endl;
+				cout << endl;
+			}
 			if (b_hasConverged)
 			{
 				output_vec.push_back(make_pair((float)inlier_.size() / (float)fpfh_src.size(), transform_));

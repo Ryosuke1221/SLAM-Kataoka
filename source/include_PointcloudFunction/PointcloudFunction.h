@@ -138,6 +138,7 @@ public:
 	void FileProcess_copy(string dir_from, string dir_to);
 	void FileProcess_delete(string dir);
 	void FileProcess_evacuate(string dir);
+	void FileProcess_FolderInFolder(string dir_, vector<string> &folder_vec);
 
 private:
 	enum KEYNUM {
@@ -169,7 +170,9 @@ public:
 	vector<pcl::PointIndices> getSegmentation_indices(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, double th_tolerance);
 	vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> getSegmentation_rest(
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_rest, double th_tolerance);
-	void GR_FPFH_SAC_IA();
+	void GlobalRegistration_FPFH_SAC_IA();
+	void GR_FPFH_SAC_IA_2frames(string dir_);
+	void GR_FPFH_SAC_IA_Allframes(string dir_);
 
 };
 

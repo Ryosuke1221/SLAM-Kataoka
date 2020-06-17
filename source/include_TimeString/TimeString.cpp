@@ -385,10 +385,8 @@ bool CTimeString::getFileNames_folder(std::string folderPath, std::vector<std::s
 	bool b_success = getFileNames(folderPath, filenames_, false, true, true);
 	for (int i = 0; i < filenames_.size(); i++)
 	{
-		vector<int> find_vec = CTimeString::find_all(filenames_[i], ".");
-		if (find_vec.size() != 0) continue;
+		if (!sys_ns::is_directory(folderPath + "/" + filenames_[i])) continue;
 		file_names.push_back(filenames_[i]);
-		//cout << file_names.back() << endl;
 	}
 	return b_success;
 }
