@@ -447,7 +447,6 @@ void CPointcloudFuction::getPCDFromCSV_naraha()
 
 void CPointcloudFuction::FreeSpace()
 {
-
 	//typedef pcl::PointXYZ T_PointType;
 	typedef pcl::PointXYZRGB T_PointType;
 
@@ -458,11 +457,137 @@ void CPointcloudFuction::FreeSpace()
 	pcl::io::loadPCDFile(dir_ + "/" + "008XYZRGB_naraha.pcd", *cloud_1);
 	pcl::io::loadPCDFile(dir_ + "/" + "009XYZRGB_naraha.pcd", *cloud_2);
 
+	//CPointVisualization<T_PointType> pv;
+	//pv.setWindowName("test");
+	//int i_select;
+	//cout << "i_select ->";
+	//cin >> i_select;
+	//if(i_select == 0)
+	//	pv.setPointCloud(cloud_1);
+	//else if(i_select == 1)
+	//	pv.setPointCloud(cloud_1, cloud_2);
+	//else if (i_select == 2)
+	//	pv.setPointCloud(cloud_1, cloud_1);
+	//else if (i_select == 3)
+	//{
+	//	pv.useNormal(0.3, 10, 0.1);
+	//	pv.setPointCloud(cloud_1);
+	//}
+	//else if (i_select == 4)
+	//{
+	//	pv.useNormal(0.3, 10, 0.1);
+	//	pv.setPointCloud(cloud_1, cloud_2);
+	//}
 
 
+	//while (1)
+	//{
+	//	pv.updateViewer();
+	//	if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
+	//}
+
+	//pv.setPointCloud(cloud_1);
+	//while (1)
+	//{
+	//	pv.updateViewer();
+	//	if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
+	//}
+
+	//pv.closeViewer();
+
+	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;				//ëÂè‰ïvÅH
+	viewer.reset(new pcl::visualization::PCLVisualizer("Velodyne Viewer"));
+
+	pcl::visualization::PointCloudColorHandler<T_PointType>::Ptr handler;
 
 
+	viewer->addCoordinateSystem(3.0, "coordinate");
+	viewer->setBackgroundColor(0.0, 0.0, 0.0, 0);
+	viewer->initCameraParameters();
+	viewer->setCameraPosition(0.0, 0.0, 30.0, 0.0, 1.0, 0.0, 0);
 
+	pcl::ModelCoefficients coeff_circle;
+	coeff_circle.values.resize(3);
+	coeff_circle.values[0] = 0.;
+	coeff_circle.values[1] = 0.;
+	coeff_circle.values[2] = 1.;
+	viewer->addCircle(coeff_circle);
+	pcl::ModelCoefficients coeff_cone;
+	coeff_cone.values.resize(7);
+	coeff_cone.values[0] = 0.;
+	coeff_cone.values[1] = 0.;
+	coeff_cone.values[2] = 0.;
+	coeff_cone.values[3] = 3.;
+	coeff_cone.values[4] = 3.;
+	coeff_cone.values[5] = 3.;
+	coeff_cone.values[6] = 1.;
+	viewer->addCone(coeff_cone, "cone1");
+	coeff_cone.values.resize(7);
+	coeff_cone.values[0] = 2.;
+	coeff_cone.values[1] = 2.;
+	coeff_cone.values[2] = 2.;
+	coeff_cone.values[3] = 3.;
+	coeff_cone.values[4] = 3.;
+	coeff_cone.values[5] = 3.;
+	coeff_cone.values[6] = 1.;
+	viewer->addCone(coeff_cone, "cone2");
+
+	T_PointType p1, p2;
+	p2.x = 5.;
+	p2.y = 5.;
+	viewer->addLine(p1, p2, 1, 0, 0);
+	p2.x = 10.;
+	p2.y = 10.;
+
+	viewer->addArrow(p1, p2, 1, 1, 0,false);
+
+	pcl::ModelCoefficients coeff_cylinder;
+
+	coeff_cylinder.values.resize(7);
+	coeff_cylinder.values[0] = 1.;
+	coeff_cylinder.values[1] = 3.;
+	coeff_cylinder.values[2] = 0.;
+	coeff_cylinder.values[3] = 1.;
+	coeff_cylinder.values[4] = 3.;
+	coeff_cylinder.values[5] = 10.;
+	coeff_cylinder.values[6] = 0.5;
+	viewer->addCylinder(coeff_cylinder);
+
+	//const std::type_info& type = typeid(T_PointType);
+	//if (type == typeid(pcl::PointXYZ))
+	//{
+	//	std::vector<double> color = { 255.0, 255.0, 255.0 };
+	//	boost::shared_ptr<T_ColorHandlerCustom> color_handler(new T_ColorHandlerCustom(color[0], color[1], color[2]));
+	//	M_handler = color_handler;
+	//}
+	//else if (type == typeid(pcl::PointXYZI))
+	//{
+	//	boost::shared_ptr<T_ColorHandlerGenericField> color_handler(new T_ColorHandlerGenericField("intensity"));
+	//	M_handler = color_handler;
+	//}
+	//else if (type == typeid(pcl::PointXYZRGB)) {
+	//	boost::shared_ptr<T_ColorHandlerRGBField> color_handler(new T_ColorHandlerRGBField());
+	//	M_handler = color_handler;
+	//}
+
+	boost::shared_ptr<pcl::visualization::PointCloudColorHandlerRGBField<T_PointType>> color_handler(new pcl::visualization::PointCloudColorHandlerRGBField<T_PointType>());
+	//std::vector<double> color = { 255.0, 255.0, 255.0 };
+	//boost::shared_ptr<pcl::visualization::PointCloudColorHandlerCustom<T_PointType>> color_handler(new pcl::visualization::PointCloudColorHandlerCustom<T_PointType>(color[0], color[1], color[2]));
+	
+	handler = color_handler;
+
+	while (1)
+	{
+		viewer->spinOnce();
+		if (cloud_1) {
+			handler->setInputCloud(cloud_1);
+			if (!viewer->updatePointCloud(cloud_1, *handler, "cloud")) {
+				viewer->addPointCloud(cloud_1, *handler, "cloud");
+			}
+		}
+		if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
+
+	}
 }
 
 void CPointcloudFuction::filterNIRPointCloud_naraha()
@@ -2003,8 +2128,9 @@ void CPointcloudFuction::DrawTrajectory()
 		point_pose_arraw.r = 255;
 		point_pose_arraw.g = 150;
 		point_pose_arraw.b = 0;
-		*cloud_ += *CPV::drawArrow(point_pose_arraw,
-			trajectory_vec_vec[i](3, 0), trajectory_vec_vec[i](4, 0), trajectory_vec_vec[i](5, 0));
+		//*cloud_ += *CPV::drawArrow_pointcloud(point_pose_arraw,
+		//	trajectory_vec_vec[i](3, 0), trajectory_vec_vec[i](4, 0), trajectory_vec_vec[i](5, 0));
+		pv.drawArrow(point_pose_arraw, trajectory_vec_vec[i](3, 0), trajectory_vec_vec[i](4, 0), trajectory_vec_vec[i](5, 0));
 		//draw frame number
 		pcl::PointXYZRGB point_frame;
 		point_frame = point_pose_arraw;
@@ -2012,7 +2138,7 @@ void CPointcloudFuction::DrawTrajectory()
 		point_frame.r = 255;
 		point_frame.g = 255;
 		point_frame.b = 0;
-		*cloud_ += *pv.drawNumber(point_frame, i);
+		*cloud_ += *pv.drawNumber_pointcloud(point_frame, i);
 		if (i != 0)
 		{
 			//draw line
@@ -2026,7 +2152,8 @@ void CPointcloudFuction::DrawTrajectory()
 			point_pose_before.x = trajectory_vec_vec[i - 1](0, 0);
 			point_pose_before.y = trajectory_vec_vec[i - 1](1, 0);
 			point_pose_before.z = trajectory_vec_vec[i - 1](2, 0);
-			*cloud_ += *CPV::drawLine(point_pose_before, point_pose_current);
+			//*cloud_ += *CPV::drawLine_pointcloud(point_pose_before, point_pose_current);
+			pv.drawLine(point_pose_before, point_pose_current);
 		}
 		cloud_vec.push_back(cloud_);
 	}
