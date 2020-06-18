@@ -1,6 +1,6 @@
 #include "PointcloudFunction.h"
 
-Eigen::Matrix4d CPointcloudFuction::calcHomogeneousMatrixFromVector6d(double X_, double Y_, double Z_,
+Eigen::Matrix4d CPointcloudFunction::calcHomogeneousMatrixFromVector6d(double X_, double Y_, double Z_,
 	double Roll_, double Pitch_, double Yaw_) 
 {
 	Eigen::Matrix4d	transformation_Position = Eigen::Matrix4d::Identity();
@@ -27,7 +27,7 @@ Eigen::Matrix4d CPointcloudFuction::calcHomogeneousMatrixFromVector6d(double X_,
 	return transformation_Position;
 }
 
-Eigen::Affine3f CPointcloudFuction::calcAffine3fFromHomogeneousMatrix(Eigen::Matrix4d input_Mat)
+Eigen::Affine3f CPointcloudFunction::calcAffine3fFromHomogeneousMatrix(Eigen::Matrix4d input_Mat)
 {
 	Eigen::Affine3f Trans_Affine = Eigen::Affine3f::Identity();
 	Eigen::Vector6d Trans_Vec = Eigen::Vector6d::Identity();
@@ -39,7 +39,7 @@ Eigen::Affine3f CPointcloudFuction::calcAffine3fFromHomogeneousMatrix(Eigen::Mat
 	return Trans_Affine;
 }
 
-Eigen::Vector6d CPointcloudFuction::calcVector6dFromHomogeneousMatrix(Eigen::Matrix4d input_Mat) 
+Eigen::Vector6d CPointcloudFunction::calcVector6dFromHomogeneousMatrix(Eigen::Matrix4d input_Mat) 
 {
 	Eigen::Vector6d XYZRPY = Eigen::Vector6d::Zero();
 	double X_, Y_, Z_, Roll_, Pitch_, Yaw_;
@@ -83,7 +83,7 @@ Eigen::Vector6d CPointcloudFuction::calcVector6dFromHomogeneousMatrix(Eigen::Mat
 	return XYZRPY;
 }
 
-void CPointcloudFuction::all_process()
+void CPointcloudFunction::all_process()
 {
 	//moveFile();
 
@@ -201,7 +201,7 @@ void CPointcloudFuction::all_process()
 
 }
 
-void CPointcloudFuction::show_sequent()
+void CPointcloudFunction::show_sequent()
 {
 	string dir_;
 	dir_ = "../../data";
@@ -316,7 +316,7 @@ void CPointcloudFuction::show_sequent()
 
 }
 
-void CPointcloudFuction::getPCDFromCSV_gotFromPCAP(string dir_save, string dir_data, string file_RelativePath_)
+void CPointcloudFunction::getPCDFromCSV_gotFromPCAP(string dir_save, string dir_data, string file_RelativePath_)
 {
 	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>());
 	vector<vector<string>> csv_vec_vec_string;
@@ -339,7 +339,7 @@ void CPointcloudFuction::getPCDFromCSV_gotFromPCAP(string dir_save, string dir_d
 }
 
 
-void CPointcloudFuction::getPCDFromCSV_naraha()
+void CPointcloudFunction::getPCDFromCSV_naraha()
 {
 	string file_dir;
 	//file_dir = "../../data/temp/02 velo&nir all frame";
@@ -445,7 +445,7 @@ void CPointcloudFuction::getPCDFromCSV_naraha()
 	}
 }
 
-void CPointcloudFuction::FreeSpace()
+void CPointcloudFunction::FreeSpace()
 {
 	//typedef pcl::PointXYZ T_PointType;
 	typedef pcl::PointXYZRGB T_PointType;
@@ -590,7 +590,7 @@ void CPointcloudFuction::FreeSpace()
 	}
 }
 
-void CPointcloudFuction::filterNIRPointCloud_naraha()
+void CPointcloudFunction::filterNIRPointCloud_naraha()
 {
 	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>());
 	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_temp(new pcl::PointCloud<pcl::PointXYZI>());
@@ -695,7 +695,7 @@ void CPointcloudFuction::filterNIRPointCloud_naraha()
 	}
 }
 
-void CPointcloudFuction::getCSVFromPointCloud()
+void CPointcloudFunction::getCSVFromPointCloud()
 {
 	cout << "start .csv method" << endl;
 	string dir_;
@@ -731,7 +731,7 @@ void CPointcloudFuction::getCSVFromPointCloud()
 	cout << "finish .csv method" << endl;
 }
 
-void CPointcloudFuction::HandRegistration()
+void CPointcloudFunction::HandRegistration()
 {
 	//"delta_T(i) = T(i-1).inverse() * T(i);",
 	//because relative displacement can accumulate correctly.
@@ -1160,7 +1160,7 @@ void CPointcloudFuction::HandRegistration()
 	pv_2frame.closeViewer();
 }
 
-CPointcloudFuction::KEYNUM CPointcloudFuction::getKEYNUM()
+CPointcloudFunction::KEYNUM CPointcloudFunction::getKEYNUM()
 {
 	//http://kts.sakaiweb.com/virtualkeycodes.html
 
@@ -1245,7 +1245,7 @@ CPointcloudFuction::KEYNUM CPointcloudFuction::getKEYNUM()
 }
 
 
-void CPointcloudFuction::combinePointCloud_naraha()
+void CPointcloudFunction::combinePointCloud_naraha()
 {
 	string dir_;
 	dir_ = "../../data/process_CombinePointCloud";
@@ -1438,19 +1438,19 @@ void CPointcloudFuction::combinePointCloud_naraha()
 	}
 }
 
-void CPointcloudFuction::changeColor_plane(pcl::PointXYZRGB &point_)
+void CPointcloudFunction::changeColor_plane(pcl::PointXYZRGB &point_)
 {
 	point_.r = 0;
 	point_.g = 0;
 	point_.b = 255;
 }
 
-void CPointcloudFuction::changeColor_plane(pcl::PointXYZI &point_)
+void CPointcloudFunction::changeColor_plane(pcl::PointXYZI &point_)
 {
 	point_.intensity = 210;
 }
 
-void CPointcloudFuction::DynamicTranslation()
+void CPointcloudFunction::DynamicTranslation()
 {
 	//bool b_saveByTXT = false;
 	bool b_inputTranslation = false;
@@ -1748,7 +1748,7 @@ void CPointcloudFuction::DynamicTranslation()
 	pv.closeViewer();
 }
 
-void CPointcloudFuction::FileProcess()
+void CPointcloudFunction::FileProcess()
 {
 
 	string dir_;
@@ -1853,7 +1853,7 @@ void CPointcloudFuction::FileProcess()
 
 }
 
-void CPointcloudFuction::FileProcess_copy(string dir_from, string dir_to)
+void CPointcloudFunction::FileProcess_copy(string dir_from, string dir_to)
 {
 	vector<string> filenames_copy;
 	//check it can copy file
@@ -1902,7 +1902,7 @@ void CPointcloudFuction::FileProcess_copy(string dir_from, string dir_to)
 	}
 }
 
-void CPointcloudFuction::FileProcess_delete(string dir)
+void CPointcloudFunction::FileProcess_delete(string dir)
 {
 
 	//check
@@ -1944,7 +1944,7 @@ void CPointcloudFuction::FileProcess_delete(string dir)
 	}
 }
 
-void CPointcloudFuction::FileProcess_evacuate(string dir)
+void CPointcloudFunction::FileProcess_evacuate(string dir)
 {
 	vector<string> filenames_main;
 	CTimeString::getFileNames_extension(dir, filenames_main, ".pcd");
@@ -2002,7 +2002,7 @@ void CPointcloudFuction::FileProcess_evacuate(string dir)
 	}
 }
 
-void CPointcloudFuction::FileProcess_FolderInFolder(string dir_, vector<string> &folder_vec)
+void CPointcloudFunction::FileProcess_FolderInFolder(string dir_, vector<string> &folder_vec)
 {
 	folder_vec.clear();
 
@@ -2056,7 +2056,7 @@ void CPointcloudFuction::FileProcess_FolderInFolder(string dir_, vector<string> 
 	}
 }
 
-void CPointcloudFuction::DrawTrajectory()
+void CPointcloudFunction::DrawTrajectory()
 {
 	//typedef typename pcl::PointXYZI T_PointType;
 	typedef typename pcl::PointXYZRGB T_PointType;
@@ -2138,7 +2138,8 @@ void CPointcloudFuction::DrawTrajectory()
 		point_frame.r = 255;
 		point_frame.g = 255;
 		point_frame.b = 0;
-		*cloud_ += *pv.drawNumber_pointcloud(point_frame, i);
+		//*cloud_ += *pv.drawNumber_pointcloud(point_frame, i);
+		pv.drawNumber(point_frame, i);
 		if (i != 0)
 		{
 			//draw line
@@ -2154,6 +2155,8 @@ void CPointcloudFuction::DrawTrajectory()
 			point_pose_before.z = trajectory_vec_vec[i - 1](2, 0);
 			//*cloud_ += *CPV::drawLine_pointcloud(point_pose_before, point_pose_current);
 			pv.drawLine(point_pose_before, point_pose_current);
+			//pv.drawLine_cylinder(point_pose_before, point_pose_current, 0.1);
+			//pv.drawLine_cylinder(point_pose_current, point_pose_before, 0.05);
 		}
 		cloud_vec.push_back(cloud_);
 	}
@@ -2180,7 +2183,7 @@ void CPointcloudFuction::DrawTrajectory()
 	pv.closeViewer();
 }
 
-void CPointcloudFuction::DoSegmentation()
+void CPointcloudFunction::DoSegmentation()
 {
 	//typedef typename pcl::PointXYZI T_PointType;
 	typedef typename pcl::PointXYZRGB T_PointType;
@@ -2286,7 +2289,7 @@ void CPointcloudFuction::DoSegmentation()
 	pv.closeViewer();
 }
 
-vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> CPointcloudFuction::getSegmentation(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, double th_tolerance)
+vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> CPointcloudFunction::getSegmentation(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, double th_tolerance)
 {
 	//typedef typename pcl::PointXYZI T_PointType;
 	typedef typename pcl::PointXYZRGB T_PointType;
@@ -2334,7 +2337,7 @@ vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> CPointcloudFuction::getSegmentati
 	return cloud_cluster_vec;
 }
 
-vector<pcl::PointIndices> CPointcloudFuction::getSegmentation_indices(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, double th_tolerance)
+vector<pcl::PointIndices> CPointcloudFunction::getSegmentation_indices(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, double th_tolerance)
 {
 	//https://vml.sakura.ne.jp/koeda/PCL/tutorials/html/cluster_extraction.html#cluster-extraction
 
@@ -2361,7 +2364,7 @@ vector<pcl::PointIndices> CPointcloudFuction::getSegmentation_indices(pcl::Point
 	return cluster_indices;
 }
 
-vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> CPointcloudFuction::getSegmentation_rest(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_rest, double th_tolerance)
+vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> CPointcloudFunction::getSegmentation_rest(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_rest, double th_tolerance)
 {
 	//typedef typename pcl::PointXYZI T_PointType;
 	typedef typename pcl::PointXYZRGB T_PointType;
@@ -2413,7 +2416,7 @@ vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> CPointcloudFuction::getSegmentati
 	return cloud_cluster_vec;
 }
 
-void CPointcloudFuction::GlobalRegistration_FPFH_SAC_IA()
+void CPointcloudFunction::GlobalRegistration_FPFH_SAC_IA()
 {
 
 	int i_method;
@@ -2440,7 +2443,7 @@ void CPointcloudFuction::GlobalRegistration_FPFH_SAC_IA()
 	return;
 }
 
-void CPointcloudFuction::GR_FPFH_SAC_IA_2frames(string dir_)
+void CPointcloudFunction::GR_FPFH_SAC_IA_2frames(string dir_)
 {
 	//typedef pcl::PointXYZ T_PointType;
 	typedef pcl::PointXYZRGB T_PointType;
@@ -2693,7 +2696,7 @@ void CPointcloudFuction::GR_FPFH_SAC_IA_2frames(string dir_)
 	cout << "escaped" << endl;
 }
 
-void CPointcloudFuction::GR_FPFH_SAC_IA_Allframes(string dir_)
+void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_)
 {
 	//typedef pcl::PointXYZ T_PointType;
 	typedef pcl::PointXYZRGB T_PointType;

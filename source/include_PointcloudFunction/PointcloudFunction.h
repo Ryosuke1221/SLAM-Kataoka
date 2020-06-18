@@ -60,11 +60,11 @@ namespace Eigen {
 
 }    // namespace Eigen
 
-class CPointcloudFuction
+class CPointcloudFunction
 {
 
 public:
-	CPointcloudFuction()
+	CPointcloudFunction()
 	{
 
 	}
@@ -210,15 +210,20 @@ class CPointVisualization
 	static pcl::PointCloud<pcl::PointXYZRGB>::Ptr expandDiagram(
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, float times_);
 
-	int num_NumberPointcloud;
-
 	T_PointCloudPtr M_cloud_second;
 	int M_num_PointCloudShowing;
 	int M_i_viewer1, M_i_viewer2;
 
-	int M_num_arrow, M_num_line, M_num_cylinder;
+	int M_num_arrow, M_num_line, M_num_cylinder, M_num_number;
 	void drawNumber_OnetoNine(pcl::PointXYZRGB point_center, int num_arg, double length_horizontal_arg);
 
+	pcl::PointXYZRGB addPointXYZRGB(pcl::PointXYZRGB point1, pcl::PointXYZRGB point2)
+	{
+		pcl::PointXYZRGB point;
+		point.x = point1.x + point2.x; point.y = point1.y + point2.y; point.z = point1.z + point2.z;
+		point.r = point1.r + point2.r; point.g = point1.g + point2.g; point.b = point1.b + point2.b;
+		return point;
+	}
 
 public:
 
@@ -245,9 +250,10 @@ public:
 	void addProcess_InsetPointCloud();
 
 	void drawArrow(pcl::PointXYZRGB point_arg, double Roll_, double Pitch_, double Yaw_);
-	void drawNumber(pcl::PointXYZRGB point_center, int num_arg);
 	void drawLine(pcl::PointXYZRGB point1_, pcl::PointXYZRGB point2_);
 	void drawLine_cylinder(pcl::PointXYZRGB point1_, pcl::PointXYZRGB point2_, double radius_);
+	void drawNumber(pcl::PointXYZRGB point_center, int num_arg);
+
 
 };
 
@@ -287,10 +293,10 @@ CPointVisualization<T_PointType>::CPointVisualization()
 	, M_cloud_second(new pcl::PointCloud<T_PointType>)
 	, M_cloud_normal(new pcl::PointCloud<pcl::Normal>)
 	, M_b_useNormal(false)
-	, num_NumberPointcloud(0)
 	, M_num_arrow(0)
 	, M_num_line(0)
 	, M_num_cylinder(0)
+	, M_num_number(0)
 {
 	setWindowName("init");
 
@@ -741,8 +747,8 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr CPointVisualization<T_PointType>::drawArr
 	//cloud_ = expandDiagram(cloud_, 5.);
 
 	Eigen::Affine3f Trans_ = Eigen::Affine3f::Identity();
-	Trans_ = CPointcloudFuction::calcAffine3fFromHomogeneousMatrix(
-		CPointcloudFuction::calcHomogeneousMatrixFromVector6d(
+	Trans_ = CPointcloudFunction::calcAffine3fFromHomogeneousMatrix(
+		CPointcloudFunction::calcHomogeneousMatrixFromVector6d(
 			point_arg.x, point_arg.y, point_arg.z, Roll_, Pitch_, Yaw_));
 	pcl::transformPointCloud(*cloud_, *cloud_, Trans_);
 
@@ -759,10 +765,10 @@ void CPointVisualization<T_PointType>::drawArrow(
 	point_end.x = length_arraw;
 	Eigen::Matrix4d point_end_homogeneous = Eigen::Matrix4d::Identity();
 	point_end_homogeneous =
-		CPointcloudFuction::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., Yaw_)
-		*CPointcloudFuction::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., Pitch_, 0.)
-		*CPointcloudFuction::calcHomogeneousMatrixFromVector6d(0., 0., 0., Roll_, 0., 0.)
-		*CPointcloudFuction::calcHomogeneousMatrixFromVector6d(
+		CPointcloudFunction::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., Yaw_)
+		*CPointcloudFunction::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., Pitch_, 0.)
+		*CPointcloudFunction::calcHomogeneousMatrixFromVector6d(0., 0., 0., Roll_, 0., 0.)
+		*CPointcloudFunction::calcHomogeneousMatrixFromVector6d(
 			point_end.x, point_end.y, point_end.z, 0., 0., 0.);
 	point_end.x = point_end_homogeneous(0, 3);
 	point_end.y = point_end_homogeneous(1, 3);
@@ -804,7 +810,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr CPointVisualization<T_PointType>::drawNum
 	int index_ = 0;
 	double range_ = 0.8;
 	double height_gap = 0.1;
-	point_center.z += height_gap * num_NumberPointcloud;
+	point_center.z += height_gap * M_num_number;
 	while (1)
 	{
 		*cloud_ += *drawNumber_OnetoNine_pointcloud(point_center, num_arg % 10, length_horizontal_);
@@ -814,7 +820,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr CPointVisualization<T_PointType>::drawNum
 		index_++;
 	}
 
-	num_NumberPointcloud++;
+	M_num_number++;
 
 	return cloud_;
 }
@@ -828,17 +834,18 @@ void CPointVisualization<T_PointType>::drawNumber(
 	int index_ = 0;
 	double range_ = 0.8;
 	double height_gap = 0.1;
-	point_center.z += height_gap * num_NumberPointcloud;
+	point_center.z += height_gap * M_num_number;
 	while (1)
 	{
-		*cloud_ += *drawNumber_OnetoNine_pointcloud(point_center, num_arg % 10, length_horizontal_);
+		//*cloud_ += *drawNumber_OnetoNine_pointcloud(point_center, num_arg % 10, length_horizontal_);
+		drawNumber_OnetoNine(point_center, num_arg % 10, length_horizontal_);
 		num_arg /= 10;
 		if (num_arg == 0) break;
 		point_center.x += -range_;
 		index_++;
 	}
 
-	num_NumberPointcloud++;
+	M_num_number++;
 
 	return;
 }
@@ -983,8 +990,8 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr CPointVisualization<T_PointType>::drawNum
 	}
 
 	Eigen::Affine3f Trans_ = Eigen::Affine3f::Identity();
-	Trans_ = CPointcloudFuction::calcAffine3fFromHomogeneousMatrix(
-		CPointcloudFuction::calcHomogeneousMatrixFromVector6d(
+	Trans_ = CPointcloudFunction::calcAffine3fFromHomogeneousMatrix(
+		CPointcloudFunction::calcHomogeneousMatrixFromVector6d(
 			-length_horizontal / 2. + point_center.x, -length_half_vertical + point_center.y,
 			point_center.z, 0., 0., 0.));
 	pcl::transformPointCloud(*cloud_, *cloud_, Trans_);
@@ -998,11 +1005,14 @@ void CPointVisualization<T_PointType>::drawNumber_OnetoNine(
 {
 	//minus atomawashi
 
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZRGB>());
+	//M_num_number
+
+	//pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZRGB>());
 	//double length_half_vertical = 0.25;
 	//double length_horizontal = 0.3;
 	double length_horizontal = length_horizontal_arg;
 	double length_half_vertical = length_horizontal / 1.2;
+	double width_ = 0.05;
 
 	if (!(0 <= num_arg && num_arg <= 9))
 	{
@@ -1036,107 +1046,360 @@ void CPointVisualization<T_PointType>::drawNumber_OnetoNine(
 	point_RightCenter.y = length_half_vertical;
 	point_RightDown.y = 0.;
 
+	point_center.x -= point_RightUp.x / 2.;
+	point_center.y -= point_RightUp.y / 2.;
+
+	point_LeftUp = addPointXYZRGB(point_LeftUp, point_center);
+	point_LeftCenter = addPointXYZRGB(point_LeftCenter, point_center);
+	point_LeftDown = addPointXYZRGB(point_LeftDown, point_center);
+	point_RightUp = addPointXYZRGB(point_RightUp, point_center);
+	point_RightCenter = addPointXYZRGB(point_RightCenter, point_center);
+	point_RightDown = addPointXYZRGB(point_RightDown, point_center);
+
 	//https://qiita.com/hiloki@github/items/647cd302616d57ac84ec
 	switch (num_arg)
 	{
-	case 0:
-		*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
-		//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
-		*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
-		*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
-		*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
-		*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
-		*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
-		break;
-	case 1:
-		//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
-		//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
-		//*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
-		//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
-		//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
-		*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
-		*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
-		break;
-	case 2:
-		*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
-		*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
-		*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
-		*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
-		//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
-		//*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
-		*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
-		break;
-	case 3:
-		*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
-		*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
-		*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
-		//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
-		//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
-		*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
-		*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
-		break;
-	case 4:
-		//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
-		*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
-		//*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
-		//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
-		*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
-		*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
-		*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
-		break;
-	case 5:
-		*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
-		*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
-		*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
-		//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
-		*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
-		*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
-		//*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
-		break;
-	case 6:
-		*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
-		*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
-		*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
-		*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
-		*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
-		*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
-		//*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
-		break;
-	case 7:
-		//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
-		//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
-		*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
-		//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
-		//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
-		*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
-		*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
-		break;
-	case 8:
-		*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
-		*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
-		*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
-		*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
-		*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
-		*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
-		*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
-		break;
-	case 9:
-		*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
-		*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
-		*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
-		//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
-		*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
-		*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
-		*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
-		break;
-	}
+	//case 0:
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
+	//	////*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
+	//	//*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
+	//	//*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
+	//	
+	//	drawLine_cylinder(point_LeftDown, point_RightDown, width_);
+	//	//drawLine_cylinder(point_LeftCenter, point_RightCenter, width_);
+	//	drawLine_cylinder(point_LeftUp, point_RightUp, width_);
+	//	drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
+	//	drawLine_cylinder(point_LeftCenter, point_LeftUp, width_);
+	//	drawLine_cylinder(point_RightDown, point_RightCenter, width_);
+	//	drawLine_cylinder(point_RightCenter, point_RightUp, width_);
+	//	break;
+	//case 1:
+	//	////*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
+	//	////*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
+	//	////*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
+	//	////*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
+	//	////*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
+	//	//*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
+	//	//*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
 
-	Eigen::Affine3f Trans_ = Eigen::Affine3f::Identity();
-	Trans_ = CPointcloudFuction::calcAffine3fFromHomogeneousMatrix(
-		CPointcloudFuction::calcHomogeneousMatrixFromVector6d(
-			-length_horizontal / 2. + point_center.x, -length_half_vertical + point_center.y,
-			point_center.z, 0., 0., 0.));
-	pcl::transformPointCloud(*cloud_, *cloud_, Trans_);
+	//	//drawLine_cylinder(point_LeftDown, point_RightDown, width_);
+	//	//drawLine_cylinder(point_LeftCenter, point_RightCenter, width_);
+	//	//drawLine_cylinder(point_LeftUp, point_RightUp, width_);
+	//	//drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
+	//	//drawLine_cylinder(point_LeftCenter, point_LeftUp, width_);
+	//	drawLine_cylinder(point_RightDown, point_RightCenter, width_);
+	//	drawLine_cylinder(point_RightCenter, point_RightUp, width_);
+	//	break;
+	//case 2:
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
+	//	////*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
+	//	////*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
+	//	//*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
+
+	//	drawLine_cylinder(point_LeftDown, point_RightDown, width_);
+	//	drawLine_cylinder(point_LeftCenter, point_RightCenter, width_);
+	//	drawLine_cylinder(point_LeftUp, point_RightUp, width_);
+	//	drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
+	//	//drawLine_cylinder(point_LeftCenter, point_LeftUp, width_);
+	//	//drawLine_cylinder(point_RightDown, point_RightCenter, width_);
+	//	drawLine_cylinder(point_RightCenter, point_RightUp, width_);
+	//	break;
+	//case 3:
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
+	//	////*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
+	//	////*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
+	//	//*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
+	//	//*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
+
+	//	drawLine_cylinder(point_LeftDown, point_RightDown, width_);
+	//	drawLine_cylinder(point_LeftCenter, point_RightCenter, width_);
+	//	drawLine_cylinder(point_LeftUp, point_RightUp, width_);
+	//	//drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
+	//	//drawLine_cylinder(point_LeftCenter, point_LeftUp, width_);
+	//	drawLine_cylinder(point_RightDown, point_RightCenter, width_);
+	//	drawLine_cylinder(point_RightCenter, point_RightUp, width_);
+	//	break;
+	//case 4:
+	//	////*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
+	//	////*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
+	//	////*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
+	//	//*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
+	//	//*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
+
+	//	//drawLine_cylinder(point_LeftDown, point_RightDown, width_);
+	//	drawLine_cylinder(point_LeftCenter, point_RightCenter, width_);
+	//	//drawLine_cylinder(point_LeftUp, point_RightUp, width_);
+	//	//drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
+	//	drawLine_cylinder(point_LeftCenter, point_LeftUp, width_);
+	//	drawLine_cylinder(point_RightDown, point_RightCenter, width_);
+	//	drawLine_cylinder(point_RightCenter, point_RightUp, width_);
+	//	break;
+	//case 5:
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
+	//	////*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
+	//	//*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
+	//	////*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
+
+	//	drawLine_cylinder(point_LeftDown, point_RightDown, width_);
+	//	drawLine_cylinder(point_LeftCenter, point_RightCenter, width_);
+	//	drawLine_cylinder(point_LeftUp, point_RightUp, width_);
+	//	//drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
+	//	drawLine_cylinder(point_LeftCenter, point_LeftUp, width_);
+	//	drawLine_cylinder(point_RightDown, point_RightCenter, width_);
+	//	//drawLine_cylinder(point_RightCenter, point_RightUp, width_);
+	//	break;
+	//case 6:
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
+	//	//*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
+	//	////*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
+
+	//	drawLine_cylinder(point_LeftDown, point_RightDown, width_);
+	//	drawLine_cylinder(point_LeftCenter, point_RightCenter, width_);
+	//	drawLine_cylinder(point_LeftUp, point_RightUp, width_);
+	//	drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
+	//	drawLine_cylinder(point_LeftCenter, point_LeftUp, width_);
+	//	drawLine_cylinder(point_RightDown, point_RightCenter, width_);
+	//	//drawLine_cylinder(point_RightCenter, point_RightUp, width_);
+	//	break;
+	//case 7:
+	//	////*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
+	//	////*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
+	//	////*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
+	//	////*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
+	//	//*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
+	//	//*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
+
+	//	//drawLine_cylinder(point_LeftDown, point_RightDown, width_);
+	//	//drawLine_cylinder(point_LeftCenter, point_RightCenter, width_);
+	//	drawLine_cylinder(point_LeftUp, point_RightUp, width_);
+	//	//drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
+	//	//drawLine_cylinder(point_LeftCenter, point_LeftUp, width_);
+	//	drawLine_cylinder(point_RightDown, point_RightCenter, width_);
+	//	drawLine_cylinder(point_RightCenter, point_RightUp, width_);
+	//	break;
+	//case 8:
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
+	//	//*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
+	//	//*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
+
+	//	drawLine_cylinder(point_LeftDown, point_RightDown, width_);
+	//	drawLine_cylinder(point_LeftCenter, point_RightCenter, width_);
+	//	drawLine_cylinder(point_LeftUp, point_RightUp, width_);
+	//	drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
+	//	drawLine_cylinder(point_LeftCenter, point_LeftUp, width_);
+	//	drawLine_cylinder(point_RightDown, point_RightCenter, width_);
+	//	drawLine_cylinder(point_RightCenter, point_RightUp, width_);
+	//	break;
+	//case 9:
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
+	//	////*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
+	//	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
+	//	//*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
+	//	//*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
+
+	//	drawLine_cylinder(point_LeftDown, point_RightDown, width_);
+	//	drawLine_cylinder(point_LeftCenter, point_RightCenter, width_);
+	//	drawLine_cylinder(point_LeftUp, point_RightUp, width_);
+	//	//drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
+	//	drawLine_cylinder(point_LeftCenter, point_LeftUp, width_);
+	//	drawLine_cylinder(point_RightDown, point_RightCenter, width_);
+	//	drawLine_cylinder(point_RightCenter, point_RightUp, width_);
+	//	break;
+case 0:
+	//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
+	////*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
+	//*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
+	//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
+	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
+	//*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
+	//*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
+
+	drawLine_cylinder(point_LeftDown, point_RightDown, width_);
+	//drawLine_cylinder(point_LeftCenter, point_RightCenter, width_);
+	drawLine_cylinder(point_LeftUp, point_RightUp, width_);
+	drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
+	drawLine_cylinder(point_LeftCenter, point_LeftUp, width_);
+	drawLine_cylinder(point_RightDown, point_RightCenter, width_);
+	drawLine_cylinder(point_RightCenter, point_RightUp, width_);
+	break;
+case 1:
+	////*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
+	////*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
+	////*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
+	////*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
+	////*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
+	//*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
+	//*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
+
+	//drawLine_cylinder(point_LeftDown, point_RightDown, width_);
+	//drawLine_cylinder(point_LeftCenter, point_RightCenter, width_);
+	//drawLine_cylinder(point_LeftUp, point_RightUp, width_);
+	//drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
+	//drawLine_cylinder(point_LeftCenter, point_LeftUp, width_);
+	drawLine_cylinder(point_RightDown, point_RightCenter, width_);
+	drawLine_cylinder(point_RightCenter, point_RightUp, width_);
+	break;
+case 2:
+	//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
+	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
+	//*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
+	//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
+	////*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
+	////*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
+	//*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
+
+	drawLine_cylinder(point_LeftDown, point_RightDown, width_);
+	drawLine_cylinder(point_LeftCenter, point_RightCenter, width_);
+	drawLine_cylinder(point_LeftUp, point_RightUp, width_);
+	drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
+	//drawLine_cylinder(point_LeftCenter, point_LeftUp, width_);
+	//drawLine_cylinder(point_RightDown, point_RightCenter, width_);
+	drawLine_cylinder(point_RightCenter, point_RightUp, width_);
+	break;
+case 3:
+	//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
+	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
+	//*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
+	////*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
+	////*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
+	//*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
+	//*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
+
+	drawLine_cylinder(point_LeftDown, point_RightDown, width_);
+	drawLine_cylinder(point_LeftCenter, point_RightCenter, width_);
+	drawLine_cylinder(point_LeftUp, point_RightUp, width_);
+	//drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
+	//drawLine_cylinder(point_LeftCenter, point_LeftUp, width_);
+	drawLine_cylinder(point_RightDown, point_RightCenter, width_);
+	drawLine_cylinder(point_RightCenter, point_RightUp, width_);
+	break;
+case 4:
+	////*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
+	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
+	////*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
+	////*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
+	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
+	//*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
+	//*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
+
+	//drawLine_cylinder(point_LeftDown, point_RightDown, width_);
+	drawLine_cylinder(point_LeftCenter, point_RightCenter, width_);
+	//drawLine_cylinder(point_LeftUp, point_RightUp, width_);
+	//drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
+	drawLine_cylinder(point_LeftCenter, point_LeftUp, width_);
+	drawLine_cylinder(point_RightDown, point_RightCenter, width_);
+	drawLine_cylinder(point_RightCenter, point_RightUp, width_);
+	break;
+case 5:
+	//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
+	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
+	//*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
+	////*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
+	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
+	//*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
+	////*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
+
+	drawLine_cylinder(point_LeftDown, point_RightDown, width_);
+	drawLine_cylinder(point_LeftCenter, point_RightCenter, width_);
+	drawLine_cylinder(point_LeftUp, point_RightUp, width_);
+	//drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
+	drawLine_cylinder(point_LeftCenter, point_LeftUp, width_);
+	drawLine_cylinder(point_RightDown, point_RightCenter, width_);
+	//drawLine_cylinder(point_RightCenter, point_RightUp, width_);
+	break;
+case 6:
+	//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
+	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
+	//*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
+	//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
+	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
+	//*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
+	////*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
+
+	drawLine_cylinder(point_LeftDown, point_RightDown, width_);
+	drawLine_cylinder(point_LeftCenter, point_RightCenter, width_);
+	drawLine_cylinder(point_LeftUp, point_RightUp, width_);
+	drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
+	drawLine_cylinder(point_LeftCenter, point_LeftUp, width_);
+	drawLine_cylinder(point_RightDown, point_RightCenter, width_);
+	//drawLine_cylinder(point_RightCenter, point_RightUp, width_);
+	break;
+case 7:
+	////*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
+	////*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
+	//*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
+	////*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
+	////*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
+	//*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
+	//*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
+
+	//drawLine_cylinder(point_LeftDown, point_RightDown, width_);
+	//drawLine_cylinder(point_LeftCenter, point_RightCenter, width_);
+	drawLine_cylinder(point_LeftUp, point_RightUp, width_);
+	//drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
+	//drawLine_cylinder(point_LeftCenter, point_LeftUp, width_);
+	drawLine_cylinder(point_RightDown, point_RightCenter, width_);
+	drawLine_cylinder(point_RightCenter, point_RightUp, width_);
+	break;
+case 8:
+	//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
+	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
+	//*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
+	//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
+	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
+	//*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
+	//*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
+
+	drawLine_cylinder(point_LeftDown, point_RightDown, width_);
+	drawLine_cylinder(point_LeftCenter, point_RightCenter, width_);
+	drawLine_cylinder(point_LeftUp, point_RightUp, width_);
+	drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
+	drawLine_cylinder(point_LeftCenter, point_LeftUp, width_);
+	drawLine_cylinder(point_RightDown, point_RightCenter, width_);
+	drawLine_cylinder(point_RightCenter, point_RightUp, width_);
+	break;
+case 9:
+	//*cloud_ += *drawLine_pointcloud(point_LeftDown, point_RightDown);
+	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_RightCenter);
+	//*cloud_ += *drawLine_pointcloud(point_LeftUp, point_RightUp);
+	////*cloud_ += *drawLine_pointcloud(point_LeftDown, point_LeftCenter);
+	//*cloud_ += *drawLine_pointcloud(point_LeftCenter, point_LeftUp);
+	//*cloud_ += *drawLine_pointcloud(point_RightDown, point_RightCenter);
+	//*cloud_ += *drawLine_pointcloud(point_RightCenter, point_RightUp);
+
+	drawLine_cylinder(point_LeftDown, point_RightDown, width_);
+	drawLine_cylinder(point_LeftCenter, point_RightCenter, width_);
+	drawLine_cylinder(point_LeftUp, point_RightUp, width_);
+	//drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
+	drawLine_cylinder(point_LeftCenter, point_LeftUp, width_);
+	drawLine_cylinder(point_RightDown, point_RightCenter, width_);
+	drawLine_cylinder(point_RightCenter, point_RightUp, width_);
+	break;
+	}
 
 	return;
 }
