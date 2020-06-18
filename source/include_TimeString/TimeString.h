@@ -69,6 +69,8 @@ public:
 	static void deletefile(string filename_delete);//full path
 	static void makenewfolder(string dir, string newfoldername);//relative path
 
+	static vector<string> inputSomeString();
+
 private:
 	static bool getDirectoryExistance(string foder_Path);
 	static bool getDirectoryExistance_detail(string foder_Path, bool b_first);

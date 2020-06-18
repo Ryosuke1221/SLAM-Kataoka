@@ -1,88 +1,5 @@
 #include "PointcloudFunction.h"
 
-Eigen::Matrix4d CPointcloudFunction::calcHomogeneousMatrixFromVector6d(double X_, double Y_, double Z_,
-	double Roll_, double Pitch_, double Yaw_) 
-{
-	Eigen::Matrix4d	transformation_Position = Eigen::Matrix4d::Identity();
-	Eigen::Matrix4d T_mat = Eigen::Matrix4d::Identity();
-	Eigen::Matrix4d Roll_mat = Eigen::Matrix4d::Identity();
-	Eigen::Matrix4d Pitch_mat = Eigen::Matrix4d::Identity();
-	Eigen::Matrix4d Yaw_mat = Eigen::Matrix4d::Identity();
-	T_mat(0, 3) = X_;
-	T_mat(1, 3) = Y_;
-	T_mat(2, 3) = Z_;
-	Roll_mat(1, 1) = cos(Roll_);
-	Roll_mat(1, 2) = -sin(Roll_);
-	Roll_mat(2, 1) = sin(Roll_);
-	Roll_mat(2, 2) = cos(Roll_);
-	Pitch_mat(0, 0) = cos(Pitch_);
-	Pitch_mat(2, 0) = -sin(Pitch_);
-	Pitch_mat(0, 2) = sin(Pitch_);
-	Pitch_mat(2, 2) = cos(Pitch_);
-	Yaw_mat(0, 0) = cos(Yaw_);
-	Yaw_mat(0, 1) = -sin(Yaw_);
-	Yaw_mat(1, 0) = sin(Yaw_);
-	Yaw_mat(1, 1) = cos(Yaw_);
-	transformation_Position = T_mat * Yaw_mat * Pitch_mat * Roll_mat;
-	return transformation_Position;
-}
-
-Eigen::Affine3f CPointcloudFunction::calcAffine3fFromHomogeneousMatrix(Eigen::Matrix4d input_Mat)
-{
-	Eigen::Affine3f Trans_Affine = Eigen::Affine3f::Identity();
-	Eigen::Vector6d Trans_Vec = Eigen::Vector6d::Identity();
-	Trans_Vec = calcVector6dFromHomogeneousMatrix(input_Mat);
-	Trans_Affine.translation() << Trans_Vec(0, 0), Trans_Vec(1, 0), Trans_Vec(2, 0);
-	Trans_Affine.rotate(Eigen::AngleAxisf(Trans_Vec(5, 0), Eigen::Vector3f::UnitZ()));
-	Trans_Affine.rotate(Eigen::AngleAxisf(Trans_Vec(4, 0), Eigen::Vector3f::UnitY()));
-	Trans_Affine.rotate(Eigen::AngleAxisf(Trans_Vec(3, 0), Eigen::Vector3f::UnitX()));
-	return Trans_Affine;
-}
-
-Eigen::Vector6d CPointcloudFunction::calcVector6dFromHomogeneousMatrix(Eigen::Matrix4d input_Mat) 
-{
-	Eigen::Vector6d XYZRPY = Eigen::Vector6d::Zero();
-	double X_, Y_, Z_, Roll_, Pitch_, Yaw_;
-	X_ = input_Mat(0, 3);
-	Y_ = input_Mat(1, 3);
-	Z_ = input_Mat(2, 3);
-	if (input_Mat(2, 0) == -1.) {
-		Pitch_ = M_PI / 2.0;
-		Roll_ = 0.;
-		Yaw_ = atan2(input_Mat(1, 2), input_Mat(1, 1));
-	}
-	else if (input_Mat(2, 0) == 1.) {
-		Pitch_ = -M_PI / 2.0;
-		Roll_ = 0.;
-		Yaw_ = atan2(-input_Mat(1, 2), input_Mat(1, 1));
-	}
-	else {
-		Yaw_ = atan2(input_Mat(1, 0), input_Mat(0, 0));
-		Roll_ = atan2(input_Mat(2, 1), input_Mat(2, 2));
-		double cos_Pitch;
-		if (cos(Yaw_) == 0.) {
-			cos_Pitch = input_Mat(0, 0) / sin(Yaw_);
-		}
-		else 	cos_Pitch = input_Mat(0, 0) / cos(Yaw_);
-
-		Pitch_ = atan2(-input_Mat(2, 0), cos_Pitch);
-	}
-	if (!(-M_PI < Roll_)) Roll_ += M_PI;
-	else if (!(Roll_ < M_PI)) Roll_ -= M_PI;
-	if (!(-M_PI < Pitch_)) Pitch_ += M_PI;
-	else if (!(Pitch_ < M_PI)) Pitch_ -= M_PI;
-	if (!(-M_PI < Yaw_)) Yaw_ += M_PI;
-	else if (!(Yaw_ < M_PI)) Yaw_ -= M_PI;
-
-	XYZRPY << X_, Y_, Z_,
-		Roll_, Pitch_, Yaw_;
-	//cout << "Roll_ = " << Roll_ << endl;
-	//cout << "Pitch_ = " << Pitch_ << endl;
-	//cout << "Yaw_ = " << Yaw_ << endl;
-
-	return XYZRPY;
-}
-
 void CPointcloudFunction::all_process()
 {
 	//moveFile();
@@ -215,9 +132,6 @@ void CPointcloudFunction::show_sequent()
 	dir_ = dir_ + "/" + dir_folder_vec[i_select];
 	cout << endl;
 
-	//string dir_;
-	//dir_ = "../../data/process_show_sequent";
-
 	//typedef typename pcl::PointXYZI PointType_func;
 	typedef typename pcl::PointXYZRGB PointType_func;
 
@@ -241,6 +155,25 @@ void CPointcloudFunction::show_sequent()
 	vector<string> filenames_;
 	CTimeString::getFileNames_extension(dir_, filenames_,".pcd");
 	cout << "file size: " << filenames_.size() << endl;
+
+	//ignore some file
+	{
+		//for (int i = 0; i < filenames_.size(); i++)
+		//{
+		//	cout << "i:" << i << " " << filenames_[i] << endl;
+		//}
+		//vector<int>i_file_vec;
+		//int i_index = 0;
+
+		vector<string> aa;
+		aa = CTimeString::inputSomeString();
+	}
+
+	while (1)
+	{
+
+	}
+
 
 	if (filenames_.size() == 0)
 	{
@@ -647,9 +580,9 @@ void CPointcloudFunction::filterNIRPointCloud_naraha()
 
 		//turn pitch(camera coordinate to robot one)
 		HM_free = Eigen::Matrix4d::Identity();
-		HM_free = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
+		HM_free = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
 		Trans_ = Eigen::Affine3f::Identity();
-		Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
+		Trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(HM_free);
 		pcl::transformPointCloud(*cloud_, *cloud_, Trans_);
 
 		//range
@@ -684,9 +617,9 @@ void CPointcloudFunction::filterNIRPointCloud_naraha()
 
 		//-turn pitch(camera coordinate)
 		HM_free = Eigen::Matrix4d::Identity();
-		HM_free = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., -pitch_init, 0.);
+		HM_free = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., -pitch_init, 0.);
 		Trans_ = Eigen::Affine3f::Identity();
-		Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
+		Trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(HM_free);
 		pcl::transformPointCloud(*cloud_, *cloud_, Trans_);
 
 		string filename_save = filenames_[index_].substr(0, filenames_[index_].size() - 4) + "_filtered_nir.pcd";
@@ -856,7 +789,7 @@ void CPointcloudFunction::HandRegistration()
 		for (int i = 0; i < trajectory_vec_vec.size(); i++)
 		{
 			Eigen::Matrix4d HM_trajectory = Eigen::Matrix4d::Identity();
-			HM_trajectory = calcHomogeneousMatrixFromVector6d(
+			HM_trajectory = CKataokaPCL::calcHomogeneousMatrixFromVector6d(
 				trajectory_vec_vec[i](0, 0),
 				trajectory_vec_vec[i](1, 0),
 				trajectory_vec_vec[i](2, 0),
@@ -913,7 +846,7 @@ void CPointcloudFunction::HandRegistration()
 			HM_free = Eigen::Matrix4d::Identity();
 			for (int i = 0; i <= index_PC_now; i++) HM_free = HM_free * HM_displacement_vec[i];
 			HM_Trans_now = HM_free;
-			Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
+			Trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(HM_free);
 			pcl::transformPointCloud(*cloud_moving_init, *cloud_moving, Trans_);
 
 			b_makeNewPC = false;
@@ -947,63 +880,63 @@ void CPointcloudFunction::HandRegistration()
 		//determine transformation by key input
 		if (key_ == X_)
 		{
-			HM_Trans_now = calcHomogeneousMatrixFromVector6d(resolution_translation, 0., 0., 0., 0., 0.)
+			HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(resolution_translation, 0., 0., 0., 0., 0.)
 				* HM_Trans_now;
 		}
 		else if (key_ == Y_)
 		{
-			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., resolution_translation, 0., 0., 0., 0.)
+			HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., resolution_translation, 0., 0., 0., 0.)
 				* HM_Trans_now;
 		}
 		else if (key_ == Z_)
 		{
-			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., resolution_translation, 0., 0., 0.)
+			HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., resolution_translation, 0., 0., 0.)
 				* HM_Trans_now;
 		}
 		else if (key_ == ROLL_)
 		{
-			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., resolution_rotation, 0., 0.)
+			HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 0., resolution_rotation, 0., 0.)
 				* HM_Trans_now;
 		}
 		else if (key_ == PITCH_)
 		{
-			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., resolution_rotation, 0.)
+			HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., resolution_rotation, 0.)
 				* HM_Trans_now;
 		}
 		else if (key_ == YAW_)
 		{
-			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., resolution_rotation)
+			HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., resolution_rotation)
 				* HM_Trans_now;
 		}
 		else if (key_ == X_MINUS)
 		{
-			HM_Trans_now = calcHomogeneousMatrixFromVector6d(-resolution_translation, 0., 0., 0., 0., 0.)
+			HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(-resolution_translation, 0., 0., 0., 0., 0.)
 				* HM_Trans_now;
 
 		}
 		else if (key_ == Y_MINUS)
 		{
-			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., -resolution_translation, 0., 0., 0., 0.)
+			HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., -resolution_translation, 0., 0., 0., 0.)
 				* HM_Trans_now;
 		}
 		else if (key_ == Z_MINUS)
 		{
-			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., -resolution_translation, 0., 0., 0.)
+			HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., -resolution_translation, 0., 0., 0.)
 				* HM_Trans_now;
 		}
 		else if (key_ == ROLL_MINUS)
 		{
-			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., -resolution_rotation, 0., 0.)
+			HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 0., -resolution_rotation, 0., 0.)
 				* HM_Trans_now;
 		}
 		else if (key_ == PITCH_MINUS)
 		{
-			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., -resolution_rotation, 0.)
+			HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., -resolution_rotation, 0.)
 				* HM_Trans_now;
 		}
 		else if (key_ == YAW_MINUS)
 		{
-			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., -resolution_rotation)
+			HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., -resolution_rotation)
 				* HM_Trans_now;
 		}
 		else if (key_ == ZERO)
@@ -1071,7 +1004,7 @@ void CPointcloudFunction::HandRegistration()
 				Registration_Vec = kataokaPCL.getFinalTransformation_Vec();
 				if (i_select == 0)
 				{
-					HM_Trans_now = calcHomogeneousMatrixFromVector6d(
+					HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(
 						Registration_Vec(0, 0), Registration_Vec(1, 0), Registration_Vec(2, 0),
 						Registration_Vec(3, 0), Registration_Vec(4, 0), Registration_Vec(5, 0))
 						* HM_Trans_now;
@@ -1080,7 +1013,7 @@ void CPointcloudFunction::HandRegistration()
 				}
 				else
 				{
-					HM_Trans_now = calcHomogeneousMatrixFromVector6d(
+					HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(
 						Registration_Vec(0, 0), Registration_Vec(1, 0), 0.,
 						0., 0., Registration_Vec(5, 0))
 						* HM_Trans_now;
@@ -1106,7 +1039,7 @@ void CPointcloudFunction::HandRegistration()
 		if (!(key_ == NONE || key_ == ENTER)) {
 			cloud_moving->clear();
 			Trans_ = Eigen::Affine3f::Identity();
-			Trans_ = calcAffine3fFromHomogeneousMatrix(HM_Trans_now);
+			Trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(HM_Trans_now);
 			pcl::transformPointCloud(*cloud_moving_init, *cloud_moving, Trans_);
 		}
 		cloud_show->clear();
@@ -1140,7 +1073,7 @@ void CPointcloudFunction::HandRegistration()
 		{
 			HM_free = HM_free * HM_displacement_vec[i];
 			Eigen::Vector6d State_;
-			State_ = calcVector6dFromHomogeneousMatrix(HM_free);
+			State_ = CKataokaPCL::calcVector6dFromHomogeneousMatrix(HM_free);
 			vector<double> trajectory_vec;
 			trajectory_vec.push_back(i);
 			trajectory_vec.push_back(State_[0]);
@@ -1316,9 +1249,9 @@ void CPointcloudFunction::combinePointCloud_naraha()
 			{
 				//turn pitch(camera coordinate to robot one)
 				HM_free = Eigen::Matrix4d::Identity();
-				HM_free = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
+				HM_free = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
 				Trans_ = Eigen::Affine3f::Identity();
-				Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
+				Trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(HM_free);
 				pcl::transformPointCloud(*cloud_velo, *cloud_velo, Trans_);
 				if (b_removeGround)
 				{
@@ -1377,9 +1310,9 @@ void CPointcloudFunction::combinePointCloud_naraha()
 			{
 				//turn pitch(camera coordinate to robot one)
 				HM_free = Eigen::Matrix4d::Identity();
-				HM_free = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
+				HM_free = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
 				Trans_ = Eigen::Affine3f::Identity();
-				Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
+				Trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(HM_free);
 				pcl::transformPointCloud(*cloud_velo, *cloud_velo, Trans_);
 				if (b_removeGround)
 				{
@@ -1399,9 +1332,9 @@ void CPointcloudFunction::combinePointCloud_naraha()
 			{
 				//turn pitch(camera coordinate to robot one)
 				HM_free = Eigen::Matrix4d::Identity();
-				HM_free = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
+				HM_free = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
 				Trans_ = Eigen::Affine3f::Identity();
-				Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
+				Trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(HM_free);
 				pcl::transformPointCloud(*cloud_nir, *cloud_nir, Trans_);
 			}
 
@@ -1616,7 +1549,7 @@ void CPointcloudFunction::DynamicTranslation()
 
 				cloud_moving->clear();
 				Trans_ = Eigen::Affine3f::Identity();
-				Trans_ = calcAffine3fFromHomogeneousMatrix(HM_Trans_now);
+				Trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(HM_Trans_now);
 				pcl::transformPointCloud(*cloud_moving_before, *cloud_moving, Trans_);
 			}
 			else
@@ -1684,27 +1617,27 @@ void CPointcloudFunction::DynamicTranslation()
 			switch (var)
 			{
 			case X_vr:
-				HM_Trans_now = calcHomogeneousMatrixFromVector6d(d_value_, 0., 0., 0., 0., 0.)
+				HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(d_value_, 0., 0., 0., 0., 0.)
 					* HM_Trans_now;
 				break;
 			case Y_vr:
-				HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., d_value_, 0., 0., 0., 0.)
+				HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., d_value_, 0., 0., 0., 0.)
 					* HM_Trans_now;
 				break;
 			case Z_vr:
-				HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., d_value_, 0., 0., 0.)
+				HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., d_value_, 0., 0., 0.)
 					* HM_Trans_now;
 				break;
 			case Roll_vr:
-				HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., d_value_ * M_PI / 180., 0., 0.)
+				HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 0., d_value_ * M_PI / 180., 0., 0.)
 					* HM_Trans_now;
 				break;
 			case Pitch_vr:
-				HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., d_value_ * M_PI / 180., 0.)
+				HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., d_value_ * M_PI / 180., 0.)
 					* HM_Trans_now;
 				break;
 			case Yaw_vr:
-				HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., d_value_ * M_PI / 180.)
+				HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., d_value_ * M_PI / 180.)
 					* HM_Trans_now;
 				break;
 			default:
@@ -1723,7 +1656,7 @@ void CPointcloudFunction::DynamicTranslation()
 		if (!(key_ == KEY_NONE || key_ == KEY_SPACE)) {
 			cloud_moving->clear();
 			Trans_ = Eigen::Affine3f::Identity();
-			Trans_ = calcAffine3fFromHomogeneousMatrix(HM_Trans_now);
+			Trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(HM_Trans_now);
 			pcl::transformPointCloud(*cloud_moving_before, *cloud_moving, Trans_);
 		}
 
@@ -2668,7 +2601,7 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_2frames(string dir_)
 		//transform
 		{
 			Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-			Trans_temp = calcAffine3fFromHomogeneousMatrix(transform_);
+			Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(transform_);
 			pcl::transformPointCloud(*cloud_src_show, *cloud_src_show, Trans_temp);
 		}
 		//add to global
@@ -2940,7 +2873,7 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_)
 
 			//output csv
 			Eigen::Vector6d transform_vec = Eigen::Vector6d::Zero();
-			transform_vec = calcVector6dFromHomogeneousMatrix(transform_);
+			transform_vec = CKataokaPCL::calcVector6dFromHomogeneousMatrix(transform_);
 			string time_end_frame = CTimeString::getTimeString();
 			string time_elapsed_frame = CTimeString::getTimeElapsefrom2Strings(time_start_frame, time_end_frame);
 			vector<string> s_temp_vec;
@@ -2991,7 +2924,7 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_)
 			//transform
 			{
 				Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-				Trans_temp = calcAffine3fFromHomogeneousMatrix(transform_);
+				Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(transform_);
 				pcl::transformPointCloud(*cloud_src, *cloud_src, Trans_temp);
 			}
 			//add

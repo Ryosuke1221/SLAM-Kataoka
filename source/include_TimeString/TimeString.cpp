@@ -391,3 +391,66 @@ bool CTimeString::getFileNames_folder(std::string folderPath, std::vector<std::s
 	return b_success;
 }
 
+vector<string> CTimeString::inputSomeString()
+{
+	string s_input;
+	cout << "input value separated by spaces" << endl;
+	//https://programming.pc-note.net/cpp/iostream.html#clear
+	cin.ignore(1024, '\n');
+	std::getline(std::cin, s_input);
+
+	//erase front space
+	while (1)
+	{
+		vector<int> i_space_vec_temp;
+		i_space_vec_temp = find_all(s_input, " ");
+		if (i_space_vec_temp[0] == 0) s_input.erase(s_input.begin());
+		else break;
+	}
+	//erase end space
+	while(1)
+	{
+		vector<int> i_space_vec_temp;
+		i_space_vec_temp = find_all(s_input, " ");
+		if (i_space_vec_temp.back() == s_input.size() - 1) s_input.pop_back();
+		else break;
+	}
+	//erase rest space
+	{
+		//erase http://farma-11.hatenablog.com/entry/2018/01/18/094729
+		vector<int> i_space_vec_temp;
+		i_space_vec_temp = find_all(s_input, " ");
+		vector<int> i_space_erasePos_vec;
+		for (int i = 0; i < i_space_vec_temp.size(); i++)
+		{
+			if (i == 0) continue;
+			i_space_erasePos_vec.push_back(i_space_vec_temp[i]);	//11 111 _1111 __11111 
+		}
+		//cout << "s_input:" << s_input << endl;
+		//use "back-for" because s_input.size() is decreasing.
+		for (int i = i_space_erasePos_vec.size() - 1; i >= 0; i--)
+		{
+			//erase char at i
+			s_input.erase(s_input.begin() + i_space_erasePos_vec[i] - 1);
+		}
+		//cout << "s_input(new):" << s_input << endl;
+	}
+
+	//compute output
+	vector<string> s_vec;
+	vector<int> i_space_vec;
+	i_space_vec = find_all(s_input, " ");
+	for (int i = 0; i < i_space_vec.size(); i++)
+	{
+		if (i == 0) s_vec.push_back(s_input.substr(0, i_space_vec[i]));	//11_111 1111 11111
+		else s_vec.push_back(s_input.substr(i_space_vec[i - 1] + 1,
+				i_space_vec[i] - (i_space_vec[i - 1] + 1)));		    //11 111_1111_11111
+	}
+	s_vec.push_back(s_input.substr(	i_space_vec.back() + 1,
+		s_input.size() - (i_space_vec.back() + 1)));					//11 111 1111_11111
+	//back() https://kaworu.jpn.org/cpp/std::vector
+	//for (int i = 0; i < s_vec.size(); i++)
+	//	cout << "i:" << i << " " << s_vec[i] << endl;
+	return s_vec;
+}
+
