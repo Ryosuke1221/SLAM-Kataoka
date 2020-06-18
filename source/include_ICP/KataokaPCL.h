@@ -488,12 +488,12 @@ public:
 
 		}
 
-		for (int i = 0; i < output_vec.size(); i++)
-		{
-			cout << "i:" << i << " score:" << output_vec[i].first << endl;
-			cout << output_vec[i].second << endl;
-			cout << endl;
-		}
+		//for (int i = 0; i < output_vec.size(); i++)
+		//{
+		//	cout << "i:" << i << " score:" << output_vec[i].first << endl;
+		//	cout << output_vec[i].second << endl;
+		//	cout << endl;
+		//}
 
 		//select most good value
 		float score_min = 100.;

@@ -30,6 +30,8 @@
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/segmentation/extract_clusters.h>
 
+#include <pcl/filters/passthrough.h>
+
 ////https://akio-tanaka.tumblr.com/page/2
 //#pragma comment(lib,"opengl32.lib")	
 //#include <vtkAutoInit.h>

@@ -393,11 +393,18 @@ bool CTimeString::getFileNames_folder(std::string folderPath, std::vector<std::s
 
 vector<string> CTimeString::inputSomeString()
 {
+	vector<string> s_vec;
+
 	string s_input;
 	cout << "input value separated by spaces" << endl;
 	//https://programming.pc-note.net/cpp/iostream.html#clear
 	cin.ignore(1024, '\n');
 	std::getline(std::cin, s_input);
+	if (s_input.size() == 0)
+	{
+		cout << "ERROR: no file inputed." << endl;
+		return s_vec;
+	}
 
 	//erase front space
 	while (1)
@@ -424,7 +431,8 @@ vector<string> CTimeString::inputSomeString()
 		for (int i = 0; i < i_space_vec_temp.size(); i++)
 		{
 			if (i == 0) continue;
-			i_space_erasePos_vec.push_back(i_space_vec_temp[i]);	//11 111 _1111 __11111 
+			if (i_space_vec_temp[i] == i_space_vec_temp[i - 1] + 1)
+				i_space_erasePos_vec.push_back(i_space_vec_temp[i]);	//11 111 _1111 __11111 
 		}
 		//cout << "s_input:" << s_input << endl;
 		//use "back-for" because s_input.size() is decreasing.
@@ -437,14 +445,13 @@ vector<string> CTimeString::inputSomeString()
 	}
 
 	//compute output
-	vector<string> s_vec;
 	vector<int> i_space_vec;
 	i_space_vec = find_all(s_input, " ");
 	for (int i = 0; i < i_space_vec.size(); i++)
 	{
 		if (i == 0) s_vec.push_back(s_input.substr(0, i_space_vec[i]));	//11_111 1111 11111
 		else s_vec.push_back(s_input.substr(i_space_vec[i - 1] + 1,
-				i_space_vec[i] - (i_space_vec[i - 1] + 1)));		    //11 111_1111_11111
+				i_space_vec[i] - (i_space_vec[i - 1] + 0)));		    //11_111_1111 11111
 	}
 	s_vec.push_back(s_input.substr(	i_space_vec.back() + 1,
 		s_input.size() - (i_space_vec.back() + 1)));					//11 111 1111_11111
