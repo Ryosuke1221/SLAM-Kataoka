@@ -410,30 +410,29 @@ void CPointcloudFunction::FreeSpace()
 	//pcl::io::loadPCDFile(dir_ + "/" + "008XYZRGB_naraha.pcd", *cloud_1);
 	//pcl::io::loadPCDFile(dir_ + "/" + "009XYZRGB_naraha.pcd", *cloud_2);
 
-	for (int j = 0; j < 100; j++)
-	{
-		for (int i = 0; i < 100; i++)
-		{
-			T_PointType point;
-			point.x = (float)i * 0.01;
-			point.y = (float)j * 0.01;
-			point.z = 0.;
-			cloud_1->push_back(point);
-		}
-	}
-	for (int j = 0; j < 100; j++)
-	{
-		for (int i = 0; i < 100; i++)
-		{
-			T_PointType point;
-			point.x = (float)i * 0.01;
-			point.y = (float)j * 0.01;
-			point.z = 0.5;
-			cloud_2->push_back(point);
-		}
-	}
-
-	cout << "median:" << CKataokaPCL::getMedianDistance(*cloud_1, *cloud_2);
+	//for (int j = 0; j < 100; j++)
+	//{
+	//	for (int i = 0; i < 100; i++)
+	//	{
+	//		T_PointType point;
+	//		point.x = (float)i * 0.01;
+	//		point.y = (float)j * 0.01;
+	//		point.z = 0.;
+	//		cloud_1->push_back(point);
+	//	}
+	//}
+	//for (int j = 0; j < 100; j++)
+	//{
+	//	for (int i = 0; i < 100; i++)
+	//	{
+	//		T_PointType point;
+	//		point.x = (float)i * 0.01;
+	//		point.y = (float)j * 0.01;
+	//		point.z = 0.5;
+	//		cloud_2->push_back(point);
+	//	}
+	//}
+	//cout << "median:" << CKataokaPCL::getMedianDistance(*cloud_1, *cloud_2);
 
 
 	//CPointVisualization<T_PointType> pv;
@@ -2927,7 +2926,7 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_)
 		s_temp_vec.push_back("convergence");
 		s_temp_vec.push_back("success_frame");
 		//s_temp_vec.push_back("distance");
-		//s_temp_vec.push_back("median");
+		s_temp_vec.push_back("median");
 		s_temp_vec.push_back("fitness");
 		s_temp_vec.push_back("time");
 		s_temp_vec.push_back("X");
@@ -3031,20 +3030,20 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_)
 			double distance_ = 0.;
 			double median_ = 0.;
 			{
-				cout << "distance" << endl;
-				Eigen::Matrix4d T_i_src = Eigen::Matrix4d::Identity();
-				Eigen::Matrix4d T_i1_tgt = Eigen::Matrix4d::Identity();
-				Eigen::Matrix4d T_i_GL = Eigen::Matrix4d::Identity();
-				//T_i_src = T_i1_tgt * T_i_GL
-				T_i_src = CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
-				T_i1_tgt = CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]);
-				T_i_GL = T_i1_tgt.inverse() * T_i_src;
-				Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-				Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(T_i_GL);
-				pcl::transformPointCloud(*cloud_src_true, *cloud_src_true, Trans_temp);
+				//cout << "distance" << endl;
+				//Eigen::Matrix4d T_i_src = Eigen::Matrix4d::Identity();
+				//Eigen::Matrix4d T_i1_tgt = Eigen::Matrix4d::Identity();
+				//Eigen::Matrix4d T_i_GL = Eigen::Matrix4d::Identity();
+				////T_i_src = T_i1_tgt * T_i_GL
+				//T_i_src = CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
+				//T_i1_tgt = CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]);
+				//T_i_GL = T_i1_tgt.inverse() * T_i_src;
+				//Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
+				//Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(T_i_GL);
+				//pcl::transformPointCloud(*cloud_src_true, *cloud_src_true, Trans_temp);
 				//distance to true
-				cout << "cloud_src->size():" << cloud_src->size() << endl;
-				cout << "cloud_src_true->size():" << cloud_src_true->size() << endl;
+				//cout << "cloud_src->size():" << cloud_src->size() << endl;
+				//cout << "cloud_src_true->size():" << cloud_src_true->size() << endl;
 				//{
 				//	pcl::PassThrough<T_PointType> pass;
 				//	pass.setInputCloud(cloud_src);
@@ -3083,7 +3082,7 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_)
 				//if (cloud_src->size() != 0) distance_ /= cloud_src->size();
 				//else distance_ = 100.;
 				//median
-				cout << "median" << endl;
+				//cout << "median" << endl;
 				median_ = CKataokaPCL::getMedianDistance(*cloud_src, *cloud_tgt);
 			}
 			//add for saving
@@ -3124,7 +3123,7 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_)
 			s_temp_vec.push_back(to_string((int)b_hasConverged));
 			s_temp_vec.push_back(to_string(max_RANSAC - frame_failed) + "(/" + to_string(max_RANSAC) + ")");
 			//s_temp_vec.push_back(to_string(distance_));
-			//s_temp_vec.push_back(to_string(median_));
+			s_temp_vec.push_back(to_string(median_));
 			s_temp_vec.push_back(to_string(fitnessscore));
 			s_temp_vec.push_back(time_elapsed_frame);
 			s_temp_vec.push_back(to_string(transform_vec(0, 0)));	//X
@@ -3159,7 +3158,7 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_)
 				s_temp_vec.push_back("convergence");
 				s_temp_vec.push_back("success_frame");
 				//s_temp_vec.push_back("distance");
-				//s_temp_vec.push_back("median");
+				s_temp_vec.push_back("median");
 				s_temp_vec.push_back("fitness");
 				s_temp_vec.push_back("time");
 				s_temp_vec.push_back("X");
