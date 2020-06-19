@@ -168,6 +168,7 @@ public:
 	void GlobalRegistration_FPFH_SAC_IA();
 	void GR_FPFH_SAC_IA_2frames(string dir_);
 	void GR_FPFH_SAC_IA_Allframes(string dir_);
+	void getNan_Pointcloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_);
 
 };
 

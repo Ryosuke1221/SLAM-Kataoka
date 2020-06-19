@@ -489,7 +489,7 @@ void CKataokaPCL::determineCorrespondences(pcl::Correspondences &correspondences
 		int found_neighs = match_search.nearestKSearch(M_pPointCloud_src_transformed->at(i), 1, index, distance);
 		//int found_neighs = match_search.nearestKSearch(M_pPointCloud_source->points[i], 1, index, distance);
 
-		if (distance[0] > max_distance)
+		if (distance[0] > max_distance * max_distance)
 			continue;
 		pcl::Correspondence corr;
 		corr.index_query = i;
@@ -537,7 +537,7 @@ void CKataokaPCL::determineCorrespondences(Correspondences_Kataoka &corresponden
 		int found_neighs = match_search.nearestKSearch(M_pPointCloud_src_transformed->at(i), 1, index, distance);
 		//int found_neighs = match_search.nearestKSearch(M_pPointCloud_source->points[i], 1, index, distance);
 
-		if (distance[0] > max_distance)
+		if (distance[0] > max_distance * max_distance)
 			continue;
 
 		Correspondence_Kataoka corr;
@@ -592,7 +592,7 @@ void CKataokaPCL::determineCorrespondences_chara(pcl::Correspondences &correspon
 		//int found_neighs = match_search.nearestKSearch(M_pPointCloud_transformed->at(i), 1, index, distance);
 		//int found_neighs = match_search.nearestKSearch(M_pPointCloud_source->points[i], 1, index, distance);
 
-		double dist_search = dist_search_arg;
+		double dist_search = dist_search_arg;	//should be not squared distance
 
 		if (!(M_chara_src_vec[i] == 0)) dist_search *= weight_dist_chara;
 
@@ -601,7 +601,7 @@ void CKataokaPCL::determineCorrespondences_chara(pcl::Correspondences &correspon
 
 		int index_min = 0;
 		double value_min = 100.;
-		double distance_tgt = 100.;
+		double distance_tgt = 10000.;
 
 		if (found_neighs == 0) continue;
 
@@ -610,9 +610,9 @@ void CKataokaPCL::determineCorrespondences_chara(pcl::Correspondences &correspon
 			double error_chara = 0;
 
 			if (M_chara_src_vec[i] == M_chara_tgt_vec[index_vec[j]])
-				error_chara = distance_vec[j];
+				error_chara = sqrt(distance_vec[j]);
 			else
-				error_chara = distance_vec[j] + penalty_chara;
+				error_chara = sqrt(distance_vec[j]) + penalty_chara;
 
 
 			if (error_chara < value_min) {
@@ -679,7 +679,7 @@ void CKataokaPCL::determineCorrespondences_chara(Correspondences_Kataoka &corres
 		//int found_neighs = match_search.nearestKSearch(M_pPointCloud_transformed->at(i), 1, index, distance);
 		//int found_neighs = match_search.nearestKSearch(M_pPointCloud_source->points[i], 1, index, distance);
 
-		double dist_search = dist_search_arg;
+		double dist_search = dist_search_arg;	//should be not squared distance
 
 		if (!(M_chara_src_vec[i] == 0)) dist_search *= weight_dist_chara;
 
@@ -688,7 +688,7 @@ void CKataokaPCL::determineCorrespondences_chara(Correspondences_Kataoka &corres
 
 		int index_min = 0;
 		double value_min = 100.;
-		double distance_tgt = 100.;
+		double distance_tgt = 10000.;
 
 		if (found_neighs == 0) continue;
 
@@ -697,9 +697,9 @@ void CKataokaPCL::determineCorrespondences_chara(Correspondences_Kataoka &corres
 			double error_chara = 0;
 
 			if (M_chara_src_vec[i] == M_chara_tgt_vec[index_vec[j]])
-				error_chara = distance_vec[j];
+				error_chara = sqrt(distance_vec[j]);
 			else
-				error_chara = distance_vec[j] + penalty_chara;
+				error_chara = sqrt(distance_vec[j]) + penalty_chara;
 
 
 			if (error_chara < value_min) {
@@ -738,7 +738,6 @@ void CKataokaPCL::determineCorrespondences_argPC(pcl::Correspondences &correspon
 
 	//cout << "determineCorrespondences" << endl;
 
-	//why sqr ?
 	double max_dist_sqr;
 	max_dist_sqr = max_distance * max_distance;
 
@@ -762,7 +761,7 @@ void CKataokaPCL::determineCorrespondences_argPC(pcl::Correspondences &correspon
 
 		int found_neighs = match_search.nearestKSearch(p_cloud_src->at(i), 1, index, distance);
 
-		if (distance[0] > max_dist_sqr)
+		if (distance[0] > max_dist_sqr)		//squared
 			continue;
 		pcl::Correspondence corr;
 		corr.index_query = i;
@@ -815,7 +814,7 @@ void CKataokaPCL::determineCorrespondences_argPC_chara(pcl::Correspondences &cor
 
 		//if(static_cast<int>(i)%100 == 0) cout << "debug: A" << endl;
 
-		double dist_search = dist_search_arg;
+		double dist_search = dist_search_arg;	//should be not squared distance
 		if (!(Chara_end_vec[static_cast<int>(i)] == 0)) dist_search *= weight_dist_chara;
 
 		int found_neighs = match_search.radiusSearch(pPointCloud_src_arg->at(i), dist_search, index_vec, distance_vec);
@@ -823,7 +822,7 @@ void CKataokaPCL::determineCorrespondences_argPC_chara(pcl::Correspondences &cor
 
 		int index_min = 0;
 		double value_min = 100.;
-		double distance_tgt = 100.;
+		double distance_tgt = 10000.;
 
 		if (found_neighs == 0) continue;
 
@@ -832,9 +831,9 @@ void CKataokaPCL::determineCorrespondences_argPC_chara(pcl::Correspondences &cor
 			double error_chara = 0;
 
 			if (Chara_end_vec[static_cast<int>(i)] == Chara_start_vec[index_vec[j]])
-				error_chara = distance_vec[j];
+				error_chara = sqrt(distance_vec[j]);
 			else
-				error_chara = distance_vec[j] + penalty_chara;
+				error_chara = sqrt(distance_vec[j]) + penalty_chara;
 
 			if (error_chara < value_min) {
 				value_min = error_chara;
@@ -884,7 +883,7 @@ void CKataokaPCL::determineCorrespondences_Spring1(Correspondences_Spring1 &corr
 
 		int found_neighs = match_search.nearestKSearch(M_pPointCloud_src_transformed->at(i), 1, index, distance);
 
-		if (distance[0] > max_distance)
+		if (distance[0] > max_distance * max_distance)
 			continue;
 
 		Correspondence_Spring1 corr;
@@ -937,13 +936,13 @@ void CKataokaPCL::determineCorrespondences_Spring2(Correspondences_Spring2 &corr
 
 		int found_neighs_nearestK = match_search.nearestKSearch(M_pPointCloud_src_transformed->at(i), 1, index, distance);
 
-		if (distance[0] > max_distance)
+		if (distance[0] > max_distance * max_distance)
 			continue;
 
 		index.clear();
 		distance.clear();
 
-		int found_neighs_radius = match_search.radiusSearch(M_pPointCloud_src_transformed->at(i), max_distance, index, distance);
+		int found_neighs_radius = match_search.radiusSearch(M_pPointCloud_src_transformed->at(i), sqrt(max_distance), index, distance);
 
 		Correspondence_Spring2 corr;
 		//corr.index_query
@@ -1031,7 +1030,7 @@ double CKataokaPCL::getFitnessScore()
 		int found_neighs = match_search.nearestKSearch(input_transformed->at(i), 1, index, distance);
 
 		// Add to the fitness score
-		fitness_score += distance[0];
+		fitness_score += sqrt(distance[0]);
 		nr++;
 	}
 
@@ -1067,12 +1066,12 @@ double CKataokaPCL::getFitnessScore_chara()
 
 		int found_neighs = match_search.nearestKSearch(input_transformed->at(i), 1, index, distance);
 
-		if (distance[0] > M_proposed_dist_search) continue;
+		if (distance[0] > M_proposed_dist_search * M_proposed_dist_search) continue;
 
 		// Add to the fitness score
 		if (M_chara_src_vec[i] == M_chara_tgt_vec[index[0]])
-			fitness_score_chara += distance[0];
-		else fitness_score_chara += distance[0] + M_proposed_penalty_chara;
+			fitness_score_chara += sqrt(distance[0]);
+		else fitness_score_chara += sqrt(distance[0]) + M_proposed_penalty_chara;
 		nr++;
 	}
 
@@ -1094,14 +1093,11 @@ void CKataokaPCL::print4x4Matrix(const Eigen::Matrix4d & matrix)
 
 double CKataokaPCL::getDistanceOf2PointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud1_arg, pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud2_arg)
 {
-
-
 	pcl::KdTreeFLANN<pcl::PointXYZRGB> match_search;
 
 	double dist_1to2, ave_dist_1to2;
 	dist_1to2 = 0.;
 	ave_dist_1to2 = 0.;
-	
 
 	pcl::CorrespondencesPtr model_scene_corrs_1to2(new pcl::Correspondences());
 	match_search.setInputCloud(p_cloud2_arg);
@@ -1129,7 +1125,7 @@ double CKataokaPCL::getDistanceOf2PointCloud(pcl::PointCloud<pcl::PointXYZRGB>::
 		idx_tgt = itr->index_match;
 
 		double dist_;
-		dist_ = itr->distance;
+		dist_ = sqrt(itr->distance);
 		dist_1to2 += dist_;
 
 	}
@@ -1150,7 +1146,7 @@ double CKataokaPCL::getDistanceOf2PointCloud(pcl::PointCloud<pcl::PointXYZRGB>::
 		int size = model_scene_corrs_1to2->size();
 		for (int i = 0; i < size; i++)
 		{
-			distance_vec.push_back(model_scene_corrs_1to2->at(i).distance);
+			distance_vec.push_back(sqrt(model_scene_corrs_1to2->at(i).distance));
 		}
 		sort(distance_vec.begin(), distance_vec.end());
 
@@ -2076,16 +2072,14 @@ float CKataokaPCL::getCorrMedianDistance(pcl::Correspondences correspondences)
 	int size = correspondences.size();
 	for (int i = 0; i < size; i++)
 	{
-		distance_vec.push_back(correspondences.at(i).distance);
+		distance_vec.push_back(sqrt(correspondences.at(i).distance));
 	}
 	sort(distance_vec.begin(), distance_vec.end());
 
-	if (size % 2 == 1) {
+	if (size % 2 == 1) 
 		return distance_vec[(size - 1) / 2];
-	}
-	else {
-		return (distance_vec[(size / 2) - 1] + distance_vec[size / 2]) / 2;
-	}
+	else 	
+		return (distance_vec[(size / 2) - 1] + distance_vec[size / 2]) / 2.;
 
 }
 
@@ -2095,7 +2089,7 @@ float CKataokaPCL::getCorrMedianDistance(CorrespondencesPtr_Kataoka corresponden
 	int size = correspondences->size();
 	for (int i = 0; i < size; i++)
 	{
-		distance_vec.push_back(correspondences->at(i).distance);
+		distance_vec.push_back(sqrt(correspondences->at(i).distance));
 	}
 	sort(distance_vec.begin(), distance_vec.end());
 
@@ -2114,7 +2108,7 @@ float CKataokaPCL::getCorrMedianDistance(CorrespondencesPtr_Spring1 corresponden
 	int size = correspondences->size();
 	for (int i = 0; i < size; i++)
 	{
-		distance_vec.push_back(correspondences->at(i).distance);
+		distance_vec.push_back(sqrt(correspondences->at(i).distance));
 	}
 	sort(distance_vec.begin(), distance_vec.end());
 
@@ -2133,7 +2127,7 @@ float CKataokaPCL::getCorrMedianDistance(CorrespondencesPtr_Spring2 corresponden
 	int size = correspondences->size();
 	for (int i = 0; i < size; i++)
 	{
-		distance_vec.push_back(correspondences->at(i).distance_vec[0]);
+		distance_vec.push_back(sqrt(correspondences->at(i).distance_vec[0]));
 	}
 	sort(distance_vec.begin(), distance_vec.end());
 

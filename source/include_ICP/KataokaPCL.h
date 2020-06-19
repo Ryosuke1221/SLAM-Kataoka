@@ -318,7 +318,7 @@ public:
 				pcl::Correspondence corr;
 				corr.index_query = i;
 				corr.index_match = index[0];
-				corr.distance = distance[0];
+				corr.distance = distance[0];	//squared
 				correspondences[nr_valid_correspondences++] = corr;
 			}
 			correspondences.resize(nr_valid_correspondences);

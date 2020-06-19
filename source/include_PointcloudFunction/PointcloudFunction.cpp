@@ -407,8 +407,34 @@ void CPointcloudFunction::FreeSpace()
 	dir_ = "../../data";
 	pcl::PointCloud<T_PointType>::Ptr cloud_1(new pcl::PointCloud<T_PointType>());
 	pcl::PointCloud<T_PointType>::Ptr cloud_2(new pcl::PointCloud<T_PointType>());
-	pcl::io::loadPCDFile(dir_ + "/" + "008XYZRGB_naraha.pcd", *cloud_1);
-	pcl::io::loadPCDFile(dir_ + "/" + "009XYZRGB_naraha.pcd", *cloud_2);
+	//pcl::io::loadPCDFile(dir_ + "/" + "008XYZRGB_naraha.pcd", *cloud_1);
+	//pcl::io::loadPCDFile(dir_ + "/" + "009XYZRGB_naraha.pcd", *cloud_2);
+
+	for (int j = 0; j < 100; j++)
+	{
+		for (int i = 0; i < 100; i++)
+		{
+			T_PointType point;
+			point.x = (float)i * 0.01;
+			point.y = (float)j * 0.01;
+			point.z = 0.;
+			cloud_1->push_back(point);
+		}
+	}
+	for (int j = 0; j < 100; j++)
+	{
+		for (int i = 0; i < 100; i++)
+		{
+			T_PointType point;
+			point.x = (float)i * 0.01;
+			point.y = (float)j * 0.01;
+			point.z = 0.5;
+			cloud_2->push_back(point);
+		}
+	}
+
+	cout << "median:" << CKataokaPCL::getMedianDistance(*cloud_1, *cloud_2);
+
 
 	//CPointVisualization<T_PointType> pv;
 	//pv.setWindowName("test");
@@ -448,99 +474,100 @@ void CPointcloudFunction::FreeSpace()
 
 	//pv.closeViewer();
 
-	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;				//大丈夫？
-	viewer.reset(new pcl::visualization::PCLVisualizer("Velodyne Viewer"));
+	//boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;				//大丈夫？
+	//viewer.reset(new pcl::visualization::PCLVisualizer("Velodyne Viewer"));
 
-	pcl::visualization::PointCloudColorHandler<T_PointType>::Ptr handler;
+	//pcl::visualization::PointCloudColorHandler<T_PointType>::Ptr handler;
 
 
-	viewer->addCoordinateSystem(3.0, "coordinate");
-	viewer->setBackgroundColor(0.0, 0.0, 0.0, 0);
-	viewer->initCameraParameters();
-	viewer->setCameraPosition(0.0, 0.0, 30.0, 0.0, 1.0, 0.0, 0);
+	//viewer->addCoordinateSystem(3.0, "coordinate");
+	//viewer->setBackgroundColor(0.0, 0.0, 0.0, 0);
+	//viewer->initCameraParameters();
+	//viewer->setCameraPosition(0.0, 0.0, 30.0, 0.0, 1.0, 0.0, 0);
 
-	pcl::ModelCoefficients coeff_circle;
-	coeff_circle.values.resize(3);
-	coeff_circle.values[0] = 0.;
-	coeff_circle.values[1] = 0.;
-	coeff_circle.values[2] = 1.;
-	viewer->addCircle(coeff_circle);
-	pcl::ModelCoefficients coeff_cone;
-	coeff_cone.values.resize(7);
-	coeff_cone.values[0] = 0.;
-	coeff_cone.values[1] = 0.;
-	coeff_cone.values[2] = 0.;
-	coeff_cone.values[3] = 3.;
-	coeff_cone.values[4] = 3.;
-	coeff_cone.values[5] = 3.;
-	coeff_cone.values[6] = 1.;
-	viewer->addCone(coeff_cone, "cone1");
-	coeff_cone.values.resize(7);
-	coeff_cone.values[0] = 2.;
-	coeff_cone.values[1] = 2.;
-	coeff_cone.values[2] = 2.;
-	coeff_cone.values[3] = 3.;
-	coeff_cone.values[4] = 3.;
-	coeff_cone.values[5] = 3.;
-	coeff_cone.values[6] = 1.;
-	viewer->addCone(coeff_cone, "cone2");
+	//pcl::ModelCoefficients coeff_circle;
+	//coeff_circle.values.resize(3);
+	//coeff_circle.values[0] = 0.;
+	//coeff_circle.values[1] = 0.;
+	//coeff_circle.values[2] = 1.;
+	//viewer->addCircle(coeff_circle);
+	//pcl::ModelCoefficients coeff_cone;
+	//coeff_cone.values.resize(7);
+	//coeff_cone.values[0] = 0.;
+	//coeff_cone.values[1] = 0.;
+	//coeff_cone.values[2] = 0.;
+	//coeff_cone.values[3] = 3.;
+	//coeff_cone.values[4] = 3.;
+	//coeff_cone.values[5] = 3.;
+	//coeff_cone.values[6] = 1.;
+	//viewer->addCone(coeff_cone, "cone1");
+	//coeff_cone.values.resize(7);
+	//coeff_cone.values[0] = 2.;
+	//coeff_cone.values[1] = 2.;
+	//coeff_cone.values[2] = 2.;
+	//coeff_cone.values[3] = 3.;
+	//coeff_cone.values[4] = 3.;
+	//coeff_cone.values[5] = 3.;
+	//coeff_cone.values[6] = 1.;
+	//viewer->addCone(coeff_cone, "cone2");
 
-	T_PointType p1, p2;
-	p2.x = 5.;
-	p2.y = 5.;
-	viewer->addLine(p1, p2, 1, 0, 0);
-	p2.x = 10.;
-	p2.y = 10.;
+	//T_PointType p1, p2;
+	//p2.x = 5.;
+	//p2.y = 5.;
+	//viewer->addLine(p1, p2, 1, 0, 0);
+	//p2.x = 10.;
+	//p2.y = 10.;
 
-	viewer->addArrow(p1, p2, 1, 1, 0,false);
+	//viewer->addArrow(p1, p2, 1, 1, 0,false);
 
-	pcl::ModelCoefficients coeff_cylinder;
+	//pcl::ModelCoefficients coeff_cylinder;
 
-	coeff_cylinder.values.resize(7);
-	coeff_cylinder.values[0] = 1.;
-	coeff_cylinder.values[1] = 3.;
-	coeff_cylinder.values[2] = 0.;
-	coeff_cylinder.values[3] = 1.;
-	coeff_cylinder.values[4] = 3.;
-	coeff_cylinder.values[5] = 10.;
-	coeff_cylinder.values[6] = 0.5;
-	viewer->addCylinder(coeff_cylinder);
+	//coeff_cylinder.values.resize(7);
+	//coeff_cylinder.values[0] = 1.;
+	//coeff_cylinder.values[1] = 3.;
+	//coeff_cylinder.values[2] = 0.;
+	//coeff_cylinder.values[3] = 1.;
+	//coeff_cylinder.values[4] = 3.;
+	//coeff_cylinder.values[5] = 10.;
+	//coeff_cylinder.values[6] = 0.5;
+	//viewer->addCylinder(coeff_cylinder);
 
-	//const std::type_info& type = typeid(T_PointType);
-	//if (type == typeid(pcl::PointXYZ))
+	////const std::type_info& type = typeid(T_PointType);
+	////if (type == typeid(pcl::PointXYZ))
+	////{
+	////	std::vector<double> color = { 255.0, 255.0, 255.0 };
+	////	boost::shared_ptr<T_ColorHandlerCustom> color_handler(new T_ColorHandlerCustom(color[0], color[1], color[2]));
+	////	M_handler = color_handler;
+	////}
+	////else if (type == typeid(pcl::PointXYZI))
+	////{
+	////	boost::shared_ptr<T_ColorHandlerGenericField> color_handler(new T_ColorHandlerGenericField("intensity"));
+	////	M_handler = color_handler;
+	////}
+	////else if (type == typeid(pcl::PointXYZRGB)) {
+	////	boost::shared_ptr<T_ColorHandlerRGBField> color_handler(new T_ColorHandlerRGBField());
+	////	M_handler = color_handler;
+	////}
+
+	//boost::shared_ptr<pcl::visualization::PointCloudColorHandlerRGBField<T_PointType>> color_handler(new pcl::visualization::PointCloudColorHandlerRGBField<T_PointType>());
+	////std::vector<double> color = { 255.0, 255.0, 255.0 };
+	////boost::shared_ptr<pcl::visualization::PointCloudColorHandlerCustom<T_PointType>> color_handler(new pcl::visualization::PointCloudColorHandlerCustom<T_PointType>(color[0], color[1], color[2]));
+	//
+	//handler = color_handler;
+
+	//while (1)
 	//{
-	//	std::vector<double> color = { 255.0, 255.0, 255.0 };
-	//	boost::shared_ptr<T_ColorHandlerCustom> color_handler(new T_ColorHandlerCustom(color[0], color[1], color[2]));
-	//	M_handler = color_handler;
-	//}
-	//else if (type == typeid(pcl::PointXYZI))
-	//{
-	//	boost::shared_ptr<T_ColorHandlerGenericField> color_handler(new T_ColorHandlerGenericField("intensity"));
-	//	M_handler = color_handler;
-	//}
-	//else if (type == typeid(pcl::PointXYZRGB)) {
-	//	boost::shared_ptr<T_ColorHandlerRGBField> color_handler(new T_ColorHandlerRGBField());
-	//	M_handler = color_handler;
+	//	viewer->spinOnce();
+	//	if (cloud_1) {
+	//		handler->setInputCloud(cloud_1);
+	//		if (!viewer->updatePointCloud(cloud_1, *handler, "cloud")) {
+	//			viewer->addPointCloud(cloud_1, *handler, "cloud");
+	//		}
+	//	}
+	//	if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
+
 	//}
 
-	boost::shared_ptr<pcl::visualization::PointCloudColorHandlerRGBField<T_PointType>> color_handler(new pcl::visualization::PointCloudColorHandlerRGBField<T_PointType>());
-	//std::vector<double> color = { 255.0, 255.0, 255.0 };
-	//boost::shared_ptr<pcl::visualization::PointCloudColorHandlerCustom<T_PointType>> color_handler(new pcl::visualization::PointCloudColorHandlerCustom<T_PointType>(color[0], color[1], color[2]));
-	
-	handler = color_handler;
-
-	while (1)
-	{
-		viewer->spinOnce();
-		if (cloud_1) {
-			handler->setInputCloud(cloud_1);
-			if (!viewer->updatePointCloud(cloud_1, *handler, "cloud")) {
-				viewer->addPointCloud(cloud_1, *handler, "cloud");
-			}
-		}
-		if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
-
-	}
 }
 
 void CPointcloudFunction::filterNIRPointCloud_naraha()
@@ -3003,105 +3030,62 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_)
 			//evaluation
 			double distance_ = 0.;
 			double median_ = 0.;
-			//{
-			//	cout << "distance" << endl;
-			//	Eigen::Matrix4d T_i_src = Eigen::Matrix4d::Identity();
-			//	Eigen::Matrix4d T_i1_tgt = Eigen::Matrix4d::Identity();
-			//	Eigen::Matrix4d T_i_GL = Eigen::Matrix4d::Identity();
-			//	//T_i_src = T_i1_tgt * T_i_GL
-			//	T_i_src = CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
-			//	T_i1_tgt = CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]);
-			//	T_i_GL = T_i1_tgt.inverse() * T_i_src;
-			//	Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-			//	Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(T_i_GL);
-			//	pcl::transformPointCloud(*cloud_src_true, *cloud_src_true, Trans_temp);
-			//	//distance to true
-			//	cout << "cloud_src->size():" << cloud_src->size() << endl;
-			//	cout << "cloud_src_true->size():" << cloud_src_true->size() << endl;
-			//	{
-			//		pcl::PassThrough<T_PointType> pass;
-			//		pass.setInputCloud(cloud_src);
-			//		pass.filter(*cloud_src);
-			//	}
-			//	{
-			//		pcl::PassThrough<T_PointType> pass;
-			//		pass.setInputCloud(cloud_src_true);
-			//		pass.filter(*cloud_src_true);
-			//	}
-			//	cout << "cloud_src->size():" << cloud_src->size() << endl;
-			//	cout << "cloud_src_true->size():" << cloud_src_true->size() << endl;
-			//	for (int i = 0; cloud_src->size(); i++)
-			//	{
-			//		T_PointType point_, point_true;
-			//		point_ = cloud_src->points[i];
-			//		point_true = cloud_src_true->points[i];
-			//		vector<bool> b_isNan;
-			//		b_isNan.push_back(false);
-			//		b_isNan.push_back(false);
-			//		b_isNan.push_back(false);
-			//		b_isNan.push_back(false);
-			//		b_isNan.push_back(false);
-			//		b_isNan.push_back(false);
+			{
+				cout << "distance" << endl;
+				Eigen::Matrix4d T_i_src = Eigen::Matrix4d::Identity();
+				Eigen::Matrix4d T_i1_tgt = Eigen::Matrix4d::Identity();
+				Eigen::Matrix4d T_i_GL = Eigen::Matrix4d::Identity();
+				//T_i_src = T_i1_tgt * T_i_GL
+				T_i_src = CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
+				T_i1_tgt = CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]);
+				T_i_GL = T_i1_tgt.inverse() * T_i_src;
+				Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
+				Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(T_i_GL);
+				pcl::transformPointCloud(*cloud_src_true, *cloud_src_true, Trans_temp);
+				//distance to true
+				cout << "cloud_src->size():" << cloud_src->size() << endl;
+				cout << "cloud_src_true->size():" << cloud_src_true->size() << endl;
+				//{
+				//	pcl::PassThrough<T_PointType> pass;
+				//	pass.setInputCloud(cloud_src);
+				//	pass.filter(*cloud_src);
+				//}
+				//{
+				//	pcl::PassThrough<T_PointType> pass;
+				//	pass.setInputCloud(cloud_src_true);
+				//	pass.filter(*cloud_src_true);
+				//}
+				//cout << "cloud_src->size():" << cloud_src->size() << endl;
+				//cout << "cloud_src_true->size():" << cloud_src_true->size() << endl;
 
-			//		if (isnan(point_.x))
-			//		{
-			//			b_isNan[0] = true;
-			//		}
-			//		if (isnan(point_.y))
-			//		{
-			//			b_isNan[1] = true;
-			//		}
-			//		if (isnan(point_.z))
-			//		{
-			//			b_isNan[2] = true;
-			//		}
+				//getNan_Pointcloud(cloud_src);
+				//getNan_Pointcloud(cloud_src_true);
 
-			//		if (isnan(point_true.x))
-			//		{
-			//			b_isNan[3] = true;
-			//		}
-			//		if (isnan(point_true.y))
-			//		{
-			//			b_isNan[4] = true;
-			//		}
-			//		if (isnan(point_true.z))
-			//		{
-			//			b_isNan[5] = true;
-			//		}
-			//		for (int k = 0; k < b_isNan.size(); k++)
-			//		{
-			//			if (b_isNan[k])
-			//			{
-			//				cout << "nan occured" << endl;
-			//				cout << "i:" << i << endl;
-			//				cout << "b_isNan:" << b_isNan[0] << endl;
-			//				cout << "b_isNan:" << b_isNan[1] << endl;
-			//				cout << "b_isNan:" << b_isNan[2] << endl;
-			//				cout << "b_isNan:" << b_isNan[3] << endl;
-			//				cout << "b_isNan:" << b_isNan[4] << endl;
-			//				cout << "b_isNan:" << b_isNan[5] << endl;
-			//				while (1) {}
-			//			}
-			//		}
+				//for (size_t i = 0; cloud_src->size(); i++)
+				//{
+				//	T_PointType point_, point_true;
+				//	point_ = cloud_src->points[i];
+				//	point_true = cloud_src_true->points[i];
+				//	const float sqrt_before = 
+				//		pow(point_.x - point_true.x, 2.)
+				//		+ pow(point_.y - point_true.y, 2.)
+				//		+ pow(point_.z - point_true.z, 2.);
+				//	if (isnan(sqrt_before)) continue;
+				//	distance_ += static_cast<double>(sqrt(sqrt_before));
+				//	if (i % 1000 == 0)
+				//	{
+				//		cout << "i:" << i << endl;
+				//		cout << "distance_:" << distance_ << endl;
+				//		cout << "sqrt(sqrt_before):" << sqrt(sqrt_before) << endl;
+				//	}
 
-			//		double sqrt_before = 
-			//			pow(point_.x - point_true.x, 2.)
-			//			+ pow(point_.y - point_true.y, 2.)
-			//			+ pow(point_.z - point_true.z, 2.);
-			//		distance_ += sqrt(sqrt_before);
-			//		if (i % 1000 == 0)
-			//		{
-			//			cout << "i:" << i << endl;
-			//			cout << "distance_:" << distance_ << endl;
-			//		}
-
-			//	}
-			//	if (cloud_src->size() != 0) distance_ /= cloud_src->size();
-			//	else distance_ = 100.;
-			//	//median
-			//	cout << "median" << endl;
-			//	median_ = CKataokaPCL::getMedianDistance(*cloud_src, *cloud_tgt);
-			//}
+				//}
+				//if (cloud_src->size() != 0) distance_ /= cloud_src->size();
+				//else distance_ = 100.;
+				//median
+				cout << "median" << endl;
+				median_ = CKataokaPCL::getMedianDistance(*cloud_src, *cloud_tgt);
+			}
 			//add for saving
 			*cloud_tgt += *cloud_src;
 			//filename for saving
@@ -3212,4 +3196,36 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_)
 	}
 
 	CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + s_newfoldername + "/" + time_end + "_output.csv");
+}
+
+void CPointcloudFunction::getNan_Pointcloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_)
+{
+	for (int j = 0; j < cloud_->size(); j++)
+	{
+		pcl::PointXYZRGB point_;
+		point_ = cloud_->points[j];
+		vector<bool> b_isNan_vec;
+		b_isNan_vec.push_back(false);
+		b_isNan_vec.push_back(false);
+		b_isNan_vec.push_back(false);
+
+		if (isnan(point_.x))
+			b_isNan_vec[0] = true;
+		if (isnan(point_.y))
+			b_isNan_vec[1] = true;
+		if (isnan(point_.z))
+			b_isNan_vec[2] = true;
+
+		for (int i = 0; i < b_isNan_vec.size(); i++)
+		{
+			if (b_isNan_vec[i])
+			{
+				cout << "nan occured" << endl;
+				cout << "j:" << j << endl;
+				cout << "b_isNan[0]:" << b_isNan_vec[0] << endl;
+				cout << "b_isNan[1]:" << b_isNan_vec[1] << endl;
+				cout << "b_isNan[2]:" << b_isNan_vec[2] << endl;
+			}
+		}
+	}
 }
