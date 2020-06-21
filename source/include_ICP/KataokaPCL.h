@@ -277,6 +277,11 @@ public:
 	static Eigen::Vector6d calcVector6dFromHomogeneousMatrix(Eigen::Matrix4d input_Mat);
 	static Eigen::Affine3f calcAffine3fFromHomogeneousMatrix(Eigen::Matrix4d input_Mat);
 
+	static Eigen::Vector6d calcRobotPosition_3DoF(Eigen::Vector6d pos_before, Eigen::Vector6d disp_odometry,
+		Eigen::Vector6d pose_sensor, Eigen::Vector6d disp_registration);
+	static Eigen::Vector6d calcRobotPosition_6DoF(Eigen::Vector6d pos_before, Eigen::Vector6d disp_odometry,
+		Eigen::Vector6d pose_sensor, Eigen::Vector6d disp_registration);
+
 	template <class T_PointType>
 	static Eigen::Vector3d getWeightPoint(pcl::PointCloud<T_PointType> cloud_)
 	{
@@ -330,27 +335,21 @@ public:
 
 	template <class T_PointType>
 	static pcl::PointCloud<pcl::FPFHSignature33>::Ptr computeFPFH(
-		pcl::PointCloud<T_PointType> cloud_, float voxel_size, float radius_normal, float radius_FPFH)
+		pcl::PointCloud<T_PointType> cloud_, pcl::PointCloud<T_PointType> cloud_surface, float radius_normal, float radius_FPFH)
 	{
 		const auto view_point = T_PointType(0.0, 10.0, 10.0);
 
 		bool useBeforeVGF = false;
 		useBeforeVGF = true;
 
-		pcl::PointCloud<T_PointType> cloud_VGF;
-		const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
-		sor->setLeafSize(voxel_size, voxel_size, voxel_size);
-		sor->setInputCloud(cloud_.makeShared());
-		sor->filter(cloud_VGF);
-
 		const pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
 		const pcl::NormalEstimation<T_PointType, pcl::Normal>::Ptr ne(new pcl::NormalEstimation<T_PointType, pcl::Normal>);
 		const pcl::search::KdTree<T_PointType>::Ptr kdtree(new pcl::search::KdTree<T_PointType>);
 		//ne->setInputCloud(cloud_.makeShared());
 		if(useBeforeVGF)
-			ne->setInputCloud(cloud_.makeShared());
+			ne->setInputCloud(cloud_surface.makeShared());
 		else
-			ne->setInputCloud(cloud_VGF.makeShared());
+			ne->setInputCloud(cloud_.makeShared());
 		ne->setRadiusSearch(radius_normal);
 		ne->setSearchMethod(kdtree);
 		ne->setViewPoint(view_point.x, view_point.y, view_point.z);
@@ -359,9 +358,9 @@ public:
 		//const float radius_FPFH = voxel_size * 5.0;
 		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh(new pcl::PointCloud<pcl::FPFHSignature33>);
 		const pcl::FPFHEstimation<T_PointType, pcl::Normal, pcl::FPFHSignature33>::Ptr fpfhe(new pcl::FPFHEstimation<T_PointType, pcl::Normal, pcl::FPFHSignature33>);
-		fpfhe->setInputCloud(cloud_VGF.makeShared());
+		fpfhe->setInputCloud(cloud_.makeShared());
 		if (useBeforeVGF)
-			fpfhe->setSearchSurface(cloud_.makeShared());
+			fpfhe->setSearchSurface(cloud_surface.makeShared());
 		else
 		{}
 		fpfhe->setInputNormals(normals);
@@ -530,6 +529,150 @@ public:
 		bool b_hasConverged = false;
 		if(output_vec.size() != 0) b_hasConverged = true;
 		return b_hasConverged;
+	}
+
+	template <class T_PointType>
+	static pcl::PointCloud<pcl::FPFHSignature33>::Ptr computeFPFH_radius(vector<int> &index_vec,
+		pcl::PointCloud<T_PointType> cloud_, pcl::PointCloud<T_PointType> cloud_surface, vector<float> radius_normal_vec, float radius_FPFH)
+	{
+		pcl::PointCloud<T_PointType> cloud_decreasing;
+		pcl::copyPointCloud(cloud_,cloud_decreasing);
+		vector<pair<bool, vector<bool>>>b_pickup_colrow_pair;
+		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh(new pcl::PointCloud<pcl::FPFHSignature33>);
+
+		for (int i_radius = 0; i_radius < radius_normal_vec.size(); i_radius++)
+		{
+			cout << "i_radius:" << i_radius << " " << radius_normal_vec[i_radius] << endl;
+			cout << "cloud_decreasing.size():" << cloud_decreasing.size() << endl;
+			fpfh->clear();
+			fpfh = CKataokaPCL::computeFPFH<T_PointType>(cloud_decreasing, cloud_surface, radius_normal_vec[i_radius], radius_FPFH);
+
+			//array to vectorvector
+			int num_nan = 0;
+			vector<vector<float>> histgram_colrow;
+			//cout << "sizeof(fpfh.points[0].histogram):" << sizeof(fpfh.points[0].histogram) << endl;
+			for (int j = 0; j < fpfh->size(); j++)
+			{
+				vector<float> histgram_row;
+				for (int i = 0; i < sizeof(fpfh->points[j].histogram); i++)
+				{
+					if (isnan(fpfh->points[j].histogram[i]) || fpfh->points[j].histogram[i] > 100. || fpfh->points[j].histogram[i] < 0)
+					{
+						histgram_row.push_back(0.);
+						num_nan++;
+					}
+					else
+						histgram_row.push_back(fpfh->points[j].histogram[i]);
+
+				}
+				histgram_colrow.push_back(histgram_row);
+			}
+			cout << "num_nan:" << num_nan << endl;
+
+			//cout << "fpfh" << endl;
+			//for (int i = 0; i < histgram_colrow[0].size(); i++)
+			//	cout << "i:" << i << " " << histgram_colrow[0][i] << endl;
+
+
+			if (i_radius == 0)
+			{
+				for (int j = 0; j < histgram_colrow.size(); j++)
+				{
+					vector<bool> b_pickup_row;
+					for (int i = 0; i < histgram_colrow[j].size(); i++)
+						b_pickup_row.push_back(true);
+					b_pickup_colrow_pair.push_back(make_pair(true, b_pickup_row));
+				}
+			}
+
+			//mean
+			vector<float> histgram_mean_row;
+			{
+				vector<float> histgram_sum_row;
+				histgram_sum_row.clear();
+				histgram_sum_row.resize(histgram_colrow[0].size());
+				fill(histgram_sum_row.begin(), histgram_sum_row.end(), 0.);
+				for (int j = 0; j < histgram_colrow.size(); j++)
+				{
+					for (int i = 0; i < histgram_colrow[j].size(); i++)
+						histgram_sum_row[i] += histgram_colrow[j][i];
+				}
+				for (int i = 0; i < histgram_sum_row.size(); i++)
+					histgram_mean_row.push_back(histgram_sum_row[i] / ((float)histgram_colrow.size()));
+				//cout << "mean" << endl;
+				//for (int i = 0; i < histgram_mean_row.size(); i++)
+				//	cout << "i:" << i << " " << histgram_mean_row[i] << endl;
+			}
+
+			//pickup
+			{
+				vector<vector<bool>> b_pickup_colrow_new;
+				int j_fpfh = 0;
+				for (int j_pick = 0; j_pick < b_pickup_colrow_pair.size(); j_pick++)
+				{
+					bool b_usePoint = false;
+					b_usePoint = b_pickup_colrow_pair[j_pick].first;
+					if (b_usePoint)
+					{
+						vector<bool> b_pickup_row_new;
+						for (int i = 0; i < b_pickup_colrow_pair[j_pick].second.size(); i++)
+						{
+							if (histgram_colrow[j_fpfh][i] > histgram_mean_row[i])
+								b_pickup_row_new.push_back(true);
+							else
+								b_pickup_row_new.push_back(false);
+						}
+						b_pickup_colrow_new.push_back(b_pickup_row_new);
+						j_fpfh++;
+					}
+					else
+					{
+						vector<bool> b_pickup_row_new;
+						fill(b_pickup_row_new.begin(), b_pickup_row_new.end(), false);
+						b_pickup_colrow_new.push_back(b_pickup_row_new);
+					}
+				}
+				for (int j = 0; j < b_pickup_colrow_pair.size(); j++)
+				{
+					for (int i = 0; i < b_pickup_colrow_pair[j].second.size(); i++)
+						b_pickup_colrow_pair[j].second[i] = b_pickup_colrow_pair[j].second[i] && b_pickup_colrow_new[j][i];
+				}
+				//update bool of pair.first
+				for (int j = 0; j < b_pickup_colrow_pair.size(); j++)
+				{
+					b_pickup_colrow_pair[j].first = false;
+					for (int i = 0; i < b_pickup_colrow_pair[j].second.size(); i++)
+					{
+						if (b_pickup_colrow_pair[j].second[i])
+						{
+							b_pickup_colrow_pair[j].first = true;
+							break;
+						}
+					}
+				}
+
+			}
+			//cloud_decreasing
+			cloud_decreasing.clear();
+			for (int j = 0; j < b_pickup_colrow_pair.size(); j++)
+				if (b_pickup_colrow_pair[j].first) cloud_decreasing.push_back(cloud_.points[j]);
+
+			//output fpfh
+			if (i_radius == radius_normal_vec.size() - 1)
+			{
+				fpfh->clear();
+				fpfh = CKataokaPCL::computeFPFH<T_PointType>(cloud_decreasing, cloud_surface,
+					radius_normal_vec[radius_normal_vec.size() - 1], radius_FPFH);
+			}
+
+		}
+
+		//output index selected by FPFH with all radius
+		index_vec.clear();
+		for (int j = 0; j < b_pickup_colrow_pair.size(); j++)
+			if (b_pickup_colrow_pair[j].first) index_vec.push_back(j);
+
+		return fpfh;
 	}
 
 };

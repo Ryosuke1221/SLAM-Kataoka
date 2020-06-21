@@ -30,7 +30,6 @@ M_convergence_criteria_()
 
 	M_converged_ = false;
 
-
 	M_min_number_correspondences_ = 3;	//same as PCL
 
 	//M_convergence_criteria_original.reset(new CKataokaConvergence_(M_nr_iterations_, M_transformation_, *M_correspondences_));
@@ -2140,3 +2139,56 @@ float CKataokaPCL::getCorrMedianDistance(CorrespondencesPtr_Spring2 corresponden
 
 }
 
+Eigen::Vector6d CKataokaPCL::calcRobotPosition_3DoF(Eigen::Vector6d pos_before, Eigen::Vector6d disp_odometry,
+	Eigen::Vector6d pose_sensor, Eigen::Vector6d disp_registration)
+{
+	//T(i-1)T(odo,i)T(s)T(icp,i)=T(i)T(s)
+	//<-> T(i)=T(i-1)T(odo,i)T(s)T(icp,i)T(s)^(-1)
+
+	//robot pos after odometry
+	Eigen::Vector6d pos_odometry = Eigen::Vector6d::Zero();
+	pos_odometry(0, 0) = cos(pos_before(5, 0))*disp_odometry(0, 0) - sin(pos_before(5, 0))*disp_odometry(1, 0)
+		+ pos_before(0, 0);
+	pos_odometry(1, 0) = sin(pos_before(5, 0))*disp_odometry(0, 0) + cos(pos_before(5, 0))*disp_odometry(1, 0)
+		+ pos_before(1, 0);
+	pos_odometry(5, 0) = pos_before(5, 0) + disp_odometry(5, 0);
+
+	//sensor pos after odometry
+	Eigen::Vector6d pos_sensor_odometry = Eigen::Vector6d::Zero();
+	pos_sensor_odometry(0, 0) = cos(pos_odometry(5, 0))*pose_sensor(0, 0) + pos_odometry(0, 0);
+	pos_sensor_odometry(1, 0) = sin(pos_odometry(5, 0))*pose_sensor(0, 0) + pos_odometry(1, 0);
+	pos_sensor_odometry(5, 0) = pos_odometry(5, 0);
+	pos_sensor_odometry(2, 0) = pose_sensor(2, 0) + pos_odometry(2, 0);
+
+	//sensor pos after registration
+	Eigen::Vector6d pos_sensor_reg = Eigen::Vector6d::Zero();
+	pos_sensor_reg(0, 0) = cos(disp_registration(5, 0))*pos_sensor_odometry(0, 0) - sin(disp_registration(5, 0))*pos_sensor_odometry(1, 0)
+		+ disp_registration(0, 0);
+	pos_sensor_reg(1, 0) = sin(disp_registration(5, 0))*pos_sensor_odometry(0, 0) + cos(disp_registration(5, 0))*pos_sensor_odometry(1, 0)
+		+ disp_registration(1, 0);
+	pos_sensor_reg(5, 0) = pos_sensor_odometry(5, 0) + disp_registration(5, 0);
+	pos_sensor_reg(2, 0) = pos_sensor_odometry(2, 0);
+
+	//robot pos after registration
+	Eigen::Vector6d pos_reg = Eigen::Vector6d::Zero();
+	pos_reg(5, 0) = pos_sensor_reg(5, 0);
+	pos_reg(0, 0) = pos_sensor_reg(0, 0) - cos(pos_reg(5, 0))*pose_sensor(0, 0);
+	pos_reg(1, 0) = pos_sensor_reg(1, 0) - sin(pos_reg(5, 0))*pose_sensor(0, 0);
+	pos_reg(2, 0) = pos_sensor_reg(2, 0) - pose_sensor(2, 0);
+	return pos_reg;
+}
+
+Eigen::Vector6d CKataokaPCL::calcRobotPosition_6DoF(Eigen::Vector6d pos_before, Eigen::Vector6d disp_odometry,
+	Eigen::Vector6d pose_sensor, Eigen::Vector6d disp_registration)
+{
+	//T(i-1)T(odo,i)T(s)T(icp,i)=T(i)T(s)
+	//<-> T(i)=T(i-1)T(odo,i)T(s)T(icp,i)T(s)^(-1)
+	Eigen::Vector6d pos_reg = Eigen::Vector6d::Zero();
+	pos_reg = calcVector6dFromHomogeneousMatrix(
+		calcHomogeneousMatrixFromVector6d(pos_before)
+		* calcHomogeneousMatrixFromVector6d(disp_odometry)
+		* calcHomogeneousMatrixFromVector6d(pose_sensor)
+		* calcHomogeneousMatrixFromVector6d(disp_registration)
+		* calcHomogeneousMatrixFromVector6d(pose_sensor).inverse());
+	return pos_reg;
+}

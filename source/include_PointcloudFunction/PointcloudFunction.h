@@ -169,6 +169,7 @@ public:
 	void GR_FPFH_SAC_IA_2frames(string dir_);
 	void GR_FPFH_SAC_IA_Allframes(string dir_);
 	void getNan_Pointcloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_);
+	void GR_FPFH_SelectPoint(string dir_);
 
 };
 
@@ -436,7 +437,7 @@ void CPointVisualization<T_PointType>::setWindowName(const string name_window_ar
 	M_viewer->initCameraParameters();
 
 
-	cout << "M_num_PointCloudShowing:" << M_num_PointCloudShowing << endl;
+	//cout << "M_num_PointCloudShowing:" << M_num_PointCloudShowing << endl;
 
 	if (M_num_PointCloudShowing == 1)
 	{
