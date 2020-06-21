@@ -2434,42 +2434,36 @@ void CPointcloudFunction::GlobalRegistration_FPFH_SAC_IA()
 		frame_end = stoi(s_input_vecvec.back()[0]) + 1;
 		//init s_output_vecvec
 		vector<vector<string>> s_output_vecvec;
-		for (int j = 0; j < frame_end + 2; j++)
+		for (int j = 0; j < frame_end + 1; j++)
 		{
 			vector<string> s_output_vec;
-			s_output_vec.resize(frame_end + 2);
+			s_output_vec.resize(frame_end + 1);
 			s_output_vecvec.push_back(s_output_vec);
 		}
 		//fill except value cell
-		for (int i = 0; i < frame_end + 1; i++)
-			s_output_vecvec[0][i + 1] = to_string(i);
-		for (int j = 0; j < frame_end + 1; j++)
-			s_output_vecvec[j + 1][0] = to_string(j);
-		s_output_vecvec[0][0] = "-";
-		for (int j = 1; j < s_output_vecvec.size(); j++)
+		for (int j = 0; j < s_output_vecvec.size(); j++)
 		{
-			for (int i = 1; i < s_output_vecvec[j].size(); i++)
+			for (int i = 0; i < s_output_vecvec[j].size(); i++)
 			{
 				if (j == i || j > i) s_output_vecvec[j][i] = "-";
 			}
 		}
 		//fill value cell
+		for (int j = 0; j < s_input_vecvec.size(); j++)
 		{
-			for (int j = 0; j < s_input_vecvec.size(); j++)
-			{
-				int i_tgt, i_src;
-				bool b_convergence = false;
-				i_tgt = stoi(s_input_vecvec[j][0]);
-				i_src = stoi(s_input_vecvec[j][1]);
-				b_convergence = stoi(s_input_vecvec[j][8]);
-				if(b_convergence) s_output_vecvec[i_tgt + 1][i_src + 1] = to_string(2);
-				else s_output_vecvec[i_tgt + 1][i_src + 1] = to_string(0);
-			}
+			cout << "j:" << j << endl;
+			int i_tgt, i_src;
+			bool b_convergence = false;
+			i_tgt = stoi(s_input_vecvec[j][0]);
+			i_src = stoi(s_input_vecvec[j][1]);
+			b_convergence = stoi(s_input_vecvec[j][8]);
+			if (b_convergence) s_output_vecvec[i_tgt][i_src] = to_string(2);
+			else s_output_vecvec[i_tgt][i_src] = to_string(0);
 		}
 		//output file
 		string filename_;
 		filename_ = filenames_csv[0].substr(0, filenames_csv[0].size() -11 ) + "_matrix.csv";
-		CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + filename_);
+		CTimeString::getMatrixCSVFromVecVec(s_output_vecvec, dir_ + "/" + filename_);
 	}
 
 	return;

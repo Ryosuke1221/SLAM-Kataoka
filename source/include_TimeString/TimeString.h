@@ -71,6 +71,41 @@ public:
 
 	static vector<string> inputSomeString();
 
+	template<typename T>
+	static void getMatrixCSVFromVecVec(vector<vector<T>> saved_data_vec_vec, string filename_)
+	{
+		if (saved_data_vec_vec.size() != saved_data_vec_vec[0].size())
+		{
+			cout << "ERROR: rows and cols is different" << endl;
+			return;
+		}
+
+		vector<vector<string>> save_vec_vec;
+		for (int j = 0; j < saved_data_vec_vec.size() + 1; j++)
+		{
+			vector<string> save_vec;
+			save_vec.resize(saved_data_vec_vec.size() + 1);
+			save_vec_vec.push_back(save_vec);
+		}
+
+		//fill except value cell
+		for (int i = 0; i < saved_data_vec_vec.size(); i++)
+			save_vec_vec[0][i + 1] = to_string(i);
+		for (int j = 0; j < saved_data_vec_vec.size(); j++)
+			save_vec_vec[j + 1][0] = to_string(j);
+		save_vec_vec[0][0] = "-";
+		//fill value cell
+		for (int j = 0; j < saved_data_vec_vec.size(); j++)
+		{
+			for (int i = 0; i < saved_data_vec_vec.size(); i++)
+			{
+				save_vec_vec[j + 1][i + 1] = to_string(saved_data_vec_vec[j][i]);
+			}
+		}
+		getCSVFromVecVec(save_vec_vec, filename_);
+	}
+
+
 private:
 	static bool getDirectoryExistance(string foder_Path);
 	static bool getDirectoryExistance_detail(string foder_Path, bool b_first);
