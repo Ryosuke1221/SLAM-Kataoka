@@ -396,14 +396,23 @@ vector<string> CTimeString::inputSomeString()
 	vector<string> s_vec;
 
 	string s_input;
-	cout << "input value separated by spaces" << endl;
+	//cout << "input value separated by spaces" << endl;
 	//https://programming.pc-note.net/cpp/iostream.html#clear
 	cin.ignore(1024, '\n');
 	std::getline(std::cin, s_input);
 	if (s_input.size() == 0)
 	{
-		cout << "ERROR: no file inputed." << endl;
+		//cout << "ERROR: no file inputed." << endl;
 		return s_vec;
+	}
+	{
+		vector<int> i_space_vec_temp;
+		i_space_vec_temp = find_all(s_input, " ");
+		if (i_space_vec_temp.size() == 0)
+		{
+			s_vec.push_back(s_input);
+			return s_vec;
+		}
 	}
 
 	//erase front space

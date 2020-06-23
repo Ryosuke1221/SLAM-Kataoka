@@ -365,8 +365,39 @@ public:
 		{}
 		fpfhe->setInputNormals(normals);
 		fpfhe->setSearchMethod(kdtree);
+		//fpfhe->setKSearch(10);
 		fpfhe->setRadiusSearch(radius_FPFH);
 		fpfhe->compute(*fpfh);
+		//cout << "fpfhe->getSearchParameter():" << fpfhe->getSearchParameter() << endl;
+
+		//{
+		//	pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh2(new pcl::PointCloud<pcl::FPFHSignature33>);
+		//	pcl::FPFHEstimation<T_PointType, pcl::Normal, pcl::FPFHSignature33> fpfhe2;
+		//	cout << "fpfhe2.getKSearch():" << fpfhe2.getKSearch() << endl;
+		//	cout << "fpfhe2.getSearchParameter():" << fpfhe2.getSearchParameter() << endl;
+		//	fpfhe2.setInputCloud(cloud_.makeShared());
+		//	if (useBeforeVGF)
+		//		fpfhe2.setSearchSurface(cloud_surface.makeShared());
+		//	else
+		//	{
+		//	}
+		//	fpfhe2.setInputNormals(normals);
+		//	fpfhe2.setSearchMethod(kdtree);
+		//	fpfhe2.setRadiusSearch(radius_FPFH);
+		//	fpfhe2.compute(*fpfh2);
+		//	cout << "fpfhe.getKSearch():" << fpfhe2.getKSearch() << endl;
+		//	cout << "fpfhe.getSearchParameter():" << fpfhe2.getSearchParameter() << endl;
+		//	//cout << "fpfhe2.hist_f1_.size():" << fpfhe2.hist_f1_.size() << endl;
+		//	//cout << "fpfhe2.hist_f2_.size():" << fpfhe2.hist_f2_.size() << endl;
+		//	//cout << "fpfhe2.hist_f3_.size():" << fpfhe2.hist_f3_.size() << endl;
+		//	cout << "fpfhe2.k_:" << fpfhe2.k_ << endl;
+		//	//cout << "fpfhe2.nr_bins_f1_:" << fpfhe2.nr_bins_f1_ << endl;
+		//	//cout << "fpfhe2.nr_bins_f2_:" << fpfhe2.nr_bins_f2_ << endl;
+		//	//cout << "fpfhe2.nr_bins_f3_:" << fpfhe2.nr_bins_f3_ << endl;
+		//	//fpfhe2.setKSearch(0.5);
+		//	//fpfhe2.setSearchParameter(0.5);
+
+		//}
 
 		//cout << "fpfh->size:" << fpfh->size() << endl;
 		//vector<vector<double>> hist_vecvec;
@@ -549,59 +580,59 @@ public:
 
 			//array to vectorvector
 			int num_nan = 0;
-			vector<vector<float>> histgram_colrow;
+			vector<vector<float>> histogram_colrow;
 			//cout << "sizeof(fpfh.points[0].histogram):" << sizeof(fpfh.points[0].histogram) << endl;
 			for (int j = 0; j < fpfh->size(); j++)
 			{
-				vector<float> histgram_row;
+				vector<float> histogram_row;
 				for (int i = 0; i < sizeof(fpfh->points[j].histogram); i++)
 				{
 					if (isnan(fpfh->points[j].histogram[i]) || fpfh->points[j].histogram[i] > 100. || fpfh->points[j].histogram[i] < 0)
 					{
-						histgram_row.push_back(0.);
+						histogram_row.push_back(0.);
 						num_nan++;
 					}
 					else
-						histgram_row.push_back(fpfh->points[j].histogram[i]);
+						histogram_row.push_back(fpfh->points[j].histogram[i]);
 
 				}
-				histgram_colrow.push_back(histgram_row);
+				histogram_colrow.push_back(histogram_row);
 			}
 			cout << "num_nan:" << num_nan << endl;
 
 			//cout << "fpfh" << endl;
-			//for (int i = 0; i < histgram_colrow[0].size(); i++)
-			//	cout << "i:" << i << " " << histgram_colrow[0][i] << endl;
+			//for (int i = 0; i < histogram_colrow[0].size(); i++)
+			//	cout << "i:" << i << " " << histogram_colrow[0][i] << endl;
 
 
 			if (i_radius == 0)
 			{
-				for (int j = 0; j < histgram_colrow.size(); j++)
+				for (int j = 0; j < histogram_colrow.size(); j++)
 				{
 					vector<bool> b_pickup_row;
-					for (int i = 0; i < histgram_colrow[j].size(); i++)
+					for (int i = 0; i < histogram_colrow[j].size(); i++)
 						b_pickup_row.push_back(true);
 					b_pickup_colrow_pair.push_back(make_pair(true, b_pickup_row));
 				}
 			}
 
 			//mean
-			vector<float> histgram_mean_row;
+			vector<float> histogram_mean_row;
 			{
-				vector<float> histgram_sum_row;
-				histgram_sum_row.clear();
-				histgram_sum_row.resize(histgram_colrow[0].size());
-				fill(histgram_sum_row.begin(), histgram_sum_row.end(), 0.);
-				for (int j = 0; j < histgram_colrow.size(); j++)
+				vector<float> histogram_sum_row;
+				histogram_sum_row.clear();
+				histogram_sum_row.resize(histogram_colrow[0].size());
+				fill(histogram_sum_row.begin(), histogram_sum_row.end(), 0.);
+				for (int j = 0; j < histogram_colrow.size(); j++)
 				{
-					for (int i = 0; i < histgram_colrow[j].size(); i++)
-						histgram_sum_row[i] += histgram_colrow[j][i];
+					for (int i = 0; i < histogram_colrow[j].size(); i++)
+						histogram_sum_row[i] += histogram_colrow[j][i];
 				}
-				for (int i = 0; i < histgram_sum_row.size(); i++)
-					histgram_mean_row.push_back(histgram_sum_row[i] / ((float)histgram_colrow.size()));
+				for (int i = 0; i < histogram_sum_row.size(); i++)
+					histogram_mean_row.push_back(histogram_sum_row[i] / ((float)histogram_colrow.size()));
 				//cout << "mean" << endl;
-				//for (int i = 0; i < histgram_mean_row.size(); i++)
-				//	cout << "i:" << i << " " << histgram_mean_row[i] << endl;
+				//for (int i = 0; i < histogram_mean_row.size(); i++)
+				//	cout << "i:" << i << " " << histogram_mean_row[i] << endl;
 			}
 
 			//pickup
@@ -617,7 +648,7 @@ public:
 						vector<bool> b_pickup_row_new;
 						for (int i = 0; i < b_pickup_colrow_pair[j_pick].second.size(); i++)
 						{
-							if (histgram_colrow[j_fpfh][i] > histgram_mean_row[i])
+							if (histogram_colrow[j_fpfh][i] > histogram_mean_row[i])
 								b_pickup_row_new.push_back(true);
 							else
 								b_pickup_row_new.push_back(false);
