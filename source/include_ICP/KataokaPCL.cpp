@@ -2192,3 +2192,69 @@ Eigen::Vector6d CKataokaPCL::calcRobotPosition_6DoF(Eigen::Vector6d pos_before, 
 		* calcHomogeneousMatrixFromVector6d(pose_sensor).inverse());
 	return pos_reg;
 }
+
+vector<float> CKataokaPCL::getErrorOfFPFHSource_corr(float &median_arg, pcl::Correspondences correspondences,
+	pcl::PointCloud<pcl::FPFHSignature33> fpfh_src, pcl::PointCloud<pcl::FPFHSignature33> fpfh_tgt)
+{
+	vector<float> error_vec;
+	error_vec.resize(fpfh_src.size());
+	fill(error_vec.begin(), error_vec.end(), 100000.);
+
+	int num_nan = 0;
+
+	for (int j = 0; j < correspondences.size(); j++)
+	{
+		int i_src, i_tgt;
+		i_src = correspondences[j].index_query;
+		i_tgt = correspondences[j].index_match;
+
+		float error_squared = 0.;
+		bool b_nan = false;
+
+		for (int i = 0; i < sizeof(fpfh_src[i_src].histogram); i++)
+		{
+			if (isnan(fpfh_src.points[i_src].histogram[i]) || isnan(fpfh_tgt.points[i_tgt].histogram[i])
+				|| fpfh_src.points[i_src].histogram[i] > 200. || fpfh_tgt.points[i_tgt].histogram[i] > 200.
+				|| fpfh_src.points[i_src].histogram[i] < 0. || fpfh_tgt.points[i_tgt].histogram[i] < 0.)
+			{
+				b_nan = true;
+				num_nan++;
+				cout << "j:" << j << " i:" << i << " nan occored" << endl;
+				break;
+			}
+			else
+				error_squared += pow(fpfh_src.points[i_src].histogram[i] - fpfh_tgt.points[i_tgt].histogram[i], 2.);
+		}
+		if (b_nan)
+			error_squared = 10000.;
+		else
+			error_squared = sqrt(error_squared);
+
+		error_vec[j] = error_squared;	//value or 100000.(init) or 10000.(invalid)
+	}
+	if (num_nan != 0) cout << "num_nan:" << num_nan << endl;
+
+	//show inlier rate
+	cout << "inlier rate:" << (float)correspondences.size() / (float)fpfh_src.size() << endl;
+
+	//show median
+	//float median_;
+	vector<float> distance_vec;
+	for (int i = 0; i < error_vec.size(); i++)
+	{
+		//if (error_vec[i] >= 10000.) continue;	//invalid: outlier and not nan
+		if (error_vec[i] >= 100000.) continue;	//invalid: outlier
+		distance_vec.push_back(error_vec[i]);
+	}
+	int size = distance_vec.size();
+
+	sort(distance_vec.begin(), distance_vec.end());
+
+	if (size % 2 == 1)
+		median_arg = distance_vec[(size - 1) / 2];
+	else
+		median_arg = (distance_vec[(size / 2) - 1] + distance_vec[size / 2]) / 2.;
+	cout << "fpfh error median_arg:" << median_arg << endl;
+
+	return error_vec;
+}

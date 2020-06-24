@@ -706,4 +706,40 @@ public:
 		return fpfh;
 	}
 
+	template <class T_PointType>
+	static vector<float> getErrorOfFPFHSource(float &median_arg,
+		pcl::PointCloud<T_PointType> cloud_src, pcl::PointCloud<T_PointType> cloud_tgt,
+		pcl::PointCloud<pcl::FPFHSignature33> fpfh_src, pcl::PointCloud<pcl::FPFHSignature33> fpfh_tgt,
+		float MaxCorrespondenceDistance)
+	{
+		//corr
+		pcl::Correspondences correspondences;
+		{
+			correspondences.resize(cloud_src.size());
+			std::vector<int> index(1);
+			std::vector<float> distance(1);
+			unsigned int nr_valid_correspondences = 0;
+			pcl::KdTreeFLANN<T_PointType> match_search;
+			match_search.setInputCloud(cloud_tgt.makeShared());
+			for (size_t i = 0; i < cloud_src.size(); ++i)
+			{
+				int found_neighs = match_search.nearestKSearch(cloud_src.at(i), 1, index, distance);
+				if (distance[0] > MaxCorrespondenceDistance * MaxCorrespondenceDistance) continue;
+				pcl::Correspondence corr;
+				corr.index_query = i;
+				corr.index_match = index[0];
+				corr.distance = distance[0];	//squared
+				correspondences[nr_valid_correspondences++] = corr;
+			}
+			correspondences.resize(nr_valid_correspondences);
+			//cout << "correspondences size = " << nr_valid_correspondences << endl;
+		}
+
+		//return CKataokaPCL::getErrorOfFPFHSource_corr(median_arg, correspondences, fpfh_src, fpfh_tgt);
+		return getErrorOfFPFHSource_corr(median_arg, correspondences, fpfh_src, fpfh_tgt);
+	}
+
+	static vector<float> getErrorOfFPFHSource_corr(float &median_arg, pcl::Correspondences correspondences,
+		pcl::PointCloud<pcl::FPFHSignature33> fpfh_src, pcl::PointCloud<pcl::FPFHSignature33> fpfh_tgt);
+	
 };

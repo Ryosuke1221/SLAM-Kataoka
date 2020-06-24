@@ -2388,6 +2388,8 @@ void CPointcloudFunction::GlobalRegistration_FPFH_SAC_IA()
 		filename_ = filenames_csv[0].substr(0, filenames_csv[0].size() -11 ) + "_matrix.csv";
 		CTimeString::getMatrixCSVFromVecVec(s_output_vecvec, dir_ + "/" + filename_);
 	}
+	else if (i_method == 5)
+		FPFH_ajustParameter(dir_);
 
 	return;
 }
@@ -3379,7 +3381,41 @@ void CPointcloudFunction::FPFH_ajustParameter(string dir_)
 
 	int i_tgt, i_src;
 
-	//pcl::PointCloud<T_PointType>::Ptr cloud_temp(new pcl::PointCloud<T_PointType>());
+	pcl::PointCloud<T_PointType>::Ptr cloud_temp(new pcl::PointCloud<T_PointType>());
+
+		//true trajectory
+	vector<Eigen::Vector6d> trajectory_vec;
+	{
+		vector<string> filenames_trajectory_temp;
+		vector<vector<double>> trajectory_vecvec_temp;
+		CTimeString::getFileNames_extension(dir_, filenames_trajectory_temp, ".csv");
+		if (filenames_trajectory_temp.size() != 1)
+		{
+			cout << "ERROR: true trajectory not found" << endl;
+			return;
+		}
+		trajectory_vecvec_temp = CTimeString::getVecVecFromCSV(dir_ + "/" + filenames_trajectory_temp[0]);
+		for (int i = 0; i < trajectory_vecvec_temp.size(); i++)
+		{
+			Eigen::Vector6d Pos_temp = Eigen::Vector6d::Zero();
+			Pos_temp << trajectory_vecvec_temp[i][1], trajectory_vecvec_temp[i][2],
+				trajectory_vecvec_temp[i][3], trajectory_vecvec_temp[i][4],
+				trajectory_vecvec_temp[i][5], trajectory_vecvec_temp[i][6];
+			trajectory_vec.push_back(Pos_temp);
+		}
+		//for (int i = 0; i < trajectory_vec.size(); i++)
+		//{
+		//	cout << "i:" << i;
+		//	cout << " x:" << trajectory_vec[i](0, 0);
+		//	cout << " y:" << trajectory_vec[i](1, 0);
+		//	cout << " z:" << trajectory_vec[i](2, 0);
+		//	cout << " roll:" << trajectory_vec[i](3, 0);
+		//	cout << " pitch:" << trajectory_vec[i](4, 0);
+		//	cout << " yaw:" << trajectory_vec[i](5, 0);
+		//	cout << endl;
+		//}
+	}
+
 
 	while (1)
 	{
@@ -3402,64 +3438,83 @@ void CPointcloudFunction::FPFH_ajustParameter(string dir_)
 		float radius_normal_FPFH, radius_FPFH;
 		radius_normal_FPFH = voxel_size * 2.0;
 		radius_FPFH = voxel_size * 5.0;
+		//radius_FPFH = voxel_size * 6.0;
 
-		vector<float> radius_normal_FPFH_vec;
-		radius_normal_FPFH_vec.push_back(radius_normal_FPFH * 0.2);
-		//radius_normal_FPFH_vec.push_back(radius_normal_FPFH * 5.);
-		//radius_normal_FPFH_vec.push_back(radius_normal_FPFH * 0.5);
-		radius_normal_FPFH_vec.push_back(radius_normal_FPFH * 1.5);
-		radius_normal_FPFH_vec.push_back(radius_normal_FPFH);
+		float MaxCorrespondenceDistance_SAC;
+		MaxCorrespondenceDistance_SAC = voxel_size * 2.5;
 
 		//show parameter
 		cout << "Parameter list" << endl;
 		cout << "0: voxel_size:                     " << voxel_size << endl;
-		//cout << "1: radius_normal_FPFH:             " << radius_normal_FPFH << endl;
-		cout << "1: radius_normal_FPFH:             ";
-		for (int i = 0; i < radius_normal_FPFH_vec.size(); i++)
-			cout << radius_normal_FPFH_vec[i] << " ";
-		cout << endl;
-
+		cout << "1: radius_normal_FPFH:             " << radius_normal_FPFH << endl;
 		cout << "2: radius_FPFH:                    " << radius_FPFH << endl;
+		cout << "3: MaxCorrespondenceDistance_SAC:  " << MaxCorrespondenceDistance_SAC << endl;
 
-		////change parameter
-		//bool b_parameter_changed = false;
-		//while (1)
-		//{
-		//	int i_change = -1;
-		//	cout << "select parameters to change  (ESCAPE by typing invalid or -1 )" << endl;
-		//	cout << "->";
-		//	cin >> i_change;
-		//	if (i_change == 0)
-		//	{
-		//		cout << "voxel_size ->";
-		//		cin >> voxel_size;
-		//		b_parameter_changed = true;
-		//	}
-		//	else if (i_change == 1)
-		//	{
-		//		cout << "radius_normal_FPFH ->";
-		//		cin >> radius_normal_FPFH;
-		//		b_parameter_changed = true;
-		//	}
-		//	else if (i_change == 2)
-		//	{
-		//		cout << "radius_FPFH ->";
-		//		cin >> radius_FPFH;
-		//		b_parameter_changed = true;
-		//	}
-		//	else
-		//	{
-		//		break;
-		//	}
-		//}
-		//if (b_parameter_changed)
-		//{
-		//	//show parameter (new)
-		//	cout << "Parameter list (new)" << endl;
-		//	cout << "0: voxel_size:                     " << voxel_size << endl;
-		//	cout << "1: radius_normal_FPFH:             " << radius_normal_FPFH << endl;
-		//	cout << "2: radius_FPFH:                    " << radius_FPFH << endl;
-		//}
+		//change parameter
+		bool b_parameter_changed = false;
+		while (1)
+		{
+
+			int i_change = -1;
+			cout << "select parameters to change  (ESCAPE by typing single 0 with no value )" << endl;
+			cout << "->XX(parameter index) YY(value)" << endl;
+			vector<string> s_input_vec;
+			s_input_vec.clear();
+			s_input_vec = CTimeString::inputSomeString();
+			cout << "s_input_vec.size():" << s_input_vec.size() << endl;
+
+			if (!(s_input_vec.size() == 1 || s_input_vec.size() == 2)) continue;
+			if (s_input_vec.size() == 1)
+			{
+				if (stoi(s_input_vec[0]) == 0) break;
+				else continue;
+			}
+
+			float value_ = 0.;
+			i_change = stoi(s_input_vec[0]);
+			value_ = stof(s_input_vec[1]);
+			b_parameter_changed = true;
+
+			if (i_change == 0)
+			{
+				voxel_size = value_;
+				cout << "voxel_size:" << voxel_size << endl;
+			}
+			else if (i_change == 1)
+			{
+				radius_normal_FPFH = value_;
+				cout << "radius_normal_FPFH:" << radius_normal_FPFH << endl;
+			}
+			else if (i_change == 2)
+			{
+				radius_FPFH = value_;
+				cout << "radius_FPFH:" << radius_FPFH << endl;
+			}
+			else if (i_change == 3)
+			{
+				MaxCorrespondenceDistance_SAC = value_;
+				cout << "MaxCorrespondenceDistance_SAC:" << MaxCorrespondenceDistance_SAC << endl;
+			}
+			else
+			{
+				cout << "error" << endl;
+				break;
+			}
+
+			cout << "parameter changed" << endl;
+			cout << endl;
+		}
+
+		if (b_parameter_changed)
+		{
+			//show parameter (new)
+			cout << "Parameter list (new)" << endl;
+			cout << "0: voxel_size:                     " << voxel_size << endl;
+			cout << "1: radius_normal_FPFH:             " << radius_normal_FPFH << endl;
+			cout << "2: radius_FPFH:                    " << radius_FPFH << endl;
+			cout << "3: MaxCorrespondenceDistance_SAC:  " << MaxCorrespondenceDistance_SAC << endl;
+		}
+		cout << "calculation start" << endl;
 
 		//input pointcloud
 		pcl::PointCloud<T_PointType>::Ptr cloud_tgt(new pcl::PointCloud<T_PointType>());
@@ -3468,39 +3523,17 @@ void CPointcloudFunction::FPFH_ajustParameter(string dir_)
 		pcl::io::loadPCDFile(dir_ + "/" + filenames_[i_src], *cloud_src);
 		cloud_tgt->is_dense = true;
 		cloud_src->is_dense = true;
+
 		//compute fpfh
 		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt(new pcl::PointCloud<pcl::FPFHSignature33>);
 		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src(new pcl::PointCloud<pcl::FPFHSignature33>);
-		//{
-		//	pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
-		//	const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
-		//	sor->setLeafSize(voxel_size, voxel_size, voxel_size);
-		//	sor->setInputCloud(cloud_tgt);
-		//	sor->filter(*cloud_VGF);
-		//	fpfh_tgt = CKataokaPCL::computeFPFH<T_PointType>(*cloud_VGF, *cloud_tgt, radius_normal_FPFH, radius_FPFH);
-		//}
-		//{
-		//	pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
-		//	const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
-		//	sor->setLeafSize(voxel_size, voxel_size, voxel_size);
-		//	sor->setInputCloud(cloud_src);
-		//	sor->filter(*cloud_VGF);
-		//	fpfh_src = CKataokaPCL::computeFPFH<T_PointType>(*cloud_VGF, *cloud_src, radius_normal_FPFH, radius_FPFH);
-		//}
-
-		//radius_normal_FPFH_vec
-		vector<int> index_FPFH_tgt;
-		vector<int> index_FPFH_src;
-
 		{
 			pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
 			const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
 			sor->setLeafSize(voxel_size, voxel_size, voxel_size);
 			sor->setInputCloud(cloud_tgt);
 			sor->filter(*cloud_VGF);
-			//fpfh_tgt = CKataokaPCL::computeFPFH<T_PointType>(*cloud_VGF, *cloud_tgt, radius_normal_FPFH, radius_FPFH);
-			fpfh_tgt = CKataokaPCL::computeFPFH_radius<T_PointType>(index_FPFH_tgt, *cloud_VGF, *cloud_tgt, radius_normal_FPFH_vec, radius_FPFH);
-
+			fpfh_tgt = CKataokaPCL::computeFPFH<T_PointType>(*cloud_VGF, *cloud_tgt, radius_normal_FPFH, radius_FPFH);
 		}
 		{
 			pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
@@ -3508,10 +3541,13 @@ void CPointcloudFunction::FPFH_ajustParameter(string dir_)
 			sor->setLeafSize(voxel_size, voxel_size, voxel_size);
 			sor->setInputCloud(cloud_src);
 			sor->filter(*cloud_VGF);
-			//fpfh_src = CKataokaPCL::computeFPFH<T_PointType>(*cloud_VGF, *cloud_src, radius_normal_FPFH, radius_FPFH);
-			fpfh_src = CKataokaPCL::computeFPFH_radius<T_PointType>(index_FPFH_src, *cloud_VGF, *cloud_src, radius_normal_FPFH_vec, radius_FPFH);
+			fpfh_src = CKataokaPCL::computeFPFH<T_PointType>(*cloud_VGF, *cloud_src, radius_normal_FPFH, radius_FPFH);
 		}
 
+		//vector<int> inlier_;
+
+		cout << "i_tgt:" << i_tgt << " i_src" << i_src << endl;
+		//cout << "inlier_.size():" << inlier_.size() << endl;
 
 		//show pointcloud
 		//save pointcloud
@@ -3524,59 +3560,120 @@ void CPointcloudFunction::FPFH_ajustParameter(string dir_)
 		sor->filter(*cloud_src_show);
 		sor->setInputCloud(cloud_tgt);
 		sor->filter(*cloud_tgt_show);
-
 		//color
 		for (int i = 0; i < cloud_tgt_show->size(); i++)
 		{
 			cloud_tgt_show->points[i].r = 255;
-			cloud_tgt_show->points[i].g = 0;
-			cloud_tgt_show->points[i].b = 0;
+			cloud_tgt_show->points[i].g = 255;
+			cloud_tgt_show->points[i].b = 255;
 		}
 		for (int i = 0; i < cloud_src_show->size(); i++)
 		{
-			cloud_src_show->points[i].r = 0;
+			cloud_src_show->points[i].r = 255;
 			cloud_src_show->points[i].g = 255;
-			cloud_src_show->points[i].b = 0;
-		}
-		//selected points
-		for (int i = 0; i < index_FPFH_tgt.size(); i++)
-		{
-			cloud_tgt_show->points[index_FPFH_tgt[i]].r = 255;
-			cloud_tgt_show->points[index_FPFH_tgt[i]].g = 255;
-			cloud_tgt_show->points[index_FPFH_tgt[i]].b = 255;
-		}
-		for (int i = 0; i < index_FPFH_src.size(); i++)
-		{
-			cloud_src_show->points[index_FPFH_src[i]].r = 255;
-			cloud_src_show->points[index_FPFH_src[i]].g = 255;
-			cloud_src_show->points[index_FPFH_src[i]].b = 255;
+			cloud_src_show->points[i].b = 255;
 		}
 
-		//add to init
+		//add to viewer
 		CPointVisualization<T_PointType> pv_tgt;
-		pv_tgt.setWindowName("tgt");
+		pv_tgt.setWindowName("Target");
 		CPointVisualization<T_PointType> pv_src;
-		pv_src.setWindowName("src");
+		pv_src.setWindowName("Source");
+
+		{
+			Eigen::Matrix4d T_i_src = Eigen::Matrix4d::Identity();
+			Eigen::Matrix4d T_i1_tgt = Eigen::Matrix4d::Identity();
+			Eigen::Matrix4d T_i_GL = Eigen::Matrix4d::Identity();
+			//T_i_src = T_i1_tgt * T_i_GL
+			T_i_src = CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
+			T_i1_tgt = CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]);
+			T_i_GL = T_i1_tgt.inverse() * T_i_src;
+			Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
+			Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(T_i_GL);
+			pcl::transformPointCloud(*cloud_src_show, *cloud_src_show, Trans_temp);
+		}
+
+		//main processing of error of fpfh
+		//vector<float> error_fpfh_vec;
+		//error_fpfh_vec = CKataokaPCL::getErrorOfFPFHSource(
+		//	*cloud_src_show,*cloud_tgt_show, *fpfh_src, *fpfh_tgt, MaxCorrespondenceDistance_SAC);
+
+		//corr
+		pcl::Correspondences correspondences;
+		{
+			correspondences.resize(cloud_src_show->size());
+			std::vector<int> index(1);
+			std::vector<float> distance(1);
+			unsigned int nr_valid_correspondences = 0;
+			pcl::KdTreeFLANN<T_PointType> match_search;
+			match_search.setInputCloud(cloud_tgt_show);
+			for (size_t i = 0; i < cloud_src_show->size(); ++i)
+			{
+				int found_neighs = match_search.nearestKSearch(cloud_src_show->at(i), 1, index, distance);
+				if (distance[0] > MaxCorrespondenceDistance_SAC * MaxCorrespondenceDistance_SAC) continue;
+				pcl::Correspondence corr;
+				corr.index_query = i;
+				corr.index_match = index[0];
+				corr.distance = distance[0];	//squared
+				correspondences[nr_valid_correspondences++] = corr;
+			}
+			correspondences.resize(nr_valid_correspondences);
+			//cout << "correspondences size = " << nr_valid_correspondences << endl;
+		}
+		//cacl error
+		vector<float> error_fpfh_vec;
+		float median_;
+		error_fpfh_vec = CKataokaPCL::getErrorOfFPFHSource_corr(median_, correspondences, *fpfh_src, *fpfh_tgt);
+
+		//change color
+		for (int i = 0; i < correspondences.size(); i++)
+		{
+			int i_src_temp, i_tgt_temp;
+			int i_color = 0;
+			i_src_temp = correspondences[i].index_query;
+			i_tgt_temp = correspondences[i].index_match;
+			if (error_fpfh_vec[i_src_temp] <= median_) i_color = 1;
+			else if (error_fpfh_vec[i_src_temp] > median_) i_color = 2;
+
+			if (i_color == 1)
+			{
+				//src
+				cloud_src_show->points[i_src_temp].r = 0;
+				cloud_src_show->points[i_src_temp].g = 255;
+				cloud_src_show->points[i_src_temp].b = 0;
+				//tgt
+				cloud_tgt_show->points[i_tgt_temp].r = 0;
+				cloud_tgt_show->points[i_tgt_temp].g = 255;
+				cloud_tgt_show->points[i_tgt_temp].b = 0;
+			}
+			else if (i_color == 2)
+			{
+				//src
+				cloud_src_show->points[i_src_temp].r = 255;
+				cloud_src_show->points[i_src_temp].g = 0;
+				cloud_src_show->points[i_src_temp].b = 0;
+				//tgt
+				cloud_tgt_show->points[i_tgt_temp].r = 255;
+				cloud_tgt_show->points[i_tgt_temp].g = 0;
+				cloud_tgt_show->points[i_tgt_temp].b = 0;
+			}
+
+		}
 
 		pv_tgt.setPointCloud(cloud_tgt_show);
 		pv_src.setPointCloud(cloud_src_show);
 
-		cout << "Press ESC to next registration" << endl;
-		cout << endl;
-		//show
 		while (1)
 		{
-			pv_tgt.updateViewer();
 			pv_src.updateViewer();
+			pv_tgt.updateViewer();
 			if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
 		}
 		//remove viewer
-		pv_tgt.closeViewer();
 		pv_src.closeViewer();
+		pv_tgt.closeViewer();
 
-		cout << "one frame process finished" << endl;
 		cout << endl;
 	}
-
 	cout << "escaped" << endl;
 }
