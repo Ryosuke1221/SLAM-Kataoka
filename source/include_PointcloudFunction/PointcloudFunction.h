@@ -166,10 +166,12 @@ public:
 	vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> getSegmentation_rest(
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_rest, double th_tolerance);
 	void GlobalRegistration_FPFH_SAC_IA();
-	void GR_FPFH_SAC_IA_2frames(string dir_);
-	void GR_FPFH_SAC_IA_Allframes(string dir_);
-	void GR_FPFH_SelectPoint(string dir_);
-	void FPFH_ajustParameter(string dir_);
+	void GR_FPFH_SAC_IA_2frames(string dir_, vector<float> parameter_vec);
+	void GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> parameter_vec);
+	void GR_FPFH_SelectPoint(string dir_, vector<float> parameter_vec);
+	void FPFH_ajustParameter(string dir_, vector<float> parameter_vec);
+	void FPFH_ajustParameter_AllFrames(string dir_, vector<float> parameter_vec);
+
 };
 
 template <class T_PointType>

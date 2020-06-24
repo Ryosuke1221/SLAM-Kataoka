@@ -1153,7 +1153,7 @@ double CKataokaPCL::getDistanceOf2PointCloud(pcl::PointCloud<pcl::PointXYZRGB>::
 			median_corr = distance_vec[(size - 1) / 2];
 		}
 		else {
-			median_corr = (distance_vec[(size / 2) - 1] + distance_vec[size / 2]) / 2;
+			median_corr = (distance_vec[(size / 2) - 1] + distance_vec[size / 2]) / 2.;
 		}
 		cout << "median_corr(map) = " << median_corr << endl;
 
