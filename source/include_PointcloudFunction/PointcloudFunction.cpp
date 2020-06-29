@@ -142,13 +142,13 @@ void CPointcloudFunction::show_sequent()
 	//b_plane = true;
 
 	bool b_onlyConvergence = false;
-	//b_onlyConvergence = true;
+	b_onlyConvergence = true;
 
 	bool b_select = false;
 	//b_select = true;
 
 	bool b_normal = false;
-	b_normal = true;
+	//b_normal = true;
 
 	CPointVisualization<PointType_func> pv;
 	if (typeid(PointType_func) == typeid(pcl::PointXYZI))
@@ -418,6 +418,38 @@ void CPointcloudFunction::getPCDFromCSV_naraha()
 
 void CPointcloudFunction::FreeSpace()
 {
+	//pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>());
+	//string filename_ = "../../data/process_GetPcdFromCSV/005nir.pcd";
+	//pcl::io::loadPCDFile(filename_,*cloud_);
+	////#include <pcl/visualization/pcl_plotter.h>
+	//pcl::visualization::PCLPlotter aaa;
+	//vector<double> hist_vec;
+	////for (int i = 0; i < 1000; i++)
+	////	hist_vec.push_back((float)i*0.1);
+	//for (int i = 0; i < cloud_->size(); i++)
+	//	hist_vec.push_back((double)cloud_->points[i].intensity);
+	//aaa.addHistogramData(hist_vec);
+	//while (1)
+	//	aaa.spinOnce();
+
+	//#include <Eigen/Core>
+	//#include <pcl/point_cloud.h>
+	//#include <pcl/common/transforms.h>
+	//#include <pcl/filters/voxel_grid.h>
+	//#include <pcl/features/normal_3d.h>
+	//#include <pcl/features/fpfh.h>
+	//#include <pcl/sample_consensus/ransac.h>
+	//#include <pcl/registration/sample_consensus_prerejective.h>
+
+	//typedef typename pcl::PointXYZ T_PointType;
+	//typedef typename pcl::PointXYZI T_PointType;
+	typedef typename pcl::PointXYZRGB T_PointType;
+
+	pcl::PointCloud<T_PointType>::Ptr cloud_(new pcl::PointCloud<T_PointType>());
+	pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
+
+
+
 
 }
 
@@ -1977,7 +2009,8 @@ void CPointcloudFunction::DrawTrajectory()
 		//draw frame number
 		pcl::PointXYZRGB point_frame;
 		point_frame = point_pose_arraw;
-		point_frame.z += 1.;
+		//point_frame.z += 1.;
+		point_frame.z += -0.5;
 		point_frame.r = 255;
 		point_frame.g = 255;
 		point_frame.b = 0;
@@ -2281,28 +2314,33 @@ void CPointcloudFunction::GlobalRegistration_FPFH_SAC_IA()
 	radius_FPFH = 2.;
 
 	float MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC, InlierFraction_SAC;
-	MaxCorrespondenceDistance_SAC = voxel_size * 2.5;
+	//MaxCorrespondenceDistance_SAC = voxel_size * 2.5;
+	MaxCorrespondenceDistance_SAC = 0.25;
+	//MaxCorrespondenceDistance_SAC = 0.5;
 	int MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC;
-	//MaximumIterations_SAC = 500000;
-	//MaximumIterations_SAC = 50;	//8 & 8
-	//MaximumIterations_SAC = 1000;
-	MaximumIterations_SAC = 500;
-	//NumberOfSamples_SAC = 4;//8 & 8
-	//NumberOfSamples_SAC = 10;
-	//NumberOfSamples_SAC = 100;
-	NumberOfSamples_SAC = 10;
-	//CorrespondenceRandomness_SAC = 2;
-	CorrespondenceRandomness_SAC = 10;
 	//SimilarityThreshold_SAC = 0.9f;
+	//SimilarityThreshold_SAC = 0.75f;
 	SimilarityThreshold_SAC = 0.01f;
+	//SimilarityThreshold_SAC = 0.5f;
+	//SimilarityThreshold_SAC = 0.75f;
 	//InlierFraction_SAC = 0.25f;
 	//InlierFraction_SAC = 0.15f;
 	InlierFraction_SAC = 0.10f;
+	//MaximumIterations_SAC = 500000;
+	MaximumIterations_SAC = 500;
+	//MaximumIterations_SAC = 50000;
+	//MaximumIterations_SAC = 10000;
+	//NumberOfSamples_SAC = 4;//8 & 8
+	//NumberOfSamples_SAC = 10;
+	NumberOfSamples_SAC = 100;
+	//NumberOfSamples_SAC = 10;
+	//CorrespondenceRandomness_SAC = 2;
+	CorrespondenceRandomness_SAC = 10;
 
 	int max_RANSAC;
 	//max_RANSAC = 50;
-	//max_RANSAC = 20;
-	max_RANSAC = 5;
+	max_RANSAC = 20;
+	//max_RANSAC = 5;
 
 	parameter_vec.push_back(voxel_size);
 	parameter_vec.push_back(radius_normal_FPFH);

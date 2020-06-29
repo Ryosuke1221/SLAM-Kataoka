@@ -31,6 +31,7 @@
 #include <pcl/segmentation/extract_clusters.h>
 
 #include <pcl/filters/passthrough.h>
+#include <pcl/visualization/pcl_plotter.h>
 
 ////https://akio-tanaka.tumblr.com/page/2
 //#pragma comment(lib,"opengl32.lib")	
@@ -926,7 +927,7 @@ void CPointVisualization<T_PointType>::drawNumber(
 	int index_ = 0;
 	double range_ = 0.8;
 	double height_gap = 0.1;
-	point_center.z += height_gap * M_num_number;
+	point_center.z -= height_gap * M_num_number;
 	while (1)
 	{
 		//*cloud_ += *drawNumber_OnetoNine_pointcloud(point_center, num_arg % 10, length_horizontal_);
