@@ -1947,24 +1947,33 @@ void CPointcloudFunction::DrawTrajectory()
 		return;
 	}
 
-	typedef typename CPointVisualization<T_PointType> CPV;
-	CPV pv;
-	pv.setWindowName("trajectory");
+	cout << "select file:" << endl;
+	//int i_readfile = 0;
+	vector<int> i_readfile_vec;
+	for (int i = 0; i < filenames_txt.size(); i++)
+		cout << " " << i << ": " << filenames_txt[i] << endl;
+	cout << "->";
+	{
+		vector<string> s_vec;
+		s_vec = CTimeString::inputSomeString();
+		for (int i = 0; i < s_vec.size(); i++)
+		{
+			int i_value = stoi(s_vec[i]);
+			if(!(0 <= i_value && i_value < filenames_txt.size()))
+				throw std::runtime_error("ERROR: Invalid trajectories readed.");
+			i_readfile_vec.push_back(i_value);
+		}
+		if (!(1 <= i_readfile_vec.size() && i_readfile_vec.size() <= 2))
+			throw std::runtime_error("ERROR: Invalid trajectories readed.");
+	}
 
 	vector<Eigen::Vector6d> trajectory_vec_vec;
 	vector<Eigen::Vector6d> trajectory_vec_vec2;
 
+	//input trajectory 0
 	{
-		//select file
-		cout << "select file:" << endl;
-		int i_readfile = 0;
-		for (int i = 0; i < filenames_txt.size(); i++)
-			cout << " " << i << ": " << filenames_txt[i] << endl;
-		cout << "->";
-		cin >> i_readfile;
 		vector<vector<double>> trajectory_temp;
-		trajectory_temp = CTimeString::getVecVecFromCSV(dir + "/" + filenames_txt[i_readfile]);
-
+		trajectory_temp = CTimeString::getVecVecFromCSV(dir + "/" + filenames_txt[i_readfile_vec[0]]);
 		for (int i = 0; i < trajectory_temp.size(); i++)
 		{
 			Eigen::Vector6d trajectory_vec = Eigen::Vector6d::Zero();
@@ -1979,52 +1988,63 @@ void CPointcloudFunction::DrawTrajectory()
 		}
 	}
 
-	{
-		//select file
-		cout << "select file:" << endl;
-		int i_readfile = 0;
-		for (int i = 0; i < filenames_txt.size(); i++)
-			cout << " " << i << ": " << filenames_txt[i] << endl;
-		cout << "->";
-		cin >> i_readfile;
-		vector<vector<double>> trajectory_temp;
-		trajectory_temp = CTimeString::getVecVecFromCSV(dir + "/" + filenames_txt[i_readfile]);
 
-		for (int i = 0; i < trajectory_temp.size(); i++)
+	bool b_show_sequently = false;
+	if (i_readfile_vec.size() == 1)
+	{
+		cout << "input: show trajectory in   1:sequently  or  0:single frame" << endl;
+		cout << "->";
+		cin >> b_show_sequently;
+	}
+	else if (i_readfile_vec.size() == 2)
+	{
+		//input trajectory 1
 		{
-			Eigen::Vector6d trajectory_vec = Eigen::Vector6d::Zero();
-			trajectory_vec <<
-				trajectory_temp[i][1],
-				trajectory_temp[i][2],
-				trajectory_temp[i][3],
-				trajectory_temp[i][4],
-				trajectory_temp[i][5],
-				trajectory_temp[i][6];
-			trajectory_vec_vec2.push_back(trajectory_vec);
+			vector<vector<double>> trajectory_temp;
+			trajectory_temp = CTimeString::getVecVecFromCSV(dir + "/" + filenames_txt[i_readfile_vec[1]]);
+			for (int i = 0; i < trajectory_temp.size(); i++)
+			{
+				Eigen::Vector6d trajectory_vec = Eigen::Vector6d::Zero();
+				trajectory_vec <<
+					trajectory_temp[i][1],
+					trajectory_temp[i][2],
+					trajectory_temp[i][3],
+					trajectory_temp[i][4],
+					trajectory_temp[i][5],
+					trajectory_temp[i][6];
+				trajectory_vec_vec2.push_back(trajectory_vec);
+			}
 		}
+
 	}
 
+	typedef typename CPointVisualization<T_PointType> CPV;
+	CPV pv;
+	pv.setWindowName("trajectory");
 
-	pv.drawTrajectory(trajectory_vec_vec, trajectory_vec_vec.size(), "t1");
-	pv.drawTrajectory(trajectory_vec_vec2, trajectory_vec_vec.size(), "t2");
-	//pv.drawTrajectory(trajectory_vec_vec, 2);
+	if (i_readfile_vec.size() == 2)
+	{
+		pv.drawTrajectory(trajectory_vec_vec, trajectory_vec_vec.size(), "trajectory0");
+		pv.drawTrajectory(trajectory_vec_vec2, trajectory_vec_vec.size(), "trajectory1");
+	}
 
-	//pv.setWindowName("trajectory: " + filenames_txt[i_readfile]);
+	else if (i_readfile_vec.size() == 1 && !b_show_sequently)
+		pv.drawTrajectory(trajectory_vec_vec, trajectory_vec_vec.size(), "trajectory0");
 
+	else if (i_readfile_vec.size() == 1 && b_show_sequently){}
 
+	int index_ = 0;
 	while (1)
 	{
+		if(b_show_sequently && GetAsyncKeyState(VK_SPACE) & 1)
+		{
+			pv.drawTrajectory(trajectory_vec_vec, index_, "trajectory0");
+			index_++;
+			if (index_ >= trajectory_vec_vec.size()) cout << "press ESC to escape" << endl;
+		}
 		pv.updateViewer();
 		if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
 	}
-
-	//pv.deleteTrajectory("t1");
-
-	//while (1)
-	//{
-	//	pv.updateViewer();
-	//	if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
-	//}
 
 	pv.closeViewer();
 }

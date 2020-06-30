@@ -213,8 +213,8 @@ class CPointVisualization
 	int M_num_PointCloudShowing;
 	int M_i_viewer1, M_i_viewer2;
 
-	vector<string> s_arrow_vec, s_line_vec, s_cylinder_vec, s_number_vec, s_trajectory_vec;
-	void drawNumber_OnetoNine(pcl::PointXYZRGB point_center, int num_arg, double length_horizontal_arg, string s_name = "");
+	vector<string> M_s_arrow_vec, M_s_line_vec, M_s_cylinder_vec, M_s_number_vec, M_s_trajectory_vec;
+	void drawNumber_OnetoNine(pcl::PointXYZRGB point_center, int num_arg, double length_horizontal_arg, string s_name);
 
 	pcl::PointXYZRGB addPointXYZRGB(pcl::PointXYZRGB point1, pcl::PointXYZRGB point2)
 	{
@@ -260,7 +260,7 @@ public:
 	void drawLine_cylinder(pcl::PointXYZRGB point1_, pcl::PointXYZRGB point2_, double radius_, string s_name = "");
 	void drawNumber(pcl::PointXYZRGB point_center, int num_arg, string s_name = "");
 	void drawTrajectory(vector<Eigen::Vector6d> trajectory_vec_vec, int i_frame, string s_name = "");
-
+	void deleteTrajectory(string s_name = "");
 };
 
 //https://qiita.com/i153/items/38f9688a9c80b2cb7da7
@@ -648,22 +648,26 @@ void CPointVisualization<T_PointType>::drawLine(pcl::PointXYZRGB point1_, pcl::P
 {
 	string name_id;
 	if (s_name.size() == 0)
-		name_id = "line" + to_string(s_line_vec.size());
+		name_id = "line" + to_string(M_s_line_vec.size());
 	else
 		name_id = s_name;
-	s_line_vec.push_back(name_id);
 
 	M_viewer->addLine(point1_, point2_, (float)point1_.r / 255., (float)point1_.g / 255.,
 		(float)point1_.b / 255., name_id);
+
+	M_s_line_vec.push_back(name_id);
+
 	return;
 }
 
 template < typename T_PointType >
 void CPointVisualization<T_PointType>::drawLine_cylinder(pcl::PointXYZRGB point1_, pcl::PointXYZRGB point2_, double radius_, string s_name)
 {
-	//M_viewer->addLine(point1_, point2_, (float)point1_.r / 255., (float)point1_.g / 255.,
-	//	(float)point1_.b / 255., "line" + to_string(M_num_line));
-	//M_num_line++;
+	string name_id;
+	if (s_name.size() == 0)
+		name_id = "cylinder" + to_string(M_s_cylinder_vec.size());
+	else
+		name_id = s_name;
 
 	Eigen::Vector3d E_ = Eigen::Vector3d::Zero();
 	E_ << point1_.x - point2_.x, point1_.y - point2_.y, point1_.z - point2_.z;
@@ -678,18 +682,14 @@ void CPointVisualization<T_PointType>::drawLine_cylinder(pcl::PointXYZRGB point1
 	coeff_cylinder.values[4] = E_(1, 0);
 	coeff_cylinder.values[5] = E_(2, 0);
 	coeff_cylinder.values[6] = radius_;
-	string name_id;
-	if (s_name.size() == 0)
-		name_id = "cylinder" + to_string(s_cylinder_vec.size());
-	else
-		name_id = s_name;
-	s_cylinder_vec.push_back(name_id);
 
 	M_viewer->addCylinder(coeff_cylinder, name_id);
 	//add color reference:http://www.pcl-users.org/Shading-for-PCLVisualizer-addCylinder-td4038645.html
 	M_viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 
 		(float)point1_.r/255., (float)point1_.g / 255., (float)point1_.b / 255., name_id);
-	//M_num_cylinder++;
+
+	M_s_cylinder_vec.push_back(name_id);
+
 	return;
 }
 
@@ -835,6 +835,12 @@ template < typename T_PointType >
 void CPointVisualization<T_PointType>::drawArrow(
 	pcl::PointXYZRGB point_arg, double Roll_, double Pitch_, double Yaw_, string s_name)
 {
+	string name_id;
+	if (s_name.size() == 0)
+		name_id = "arrow" + to_string(M_s_arrow_vec.size());
+	else
+		name_id = s_name;
+
 	double length_arraw = 0.3 * 5.;
 	pcl::PointXYZRGB point_start;
 	pcl::PointXYZRGB point_end;
@@ -853,15 +859,13 @@ void CPointVisualization<T_PointType>::drawArrow(
 	point_end.x += point_arg.x;
 	point_end.y += point_arg.y;
 	point_end.z += point_arg.z;
-	string name_id;
-	if (s_name.size() == 0)
-		name_id = "arrow" + to_string(s_arrow_vec.size());
-	else
-		name_id = s_name;
-	s_arrow_vec.push_back(name_id);
+
 	M_viewer->addArrow(point_end, point_start,	(float)(point_arg.r) / 255.,
 		(float)(point_arg.g) / 255., (float)(point_arg.b) / 255., false, name_id);
-	return ;
+
+	M_s_arrow_vec.push_back(name_id);
+
+	return;
 }
 
 template < typename T_PointType >
@@ -891,7 +895,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr CPointVisualization<T_PointType>::drawNum
 	int index_ = 0;
 	double range_ = 0.8;
 	double height_gap = 0.1;
-	point_center.z += height_gap * M_num_number;
+	//point_center.z += height_gap * M_num_number;
 	while (1)
 	{
 		*cloud_ += *drawNumber_OnetoNine_pointcloud(point_center, num_arg % 10, length_horizontal_);
@@ -901,35 +905,37 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr CPointVisualization<T_PointType>::drawNum
 		index_++;
 	}
 
-	M_num_number++;
+	//M_num_number++;
 
 	return cloud_;
 }
 
 template < typename T_PointType >
-void CPointVisualization<T_PointType>::drawNumber(pcl::PointXYZRGB point_center, int num_arg, string s_name = "")
+void CPointVisualization<T_PointType>::drawNumber(pcl::PointXYZRGB point_center, int num_arg, string s_name)
 {
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZRGB>());
 	double length_horizontal_ = 0.5;
 	int index_ = 0;
 	double range_ = 0.8;
 	double height_gap = 0.1;
-	point_center.z -= height_gap * (s_number_vec.size() + 1);
+	point_center.z -= height_gap * (M_s_number_vec.size() + 1);
+
+	string name_id;
+	if (s_name.size() == 0)
+		name_id = "number" + to_string(M_s_number_vec.size());
+	else
+		name_id = s_name;
+
 	while (1)
 	{
-		drawNumber_OnetoNine(point_center, num_arg % 10, length_horizontal_, s_name+ "_one" + to_string(index_));
+		drawNumber_OnetoNine(point_center, num_arg % 10, length_horizontal_, name_id + "_one" + to_string(index_));
 		num_arg /= 10;
 		if (num_arg == 0) break;
 		point_center.x += -range_;
 		index_++;
 	}
 
-	string name_id;
-	if (s_name.size() == 0)
-		name_id = "number" + to_string(s_number_vec.size());
-	else
-		name_id = s_name;
-	s_number_vec.push_back(name_id);
+	M_s_number_vec.push_back(name_id);
 
 	return;
 }
@@ -1092,6 +1098,9 @@ void CPointVisualization<T_PointType>::drawNumber_OnetoNine(
 	double length_half_vertical = length_horizontal / 1.2;
 	double width_ = 0.05;
 
+	string name_id;
+	name_id = s_name;
+
 	if (!(0 <= num_arg && num_arg <= 9))
 	{
 		throw std::runtime_error("ERROR: Given number is out of range.");
@@ -1139,13 +1148,13 @@ void CPointVisualization<T_PointType>::drawNumber_OnetoNine(
 	{
 
 	case 0:
-		drawLine_cylinder(point_LeftDown, point_RightDown, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftDown, point_RightDown, width_, name_id + to_string(M_s_cylinder_vec.size()));
 		//drawLine_cylinder(point_LeftCenter, point_RightCenter, width_);
-		drawLine_cylinder(point_LeftUp, point_RightUp, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_LeftDown, point_LeftCenter, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_LeftCenter, point_LeftUp, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_RightDown, point_RightCenter, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_RightCenter, point_RightUp, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftUp, point_RightUp, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftDown, point_LeftCenter, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftCenter, point_LeftUp, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_RightDown, point_RightCenter, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_RightCenter, point_RightUp, width_, name_id + to_string(M_s_cylinder_vec.size()));
 		break;
 	case 1:
 		//drawLine_cylinder(point_LeftDown, point_RightDown, width_);
@@ -1153,80 +1162,80 @@ void CPointVisualization<T_PointType>::drawNumber_OnetoNine(
 		//drawLine_cylinder(point_LeftUp, point_RightUp, width_);
 		//drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
 		//drawLine_cylinder(point_LeftCenter, point_LeftUp, width_);
-		drawLine_cylinder(point_RightDown, point_RightCenter, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_RightCenter, point_RightUp, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
+		drawLine_cylinder(point_RightDown, point_RightCenter, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_RightCenter, point_RightUp, width_, name_id + to_string(M_s_cylinder_vec.size()));
 		break;
 	case 2:
-		drawLine_cylinder(point_LeftDown, point_RightDown, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_LeftCenter, point_RightCenter, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_LeftUp, point_RightUp, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_LeftDown, point_LeftCenter, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftDown, point_RightDown, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftCenter, point_RightCenter, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftUp, point_RightUp, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftDown, point_LeftCenter, width_, name_id + to_string(M_s_cylinder_vec.size()));
 		//drawLine_cylinder(point_LeftCenter, point_LeftUp, width_);
 		//drawLine_cylinder(point_RightDown, point_RightCenter, width_);
-		drawLine_cylinder(point_RightCenter, point_RightUp, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
+		drawLine_cylinder(point_RightCenter, point_RightUp, width_, name_id + to_string(M_s_cylinder_vec.size()));
 		break;
 	case 3:
-		drawLine_cylinder(point_LeftDown, point_RightDown, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_LeftCenter, point_RightCenter, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_LeftUp, point_RightUp, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftDown, point_RightDown, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftCenter, point_RightCenter, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftUp, point_RightUp, width_, name_id + to_string(M_s_cylinder_vec.size()));
 		//drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
 		//drawLine_cylinder(point_LeftCenter, point_LeftUp, width_);
-		drawLine_cylinder(point_RightDown, point_RightCenter, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_RightCenter, point_RightUp, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
+		drawLine_cylinder(point_RightDown, point_RightCenter, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_RightCenter, point_RightUp, width_, name_id + to_string(M_s_cylinder_vec.size()));
 		break;
 	case 4:
 		//drawLine_cylinder(point_LeftDown, point_RightDown, width_);
-		drawLine_cylinder(point_LeftCenter, point_RightCenter, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftCenter, point_RightCenter, width_, name_id + to_string(M_s_cylinder_vec.size()));
 		//drawLine_cylinder(point_LeftUp, point_RightUp, width_);
 		//drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
-		drawLine_cylinder(point_LeftCenter, point_LeftUp, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_RightDown, point_RightCenter, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_RightCenter, point_RightUp, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftCenter, point_LeftUp, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_RightDown, point_RightCenter, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_RightCenter, point_RightUp, width_, name_id + to_string(M_s_cylinder_vec.size()));
 		break;
 	case 5:
-		drawLine_cylinder(point_LeftDown, point_RightDown, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_LeftCenter, point_RightCenter, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_LeftUp, point_RightUp, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftDown, point_RightDown, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftCenter, point_RightCenter, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftUp, point_RightUp, width_, name_id + to_string(M_s_cylinder_vec.size()));
 		//drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
-		drawLine_cylinder(point_LeftCenter, point_LeftUp, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_RightDown, point_RightCenter, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftCenter, point_LeftUp, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_RightDown, point_RightCenter, width_, name_id + to_string(M_s_cylinder_vec.size()));
 		//drawLine_cylinder(point_RightCenter, point_RightUp, width_);
 		break;
 	case 6:
-		drawLine_cylinder(point_LeftDown, point_RightDown, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_LeftCenter, point_RightCenter, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_LeftUp, point_RightUp, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_LeftDown, point_LeftCenter, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_LeftCenter, point_LeftUp, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_RightDown, point_RightCenter, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftDown, point_RightDown, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftCenter, point_RightCenter, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftUp, point_RightUp, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftDown, point_LeftCenter, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftCenter, point_LeftUp, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_RightDown, point_RightCenter, width_, name_id + to_string(M_s_cylinder_vec.size()));
 		//drawLine_cylinder(point_RightCenter, point_RightUp, width_);
 		break;
 	case 7:
 		//drawLine_cylinder(point_LeftDown, point_RightDown, width_);
 		//drawLine_cylinder(point_LeftCenter, point_RightCenter, width_);
-		drawLine_cylinder(point_LeftUp, point_RightUp, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftUp, point_RightUp, width_, name_id + to_string(M_s_cylinder_vec.size()));
 		//drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
 		//drawLine_cylinder(point_LeftCenter, point_LeftUp, width_);
-		drawLine_cylinder(point_RightDown, point_RightCenter, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_RightCenter, point_RightUp, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
+		drawLine_cylinder(point_RightDown, point_RightCenter, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_RightCenter, point_RightUp, width_, name_id + to_string(M_s_cylinder_vec.size()));
 		break;
 	case 8:
-		drawLine_cylinder(point_LeftDown, point_RightDown, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_LeftCenter, point_RightCenter, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_LeftUp, point_RightUp, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_LeftDown, point_LeftCenter, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_LeftCenter, point_LeftUp, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_RightDown, point_RightCenter, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_RightCenter, point_RightUp, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftDown, point_RightDown, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftCenter, point_RightCenter, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftUp, point_RightUp, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftDown, point_LeftCenter, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftCenter, point_LeftUp, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_RightDown, point_RightCenter, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_RightCenter, point_RightUp, width_, name_id + to_string(M_s_cylinder_vec.size()));
 		break;
 	case 9:
-		drawLine_cylinder(point_LeftDown, point_RightDown, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_LeftCenter, point_RightCenter, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_LeftUp, point_RightUp, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftDown, point_RightDown, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftCenter, point_RightCenter, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftUp, point_RightUp, width_, name_id + to_string(M_s_cylinder_vec.size()));
 		//drawLine_cylinder(point_LeftDown, point_LeftCenter, width_);
-		drawLine_cylinder(point_LeftCenter, point_LeftUp, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_RightDown, point_RightCenter, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
-		drawLine_cylinder(point_RightCenter, point_RightUp, width_, s_name + "_cylinder" + to_string(s_cylinder_vec.size()));
+		drawLine_cylinder(point_LeftCenter, point_LeftUp, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_RightDown, point_RightCenter, width_, name_id + to_string(M_s_cylinder_vec.size()));
+		drawLine_cylinder(point_RightCenter, point_RightUp, width_, name_id + to_string(M_s_cylinder_vec.size()));
 		break;
 	}
 
@@ -1293,16 +1302,23 @@ void CPointVisualization<T_PointType>::useNormal(double radius_arg, int level_ar
 }
 
 template < typename T_PointType >
-void CPointVisualization<T_PointType>::drawTrajectory(vector<Eigen::Vector6d> trajectory_vec_vec, int i_frame, string s_name = "")
+void CPointVisualization<T_PointType>::drawTrajectory(vector<Eigen::Vector6d> trajectory_vec_vec, int i_frame, string s_name)
 {
 	if (i_frame > trajectory_vec_vec.size() - 1) i_frame = trajectory_vec_vec.size() - 1;
 
-	//if(s_name.size() != 0)
-	//	setWindowName(s_name);
-	//else 
-	//	setWindowName("trajectory: " + to_string(M_num_trajectory));
+	if (M_s_trajectory_vec.size() >= 2) throw std::runtime_error("ERROR: Readed trajectory number is over.");
 
-	if (s_trajectory_vec.size() >= 2) throw std::runtime_error("ERROR: Readed trajectory number is over.");
+	for (int i = 0; i < M_s_trajectory_vec.size(); i++)
+	{
+		if(s_name == M_s_trajectory_vec[i]) 
+			deleteTrajectory(M_s_trajectory_vec[i]);
+	}
+
+	string name_id;
+	if (s_name.size() == 0)
+		name_id = "trajectory" + to_string(M_s_trajectory_vec.size());
+	else
+		name_id = s_name;
 
 	vector<unsigned char> color_trajectory_first;
 	vector<unsigned char> color_number_first;
@@ -1331,7 +1347,6 @@ void CPointVisualization<T_PointType>::drawTrajectory(vector<Eigen::Vector6d> tr
 	color_arrow_second.push_back(102);
 	color_arrow_second.push_back(0);
 
-
 	//draw trajectory
 	for (int i = 0; i < i_frame + 1; i++)
 	{
@@ -1340,42 +1355,39 @@ void CPointVisualization<T_PointType>::drawTrajectory(vector<Eigen::Vector6d> tr
 		point_pose_arraw.x = trajectory_vec_vec[i](0, 0);
 		point_pose_arraw.y = trajectory_vec_vec[i](1, 0);
 		point_pose_arraw.z = trajectory_vec_vec[i](2, 0);
-		if (s_trajectory_vec.size() == 0)
+		if (M_s_trajectory_vec.size() == 0)
 		{
 			point_pose_arraw.r = color_arrow_first[0];
 			point_pose_arraw.g = color_arrow_first[1];
 			point_pose_arraw.b = color_arrow_first[2];
 		}
-		else if (s_trajectory_vec.size() == 1)
+		else if (M_s_trajectory_vec.size() == 1)
 		{
 			point_pose_arraw.r = color_arrow_second[0];
 			point_pose_arraw.g = color_arrow_second[1];
 			point_pose_arraw.b = color_arrow_second[2];
 		}
-		if (s_name.size() == 0)
-			drawArrow(point_pose_arraw, trajectory_vec_vec[i](3, 0), trajectory_vec_vec[i](4, 0), trajectory_vec_vec[i](5, 0),
-				"trajectory" + to_string(s_trajectory_vec.size()) + "_arrow" + to_string(i));
-		else
-			drawArrow(point_pose_arraw, trajectory_vec_vec[i](3, 0), trajectory_vec_vec[i](4, 0), trajectory_vec_vec[i](5, 0),
-				s_name + to_string(s_trajectory_vec.size()) + "_arrow" + to_string(i));
+		drawArrow(point_pose_arraw, trajectory_vec_vec[i](3, 0), trajectory_vec_vec[i](4, 0), trajectory_vec_vec[i](5, 0),
+			name_id + "_arrow" + to_string(i));
 
 		//draw frame number
 		pcl::PointXYZRGB point_frame;
 		point_frame = point_pose_arraw;
 		point_frame.z += -0.5;
-		if (s_trajectory_vec.size() == 0)
+		if (M_s_trajectory_vec.size() == 0)
 		{
 			point_frame.r = color_number_first[0];
 			point_frame.g = color_number_first[1];
 			point_frame.b = color_number_first[2];
 		}
-		else if (s_trajectory_vec.size() == 1)
+		else if (M_s_trajectory_vec.size() == 1)
 		{
 			point_frame.r = color_number_second[0];
 			point_frame.g = color_number_second[1];
 			point_frame.b = color_number_second[2];
 		}
-		drawNumber(point_frame, i, "trajectory" + to_string(s_trajectory_vec.size()) + "_number" + to_string(i));
+		drawNumber(point_frame, i, name_id + "_number" + to_string(i));
+
 		if (i != 0)
 		{
 			//draw line
@@ -1384,13 +1396,13 @@ void CPointVisualization<T_PointType>::drawTrajectory(vector<Eigen::Vector6d> tr
 			point_pose_current.r = 255;
 			point_pose_current.g = 0;
 			point_pose_current.b = 255;
-			if (s_trajectory_vec.size() == 0)
+			if (M_s_trajectory_vec.size() == 0)
 			{
 				point_pose_current.r = color_trajectory_first[0];
 				point_pose_current.g = color_trajectory_first[1];
 				point_pose_current.b = color_trajectory_first[2];
 			}
-			else if (s_trajectory_vec.size() == 1)
+			else if (M_s_trajectory_vec.size() == 1)
 			{
 				point_pose_current.r = color_trajectory_second[0];
 				point_pose_current.g = color_trajectory_second[1];
@@ -1401,16 +1413,88 @@ void CPointVisualization<T_PointType>::drawTrajectory(vector<Eigen::Vector6d> tr
 			point_pose_before.x = trajectory_vec_vec[i - 1](0, 0);
 			point_pose_before.y = trajectory_vec_vec[i - 1](1, 0);
 			point_pose_before.z = trajectory_vec_vec[i - 1](2, 0);
-			drawLine(point_pose_before, point_pose_current, "trajectory" + to_string(s_trajectory_vec.size()) + "_line" + to_string(i));
+			drawLine(point_pose_before, point_pose_current, name_id + "_line" + to_string(i));
 		}
 	}
 
-	string name_id;
-	if (s_name.size() == 0)
-		name_id = "trajectory" + to_string(s_trajectory_vec.size());
-	else
-		name_id = s_name;
-	s_trajectory_vec.push_back(name_id);
+	M_s_trajectory_vec.push_back(name_id);
+
+	return;
+}
+
+template < typename T_PointType >
+void CPointVisualization<T_PointType>::deleteTrajectory(string s_name)
+{
+	string s_trajectory_delete;
+	s_trajectory_delete = s_name;
+
+	vector<string> s_line_vec_new, s_cylinder_vec_new, s_arrow_vec_new, s_number_vec_new, s_trajectory_vec_new;
+
+	//delete all trajectory
+	if (s_name.size() == 0) 
+	{
+		s_trajectory_vec_new = M_s_trajectory_vec;
+		for (int i = 0; i < s_trajectory_vec_new.size(); i++)
+			deleteTrajectory(s_trajectory_vec_new[i]);
+		return;
+	}
+
+	//remove trajectory name
+	bool b_trajectory_erased = false;
+	for (int i = 0; i < M_s_trajectory_vec.size(); i++)
+	{
+		vector<int> find_vec = CTimeString::find_all(M_s_trajectory_vec[i], s_trajectory_delete);
+		if (find_vec.size() != 0)
+		{
+			M_s_trajectory_vec.erase(M_s_trajectory_vec.begin() + i);
+			b_trajectory_erased = true;
+			break;
+		}
+	}
+	if (!b_trajectory_erased) throw std::runtime_error("ERROR: Trajectory not found.");
+
+	//remove number name
+	for (int i = 0; i < M_s_number_vec.size(); i++)
+	{
+		vector<int> find_vec = CTimeString::find_all(M_s_number_vec[i], s_trajectory_delete);
+		if (find_vec.size() != 0) { }
+	}
+	M_s_number_vec.clear();
+	M_s_number_vec = s_number_vec_new;
+
+	//remove line
+	for (int i = 0; i < M_s_line_vec.size(); i++)
+	{
+		vector<int> find_vec = CTimeString::find_all(M_s_line_vec[i], s_trajectory_delete);
+		if (find_vec.size() != 0)
+			M_viewer->removeShape(M_s_line_vec[i]);
+		else s_line_vec_new.push_back(M_s_line_vec[i]);
+	}
+	M_s_line_vec.clear();
+	M_s_line_vec = s_line_vec_new;
+
+	//remove cylinder
+	for (int i = 0; i < M_s_cylinder_vec.size(); i++)
+	{
+		vector<int> find_vec = CTimeString::find_all(M_s_cylinder_vec[i], s_trajectory_delete);
+		if (find_vec.size() != 0)
+			M_viewer->removeShape(M_s_cylinder_vec[i]);
+		else s_cylinder_vec_new.push_back(M_s_cylinder_vec[i]);
+
+	}
+	M_s_cylinder_vec.clear();
+	M_s_cylinder_vec = s_cylinder_vec_new;
+
+	//remove arrow
+	for (int i = 0; i < M_s_arrow_vec.size(); i++)
+	{
+		vector<int> find_vec = CTimeString::find_all(M_s_arrow_vec[i], s_trajectory_delete);
+		if (find_vec.size() != 0)
+			M_viewer->removeShape(M_s_arrow_vec[i]);
+		else s_arrow_vec_new.push_back(M_s_arrow_vec[i]);
+	}
+	M_s_arrow_vec.clear();
+	M_s_arrow_vec = s_arrow_vec_new;
 
 	return;
 }
