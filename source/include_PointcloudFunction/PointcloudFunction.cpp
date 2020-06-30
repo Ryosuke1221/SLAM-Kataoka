@@ -1988,7 +1988,6 @@ void CPointcloudFunction::DrawTrajectory()
 		}
 	}
 
-
 	bool b_show_sequently = false;
 	if (i_readfile_vec.size() == 1)
 	{
@@ -1999,23 +1998,20 @@ void CPointcloudFunction::DrawTrajectory()
 	else if (i_readfile_vec.size() == 2)
 	{
 		//input trajectory 1
+		vector<vector<double>> trajectory_temp;
+		trajectory_temp = CTimeString::getVecVecFromCSV(dir + "/" + filenames_txt[i_readfile_vec[1]]);
+		for (int i = 0; i < trajectory_temp.size(); i++)
 		{
-			vector<vector<double>> trajectory_temp;
-			trajectory_temp = CTimeString::getVecVecFromCSV(dir + "/" + filenames_txt[i_readfile_vec[1]]);
-			for (int i = 0; i < trajectory_temp.size(); i++)
-			{
-				Eigen::Vector6d trajectory_vec = Eigen::Vector6d::Zero();
-				trajectory_vec <<
-					trajectory_temp[i][1],
-					trajectory_temp[i][2],
-					trajectory_temp[i][3],
-					trajectory_temp[i][4],
-					trajectory_temp[i][5],
-					trajectory_temp[i][6];
-				trajectory_vec_vec2.push_back(trajectory_vec);
-			}
+			Eigen::Vector6d trajectory_vec = Eigen::Vector6d::Zero();
+			trajectory_vec <<
+				trajectory_temp[i][1],
+				trajectory_temp[i][2],
+				trajectory_temp[i][3],
+				trajectory_temp[i][4],
+				trajectory_temp[i][5],
+				trajectory_temp[i][6];
+			trajectory_vec_vec2.push_back(trajectory_vec);
 		}
-
 	}
 
 	typedef typename CPointVisualization<T_PointType> CPV;

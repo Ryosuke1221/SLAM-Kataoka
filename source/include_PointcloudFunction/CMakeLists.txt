@@ -1,4 +1,5 @@
-add_library(lib_PointcloudFunction STATIC PointcloudFunction.cpp PointcloudFunction.h )
+add_library(lib_PointcloudFunction STATIC 
+	PointcloudFunction.cpp PointcloudFunction.h PointVisualization.h)
 
 #PCL 1.8
 find_package( PCL 1.8 REQUIRED )
