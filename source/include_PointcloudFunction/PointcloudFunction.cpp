@@ -1947,17 +1947,21 @@ void CPointcloudFunction::DrawTrajectory()
 		return;
 	}
 
-	//select file
-	cout << "select file:" << endl;
-	int i_readfile = 0;
-	for (int i = 0; i < filenames_txt.size(); i++)
-		cout << " " << i << ": " << filenames_txt[i] << endl;
-	cout << "->";
-	cin >> i_readfile;
+	typedef typename CPointVisualization<T_PointType> CPV;
+	CPV pv;
+	pv.setWindowName("trajectory");
 
-	//input trajectory
 	vector<Eigen::Vector6d> trajectory_vec_vec;
+	vector<Eigen::Vector6d> trajectory_vec_vec2;
+
 	{
+		//select file
+		cout << "select file:" << endl;
+		int i_readfile = 0;
+		for (int i = 0; i < filenames_txt.size(); i++)
+			cout << " " << i << ": " << filenames_txt[i] << endl;
+		cout << "->";
+		cin >> i_readfile;
 		vector<vector<double>> trajectory_temp;
 		trajectory_temp = CTimeString::getVecVecFromCSV(dir + "/" + filenames_txt[i_readfile]);
 
@@ -1975,87 +1979,53 @@ void CPointcloudFunction::DrawTrajectory()
 		}
 	}
 
-	//bool read_sequently = true;
-	//cout << "select: read_sequently  1:YES  0:NO" << endl;
-	//cout << "->";
-	//cin >> read_sequently;
-
-	typedef typename CPointVisualization<T_PointType> CPV;
-	CPV pv;
-	pv.setWindowName("trajectory: " + filenames_txt[i_readfile]);
-
-	cout << "show in one frame or frames  one frame:1  frames:0" << endl;
-	cout << "->";
-	bool b_mode_1frame;
-	cin >> b_mode_1frame;
-
-	//draw trajectory
-	vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec;
-	for (int i = 0; i < trajectory_vec_vec.size(); i++)
 	{
-		pcl::PointCloud<T_PointType>::Ptr cloud_(new pcl::PointCloud<T_PointType>());
-		cloud_->clear();
-		//draw arraw
-		pcl::PointXYZRGB point_pose_arraw;
-		point_pose_arraw.x = trajectory_vec_vec[i](0, 0);
-		point_pose_arraw.y = trajectory_vec_vec[i](1, 0);
-		point_pose_arraw.z = trajectory_vec_vec[i](2, 0);
-		point_pose_arraw.r = 255;
-		point_pose_arraw.g = 150;
-		point_pose_arraw.b = 0;
-		//*cloud_ += *CPV::drawArrow_pointcloud(point_pose_arraw,
-		//	trajectory_vec_vec[i](3, 0), trajectory_vec_vec[i](4, 0), trajectory_vec_vec[i](5, 0));
-		pv.drawArrow(point_pose_arraw, trajectory_vec_vec[i](3, 0), trajectory_vec_vec[i](4, 0), trajectory_vec_vec[i](5, 0));
-		//draw frame number
-		pcl::PointXYZRGB point_frame;
-		point_frame = point_pose_arraw;
-		//point_frame.z += 1.;
-		point_frame.z += -0.5;
-		point_frame.r = 255;
-		point_frame.g = 255;
-		point_frame.b = 0;
-		//*cloud_ += *pv.drawNumber_pointcloud(point_frame, i);
-		pv.drawNumber(point_frame, i);
-		if (i != 0)
+		//select file
+		cout << "select file:" << endl;
+		int i_readfile = 0;
+		for (int i = 0; i < filenames_txt.size(); i++)
+			cout << " " << i << ": " << filenames_txt[i] << endl;
+		cout << "->";
+		cin >> i_readfile;
+		vector<vector<double>> trajectory_temp;
+		trajectory_temp = CTimeString::getVecVecFromCSV(dir + "/" + filenames_txt[i_readfile]);
+
+		for (int i = 0; i < trajectory_temp.size(); i++)
 		{
-			//draw line
-			pcl::PointXYZRGB point_pose_current;
-			point_pose_current = point_pose_arraw;
-			point_pose_current.r = 255;
-			point_pose_current.g = 0;
-			point_pose_current.b = 255;
-			pcl::PointXYZRGB point_pose_before;
-			point_pose_before = point_pose_current;
-			point_pose_before.x = trajectory_vec_vec[i - 1](0, 0);
-			point_pose_before.y = trajectory_vec_vec[i - 1](1, 0);
-			point_pose_before.z = trajectory_vec_vec[i - 1](2, 0);
-			//*cloud_ += *CPV::drawLine_pointcloud(point_pose_before, point_pose_current);
-			pv.drawLine(point_pose_before, point_pose_current);
-			//pv.drawLine_cylinder(point_pose_before, point_pose_current, 0.1);
-			//pv.drawLine_cylinder(point_pose_current, point_pose_before, 0.05);
+			Eigen::Vector6d trajectory_vec = Eigen::Vector6d::Zero();
+			trajectory_vec <<
+				trajectory_temp[i][1],
+				trajectory_temp[i][2],
+				trajectory_temp[i][3],
+				trajectory_temp[i][4],
+				trajectory_temp[i][5],
+				trajectory_temp[i][6];
+			trajectory_vec_vec2.push_back(trajectory_vec);
 		}
-		cloud_vec.push_back(cloud_);
 	}
 
-	int index = 0;
-	pcl::PointCloud<T_PointType>::Ptr cloud_show(new pcl::PointCloud<T_PointType>());
 
-	if(!b_mode_1frame) cout << "Press SPACE then skip" << endl;
+	pv.drawTrajectory(trajectory_vec_vec, trajectory_vec_vec.size(), "t1");
+	pv.drawTrajectory(trajectory_vec_vec2, trajectory_vec_vec.size(), "t2");
+	//pv.drawTrajectory(trajectory_vec_vec, 2);
+
+	//pv.setWindowName("trajectory: " + filenames_txt[i_readfile]);
+
+
 	while (1)
 	{
-		if (index < cloud_vec.size())
-		{
-			if (b_mode_1frame || (GetAsyncKeyState(VK_SPACE) & 1))
-			{
-				//cout << "index:" << index << endl;
-				*cloud_show += *cloud_vec[index];
-				index++;
-			}
-		}
-		pv.setPointCloud(cloud_show);
 		pv.updateViewer();
 		if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
 	}
+
+	//pv.deleteTrajectory("t1");
+
+	//while (1)
+	//{
+	//	pv.updateViewer();
+	//	if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
+	//}
+
 	pv.closeViewer();
 }
 
