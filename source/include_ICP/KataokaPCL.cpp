@@ -2194,10 +2194,10 @@ Eigen::Vector6d CKataokaPCL::calcRobotPosition_6DoF(Eigen::Vector6d pos_before, 
 }
 
 vector<float> CKataokaPCL::getErrorOfFPFHSource_corr(float &median_arg, pcl::Correspondences correspondences,
-	pcl::PointCloud<pcl::FPFHSignature33> fpfh_src, pcl::PointCloud<pcl::FPFHSignature33> fpfh_tgt)
+	pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src, pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt)
 {
 	vector<float> error_vec;
-	error_vec.resize(fpfh_src.size());
+	error_vec.resize(fpfh_src->size());
 	fill(error_vec.begin(), error_vec.end(), 100000.);
 
 	int num_nan = 0;
@@ -2211,19 +2211,25 @@ vector<float> CKataokaPCL::getErrorOfFPFHSource_corr(float &median_arg, pcl::Cor
 		float error_squared = 0.;
 		bool b_nan = false;
 
-		for (int i = 0; i < sizeof(fpfh_src[i_src].histogram); i++)
+		for (int i = 0; i < sizeof(fpfh_src->points[i_src].histogram); i++)
 		{
-			if (isnan(fpfh_src.points[i_src].histogram[i]) || isnan(fpfh_tgt.points[i_tgt].histogram[i])
-				|| fpfh_src.points[i_src].histogram[i] > 200. || fpfh_tgt.points[i_tgt].histogram[i] > 200.
-				|| fpfh_src.points[i_src].histogram[i] < 0. || fpfh_tgt.points[i_tgt].histogram[i] < 0.)
+			if (isnan(fpfh_src->points[i_src].histogram[i]) || isnan(fpfh_tgt->points[i_tgt].histogram[i])
+				|| fpfh_src->points[i_src].histogram[i] > 200. || fpfh_tgt->points[i_tgt].histogram[i] > 200.
+				|| fpfh_src->points[i_src].histogram[i] < 0. || fpfh_tgt->points[i_tgt].histogram[i] < 0.)
 			{
 				b_nan = true;
 				num_nan++;
 				cout << "j:" << j << " i:" << i << " nan occored" << endl;
+				cout << "correspondences.size():" << correspondences.size() << endl;
+				//cout << "sizeof(fpfh_src->points[i_src].histogram):" << sizeof(fpfh_src->points[i_src].histogram) << endl;
+				//cout << "sizeof(fpfh_tgt->points[i_tgt].histogram):" << sizeof(fpfh_tgt->points[i_tgt].histogram) << endl;
+				//cout << "i_src:" << i_src << " i_tgt:" << i_tgt << endl;
+				//cout << "fpfh_src->points.size():" << fpfh_src->points.size() << endl;
+				//cout << "fpfh_tgt->points.size():" << fpfh_tgt->points.size() << endl;
 				break;
 			}
 			else
-				error_squared += pow(fpfh_src.points[i_src].histogram[i] - fpfh_tgt.points[i_tgt].histogram[i], 2.);
+				error_squared += pow(fpfh_src->points[i_src].histogram[i] - fpfh_tgt->points[i_tgt].histogram[i], 2.);
 		}
 		if (b_nan)
 			error_squared = 10000.;
@@ -2235,7 +2241,7 @@ vector<float> CKataokaPCL::getErrorOfFPFHSource_corr(float &median_arg, pcl::Cor
 	if (num_nan != 0) cout << "num_nan:" << num_nan << endl;
 
 	//show inlier rate
-	cout << "inlier rate:" << (float)correspondences.size() / (float)fpfh_src.size() << endl;
+	cout << "inlier rate:" << (float)correspondences.size() / (float)fpfh_src->size() << endl;
 
 	//show median
 	//float median_;
