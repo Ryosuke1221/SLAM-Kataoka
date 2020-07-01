@@ -159,10 +159,6 @@ public:
 	KEYNUM getKEYNUM();
 	void DrawTrajectory();
 	void DoSegmentation();
-	vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> getSegmentation(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, double th_tolerance);
-	vector<pcl::PointIndices> getSegmentation_indices(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, double th_tolerance);
-	vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> getSegmentation_rest(
-		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_arg, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_rest, double th_tolerance);
 	void GlobalRegistration_FPFH_SAC_IA();
 	void GR_FPFH_SAC_IA_2frames(string dir_, vector<float> parameter_vec);
 	void GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> parameter_vec);
@@ -172,5 +168,128 @@ public:
 	void GR_FPFH_optimizeParameter(string dir_, vector<float> parameter_vec);
 	void GR_FPFH_optimizeParameter_AllFrames(string dir_, vector<float> parameter_vec);
 	void GR_ajustParameter(vector<float> &parameter_vec);
+
+	template <class T_PointType>
+	vector<pcl::PointIndices> getSegmentation_indices(
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_arg, float Tolerance, int MinClusterSize)
+	{
+		//https://vml.sakura.ne.jp/koeda/PCL/tutorials/html/cluster_extraction.html#cluster-extraction
+		//https://www.slideshare.net/masafuminoda/pcl-11030703
+		//std::cout << "PointCloud before filtering has: " << cloud_arg->points.size() << " data points." << std::endl;
+		// Creating the KdTree object for the search method of the extraction
+		boost::shared_ptr<pcl::search::KdTree<T_PointType>> tree(new pcl::search::KdTree<T_PointType>);
+		tree->setInputCloud(cloud_arg);
+		std::vector<pcl::PointIndices> cluster_indices;
+		pcl::EuclideanClusterExtraction<T_PointType> ec;
+		ec.setClusterTolerance(Tolerance);//threshold; distance of clusters 
+		ec.setMinClusterSize(MinClusterSize);
+		ec.setMaxClusterSize(25000);
+		ec.setSearchMethod(tree);
+		ec.setInputCloud(cloud_arg);
+		ec.extract(cluster_indices);
+		return cluster_indices;
+	}
+
+	template <class T_PointType>
+	vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> getSegmentation_rest(
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_arg, 
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_rest, float Tolerance, int MinClusterSize)
+	{
+		std::vector<pcl::PointIndices> cluster_indices;
+		cluster_indices = getSegmentation_indices(cloud_arg, Tolerance, MinClusterSize);
+
+		vector<bool> b_rest_vec;
+		for (int i = 0; i < cloud_arg->size(); i++)
+			b_rest_vec.push_back(true);
+		for (int j = 0; j < cluster_indices.size(); j++)
+		{
+			for (int i = 0; i < cluster_indices[j].indices.size(); i++)
+				b_rest_vec[cluster_indices[j].indices[i]] = false;
+		}
+
+		vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_cluster_vec;
+		for (int j = 0; j < cluster_indices.size(); j++)
+		{
+			pcl::PointCloud<T_PointType>::Ptr cloud_cluster(new pcl::PointCloud<T_PointType>);
+			for (int i = 0; i < cluster_indices[j].indices.size(); i++)
+				cloud_cluster->push_back(cloud_arg->points[cluster_indices[j].indices[i]]);
+			cloud_cluster->width = cloud_cluster->points.size();
+			cloud_cluster->height = 1;
+			cloud_cluster->is_dense = true;
+			//std::cout << "PointCloud representing the Cluster: " << cloud_cluster->points.size() << " data points." << std::endl;
+			cloud_cluster_vec.push_back(cloud_cluster);
+		}
+
+		cloud_rest->clear();
+		for (int i = 0; i < cloud_arg->size(); i++)
+		{
+			if (b_rest_vec[i] == true)
+			{
+				auto point = cloud_arg->points[i];
+				cloud_rest->push_back(point);
+			}
+		}
+
+		return cloud_cluster_vec;
+	}
+
+	template <class T_PointType>
+	vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> getSegmentation_robust(
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_arg,
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_rest, float Tolerance, int MinClusterSize)
+	{
+
+		vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_cluster_vec;
+		cloud_rest->clear();
+
+		cloud_cluster_vec = getSegmentation_rest(cloud_arg, cloud_rest, Tolerance, MinClusterSize);
+
+		////next clustering (to rest)
+		//{
+		//	vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_cluster_vec_next;
+		//	boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_rest_next(new pcl::PointCloud<T_PointType>);
+		//	cloud_cluster_vec_next = getSegmentation_rest(cloud_rest, cloud_rest_next, Tolerance * 1.5, MinClusterSize);
+		//	for (int i = 0; i < cloud_cluster_vec_next.size(); i++)
+		//		cloud_cluster_vec.push_back(cloud_cluster_vec_next[i]);
+		//	cloud_rest->clear();
+		//	pcl::copyPointCloud(*cloud_rest_next, *cloud_rest);
+		//}
+
+		//next clustering (to cluster)
+		{
+			vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_cluster_vec_next;
+			for (int j = 0; j < cloud_cluster_vec.size(); j++)
+			{
+				vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_cluster_vec_in1cluster;
+				boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_rest_in1cluster(new pcl::PointCloud<T_PointType>);
+
+				cloud_cluster_vec_in1cluster = getSegmentation_rest(cloud_cluster_vec[j], cloud_rest_in1cluster, Tolerance * 0.5, (float)MinClusterSize * 0.1);
+				for (int i = 0; i < cloud_cluster_vec_in1cluster.size(); i++)
+					cloud_cluster_vec_next.push_back(cloud_cluster_vec_in1cluster[i]);
+				*cloud_rest += *cloud_rest_in1cluster;
+			}
+			cloud_cluster_vec.clear();
+			cloud_cluster_vec = cloud_cluster_vec_next;
+		}
+
+		return cloud_cluster_vec;
+	}
+
+	template <class T_PointType>
+	void rejectOutlier(boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_arg,
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> &cloud_output, float Tolerance, int MinClusterSize)
+	{
+		vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_cluster_vec;
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_temp(new pcl::PointCloud<T_PointType>);
+		cloud_cluster_vec = getSegmentation_robust(cloud_arg, cloud_temp, Tolerance, MinClusterSize);
+		//cloud_cluster_vec = getSegmentation_rest(cloud_arg, cloud_temp, Tolerance, MinClusterSize);
+
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_output_temp(new pcl::PointCloud<T_PointType>);
+		for (int i = 0; i < cloud_cluster_vec.size(); i++)
+			*cloud_output_temp += *cloud_cluster_vec[i];
+		cloud_output->clear();
+		pcl::copyPointCloud(*cloud_output_temp,*cloud_output);
+	}
+
 
 };
