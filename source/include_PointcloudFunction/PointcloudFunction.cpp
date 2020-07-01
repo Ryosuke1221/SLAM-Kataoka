@@ -2473,9 +2473,9 @@ void CPointcloudFunction::GlobalRegistration_FPFH_SAC_IA()
 		CTimeString::getMatrixCSVFromVecVec(s_output_vecvec, dir_ + "/" + filename_);
 	}
 	else if (i_method == 5)
-		FPFH_ajustParameter(dir_, parameter_vec);
-	else if(i_method == 6)
-		FPFH_ajustParameter_AllFrames(dir_, parameter_vec);
+		GR_FPFH_optimizeParameter(dir_, parameter_vec);
+	else if (i_method == 6)
+		GR_FPFH_optimizeParameter_AllFrames(dir_, parameter_vec);
 
 
 	return;
@@ -2493,28 +2493,6 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_2frames(string dir_, vector<float> para
 
 	pcl::PointCloud<T_PointType>::Ptr cloud_temp(new pcl::PointCloud<T_PointType>());
 
-	//parameter
-	float voxel_size;
-	voxel_size = parameter_vec[0];
-
-	float radius_normal_FPFH, radius_FPFH;
-	radius_normal_FPFH = parameter_vec[1];
-	radius_FPFH = parameter_vec[2];
-
-	float MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC, InlierFraction_SAC;
-	MaxCorrespondenceDistance_SAC = parameter_vec[3];
-	SimilarityThreshold_SAC = parameter_vec[4];
-	InlierFraction_SAC = parameter_vec[5];
-
-
-	int MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC;
-	MaximumIterations_SAC = (int)parameter_vec[6];
-	NumberOfSamples_SAC = (int)parameter_vec[7];
-	CorrespondenceRandomness_SAC = (int)parameter_vec[8];
-
-	int max_RANSAC;
-	max_RANSAC = (int)parameter_vec[9];
-
 	while (1)
 	{
 		cout << "select frame  (ESCAPE by typing same frame or -1 )" << endl;
@@ -2527,120 +2505,31 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_2frames(string dir_, vector<float> para
 
 		if (i_tgt == i_src) break;
 
-		//show parameter
-		cout << "Parameter list" << endl;
-		cout << "0: voxel_size:                     " << voxel_size << endl;
-		cout << "1: radius_normal_FPFH:             " << radius_normal_FPFH << endl;
-		cout << "2: radius_FPFH:                    " << radius_FPFH << endl;
-		cout << "3: MaxCorrespondenceDistance_SAC:  " << MaxCorrespondenceDistance_SAC << endl;
-		cout << "4: SimilarityThreshold_SAC:        " << SimilarityThreshold_SAC << endl;
-		cout << "5: InlierFraction_SAC:             " << InlierFraction_SAC << endl;
-		cout << "6: MaximumIterations_SAC:          " << MaximumIterations_SAC << endl;
-		cout << "7: NumberOfSamples_SAC:            " << NumberOfSamples_SAC << endl;
-		cout << "8: CorrespondenceRandomness_SAC:   " << CorrespondenceRandomness_SAC << endl;
-		cout << "9: max_RANSAC                      " << max_RANSAC << endl;
-
-		//change parameter
-		bool b_parameter_changed = false;
-		while (1)
-		{
-		
-			int i_change = -1;
-			cout << "select parameters to change  (ESCAPE by typing single 0 with no value )" << endl;
-			cout << "->XX(parameter index) YY(value)" << endl;
-			vector<string> s_input_vec;
-			s_input_vec.clear();
-			s_input_vec = CTimeString::inputSomeString();
-			cout << "s_input_vec.size():" << s_input_vec.size() << endl;
-
-			if (!(s_input_vec.size() == 1 || s_input_vec.size() == 2)) continue;
-			if (s_input_vec.size() == 1)
-			{
-				if (stoi(s_input_vec[0]) == 0) break;
-				else continue;
-			}
-
-			float value_ = 0.;
-			i_change = stoi(s_input_vec[0]);
-			value_ = stof(s_input_vec[1]);
-			b_parameter_changed = true;
-
-			if (i_change == 0)
-			{
-				voxel_size = value_;
-				cout << "voxel_size:" << voxel_size << endl;
-			}
-			else if (i_change == 1)
-			{
-				radius_normal_FPFH = value_;
-				cout << "radius_normal_FPFH:" << radius_normal_FPFH << endl;
-			}
-			else if (i_change == 2)
-			{
-				radius_FPFH = value_;
-				cout << "radius_FPFH:" << radius_FPFH << endl;
-			}
-			else if (i_change == 3)
-			{
-				MaxCorrespondenceDistance_SAC = value_;
-				cout << "MaxCorrespondenceDistance_SAC:" << MaxCorrespondenceDistance_SAC << endl;
-			}
-			else if (i_change == 4)
-			{
-				SimilarityThreshold_SAC = value_;
-				cout << "SimilarityThreshold_SAC:" << SimilarityThreshold_SAC << endl;
-			}
-			else if (i_change == 5)
-			{
-				InlierFraction_SAC = value_;
-				cout << "InlierFraction_SAC:" << InlierFraction_SAC << endl;
-			}
-			else if (i_change == 6)
-			{
-				MaximumIterations_SAC = (int)value_;
-				cout << "MaximumIterations_SAC:" << MaximumIterations_SAC << endl;
-			}
-			else if (i_change == 7)
-			{
-				NumberOfSamples_SAC = (int)value_;
-				cout << "NumberOfSamples_SAC:" << NumberOfSamples_SAC << endl;
-			}
-			else if (i_change == 8)
-			{
-				CorrespondenceRandomness_SAC = (int)value_;
-				cout << "CorrespondenceRandomness_SAC:" << CorrespondenceRandomness_SAC << endl;
-			}
-			else if (i_change == 9)
-			{
-				max_RANSAC = (int)value_;
-				cout << "max_RANSAC:" << max_RANSAC << endl;
-			}
-			else
-			{
-				cout << "error" << endl;
-				break;
-			}
-
-			cout << "parameter changed" << endl;
-			cout << endl;
-		}
-
-		if (b_parameter_changed)
-		{
-			//show parameter (new)
-			cout << "Parameter list (new)" << endl;
-			cout << "0: voxel_size:                     " << voxel_size << endl;
-			cout << "1: radius_normal_FPFH:             " << radius_normal_FPFH << endl;
-			cout << "2: radius_FPFH:                    " << radius_FPFH << endl;
-			cout << "3: MaxCorrespondenceDistance_SAC:  " << MaxCorrespondenceDistance_SAC << endl;
-			cout << "4: SimilarityThreshold_SAC:        " << SimilarityThreshold_SAC << endl;
-			cout << "5: InlierFraction_SAC:             " << InlierFraction_SAC << endl;
-			cout << "6: MaximumIterations_SAC:          " << MaximumIterations_SAC << endl;
-			cout << "7: NumberOfSamples_SAC:            " << NumberOfSamples_SAC << endl;
-			cout << "8: CorrespondenceRandomness_SAC:   " << CorrespondenceRandomness_SAC << endl;
-			cout << "9: max_RANSAC                      " << max_RANSAC << endl;
-		}
+		GR_ajustParameter(parameter_vec);
 		cout << "calculation start" << endl;
+
+		//input parameter to variable
+		float voxel_size;
+		voxel_size = parameter_vec[0];
+
+		float radius_normal_FPFH, radius_FPFH;
+		radius_normal_FPFH = parameter_vec[1];
+		radius_FPFH = parameter_vec[2];
+
+		float MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC, InlierFraction_SAC;
+		MaxCorrespondenceDistance_SAC = parameter_vec[3];
+		SimilarityThreshold_SAC = parameter_vec[4];
+		InlierFraction_SAC = parameter_vec[5];
+
+
+		int MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC;
+		MaximumIterations_SAC = (int)parameter_vec[6];
+		NumberOfSamples_SAC = (int)parameter_vec[7];
+		CorrespondenceRandomness_SAC = (int)parameter_vec[8];
+
+		int max_RANSAC;
+		max_RANSAC = (int)parameter_vec[9];
+
 
 		//input pointcloud
 		pcl::PointCloud<T_PointType>::Ptr cloud_tgt(new pcl::PointCloud<T_PointType>());
@@ -2798,6 +2687,8 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> pa
 	vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> fpfh_vec;
 	vector<vector<string>> s_output_vecvec;
 
+	GR_ajustParameter(parameter_vec);
+
 	//parameter
 	float voxel_size;
 	voxel_size = parameter_vec[0];
@@ -2811,7 +2702,6 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> pa
 	SimilarityThreshold_SAC = parameter_vec[4];
 	InlierFraction_SAC = parameter_vec[5];
 
-
 	int MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC;
 	MaximumIterations_SAC = (int)parameter_vec[6];
 	NumberOfSamples_SAC = (int)parameter_vec[7];
@@ -2822,114 +2712,12 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> pa
 
 	int th_minute_CSV;
 	//th_minute_CSV = 20;
-	th_minute_CSV = 4;
+	th_minute_CSV = 2;
 
-	//show parameter
-	cout << "Parameter list" << endl;
-	cout << "0: voxel_size:                     " << voxel_size << endl;
-	cout << "1: radius_normal_FPFH:             " << radius_normal_FPFH << endl;
-	cout << "2: radius_FPFH:                    " << radius_FPFH << endl;
-	cout << "3: MaxCorrespondenceDistance_SAC:  " << MaxCorrespondenceDistance_SAC << endl;
-	cout << "4: SimilarityThreshold_SAC:        " << SimilarityThreshold_SAC << endl;
-	cout << "5: InlierFraction_SAC:             " << InlierFraction_SAC << endl;
-	cout << "6: MaximumIterations_SAC:          " << MaximumIterations_SAC << endl;
-	cout << "7: NumberOfSamples_SAC:            " << NumberOfSamples_SAC << endl;
-	cout << "8: CorrespondenceRandomness_SAC:   " << CorrespondenceRandomness_SAC << endl;
-	cout << "9: max_RANSAC                      " << max_RANSAC << endl;
+	//push_back parameter information to s_output_vecvec
+	GR_addToOutputString_Parameter(s_output_vecvec, parameter_vec);
 
-	{
-		vector<string> s_temp_vec;
-		s_temp_vec.push_back("Parameter");
-		s_output_vecvec.push_back(s_temp_vec);
-	}
-	{
-		vector<string> s_temp_vec;
-		s_temp_vec.push_back("voxel_size");
-		s_temp_vec.push_back(""); s_temp_vec.push_back(""); s_temp_vec.push_back("");
-		s_temp_vec.push_back(to_string(voxel_size));
-		s_output_vecvec.push_back(s_temp_vec);
-	}
-	{
-		vector<string> s_temp_vec;
-		s_temp_vec.push_back("radius_normal_FPFH");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back(to_string(radius_normal_FPFH));
-		s_output_vecvec.push_back(s_temp_vec);
-	}
-	{
-		vector<string> s_temp_vec;
-		s_temp_vec.push_back("radius_FPFH");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back(to_string(radius_FPFH));
-		s_output_vecvec.push_back(s_temp_vec);
-	}
-	{
-		vector<string> s_temp_vec;
-		s_temp_vec.push_back("MaxCorrespondenceDistance_SAC");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back(to_string(MaxCorrespondenceDistance_SAC));
-		s_output_vecvec.push_back(s_temp_vec);
-	}
-	{
-		vector<string> s_temp_vec;
-		s_temp_vec.push_back("SimilarityThreshold_SAC");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back(to_string(SimilarityThreshold_SAC));
-		s_output_vecvec.push_back(s_temp_vec);
-	}
-	{
-		vector<string> s_temp_vec;
-		s_temp_vec.push_back("InlierFraction_SAC");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back(to_string(InlierFraction_SAC));
-		s_output_vecvec.push_back(s_temp_vec);
-	}
-	{
-		vector<string> s_temp_vec;
-		s_temp_vec.push_back("MaximumIterations_SAC");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back(to_string(MaximumIterations_SAC));
-		s_output_vecvec.push_back(s_temp_vec);
-	}
-	{
-		vector<string> s_temp_vec;
-		s_temp_vec.push_back("NumberOfSamples_SAC");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back(to_string(NumberOfSamples_SAC));
-		s_output_vecvec.push_back(s_temp_vec);
-	}
-	{
-		vector<string> s_temp_vec;
-		s_temp_vec.push_back("CorrespondenceRandomness_SAC");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back(to_string(CorrespondenceRandomness_SAC));
-		s_output_vecvec.push_back(s_temp_vec);
-	}
-	{
-		vector<string> s_temp_vec;
-		s_temp_vec.push_back("max_RANSAC");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back(to_string(max_RANSAC));
-		s_output_vecvec.push_back(s_temp_vec);
-	}
+	
 	{
 		vector<string> s_temp_vec;
 		s_temp_vec.push_back("");
@@ -2940,30 +2728,8 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> pa
 		s_temp_vec.push_back("Result");
 		s_output_vecvec.push_back(s_temp_vec);
 	}
-	{
-		vector<string> s_temp_vec;
-		s_temp_vec.push_back("target");
-		s_temp_vec.push_back("source");
-		s_temp_vec.push_back("tgt size");
-		s_temp_vec.push_back("src size");
-		s_temp_vec.push_back("tgt VGF size");
-		s_temp_vec.push_back("src VGF size");
-		s_temp_vec.push_back("inlier size");
-		s_temp_vec.push_back("inlier rate");
-		s_temp_vec.push_back("convergence");
-		s_temp_vec.push_back("success_frame");
-		s_temp_vec.push_back("distance");
-		s_temp_vec.push_back("median");
-		s_temp_vec.push_back("fitness");
-		s_temp_vec.push_back("time");
-		s_temp_vec.push_back("X");
-		s_temp_vec.push_back("Y");
-		s_temp_vec.push_back("Z");
-		s_temp_vec.push_back("ROLL");
-		s_temp_vec.push_back("PITCH");
-		s_temp_vec.push_back("YAW");
-		s_output_vecvec.push_back(s_temp_vec);
-	}
+
+	GR_addToOutputString_OutputHeader(s_output_vecvec);
 
 	int i_tgt_start = 0;
 	cout << "select first tgt frame" << endl;
@@ -3010,8 +2776,6 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> pa
 	{
 		for (int i_src = i_tgt + 1; i_src < cloud_vec.size(); i_src++)
 		{
-			//if (i_tgt == i_src) continue;
-
 			string time_start_frame = CTimeString::getTimeString();
 
 			bool b_hasConverged = false;
@@ -3062,11 +2826,10 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> pa
 				Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(transform_);
 				pcl::transformPointCloud(*cloud_src, *cloud_src, Trans_temp);
 			}
-			//evaluation
+
+			//distance
 			double distance_ = 0.;
-			double median_ = 0.;
 			{
-				cout << "distance" << endl;
 				Eigen::Matrix4d T_i_src = Eigen::Matrix4d::Identity();
 				Eigen::Matrix4d T_i1_tgt = Eigen::Matrix4d::Identity();
 				Eigen::Matrix4d T_i_GL = Eigen::Matrix4d::Identity();
@@ -3084,7 +2847,7 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> pa
 					point_ = cloud_src->points[i];
 					point_ = cloud_src->points.at(i);
 					point_true = cloud_src_true->points[i];
-					const float sqrt_before = 
+					const float sqrt_before =
 						pow(point_.x - point_true.x, 2.)
 						+ pow(point_.y - point_true.y, 2.)
 						+ pow(point_.z - point_true.z, 2.);
@@ -3096,11 +2859,11 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> pa
 				}
 				if (cloud_src->size() != 0) distance_ /= cloud_src->size();
 				else distance_ = 100.;
-				cout << "distance_:" << distance_ << endl;
-				//median
-				cout << "median" << endl;
-				median_ = CKataokaPCL::getMedianDistance(*cloud_src, *cloud_tgt);
 			}
+
+			//median
+			double median_ = CKataokaPCL::getMedianDistance(*cloud_src, *cloud_tgt);
+
 			//add for saving
 			*cloud_tgt += *cloud_src;
 			//filename for saving
@@ -3152,7 +2915,8 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> pa
 
 			//regular saving csv
 			string s_elapsed_frame = CTimeString::getTimeElapsefrom2Strings(time_regular, time_end_frame);
-			cout << "time_elapsed_frame:" << s_elapsed_frame << endl;
+			cout << "time_elapsed from last .csv output: " << s_elapsed_frame << endl;
+			cout << "time_elapsed from start:            " << CTimeString::getTimeElapsefrom2Strings(time_start, time_end_frame) << endl;
 			int elapsed_millisec = CTimeString::getTimeElapsefrom2Strings_millisec(time_regular, time_end_frame);
 			int elapsed_minute = (int)(((float)elapsed_millisec / 1000.) / 60.);
 			if (elapsed_minute >= th_minute_CSV)
@@ -3162,28 +2926,7 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> pa
 				time_regular = CTimeString::getTimeString();
 				//clear s_output_vecvec
 				s_output_vecvec.clear();
-				vector<string> s_temp_vec;
-				s_temp_vec.push_back("target");
-				s_temp_vec.push_back("source");
-				s_temp_vec.push_back("tgt size");
-				s_temp_vec.push_back("src size");
-				s_temp_vec.push_back("tgt VGF size");
-				s_temp_vec.push_back("src VGF size");
-				s_temp_vec.push_back("inlier size");
-				s_temp_vec.push_back("inlier rate");
-				s_temp_vec.push_back("convergence");
-				s_temp_vec.push_back("success_frame");
-				s_temp_vec.push_back("distance");
-				s_temp_vec.push_back("median");
-				s_temp_vec.push_back("fitness");
-				s_temp_vec.push_back("time");
-				s_temp_vec.push_back("X");
-				s_temp_vec.push_back("Y");
-				s_temp_vec.push_back("Z");
-				s_temp_vec.push_back("ROLL");
-				s_temp_vec.push_back("PITCH");
-				s_temp_vec.push_back("YAW");
-				s_output_vecvec.push_back(s_temp_vec);
+				GR_addToOutputString_OutputHeader(s_output_vecvec);
 			}
 
 			cout << endl;
@@ -3212,6 +2955,118 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> pa
 
 	CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + s_newfoldername + "/" + time_end + "_output.csv");
 }
+
+void CPointcloudFunction::GR_addToOutputString_Parameter(vector<vector<string>> &s_output_vecvec, vector<float> parameter_vec)
+{
+	vector<string> s_temp_vec;
+	s_temp_vec.push_back("Parameter");
+	s_output_vecvec.push_back(s_temp_vec);
+	
+	s_temp_vec.clear();
+	s_temp_vec.push_back("voxel_size");
+	s_temp_vec.push_back(""); s_temp_vec.push_back(""); s_temp_vec.push_back("");
+	s_temp_vec.push_back(to_string(parameter_vec[0]));
+	s_output_vecvec.push_back(s_temp_vec);
+	
+	s_temp_vec.clear();
+	s_temp_vec.push_back("radius_normal_FPFH");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back(to_string(parameter_vec[1]));
+	s_output_vecvec.push_back(s_temp_vec);
+	
+	s_temp_vec.clear();
+	s_temp_vec.push_back("radius_FPFH");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back(to_string(parameter_vec[2]));
+	s_output_vecvec.push_back(s_temp_vec);
+	
+	s_temp_vec.clear();
+	s_temp_vec.push_back("MaxCorrespondenceDistance_SAC");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back(to_string(parameter_vec[3]));
+	s_output_vecvec.push_back(s_temp_vec);
+	
+	s_temp_vec.clear();
+	s_temp_vec.push_back("SimilarityThreshold_SAC");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back(to_string(parameter_vec[4]));
+	s_output_vecvec.push_back(s_temp_vec);
+	
+	s_temp_vec.clear();
+	s_temp_vec.push_back("InlierFraction_SAC");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back(to_string(parameter_vec[5]));
+	s_output_vecvec.push_back(s_temp_vec);
+	
+	s_temp_vec.clear();
+	s_temp_vec.push_back("MaximumIterations_SAC");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back(to_string(parameter_vec[6]));
+	s_output_vecvec.push_back(s_temp_vec);
+	
+	s_temp_vec.clear();
+	s_temp_vec.push_back("NumberOfSamples_SAC");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back(to_string(parameter_vec[7]));
+	s_output_vecvec.push_back(s_temp_vec);
+	
+	s_temp_vec.clear();
+	s_temp_vec.push_back("CorrespondenceRandomness_SAC");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back(to_string(parameter_vec[8]));
+	s_output_vecvec.push_back(s_temp_vec);
+	
+	s_temp_vec.clear();
+	s_temp_vec.push_back("max_RANSAC");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back("");
+	s_temp_vec.push_back(to_string(parameter_vec[9]));
+	s_output_vecvec.push_back(s_temp_vec);
+}
+
+void CPointcloudFunction::GR_addToOutputString_OutputHeader(vector<vector<string>> &s_output_vecvec)
+{
+	vector<string> s_temp_vec;
+	s_temp_vec.push_back("target");
+	s_temp_vec.push_back("source");
+	s_temp_vec.push_back("tgt size");
+	s_temp_vec.push_back("src size");
+	s_temp_vec.push_back("tgt VGF size");
+	s_temp_vec.push_back("src VGF size");
+	s_temp_vec.push_back("inlier size");
+	s_temp_vec.push_back("inlier rate");
+	s_temp_vec.push_back("convergence");
+	s_temp_vec.push_back("success_frame");
+	s_temp_vec.push_back("distance");
+	s_temp_vec.push_back("median");
+	s_temp_vec.push_back("fitness");
+	s_temp_vec.push_back("time");
+	s_temp_vec.push_back("X");
+	s_temp_vec.push_back("Y");
+	s_temp_vec.push_back("Z");
+	s_temp_vec.push_back("ROLL");
+	s_temp_vec.push_back("PITCH");
+	s_temp_vec.push_back("YAW");
+	s_output_vecvec.push_back(s_temp_vec);
+}
+
 
 void CPointcloudFunction::GR_FPFH_SelectPoint(string dir_, vector<float> parameter_vec)
 {
@@ -3262,46 +3117,6 @@ void CPointcloudFunction::GR_FPFH_SelectPoint(string dir_, vector<float> paramet
 		cout << endl;
 
 		cout << "2: radius_FPFH:                    " << radius_FPFH << endl;
-
-		////change parameter
-		//bool b_parameter_changed = false;
-		//while (1)
-		//{
-		//	int i_change = -1;
-		//	cout << "select parameters to change  (ESCAPE by typing invalid or -1 )" << endl;
-		//	cout << "->";
-		//	cin >> i_change;
-		//	if (i_change == 0)
-		//	{
-		//		cout << "voxel_size ->";
-		//		cin >> voxel_size;
-		//		b_parameter_changed = true;
-		//	}
-		//	else if (i_change == 1)
-		//	{
-		//		cout << "radius_normal_FPFH ->";
-		//		cin >> radius_normal_FPFH;
-		//		b_parameter_changed = true;
-		//	}
-		//	else if (i_change == 2)
-		//	{
-		//		cout << "radius_FPFH ->";
-		//		cin >> radius_FPFH;
-		//		b_parameter_changed = true;
-		//	}
-		//	else
-		//	{
-		//		break;
-		//	}
-		//}
-		//if (b_parameter_changed)
-		//{
-		//	//show parameter (new)
-		//	cout << "Parameter list (new)" << endl;
-		//	cout << "0: voxel_size:                     " << voxel_size << endl;
-		//	cout << "1: radius_normal_FPFH:             " << radius_normal_FPFH << endl;
-		//	cout << "2: radius_FPFH:                    " << radius_FPFH << endl;
-		//}
 
 		//input pointcloud
 		pcl::PointCloud<T_PointType>::Ptr cloud_tgt(new pcl::PointCloud<T_PointType>());
@@ -3423,7 +3238,7 @@ void CPointcloudFunction::GR_FPFH_SelectPoint(string dir_, vector<float> paramet
 	cout << "escaped" << endl;
 }
 
-void CPointcloudFunction::FPFH_ajustParameter(string dir_, vector<float> parameter_vec)
+void CPointcloudFunction::GR_FPFH_optimizeParameter(string dir_, vector<float> parameter_vec)
 {
 	//typedef pcl::PointXYZ T_PointType;
 	typedef pcl::PointXYZRGB T_PointType;
@@ -3439,7 +3254,7 @@ void CPointcloudFunction::FPFH_ajustParameter(string dir_, vector<float> paramet
 
 	pcl::PointCloud<T_PointType>::Ptr cloud_temp(new pcl::PointCloud<T_PointType>());
 
-		//true trajectory
+	//true trajectory
 	vector<Eigen::Vector6d> trajectory_vec;
 	{
 		vector<string> filenames_trajectory_temp;
@@ -3472,16 +3287,6 @@ void CPointcloudFunction::FPFH_ajustParameter(string dir_, vector<float> paramet
 		//}
 	}
 
-	//parameter
-	float voxel_size;
-	voxel_size = parameter_vec[0];
-
-	float radius_normal_FPFH, radius_FPFH;
-	radius_normal_FPFH = parameter_vec[1];
-	radius_FPFH = parameter_vec[2];
-
-	float MaxCorrespondenceDistance_SAC;
-	MaxCorrespondenceDistance_SAC = parameter_vec[3];
 
 	while (1)
 	{
@@ -3495,77 +3300,21 @@ void CPointcloudFunction::FPFH_ajustParameter(string dir_, vector<float> paramet
 
 		if (i_tgt == i_src) break;
 
-		//show parameter
-		cout << "Parameter list" << endl;
-		cout << "0: voxel_size:                     " << voxel_size << endl;
-		cout << "1: radius_normal_FPFH:             " << radius_normal_FPFH << endl;
-		cout << "2: radius_FPFH:                    " << radius_FPFH << endl;
-		cout << "3: MaxCorrespondenceDistance_SAC:  " << MaxCorrespondenceDistance_SAC << endl;
-
 		//change parameter
-		bool b_parameter_changed = false;
-		while (1)
-		{
+		GR_ajustParameter(parameter_vec);
+	
+		//parameter
+		float voxel_size;
+		voxel_size = parameter_vec[0];
 
-			int i_change = -1;
-			cout << "select parameters to change  (ESCAPE by typing single 0 with no value )" << endl;
-			cout << "->XX(parameter index) YY(value)" << endl;
-			vector<string> s_input_vec;
-			s_input_vec.clear();
-			s_input_vec = CTimeString::inputSomeString();
-			cout << "s_input_vec.size():" << s_input_vec.size() << endl;
+		float radius_normal_FPFH, radius_FPFH;
+		radius_normal_FPFH = parameter_vec[1];
+		radius_FPFH = parameter_vec[2];
 
-			if (!(s_input_vec.size() == 1 || s_input_vec.size() == 2)) continue;
-			if (s_input_vec.size() == 1)
-			{
-				if (stoi(s_input_vec[0]) == 0) break;
-				else continue;
-			}
+		float MaxCorrespondenceDistance_SAC;
+		MaxCorrespondenceDistance_SAC = parameter_vec[3];
 
-			float value_ = 0.;
-			i_change = stoi(s_input_vec[0]);
-			value_ = stof(s_input_vec[1]);
-			b_parameter_changed = true;
 
-			if (i_change == 0)
-			{
-				voxel_size = value_;
-				cout << "voxel_size:" << voxel_size << endl;
-			}
-			else if (i_change == 1)
-			{
-				radius_normal_FPFH = value_;
-				cout << "radius_normal_FPFH:" << radius_normal_FPFH << endl;
-			}
-			else if (i_change == 2)
-			{
-				radius_FPFH = value_;
-				cout << "radius_FPFH:" << radius_FPFH << endl;
-			}
-			else if (i_change == 3)
-			{
-				MaxCorrespondenceDistance_SAC = value_;
-				cout << "MaxCorrespondenceDistance_SAC:" << MaxCorrespondenceDistance_SAC << endl;
-			}
-			else
-			{
-				cout << "error" << endl;
-				break;
-			}
-
-			cout << "parameter changed" << endl;
-			cout << endl;
-		}
-
-		if (b_parameter_changed)
-		{
-			//show parameter (new)
-			cout << "Parameter list (new)" << endl;
-			cout << "0: voxel_size:                     " << voxel_size << endl;
-			cout << "1: radius_normal_FPFH:             " << radius_normal_FPFH << endl;
-			cout << "2: radius_FPFH:                    " << radius_FPFH << endl;
-			cout << "3: MaxCorrespondenceDistance_SAC:  " << MaxCorrespondenceDistance_SAC << endl;
-		}
 		cout << "calculation start" << endl;
 
 		//input pointcloud
@@ -3724,7 +3473,7 @@ void CPointcloudFunction::FPFH_ajustParameter(string dir_, vector<float> paramet
 	cout << "escaped" << endl;
 }
 
-void CPointcloudFunction::FPFH_ajustParameter_AllFrames(string dir_, vector<float> parameter_vec)
+void CPointcloudFunction::GR_FPFH_optimizeParameter_AllFrames(string dir_, vector<float> parameter_vec)
 {
 	//typedef pcl::PointXYZ T_PointType;
 	typedef pcl::PointXYZRGB T_PointType;
@@ -3738,6 +3487,8 @@ void CPointcloudFunction::FPFH_ajustParameter_AllFrames(string dir_, vector<floa
 	vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec;
 	vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> fpfh_vec;
 
+	GR_ajustParameter(parameter_vec);
+
 	//parameter
 	float voxel_size;
 	voxel_size = parameter_vec[0];
@@ -3749,76 +3500,6 @@ void CPointcloudFunction::FPFH_ajustParameter_AllFrames(string dir_, vector<floa
 	float MaxCorrespondenceDistance_SAC;
 	MaxCorrespondenceDistance_SAC = parameter_vec[3];
 
-	//show parameter
-	cout << "Parameter list" << endl;
-	cout << "0: voxel_size:                     " << voxel_size << endl;
-	cout << "1: radius_normal_FPFH:             " << radius_normal_FPFH << endl;
-	cout << "2: radius_FPFH:                    " << radius_FPFH << endl;
-	cout << "3: MaxCorrespondenceDistance_SAC:  " << MaxCorrespondenceDistance_SAC << endl;
-
-	//change parameter
-	bool b_parameter_changed = false;
-	while (1)
-	{
-
-		int i_change = -1;
-		cout << "select parameters to change  (ESCAPE by typing single 0 with no value )" << endl;
-		cout << "->XX(parameter index) YY(value)" << endl;
-		vector<string> s_input_vec;
-		s_input_vec.clear();
-		s_input_vec = CTimeString::inputSomeString();
-		cout << "s_input_vec.size():" << s_input_vec.size() << endl;
-
-		if (!(s_input_vec.size() == 1 || s_input_vec.size() == 2)) continue;
-		if (s_input_vec.size() == 1)
-		{
-			if (stoi(s_input_vec[0]) == 0) break;
-			else continue;
-		}
-
-		float value_ = 0.;
-		i_change = stoi(s_input_vec[0]);
-		value_ = stof(s_input_vec[1]);
-		b_parameter_changed = true;
-
-		if (i_change == 0)
-		{
-			voxel_size = value_;
-			cout << "voxel_size:" << voxel_size << endl;
-		}
-		else if (i_change == 1)
-		{
-			radius_normal_FPFH = value_;
-			cout << "radius_normal_FPFH:" << radius_normal_FPFH << endl;
-		}
-		else if (i_change == 2)
-		{
-			radius_FPFH = value_;
-			cout << "radius_FPFH:" << radius_FPFH << endl;
-		}
-		else if (i_change == 3)
-		{
-			MaxCorrespondenceDistance_SAC = value_;
-			cout << "MaxCorrespondenceDistance_SAC:" << MaxCorrespondenceDistance_SAC << endl;
-		}
-		else
-		{
-			cout << "error" << endl;
-			break;
-		}
-
-		cout << "parameter changed" << endl;
-		cout << endl;
-	}
-	if (b_parameter_changed)
-	{
-		//show parameter (new)
-		cout << "Parameter list (new)" << endl;
-		cout << "0: voxel_size:                     " << voxel_size << endl;
-		cout << "1: radius_normal_FPFH:             " << radius_normal_FPFH << endl;
-		cout << "2: radius_FPFH:                    " << radius_FPFH << endl;
-		cout << "3: MaxCorrespondenceDistance_SAC:  " << MaxCorrespondenceDistance_SAC << endl;
-	}
 	cout << "calculation start" << endl;
 
 	for (int i = 0; i < filenames_.size(); i++)
@@ -3866,80 +3547,14 @@ void CPointcloudFunction::FPFH_ajustParameter_AllFrames(string dir_, vector<floa
 		}
 	}
 
+	cout << "calculation start" << endl;
+
 	int i_tgt_start = 0;
 	for (int i_tgt = i_tgt_start; i_tgt < cloud_vec.size() - 1; i_tgt++)
 	{
 		for (int i_src = i_tgt + 1; i_src < cloud_vec.size(); i_src++)
 		{
 			cout << "i_tgt:" << i_tgt << " i_src:" << i_src << endl;
-
-			////change parameter
-			//bool b_parameter_changed = false;
-			//while (1)
-			//{
-
-			//	cout << "i_tgt:" << i_tgt << " i_src" << i_src << endl;
-
-			//	int i_change = -1;
-			//	cout << "select parameters to change  (ESCAPE by typing single 0 with no value )" << endl;
-			//	cout << "->XX(parameter index) YY(value)" << endl;
-			//	vector<string> s_input_vec;
-			//	s_input_vec.clear();
-			//	s_input_vec = CTimeString::inputSomeString();
-			//	cout << "s_input_vec.size():" << s_input_vec.size() << endl;
-
-			//	if (!(s_input_vec.size() == 1 || s_input_vec.size() == 2)) continue;
-			//	if (s_input_vec.size() == 1)
-			//	{
-			//		if (stoi(s_input_vec[0]) == 0) break;
-			//		else continue;
-			//	}
-
-			//	float value_ = 0.;
-			//	i_change = stoi(s_input_vec[0]);
-			//	value_ = stof(s_input_vec[1]);
-			//	b_parameter_changed = true;
-
-			//	if (i_change == 0)
-			//	{
-			//		voxel_size = value_;
-			//		cout << "voxel_size:" << voxel_size << endl;
-			//	}
-			//	else if (i_change == 1)
-			//	{
-			//		radius_normal_FPFH = value_;
-			//		cout << "radius_normal_FPFH:" << radius_normal_FPFH << endl;
-			//	}
-			//	else if (i_change == 2)
-			//	{
-			//		radius_FPFH = value_;
-			//		cout << "radius_FPFH:" << radius_FPFH << endl;
-			//	}
-			//	else if (i_change == 3)
-			//	{
-			//		MaxCorrespondenceDistance_SAC = value_;
-			//		cout << "MaxCorrespondenceDistance_SAC:" << MaxCorrespondenceDistance_SAC << endl;
-			//	}
-			//	else
-			//	{
-			//		cout << "error" << endl;
-			//		break;
-			//	}
-
-			//	cout << "parameter changed" << endl;
-			//	cout << endl;
-			//}
-			//if (b_parameter_changed)
-			//{
-			//	//show parameter (new)
-			//	cout << "Parameter list (new)" << endl;
-			//	cout << "0: voxel_size:                     " << voxel_size << endl;
-			//	cout << "1: radius_normal_FPFH:             " << radius_normal_FPFH << endl;
-			//	cout << "2: radius_FPFH:                    " << radius_FPFH << endl;
-			//	cout << "3: MaxCorrespondenceDistance_SAC:  " << MaxCorrespondenceDistance_SAC << endl;
-			//}
-
-			//cout << "calculation start" << endl;
 
 			pcl::PointCloud<T_PointType>::Ptr cloud_tgt(new pcl::PointCloud<T_PointType>());
 			pcl::PointCloud<T_PointType>::Ptr cloud_src(new pcl::PointCloud<T_PointType>());
@@ -4005,6 +3620,7 @@ void CPointcloudFunction::FPFH_ajustParameter_AllFrames(string dir_, vector<floa
 
 	cout << endl;
 	//show parameter
+	cout << "output" << endl;
 	cout << "Parameter list" << endl;
 	cout << "0: voxel_size:                     " << voxel_size << endl;
 	cout << "1: radius_normal_FPFH:             " << radius_normal_FPFH << endl;
@@ -4024,5 +3640,122 @@ void CPointcloudFunction::FPFH_ajustParameter_AllFrames(string dir_, vector<floa
 	cout << "median_result:" << median_result << endl;
 
 	cout << endl;
-	cout << "escaped" << endl;
 }
+
+void CPointcloudFunction::GR_ajustParameter(vector<float> &parameter_vec)
+{
+	//show parameter
+	cout << "Parameter list" << endl;
+	cout << "0: voxel_size:                     " << parameter_vec[0] << endl;
+	cout << "1: radius_normal_FPFH:             " << parameter_vec[1] << endl;
+	cout << "2: radius_FPFH:                    " << parameter_vec[2] << endl;
+	cout << "3: MaxCorrespondenceDistance_SAC:  " << parameter_vec[3] << endl;
+	cout << "4: SimilarityThreshold_SAC:        " << parameter_vec[4] << endl;
+	cout << "5: InlierFraction_SAC:             " << parameter_vec[5] << endl;
+	cout << "6: MaximumIterations_SAC:          " << parameter_vec[6] << endl;
+	cout << "7: NumberOfSamples_SAC:            " << parameter_vec[7] << endl;
+	cout << "8: CorrespondenceRandomness_SAC:   " << parameter_vec[8] << endl;
+	cout << "9: max_RANSAC                      " << parameter_vec[9] << endl;
+
+	//change parameter
+	bool b_parameter_changed = false;
+	while (1)
+	{
+
+		int i_change = -1;
+		cout << "select parameters to change  (ESCAPE by typing single 0 with no value )" << endl;
+		cout << "->XX(parameter index) YY(value)" << endl;
+		vector<string> s_input_vec;
+		s_input_vec.clear();
+		s_input_vec = CTimeString::inputSomeString();
+		cout << "s_input_vec.size():" << s_input_vec.size() << endl;
+
+		if (!(s_input_vec.size() == 1 || s_input_vec.size() == 2)) continue;
+		if (s_input_vec.size() == 1)
+		{
+			if (stoi(s_input_vec[0]) == 0) break;
+			else continue;
+		}
+
+		float value_ = 0.;
+		i_change = stoi(s_input_vec[0]);
+		value_ = stof(s_input_vec[1]);
+		b_parameter_changed = true;
+
+		if (i_change == 0)
+		{
+			parameter_vec[i_change] = value_;
+			cout << "voxel_size:" << parameter_vec[i_change] << endl;
+		}
+		else if (i_change == 1)
+		{
+			parameter_vec[i_change] = value_;
+			cout << "radius_normal_FPFH:" << parameter_vec[i_change] << endl;
+		}
+		else if (i_change == 2)
+		{
+			parameter_vec[i_change] = value_;
+			cout << "radius_FPFH:" << parameter_vec[i_change] << endl;
+		}
+		else if (i_change == 3)
+		{
+			parameter_vec[i_change] = value_;
+			cout << "MaxCorrespondenceDistance_SAC:" << parameter_vec[i_change] << endl;
+		}
+		else if (i_change == 4)
+		{
+			parameter_vec[i_change] = value_;
+			cout << "SimilarityThreshold_SAC:" << parameter_vec[i_change] << endl;
+		}
+		else if (i_change == 5)
+		{
+			parameter_vec[i_change] = value_;
+			cout << "InlierFraction_SAC:" << parameter_vec[i_change] << endl;
+		}
+		else if (i_change == 6)
+		{
+			parameter_vec[i_change] = (int)value_;
+			cout << "MaximumIterations_SAC:" << parameter_vec[i_change] << endl;
+		}
+		else if (i_change == 7)
+		{
+			parameter_vec[i_change] = (int)value_;
+			cout << "NumberOfSamples_SAC:" << parameter_vec[i_change] << endl;
+		}
+		else if (i_change == 8)
+		{
+			parameter_vec[i_change] = (int)value_;
+			cout << "CorrespondenceRandomness_SAC:" << parameter_vec[i_change] << endl;
+		}
+		else if (i_change == 9)
+		{
+			parameter_vec[i_change] = (int)value_;
+			cout << "max_RANSAC:" << parameter_vec[i_change] << endl;
+		}
+		else
+		{
+			cout << "error" << endl;
+			break;
+		}
+
+		cout << "parameter changed" << endl;
+		cout << endl;
+	}
+
+	if (b_parameter_changed)
+	{
+		//show parameter (new)
+		cout << "Parameter list (new)" << endl;
+		cout << "0: voxel_size:                     " << parameter_vec[0] << endl;
+		cout << "1: radius_normal_FPFH:             " << parameter_vec[1] << endl;
+		cout << "2: radius_FPFH:                    " << parameter_vec[2] << endl;
+		cout << "3: MaxCorrespondenceDistance_SAC:  " << parameter_vec[3] << endl;
+		cout << "4: SimilarityThreshold_SAC:        " << parameter_vec[4] << endl;
+		cout << "5: InlierFraction_SAC:             " << parameter_vec[5] << endl;
+		cout << "6: MaximumIterations_SAC:          " << parameter_vec[6] << endl;
+		cout << "7: NumberOfSamples_SAC:            " << parameter_vec[7] << endl;
+		cout << "8: CorrespondenceRandomness_SAC:   " << parameter_vec[8] << endl;
+		cout << "9: max_RANSAC                      " << parameter_vec[9] << endl;
+	}
+}
+
