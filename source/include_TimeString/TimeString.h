@@ -72,15 +72,16 @@ public:
 	static vector<string> inputSomeString();
 
 	template<typename T>
-	static void getMatrixCSVFromVecVec(vector<vector<T>> saved_data_vec_vec, string filename_)
+	static vector<vector<T>> getMatrixCSVFromVecVec(vector<vector<T>> saved_data_vec_vec)
 	{
+		vector<vector<string>> save_vec_vec;
+
 		if (saved_data_vec_vec.size() != saved_data_vec_vec[0].size())
 		{
 			cout << "ERROR: rows and cols is different" << endl;
-			return;
+			return save_vec_vec;
 		}
 
-		vector<vector<string>> save_vec_vec;
 		for (int j = 0; j < saved_data_vec_vec.size() + 1; j++)
 		{
 			vector<string> save_vec;
@@ -102,7 +103,7 @@ public:
 				save_vec_vec[j + 1][i + 1] = to_string(saved_data_vec_vec[j][i]);
 			}
 		}
-		getCSVFromVecVec(save_vec_vec, filename_);
+		return save_vec_vec;
 	}
 
 

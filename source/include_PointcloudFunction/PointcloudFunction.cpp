@@ -20,7 +20,8 @@ void CPointcloudFunction::all_process()
 		EN_DynamicTranslation,
 		EN_DrawTrajectory,
 		EN_Segmentation,
-		EN_GR_FPFH_SAC_IA
+		EN_GR_FPFH_SAC_IA,
+		EN_DoOutlierRejector
 	};
 
 	while (!b_finish)
@@ -40,6 +41,7 @@ void CPointcloudFunction::all_process()
 		cout << " " << EN_DrawTrajectory << ": DrawTrajectory" << endl;
 		cout << " " << EN_Segmentation << ": Segmentation" << endl;
 		cout << " " << EN_GR_FPFH_SAC_IA << ": GR_FPFH_SAC_IA" << endl;
+		cout << " " << EN_DoOutlierRejector << ": DoOutlierRejector" << endl;
 
 		cout <<"WhichProcess: ";
 		cin >> WhichProcess;
@@ -103,6 +105,9 @@ void CPointcloudFunction::all_process()
 			GlobalRegistration_FPFH_SAC_IA();
 			break;
 
+		case EN_DoOutlierRejector:
+			DoOutlierRejector();
+			break;
 		default:
 			break;
 		}
@@ -143,6 +148,11 @@ void CPointcloudFunction::show_sequent()
 
 	bool b_onlyConvergence = false;
 	//b_onlyConvergence = true;
+	{
+		int i_find = dir_.find("GR_FPFH_SAC_IA");
+		if (i_find == std::string::npos) b_onlyConvergence = false;
+		else b_onlyConvergence = true;
+	}
 
 	bool b_select = false;
 	//b_select = true;
@@ -1166,11 +1176,9 @@ void CPointcloudFunction::combinePointCloud_naraha()
 	//pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_temp(new pcl::PointCloud<pcl::PointXYZRGB>());
 	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_temp_XYZI(new pcl::PointCloud<pcl::PointXYZI>());
 
-	int i_select;
-	bool b_transform = true;
+	bool b_transform = false;
+	b_transform = true;
 	bool b_removeGround = true;
-	bool b_rejectOutlier = true;
-	//b_rejectOutlier = false;
 
 	Eigen::Affine3f Trans_;
 	Eigen::Matrix4d HM_free = Eigen::Matrix4d::Identity();
@@ -1185,14 +1193,22 @@ void CPointcloudFunction::combinePointCloud_naraha()
 	//th_z_velo = -0.35;
 	th_z_velo = -0.4;
 
-	cout << "select no_nir_frame or nir_frame" << endl;
-	cout << "0: velodyne(no NIR), 1:velodyne(NIR)" << endl;
-	cout << "i_select:";
-	cin >> i_select;
+	//outlier rejector
+	bool b_rejectOutlier = false;
+	//b_rejectOutlier = true;
+	float Tolerance_out;
+	int MinClusterSize_out;
+	Tolerance_out = 1.;
+	MinClusterSize_out = 100;
+	int Meank_out;
+	float StddevMulThresh_out;
+	Meank_out = 50;
+	StddevMulThresh_out = 0.1;
+	cout << "select: do you use outlier rejector?   Yes:1  No 0" << endl;
+	cout << "->";
+	cin >> b_rejectOutlier;
 
-	switch (i_select)
 	{
-	case 0:
 		for (int index_ = 0; index_ < filenames_velo_nonir.size(); index_++)
 		{
 			cloud_velo->clear();
@@ -1233,14 +1249,16 @@ void CPointcloudFunction::combinePointCloud_naraha()
 				cloud_save->push_back(point_);
 			}
 
-			if(b_rejectOutlier) rejectOutlier(cloud_save, cloud_save, 1., 100);
+			if (b_rejectOutlier)
+			{
+				//CKataokaPCL::rejectOutlier(cloud_save, cloud_save, Tolerance_out, MinClusterSize_out);
+				CKataokaPCL::Remove_outliers(cloud_save, cloud_save, Meank_out, StddevMulThresh_out);
+			}
 			string filename_save = filenames_velo_nonir[index_].substr(0, 3) + "XYZRGB_naraha.pcd";
 			pcl::io::savePCDFile<pcl::PointXYZRGB>
-				(dir_  + "/" + filename_save, *cloud_save);
+				(dir_ + "/" + filename_save, *cloud_save);
 		}
-		break;
 
-	case 1:
 		for (int index_ = 0; index_ < filenames_velo.size(); index_++)
 		{
 			if (filenames_velo.size() == 0)
@@ -1318,13 +1336,18 @@ void CPointcloudFunction::combinePointCloud_naraha()
 				cloud_save->push_back(point_);
 			}
 
-			if (b_rejectOutlier) rejectOutlier(cloud_save, cloud_save, 1., 100);
-			string filename_save = filenames_velo[index_].substr(0,3) +"XYZRGB_naraha.pcd";
+			if (b_rejectOutlier)
+			{
+				//CKataokaPCL::rejectOutlier(cloud_save, cloud_save, Tolerance_out, MinClusterSize_out);
+				CKataokaPCL::Remove_outliers(cloud_save, cloud_save, Meank_out, StddevMulThresh_out);
+			}
+			string filename_save = filenames_velo[index_].substr(0, 3) + "XYZRGB_naraha.pcd";
 			pcl::io::savePCDFile<pcl::PointXYZRGB>
 				(dir_ + "/" + filename_save, *cloud_save);
 		}
-		break;
+
 	}
+	
 }
 
 void CPointcloudFunction::changeColor_plane(pcl::PointXYZRGB &point_)
@@ -2093,7 +2116,7 @@ void CPointcloudFunction::DoSegmentation()
 
 		vector <pcl::PointCloud<T_PointType>::Ptr> cloud_cluster_vec;
 		pcl::PointCloud<T_PointType>::Ptr cloud_rest(new pcl::PointCloud<T_PointType>);
-		cloud_cluster_vec = getSegmentation_robust(cloud_vec[idx], cloud_rest, Tolerance, 100);
+		cloud_cluster_vec = CKataokaPCL::getSegmentation_robust(cloud_vec[idx], cloud_rest, Tolerance, 100);
 
 		cout << "cloud_cluster_vec.size(): " << cloud_cluster_vec.size() << endl;
 
@@ -2326,13 +2349,28 @@ void CPointcloudFunction::GlobalRegistration_FPFH_SAC_IA()
 			i_tgt = stoi(s_input_vecvec[j][0]);
 			i_src = stoi(s_input_vecvec[j][1]);
 			b_convergence = stoi(s_input_vecvec[j][8]);
-			if (b_convergence) s_output_vecvec[i_tgt][i_src] = to_string(2);
+			if (b_convergence) s_output_vecvec[i_tgt][i_src] = to_string(1);
 			else s_output_vecvec[i_tgt][i_src] = to_string(0);
+		}
+		//make matrix
+		s_output_vecvec = CTimeString::getMatrixCSVFromVecVec(s_output_vecvec);
+		//add matrix under fusion
+		{
+			vector<vector<string>> s_temp_vecvec;
+			s_temp_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + filenames_csv[0]);
+			vector<string> s_temp_vec;
+			s_temp_vecvec.push_back(s_temp_vec);
+			for (int j = 0; j < s_output_vecvec.size(); j++)
+			{
+				s_temp_vecvec.push_back(s_output_vecvec[j]);
+			}
+			s_output_vecvec.clear();
+			s_output_vecvec = s_temp_vecvec;
 		}
 		//output file
 		string filename_;
-		filename_ = filenames_csv[0].substr(0, filenames_csv[0].size() -11 ) + "_matrix.csv";
-		CTimeString::getMatrixCSVFromVecVec(s_output_vecvec, dir_ + "/" + filename_);
+		filename_ = filenames_csv[0].substr(0, filenames_csv[0].size() - 4) + "_matrix.csv";
+		CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + filename_);
 	}
 	else if (i_method == 5)
 		GR_FPFH_optimizeParameter(dir_, parameter_vec);
@@ -2573,8 +2611,8 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> pa
 	max_RANSAC = (int)parameter_vec[9];
 
 	int th_minute_CSV;
-	//th_minute_CSV = 20;
-	th_minute_CSV = 2;
+	th_minute_CSV = 20;
+	//th_minute_CSV = 2;
 
 	//push_back parameter information to s_output_vecvec
 	GR_addToOutputString_Parameter(s_output_vecvec, parameter_vec);
@@ -3281,10 +3319,17 @@ void CPointcloudFunction::GR_FPFH_optimizeParameter(string dir_, vector<float> p
 			correspondences.resize(nr_valid_correspondences);
 			//cout << "correspondences size = " << nr_valid_correspondences << endl;
 		}
-		//cacl error
+		//calc error
 		vector<float> error_fpfh_vec;
 		float median_;
 		error_fpfh_vec = CKataokaPCL::getErrorOfFPFHSource_corr(median_, correspondences, fpfh_src, fpfh_tgt);
+
+		//calc variance
+		vector<float> variance_vec;
+		variance_vec = CKataokaPCL::getFPFHVariance(fpfh_src);
+		cout << "calc variance" << endl;
+		for (int i = 0; i < variance_vec.size(); i++)
+			cout << "i:" << i << " " << variance_vec[i] << endl;
 
 		//change color
 		for (int i = 0; i < correspondences.size(); i++)
@@ -3625,3 +3670,107 @@ void CPointcloudFunction::GR_ajustParameter(vector<float> &parameter_vec)
 	}
 }
 
+void CPointcloudFunction::DoOutlierRejector()
+{
+	string dir_;
+	dir_ = "../../data";
+	vector<string> dir_folder_vec;
+	FileProcess_FolderInFolder(dir_, dir_folder_vec);
+
+	int i_select;
+	cout << "select folder (index) ->";
+	cin >> i_select;
+	cout << i_select << "(" << dir_folder_vec[i_select] << ")" << endl;
+	dir_ = dir_ + "/" + dir_folder_vec[i_select];
+	cout << endl;
+
+	//typedef typename pcl::PointXYZI PointType_func;
+	typedef typename pcl::PointXYZRGB PointType_func;
+
+	bool b_plane = false;
+	//b_plane = true;
+
+	CPointVisualization<PointType_func> pv;
+	if (typeid(PointType_func) == typeid(pcl::PointXYZI))
+		pv.setWindowName("show XYZI");
+	else if (typeid(PointType_func) == typeid(pcl::PointXYZRGB))
+		pv.setWindowName("show XYZRGB");
+	else
+		throw std::runtime_error("This PointType is unsupported.");
+
+	vector<string> filenames_;
+	CTimeString::getFileNames_extension(dir_, filenames_, ".pcd");
+	cout << "file size: " << filenames_.size() << endl;
+
+	if (filenames_.size() == 0)
+	{
+		cout << "ERROR: no file found" << endl;
+		return;
+	}
+
+	vector< pcl::PointCloud<PointType_func>::Ptr> cloud_vec;
+
+	pcl::PointCloud<PointType_func>::Ptr cloud_(new pcl::PointCloud<PointType_func>());
+	pcl::PointCloud<PointType_func>::Ptr cloud_temp(new pcl::PointCloud<PointType_func>());
+
+	//parameter of outlier rejector
+	float Tolerance_out;
+	int MinClusterSize_out;
+	Tolerance_out = 1.;
+	MinClusterSize_out = 100;
+	int Meank_out;
+	float StddevMulThresh_out;
+	Meank_out = 50;
+	StddevMulThresh_out = 0.1;
+
+	int index_ = 0;
+	cout << "Press space to next" << endl;
+	while (1)
+	{
+		//short key_num = GetAsyncKeyState(VK_SPACE);
+		if ((GetAsyncKeyState(VK_SPACE) & 1) == 1)
+		{
+			if (index_ >= 2 * (filenames_.size()))
+			{
+				cout << "index over" << endl;
+				break;
+			}
+
+			if (index_ % 2 == 0)
+			{
+				int index_temp = (int)(index_ / 2);
+				//read file
+				cout << "index_: " << index_temp << endl;
+				pcl::io::loadPCDFile(dir_ + "/" + filenames_[index_temp], *cloud_);
+				cout << "showing:" << filenames_[index_temp] << " size:" << cloud_->size() << endl;
+			}
+			else
+			{
+				//use outlier rejector
+				cout << "use outlier rejector" << endl;
+				//CKataokaPCL::rejectOutlier(cloud_, cloud_, Tolerance_out, MinClusterSize_out);
+				CKataokaPCL::Remove_outliers(cloud_, cloud_, Meank_out, StddevMulThresh_out);
+			}
+
+			//remove ground plane
+			if (cloud_->size() != 0 && b_plane)
+			{
+				detectPlane<PointType_func>(*cloud_, 0.05, true, true);	//velo
+				//detectPlane<PointType_func>(*cloud_, 0.01, true, true);	//nir
+			}
+			pv.setPointCloud(cloud_);
+			index_++;
+		}
+
+		//escape
+		//short key_num_esc = GetAsyncKeyState(VK_ESCAPE);
+		if ((GetAsyncKeyState(VK_ESCAPE) & 1) == 1) {
+			cout << "toggled!" << endl;
+			break;
+		}
+		pv.updateViewer();
+	}
+
+	pv.closeViewer();
+
+}

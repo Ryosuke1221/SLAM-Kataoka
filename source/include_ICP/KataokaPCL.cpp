@@ -2264,3 +2264,67 @@ vector<float> CKataokaPCL::getErrorOfFPFHSource_corr(float &median_arg, pcl::Cor
 
 	return error_vec;
 }
+
+vector<float> CKataokaPCL::getFPFHVariance(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_)
+{
+	vector<float> fpfh_hist_mean;
+	fpfh_hist_mean.resize(sizeof(fpfh_->points[0].histogram));
+	fill(fpfh_hist_mean.begin(), fpfh_hist_mean.end(), 0.);
+	int num_nan = 0;
+	vector<bool> b_isnan_vec;
+
+	for (int j = 0; j < fpfh_->size(); j++)
+	{
+		bool b_has_nan = false;
+		vector<float> fpfh_hist_mean_temp;
+		for (int i = 0; i < fpfh_hist_mean.size(); i++)
+		{
+			//remove nan
+			if (isnan(fpfh_->points[j].histogram[i]) || fpfh_->points[j].histogram[i] > 100. || fpfh_->points[j].histogram[i] < 0)
+			{
+				num_nan++;
+				b_has_nan = true;
+				cout << "nan occored in j;" << j << " i:" << i << endl;
+				break;
+			}
+			else
+				//fpfh_hist_mean[i] += fpfh_->points[j].histogram[i];
+				fpfh_hist_mean_temp.push_back(fpfh_->points[j].histogram[i]);
+		}
+		if (b_has_nan)
+		{
+			b_isnan_vec.push_back(true);
+			continue;
+		}
+		else
+		{
+			for (int i = 0; i < fpfh_hist_mean.size(); i++)
+				fpfh_hist_mean[i] += fpfh_hist_mean_temp[i];
+			b_isnan_vec.push_back(false);
+		}
+	}
+	cout << "num_nan:" << num_nan << endl;
+
+	int num_valid_points = 0;
+	for (int j = 0; j < b_isnan_vec.size(); j++)
+		if (!b_isnan_vec[j]) num_valid_points++;
+
+	for (int i = 0; i < fpfh_hist_mean.size(); i++)
+		fpfh_hist_mean[i] /= num_valid_points;
+
+	vector<float> fpfh_hist_SquaredError;
+	fpfh_hist_SquaredError.resize(sizeof(fpfh_->points[0].histogram));
+	fill(fpfh_hist_SquaredError.begin(), fpfh_hist_SquaredError.end(), 0.);
+
+	for (int j = 0; j < fpfh_->size(); j++)
+	{
+		if (b_isnan_vec[j]) continue;
+		for (int i = 0; i < fpfh_hist_mean.size(); i++)
+			fpfh_hist_SquaredError[i] += pow(fpfh_->points[j].histogram[i] - fpfh_hist_mean[i], 2.);
+	}
+
+	for (int i = 0; i < fpfh_hist_SquaredError.size(); i++)
+		fpfh_hist_SquaredError[i] /= num_valid_points;
+
+	return fpfh_hist_SquaredError;
+}
