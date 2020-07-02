@@ -470,3 +470,84 @@ vector<string> CTimeString::inputSomeString()
 	return s_vec;
 }
 
+void CTimeString::changeParameter(vector<float> &parameter_vec, vector<string> name_vec)
+{
+	if(parameter_vec.size() != parameter_vec.size()) 
+	{
+		throw std::runtime_error("ERROR(CTimeString::changeParameter): vector size is different");
+	}
+
+	//count longest string
+	int size_string_longest = 0;
+	for (int i = 0; i < name_vec.size(); i++)
+	{
+		if (size_string_longest < name_vec[i].size()) size_string_longest = name_vec[i].size();
+	}
+
+	//show parameter
+	cout << "Parameter list" << endl;
+	for (int i = 0; i < name_vec.size(); i++)
+	{
+		string s_show = name_vec[i];
+		s_show += ":";
+		while (1)
+		{
+			if (s_show.size() < size_string_longest + 1) s_show += " ";
+			else break;
+		}
+		cout << i << ": " << s_show << "  " << parameter_vec[i] << endl;
+	}
+
+	//change parameter
+	bool b_parameter_changed = false;
+	while (1)
+	{
+
+		int i_change = -1;
+		cout << "select parameters to change  (ESCAPE by typing single 0 with no value )" << endl;
+		cout << "->XX(parameter index) YY(value)" << endl;
+		vector<string> s_input_vec;
+		s_input_vec.clear();
+		s_input_vec = CTimeString::inputSomeString();
+		cout << "s_input_vec.size():" << s_input_vec.size() << endl;
+
+		if (!(s_input_vec.size() == 1 || s_input_vec.size() == 2)) continue;
+
+		if (s_input_vec.size() == 1)
+		{
+			if (stoi(s_input_vec[0]) == 0) break;
+			else continue;
+		}
+
+		//s_input_vec.size() == 2
+		i_change = stoi(s_input_vec[0]);
+		if (!(0 <= i_change && i_change < name_vec.size() - 1)) continue;
+
+		float value_ = stof(s_input_vec[1]);
+		b_parameter_changed = true;
+
+		//change value
+		parameter_vec[i_change] = value_;
+		cout << name_vec[i_change] << ": " << parameter_vec[i_change] << endl;
+		cout << "parameter changed" << endl;
+		cout << endl;
+	}
+
+	if (b_parameter_changed)
+	{
+		cout << endl;
+		cout << "Parameter list (new)" << endl;
+		for (int i = 0; i < name_vec.size(); i++)
+		{
+			string s_show = name_vec[i];
+			s_show += ":";
+			while (1)
+			{
+				if (s_show.size() < size_string_longest + 1) s_show += " ";
+				else break;
+			}
+			cout << i << ": " << s_show << "  " << parameter_vec[i] << endl;
+		}
+	}
+
+}

@@ -162,11 +162,9 @@ public:
 	void GlobalRegistration_FPFH_SAC_IA();
 	void GR_FPFH_SAC_IA_2frames(string dir_, vector<float> parameter_vec);
 	void GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> parameter_vec);
-	void GR_addToOutputString_Parameter(vector<vector<string>> &s_output_vecvec, vector<float> parameter_vec);
 	void GR_addToOutputString_OutputHeader(vector<vector<string>> &s_output_vecvec);
 	void GR_FPFH_SelectPoint(string dir_, vector<float> parameter_vec);
 	void GR_FPFH_optimizeParameter(string dir_, vector<float> parameter_vec);
 	void GR_FPFH_optimizeParameter_AllFrames(string dir_, vector<float> parameter_vec);
-	void GR_ajustParameter(vector<float> &parameter_vec);
 	void DoOutlierRejector();
 };

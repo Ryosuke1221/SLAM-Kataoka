@@ -70,6 +70,7 @@ public:
 	static void makenewfolder(string dir, string newfoldername);//relative path
 
 	static vector<string> inputSomeString();
+	static void changeParameter(vector<float> &parameter_vec, vector<string> name_vec);
 
 	template<typename T>
 	static vector<vector<T>> getMatrixCSVFromVecVec(vector<vector<T>> saved_data_vec_vec)
