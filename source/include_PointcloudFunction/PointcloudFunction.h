@@ -161,10 +161,12 @@ public:
 	void DoSegmentation();
 	void GlobalRegistration_FPFH_SAC_IA();
 	void GR_FPFH_SAC_IA_2frames(string dir_, vector<float> parameter_vec);
-	void GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> parameter_vec);
+	void GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> parameter_vec, bool b_changeParameter = true);
 	void GR_addToOutputString_OutputHeader(vector<vector<string>> &s_output_vecvec);
 	void GR_FPFH_SelectPoint(string dir_, vector<float> parameter_vec);
-	void GR_FPFH_optimizeParameter(string dir_, vector<float> parameter_vec);
-	void GR_FPFH_optimizeParameter_AllFrames(string dir_, vector<float> parameter_vec);
+	void GR_FPFH_error(string dir_, vector<float> parameter_vec);
+	void GR_FPFH_error_AllFrames(string dir_, vector<float> parameter_vec, bool b_changeParameter = true);
+	void GR_FPFH_variance_AllFrames(string dir_, vector<float> parameter_vec, bool b_changeParameter = true);
+	void GR_FPFH_varyParameter(string dir_, vector<float> parameter_vec_arg);
 	void DoOutlierRejector();
 };

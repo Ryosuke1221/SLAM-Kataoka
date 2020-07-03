@@ -2200,6 +2200,8 @@ vector<float> CKataokaPCL::getErrorOfFPFHSource_corr(float &median_arg, pcl::Cor
 	error_vec.resize(fpfh_src->size());
 	fill(error_vec.begin(), error_vec.end(), 100000.);
 
+	bool b_cout = false;
+
 	int num_nan = 0;
 
 	for (int j = 0; j < correspondences.size(); j++)
@@ -2220,7 +2222,7 @@ vector<float> CKataokaPCL::getErrorOfFPFHSource_corr(float &median_arg, pcl::Cor
 				b_nan = true;
 				num_nan++;
 				cout << "j:" << j << " i:" << i << " nan occored" << endl;
-				cout << "correspondences.size():" << correspondences.size() << endl;
+				//cout << "correspondences.size():" << correspondences.size() << endl;
 				//cout << "sizeof(fpfh_src->points[i_src].histogram):" << sizeof(fpfh_src->points[i_src].histogram) << endl;
 				//cout << "sizeof(fpfh_tgt->points[i_tgt].histogram):" << sizeof(fpfh_tgt->points[i_tgt].histogram) << endl;
 				//cout << "i_src:" << i_src << " i_tgt:" << i_tgt << endl;
@@ -2238,10 +2240,10 @@ vector<float> CKataokaPCL::getErrorOfFPFHSource_corr(float &median_arg, pcl::Cor
 
 		error_vec[j] = error_squared;	//value or 100000.(init) or 10000.(invalid)
 	}
-	if (num_nan != 0) cout << "num_nan:" << num_nan << endl;
+	if (b_cout) if (num_nan != 0) cout << "num_nan:" << num_nan << endl;
 
 	//show inlier rate
-	cout << "inlier rate:" << (float)correspondences.size() / (float)fpfh_src->size() << endl;
+	if(b_cout) cout << "inlier rate:" << (float)correspondences.size() / (float)fpfh_src->size() << endl;
 
 	//show median
 	//float median_;
@@ -2260,7 +2262,7 @@ vector<float> CKataokaPCL::getErrorOfFPFHSource_corr(float &median_arg, pcl::Cor
 		median_arg = distance_vec[(size - 1) / 2];
 	else
 		median_arg = (distance_vec[(size / 2) - 1] + distance_vec[size / 2]) / 2.;
-	cout << "fpfh error median_arg:" << median_arg << endl;
+	if (b_cout) cout << "fpfh error median_arg:" << median_arg << endl;
 
 	return error_vec;
 }
@@ -2273,6 +2275,8 @@ vector<float> CKataokaPCL::getFPFHVariance(pcl::PointCloud<pcl::FPFHSignature33>
 	int num_nan = 0;
 	vector<bool> b_isnan_vec;
 
+	bool b_cout = false;
+
 	for (int j = 0; j < fpfh_->size(); j++)
 	{
 		bool b_has_nan = false;
@@ -2284,7 +2288,7 @@ vector<float> CKataokaPCL::getFPFHVariance(pcl::PointCloud<pcl::FPFHSignature33>
 			{
 				num_nan++;
 				b_has_nan = true;
-				cout << "nan occored in j;" << j << " i:" << i << endl;
+				if(b_cout) cout << "nan occored in j;" << j << " i:" << i << endl;
 				break;
 			}
 			else
@@ -2303,7 +2307,7 @@ vector<float> CKataokaPCL::getFPFHVariance(pcl::PointCloud<pcl::FPFHSignature33>
 			b_isnan_vec.push_back(false);
 		}
 	}
-	cout << "num_nan:" << num_nan << endl;
+	if(b_cout) cout << "num_nan:" << num_nan << endl;
 
 	int num_valid_points = 0;
 	for (int j = 0; j < b_isnan_vec.size(); j++)

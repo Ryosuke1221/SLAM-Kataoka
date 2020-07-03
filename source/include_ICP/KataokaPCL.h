@@ -329,7 +329,7 @@ public:
 				correspondences[nr_valid_correspondences++] = corr;
 			}
 			correspondences.resize(nr_valid_correspondences);
-			cout << "correspondences size = " << nr_valid_correspondences << endl;
+			//cout << "correspondences size = " << nr_valid_correspondences << endl;
 		}
 		//call median function
 		return getCorrMedianDistance(correspondences);

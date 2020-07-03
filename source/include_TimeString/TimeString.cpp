@@ -470,6 +470,37 @@ vector<string> CTimeString::inputSomeString()
 	return s_vec;
 }
 
+void CTimeString::showParameter(vector<float> parameter_vec, vector<string> name_vec, int i_frame_show)
+{
+	if (i_frame_show == -1) i_frame_show = name_vec.size() - 1;
+
+	if (parameter_vec.size() != parameter_vec.size())
+	{
+		throw std::runtime_error("ERROR(CTimeString::changeParameter): vector size is different");
+	}
+
+	//count longest string
+	int size_string_longest = 0;
+	for (int i = 0; i < name_vec.size(); i++)
+	{
+		if (size_string_longest < name_vec[i].size()) size_string_longest = name_vec[i].size();
+	}
+
+	//show parameter
+	for (int i = 0; i < i_frame_show + 1; i++)
+	{
+		string s_show = name_vec[i];
+		s_show += ":";
+		while (1)
+		{
+			if (s_show.size() < size_string_longest + 1) s_show += " ";
+			else break;
+		}
+		cout << i << ": " << s_show << "  " << parameter_vec[i] << endl;
+	}
+
+}
+
 void CTimeString::changeParameter(vector<float> &parameter_vec, vector<string> name_vec)
 {
 	if(parameter_vec.size() != parameter_vec.size()) 
@@ -486,17 +517,7 @@ void CTimeString::changeParameter(vector<float> &parameter_vec, vector<string> n
 
 	//show parameter
 	cout << "Parameter list" << endl;
-	for (int i = 0; i < name_vec.size(); i++)
-	{
-		string s_show = name_vec[i];
-		s_show += ":";
-		while (1)
-		{
-			if (s_show.size() < size_string_longest + 1) s_show += " ";
-			else break;
-		}
-		cout << i << ": " << s_show << "  " << parameter_vec[i] << endl;
-	}
+	showParameter(parameter_vec, name_vec);
 
 	//change parameter
 	bool b_parameter_changed = false;
@@ -537,17 +558,25 @@ void CTimeString::changeParameter(vector<float> &parameter_vec, vector<string> n
 	{
 		cout << endl;
 		cout << "Parameter list (new)" << endl;
-		for (int i = 0; i < name_vec.size(); i++)
-		{
-			string s_show = name_vec[i];
-			s_show += ":";
-			while (1)
-			{
-				if (s_show.size() < size_string_longest + 1) s_show += " ";
-				else break;
-			}
-			cout << i << ": " << s_show << "  " << parameter_vec[i] << endl;
-		}
+		showParameter(parameter_vec, name_vec);
 	}
 
 }
+
+//void CTimeString::changeParameter(vector<float> &parameter_vec, vector<string> name_vec, string filename_,
+//	int row_small, int row_big, int col_small, int col_big)
+//{
+//	cout << "press 1 and Enter if you have closed file" << endl;
+//	{
+//		int aa;
+//		cin >> aa;
+//	}
+//	vector<vector<string>> s_vec_vec;
+//	{
+//		vector<vector<string>> s_vec_vec_temp;
+//		s_vec_vec = getVecVecFromCSV_string(filename_);
+//
+//	}
+//
+//
+//}

@@ -2182,7 +2182,7 @@ void CPointcloudFunction::GlobalRegistration_FPFH_SAC_IA()
 	//radius_normal_FPFH = voxel_size * 2.0;
 	radius_normal_FPFH = 0.5;
 	//radius_FPFH = voxel_size * 5.0;
-	radius_FPFH = 2.;
+	radius_FPFH = 1.;
 
 	float MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC, InlierFraction_SAC;
 	//MaxCorrespondenceDistance_SAC = voxel_size * 2.5;
@@ -2231,6 +2231,8 @@ void CPointcloudFunction::GlobalRegistration_FPFH_SAC_IA()
 	cout << "4: watch points selected by FPFH with some radius" << endl;
 	cout << "5: output error of fpfh value (2 frames)" << endl;
 	cout << "6: output error of fpfh value (all frames)" << endl;
+	cout << "7: output show FPFH variance (all frames)" << endl;
+	cout << "8: vary parameter by some patterns (all frames)" << endl;
 	cout << "select ->";
 	cin >> i_method;
 
@@ -2373,10 +2375,13 @@ void CPointcloudFunction::GlobalRegistration_FPFH_SAC_IA()
 	else if (i_method == 4)
 		GR_FPFH_SelectPoint(dir_, parameter_vec);
 	else if (i_method == 5)
-		GR_FPFH_optimizeParameter(dir_, parameter_vec);
+		GR_FPFH_error(dir_, parameter_vec);
 	else if (i_method == 6)
-		GR_FPFH_optimizeParameter_AllFrames(dir_, parameter_vec);
-
+		GR_FPFH_error_AllFrames(dir_, parameter_vec);
+	else if (i_method == 7)
+		GR_FPFH_variance_AllFrames(dir_, parameter_vec);
+	else if (i_method == 8)
+		GR_FPFH_varyParameter(dir_, parameter_vec);
 
 	return;
 }
@@ -2555,7 +2560,7 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_2frames(string dir_, vector<float> para
 	cout << "escaped" << endl;
 }
 
-void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> parameter_vec)
+void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> parameter_vec, bool b_changeParameter)
 {
 	//typedef pcl::PointXYZ T_PointType;
 	typedef pcl::PointXYZRGB T_PointType;
@@ -2616,7 +2621,8 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> pa
 	vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> fpfh_vec;
 	vector<vector<string>> s_output_vecvec;
 
-	CTimeString::changeParameter(parameter_vec, name_parameter_vec);
+	if(b_changeParameter)
+		CTimeString::changeParameter(parameter_vec, name_parameter_vec);
 
 	//parameter
 	float voxel_size;
@@ -2670,9 +2676,9 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> pa
 	GR_addToOutputString_OutputHeader(s_output_vecvec);
 
 	int i_tgt_start = 0;
-	cout << "select first tgt frame" << endl;
-	cout << "i_tgt_start ->";
-	cin >> i_tgt_start;
+	//cout << "select first tgt frame" << endl;
+	//cout << "i_tgt_start ->";
+	//cin >> i_tgt_start;
 
 	if (!(0 <= i_tgt_start && i_tgt_start <= filenames_.size() - 2))
 	{
@@ -2797,10 +2803,12 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> pa
 				}
 				if (cloud_src->size() != 0) distance_ /= cloud_src->size();
 				else distance_ = 100.;
+				cout << "distance_:" << distance_ << endl;
 			}
 
 			//median
 			double median_ = CKataokaPCL::getMedianDistance(cloud_src, cloud_tgt);
+			cout << "median_:" << median_ << endl;
 
 			//add for saving
 			*cloud_tgt += *cloud_src;
@@ -2869,6 +2877,9 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> pa
 
 			cout << endl;
 		}
+		cout << "Parameter list" << endl;
+		if (!b_changeParameter) CTimeString::showParameter(parameter_vec, name_parameter_vec);
+		cout << endl;
 	}
 
 	string time_end = CTimeString::getTimeString();
@@ -3095,7 +3106,7 @@ void CPointcloudFunction::GR_FPFH_SelectPoint(string dir_, vector<float> paramet
 	cout << "escaped" << endl;
 }
 
-void CPointcloudFunction::GR_FPFH_optimizeParameter(string dir_, vector<float> parameter_vec)
+void CPointcloudFunction::GR_FPFH_error(string dir_, vector<float> parameter_vec)
 {
 	//typedef pcl::PointXYZ T_PointType;
 	typedef pcl::PointXYZRGB T_PointType;
@@ -3289,12 +3300,12 @@ void CPointcloudFunction::GR_FPFH_optimizeParameter(string dir_, vector<float> p
 		float median_;
 		error_fpfh_vec = CKataokaPCL::getErrorOfFPFHSource_corr(median_, correspondences, fpfh_src, fpfh_tgt);
 
-		//calc variance
-		vector<float> variance_vec;
-		variance_vec = CKataokaPCL::getFPFHVariance(fpfh_src);
-		cout << "calc variance" << endl;
-		for (int i = 0; i < variance_vec.size(); i++)
-			cout << "i:" << i << " " << variance_vec[i] << endl;
+		////calc variance
+		//vector<float> variance_vec;
+		//variance_vec = CKataokaPCL::getFPFHVariance(fpfh_src);
+		//cout << "calc variance" << endl;
+		//for (int i = 0; i < variance_vec.size(); i++)
+		//	cout << "i:" << i << " " << variance_vec[i] << endl;
 
 		//change color
 		for (int i = 0; i < correspondences.size(); i++)
@@ -3349,7 +3360,7 @@ void CPointcloudFunction::GR_FPFH_optimizeParameter(string dir_, vector<float> p
 	cout << "escaped" << endl;
 }
 
-void CPointcloudFunction::GR_FPFH_optimizeParameter_AllFrames(string dir_, vector<float> parameter_vec)
+void CPointcloudFunction::GR_FPFH_error_AllFrames(string dir_, vector<float> parameter_vec, bool b_changeParameter)
 {
 	//typedef pcl::PointXYZ T_PointType;
 	typedef pcl::PointXYZRGB T_PointType;
@@ -3375,7 +3386,8 @@ void CPointcloudFunction::GR_FPFH_optimizeParameter_AllFrames(string dir_, vecto
 	vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec;
 	vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> fpfh_vec;
 
-	CTimeString::changeParameter(parameter_vec, name_parameter_vec);
+	if(b_changeParameter)
+		CTimeString::changeParameter(parameter_vec, name_parameter_vec);
 
 	//parameter
 	float voxel_size;
@@ -3387,8 +3399,6 @@ void CPointcloudFunction::GR_FPFH_optimizeParameter_AllFrames(string dir_, vecto
 
 	float MaxCorrespondenceDistance_SAC;
 	MaxCorrespondenceDistance_SAC = parameter_vec[3];
-
-	cout << "calculation start" << endl;
 
 	for (int i = 0; i < filenames_.size(); i++)
 	{
@@ -3442,7 +3452,7 @@ void CPointcloudFunction::GR_FPFH_optimizeParameter_AllFrames(string dir_, vecto
 	{
 		for (int i_src = i_tgt + 1; i_src < cloud_vec.size(); i_src++)
 		{
-			cout << "i_tgt:" << i_tgt << " i_src:" << i_src << endl;
+			if(b_changeParameter) cout << "i_tgt:" << i_tgt << " i_src:" << i_src << endl;
 
 			pcl::PointCloud<T_PointType>::Ptr cloud_tgt(new pcl::PointCloud<T_PointType>());
 			pcl::PointCloud<T_PointType>::Ptr cloud_src(new pcl::PointCloud<T_PointType>());
@@ -3508,10 +3518,11 @@ void CPointcloudFunction::GR_FPFH_optimizeParameter_AllFrames(string dir_, vecto
 	//show parameter
 	cout << "output" << endl;
 	cout << "Parameter list" << endl;
-	cout << "0: voxel_size:                     " << voxel_size << endl;
-	cout << "1: radius_normal_FPFH:             " << radius_normal_FPFH << endl;
-	cout << "2: radius_FPFH:                    " << radius_FPFH << endl;
-	cout << "3: MaxCorrespondenceDistance_SAC:  " << MaxCorrespondenceDistance_SAC << endl;
+	CTimeString::showParameter(parameter_vec, name_parameter_vec, 3);
+	//cout << "0: voxel_size:                     " << voxel_size << endl;
+	//cout << "1: radius_normal_FPFH:             " << radius_normal_FPFH << endl;
+	//cout << "2: radius_FPFH:                    " << radius_FPFH << endl;
+	//cout << "3: MaxCorrespondenceDistance_SAC:  " << MaxCorrespondenceDistance_SAC << endl;
 	
 	//result mean and median
 	double mean_result = 0.;
@@ -3631,4 +3642,241 @@ void CPointcloudFunction::DoOutlierRejector()
 
 	pv.closeViewer();
 
+}
+
+void CPointcloudFunction::GR_FPFH_variance_AllFrames(string dir_, vector<float> parameter_vec, bool b_changeParameter)
+{
+	//typedef pcl::PointXYZ T_PointType;
+	typedef pcl::PointXYZRGB T_PointType;
+
+	vector<string> name_parameter_vec;
+	name_parameter_vec.push_back("voxel_size");
+	name_parameter_vec.push_back("radius_normal_FPFH");
+	name_parameter_vec.push_back("radius_FPFH");
+	name_parameter_vec.push_back("MaxCorrespondenceDistance_SAC");
+	name_parameter_vec.push_back("SimilarityThreshold_SAC");
+	name_parameter_vec.push_back("InlierFraction_SAC");
+	name_parameter_vec.push_back("MaximumIterations_SAC");
+	name_parameter_vec.push_back("NumberOfSamples_SAC");
+	name_parameter_vec.push_back("CorrespondenceRandomness_SAC");
+	name_parameter_vec.push_back("max_RANSAC");
+
+	vector<string> filenames_;
+	CTimeString::getFileNames_extension(dir_, filenames_, ".pcd");
+
+	if (b_changeParameter)
+		CTimeString::changeParameter(parameter_vec, name_parameter_vec);
+
+	//parameter
+	float voxel_size;
+	voxel_size = parameter_vec[0];
+
+	float radius_normal_FPFH, radius_FPFH;
+	radius_normal_FPFH = parameter_vec[1];
+	radius_FPFH = parameter_vec[2];
+
+	float MaxCorrespondenceDistance_SAC;
+	MaxCorrespondenceDistance_SAC = parameter_vec[3];
+
+	vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec;
+	for (int i = 0; i < filenames_.size(); i++)
+	{
+		pcl::PointCloud<T_PointType>::Ptr cloud(new pcl::PointCloud<T_PointType>());
+		pcl::io::loadPCDFile(dir_ + "/" + filenames_[i], *cloud);
+		cloud->is_dense = true;
+		cloud_vec.push_back(cloud);
+	}
+
+	vector<vector<float>> variance_vec_vec;
+
+	for (int j = 0; j < filenames_.size(); j++)
+	{
+		//if (b_changeParameter) cout << "frame:" << j << endl;
+		cout << "frame:" << j << endl;
+		pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
+		{
+			const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
+			sor->setLeafSize(voxel_size, voxel_size, voxel_size);
+			sor->setInputCloud(cloud_vec[j]);
+			sor->filter(*cloud_VGF);
+		}
+
+		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_(new pcl::PointCloud<pcl::FPFHSignature33>);
+		fpfh_ = CKataokaPCL::computeFPFH<T_PointType>(cloud_VGF, cloud_vec[j], radius_normal_FPFH, radius_FPFH);
+
+		//calc variance
+		vector<float> variance_vec;
+		variance_vec = CKataokaPCL::getFPFHVariance(fpfh_);
+		variance_vec_vec.push_back(variance_vec);
+	}
+
+	vector<float> variance_vec_allFrame;
+	variance_vec_allFrame.resize(variance_vec_vec[0].size());
+	fill(variance_vec_allFrame.begin(), variance_vec_allFrame.end(), 0.);
+	for (int j = 0; j < variance_vec_vec.size(); j++)
+	{
+		for (int i = 0; i < variance_vec_vec[j].size(); i++)
+			variance_vec_allFrame[i] += variance_vec_vec[j][i];
+	}
+
+	for (int i = 0; i < variance_vec_allFrame.size(); i++)
+		variance_vec_allFrame[i] /= (float)variance_vec_vec.size();
+
+	//cout << endl;
+	//for (int i = 0; i < variance_vec_allFrame.size(); i++)
+	//	cout << "i:" << i << " " << variance_vec_allFrame[i] << endl;
+	//cout << endl;
+
+	cout << "for compare" << endl;
+	CTimeString::showParameter(parameter_vec, name_parameter_vec, 2);
+	cout << endl;
+	cout << "show FPFH variance by histogram" << endl;
+	for (int i = 0; i < variance_vec_allFrame.size(); i++)
+		cout << variance_vec_allFrame[i] << endl;
+
+	cout << endl;
+}
+
+void CPointcloudFunction::GR_FPFH_varyParameter(string dir_, vector<float> parameter_vec_arg)
+{
+	vector<string> name_parameter_vec;
+	name_parameter_vec.push_back("voxel_size");
+	name_parameter_vec.push_back("radius_normal_FPFH");
+	name_parameter_vec.push_back("radius_FPFH");
+	name_parameter_vec.push_back("MaxCorrespondenceDistance_SAC");
+	name_parameter_vec.push_back("SimilarityThreshold_SAC");
+	name_parameter_vec.push_back("InlierFraction_SAC");
+	name_parameter_vec.push_back("MaximumIterations_SAC");
+	name_parameter_vec.push_back("NumberOfSamples_SAC");
+	name_parameter_vec.push_back("CorrespondenceRandomness_SAC");
+	name_parameter_vec.push_back("max_RANSAC");
+
+	cout << "0: registration of all frames and output files(.csv and .pcd)" << endl;
+	cout << "1: output error of fpfh value (all frames)" << endl;
+	cout << "2: output show FPFH variance (all frames)" << endl;
+
+	int i_method;
+	cin >> i_method;
+
+	//show parameter
+	cout << "Parameter list" << endl;
+	CTimeString::showParameter(parameter_vec_arg, name_parameter_vec);
+
+	//input parameter
+	vector<vector<float>> parameter_vec_vec;
+	parameter_vec_vec.resize(parameter_vec_arg.size());
+
+	while (1)
+	{
+		int i_change = -1;
+		cout << "input parameters to change  (ESCAPE by typing single 0 with no value )" << endl;
+		cout << "->XX(parameter index) AA(value) BB(value) CC(value) ..." << endl;
+		vector<string> s_input_vec;
+		s_input_vec.clear();
+		s_input_vec = CTimeString::inputSomeString();
+		cout << "s_input_vec.size():" << s_input_vec.size() << endl;
+
+		if (s_input_vec.size() == 1)
+		{
+			if (stoi(s_input_vec[0]) == 0) break;
+			else continue;
+		}
+
+		i_change = stoi(s_input_vec[0]);
+		if (!(0 <= i_change && i_change < name_parameter_vec.size())) continue;
+
+		vector<float> value_vec;
+		for (int j = 1; j < s_input_vec.size(); j++)
+			value_vec.push_back(stof(s_input_vec[j]));
+
+		cout << "value_vec" << endl;
+		for (int i = 0; i < value_vec.size(); i++)
+			cout << "i:" << i << " " << value_vec[i] << endl;
+
+		//change value
+		cout << "parameter inputed" << endl;
+		parameter_vec_vec[i_change] = value_vec;
+		cout << name_parameter_vec[i_change] << ": ";
+		for (int j = 0; j < parameter_vec_vec[i_change].size(); j++)
+			cout << parameter_vec_vec[i_change][j] << " ";
+		cout << endl;
+	}
+
+	//fill blank parameter
+	for (int j = 0; j < parameter_vec_vec.size(); j++)
+	{
+		if (parameter_vec_vec[j].size() == 0)
+			parameter_vec_vec[j].push_back(parameter_vec_arg[j]);
+	}
+
+	//cout << "parameter_vec_vec" << endl;
+	//for (int j = 0; j < parameter_vec_vec.size(); j++)
+	//{
+	//	//cout << "j:" << j << " ";
+	//	for (int i = 0; i < parameter_vec_vec[j].size(); i++)
+	//	{
+	//		cout << parameter_vec_vec[j][i] << " ";
+	//	}
+	//	cout << endl;
+	//}
+	//cout << endl;
+
+	//make pattern_vec_vec
+	vector<vector<float>> pattern_vec_vec;
+	int num_pattern;
+	num_pattern = 1;
+	for (int j = 0; j < parameter_vec_vec.size(); j++)
+		num_pattern *= parameter_vec_vec[j].size();
+	pattern_vec_vec.resize(num_pattern);
+	for (int j = 0; j < num_pattern; j++)
+		pattern_vec_vec[j].resize(parameter_vec_vec.size());
+
+	//insert to pattern_vec_vec
+	for (int j = 0; j < num_pattern; j++)
+	{
+		int i_devide = num_pattern;
+		int i_residual = j;
+		for (int i = 0; i < parameter_vec_vec.size(); i++)
+		{
+			int idx;
+			i_devide /= parameter_vec_vec[i].size();
+			idx = i_residual / i_devide;
+			i_residual %= i_devide;
+			pattern_vec_vec[j][i] = parameter_vec_vec[i][idx];
+		}
+	}
+
+	//show pattern
+	for (int j = 0; j < pattern_vec_vec.size(); j++)
+	{
+		cout << "j:" << j << " ";
+		for (int i = 0; i < pattern_vec_vec[j].size(); i++)
+			cout << pattern_vec_vec[j][i] << " ";
+		cout << endl;
+	}
+	cout << endl;
+
+	for (int j = 0; j < pattern_vec_vec.size(); j++)
+	{
+		vector<float> parameter_vec = pattern_vec_vec[j];
+		switch (i_method)
+		{
+		case 0:
+			CTimeString::showParameter(parameter_vec, name_parameter_vec);
+			GR_FPFH_SAC_IA_Allframes(dir_, parameter_vec, false);
+			break;
+		case 1:
+			CTimeString::showParameter(parameter_vec, name_parameter_vec, 3);
+			GR_FPFH_error_AllFrames(dir_, parameter_vec, false);
+			break;
+		case 2:
+			CTimeString::showParameter(parameter_vec, name_parameter_vec);
+			GR_FPFH_variance_AllFrames(dir_, parameter_vec, false);
+			break;
+		default:
+			break;
+		}
+	}
+
+	cout << endl;
 }
