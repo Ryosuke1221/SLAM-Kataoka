@@ -503,17 +503,17 @@ void CTimeString::showParameter(vector<float> parameter_vec, vector<string> name
 
 void CTimeString::changeParameter(vector<float> &parameter_vec, vector<string> name_vec)
 {
-	if(parameter_vec.size() != parameter_vec.size()) 
+	if(parameter_vec.size() != name_vec.size())
 	{
 		throw std::runtime_error("ERROR(CTimeString::changeParameter): vector size is different");
 	}
 
-	//count longest string
-	int size_string_longest = 0;
-	for (int i = 0; i < name_vec.size(); i++)
-	{
-		if (size_string_longest < name_vec[i].size()) size_string_longest = name_vec[i].size();
-	}
+	////count longest string
+	//int size_string_longest = 0;
+	//for (int i = 0; i < name_vec.size(); i++)
+	//{
+	//	if (size_string_longest < name_vec[i].size()) size_string_longest = name_vec[i].size();
+	//}
 
 	//show parameter
 	cout << "Parameter list" << endl;
@@ -563,20 +563,231 @@ void CTimeString::changeParameter(vector<float> &parameter_vec, vector<string> n
 
 }
 
-//void CTimeString::changeParameter(vector<float> &parameter_vec, vector<string> name_vec, string filename_,
-//	int row_small, int row_big, int col_small, int col_big)
-//{
-//	cout << "press 1 and Enter if you have closed file" << endl;
-//	{
-//		int aa;
-//		cin >> aa;
-//	}
-//	vector<vector<string>> s_vec_vec;
-//	{
-//		vector<vector<string>> s_vec_vec_temp;
-//		s_vec_vec = getVecVecFromCSV_string(filename_);
-//
-//	}
-//
-//
-//}
+void CTimeString::changeParameter(vector<float> &parameter_vec, vector<string> name_vec, string filename_,
+	int row_small, int row_big, int col_)
+{
+	cout << "Parameter list" << endl;
+	showParameter(parameter_vec, name_vec);
+
+	cout << "press 1 and Enter if you have closed file" << endl;
+	{
+		int aa;
+		cin >> aa;
+	}
+
+	vector<vector<string>> s_vec_vec_temp;
+	s_vec_vec_temp = getVecVecFromCSV_string(filename_);
+
+	if (!(0 <= row_big && row_big < s_vec_vec_temp.size())) row_big = s_vec_vec_temp.size() - 1;
+	if (!(0 <= row_small && row_small < row_big)) row_small = 0;
+	if (!(0 <= col_ && col_ < s_vec_vec_temp[0].size())) col_ = s_vec_vec_temp[0].size() - 1;
+
+	vector<float> parameter_vec_new;
+	for (int j = row_small; j < row_big + 1; j++)
+	{
+		float value_;
+		if (s_vec_vec_temp[j][col_].size() == 0) value_ = 0.;
+		else value_ = stof(s_vec_vec_temp[j][col_]);
+		parameter_vec_new.push_back(value_);
+	}
+
+	if(parameter_vec.size() != parameter_vec_new.size())
+		throw std::runtime_error("ERROR(CTimeString::changeParameter): parameter size invalid");
+
+	parameter_vec = parameter_vec_new;
+
+	cout << "Parameter list (new)" << endl;
+	showParameter(parameter_vec, name_vec);
+
+}
+
+void CTimeString::changeParameter_2dimension(vector<vector<float>> &parameter_vec_vec, vector<string> name_vec, vector<float> parameter_vec_init)
+{
+
+	if (parameter_vec_init.size() != name_vec.size())
+		throw std::runtime_error("ERROR(CTimeString::changeParameter): vector size is different");
+
+	parameter_vec_vec.clear();
+	parameter_vec_vec.resize(parameter_vec_init.size());
+
+	//show parameter
+	cout << "Parameter list" << endl;
+	CTimeString::showParameter(parameter_vec_init, name_vec);
+
+	while (1)
+	{
+		int i_change = -1;
+		cout << "input parameters to change  (ESCAPE by typing single 0 with no value )" << endl;
+		cout << "->XX(parameter index) AA(value) BB(value) CC(value) ..." << endl;
+		vector<string> s_input_vec;
+		s_input_vec.clear();
+		s_input_vec = CTimeString::inputSomeString();
+		cout << "s_input_vec.size():" << s_input_vec.size() << endl;
+
+		if (s_input_vec.size() == 1)
+		{
+			if (stoi(s_input_vec[0]) == 0) break;
+			else continue;
+		}
+
+		i_change = stoi(s_input_vec[0]);
+		if (!(0 <= i_change && i_change < name_vec.size())) continue;
+
+		vector<float> value_vec;
+		for (int j = 1; j < s_input_vec.size(); j++)
+			value_vec.push_back(stof(s_input_vec[j]));
+
+		cout << "value_vec" << endl;
+		for (int i = 0; i < value_vec.size(); i++)
+			cout << "i:" << i << " " << value_vec[i] << endl;
+
+		//change value
+		cout << "parameter inputed" << endl;
+		parameter_vec_vec[i_change] = value_vec;
+		cout << name_vec[i_change] << ": ";
+		for (int j = 0; j < parameter_vec_vec[i_change].size(); j++)
+			cout << parameter_vec_vec[i_change][j] << " ";
+		cout << endl;
+	}
+
+	//fill blank parameter
+	for (int j = 0; j < parameter_vec_vec.size(); j++)
+	{
+		if (parameter_vec_vec[j].size() == 0)
+			parameter_vec_vec[j].push_back(parameter_vec_init[j]);
+	}
+
+	//count longest string for showing
+	int size_string_longest = 0;
+	for (int i = 0; i < name_vec.size(); i++)
+		if (size_string_longest < name_vec[i].size()) size_string_longest = name_vec[i].size();
+	//show parameter
+	cout << "Parameter list (vector)" << endl;
+	for (int j = 0; j < parameter_vec_vec.size(); j++)
+	{
+		string s_show = name_vec[j];
+		s_show += ":";
+		while (1)
+		{
+			if (s_show.size() < size_string_longest + 1) s_show += " ";
+			else break;
+		}
+		cout << j << ": " << s_show;
+		for (int i = 0; i < parameter_vec_vec[j].size(); i++)
+			cout << "  " << parameter_vec_vec[j][i];
+		cout << endl;
+	}
+	cout << endl;
+
+}
+
+void CTimeString::calcParameterPattern(vector<vector<float>> &pattern_vec_vec, vector<vector<float>> parameter_vec_vec)
+{
+	//make pattern_vec_vec
+	int num_pattern;
+	num_pattern = 1;
+	for (int j = 0; j < parameter_vec_vec.size(); j++)
+		num_pattern *= parameter_vec_vec[j].size();
+	pattern_vec_vec.resize(num_pattern);
+	for (int j = 0; j < num_pattern; j++)
+		pattern_vec_vec[j].resize(parameter_vec_vec.size());
+
+	//insert to pattern_vec_vec
+	for (int j = 0; j < num_pattern; j++)
+	{
+		int i_devide = num_pattern;
+		int i_residual = j;
+		for (int i = 0; i < parameter_vec_vec.size(); i++)
+		{
+			int idx;
+			i_devide /= parameter_vec_vec[i].size();
+			idx = i_residual / i_devide;
+			i_residual %= i_devide;
+			pattern_vec_vec[j][i] = parameter_vec_vec[i][idx];
+		}
+	}
+
+	cout << "show pattern" << endl;
+	for (int j = 0; j < pattern_vec_vec.size(); j++)
+	{
+		cout << j << ":";
+		for (int i = 0; i < pattern_vec_vec[j].size(); i++)
+		{
+			string s_value;
+			s_value = to_string(pattern_vec_vec[j][i]);
+			if (s_value.size() < 4) s_value = " " + s_value;
+			if (s_value.size() < 4) s_value = " " + s_value;
+			if (s_value.size() < 4) s_value = " " + s_value;
+			cout << "  " << s_value;
+
+		}
+		cout << endl;
+	}
+	cout << endl;
+
+}
+
+void CTimeString::changeParameter_2dimension(vector<vector<float>> &parameter_vec_vec, vector<string> name_vec, vector<float> parameter_vec_init,
+	string filename_, int row_small, int col_small, int row_big, int col_big)
+{
+	cout << "Parameter list" << endl;
+	showParameter(parameter_vec_init, name_vec);
+
+	parameter_vec_vec.clear();
+
+	//cout << "press 1 and Enter if you have closed file" << endl;
+	//{
+	//	int aa;
+	//	cin >> aa;
+	//}
+
+	vector<vector<string>> s_vec_vec_temp;
+	s_vec_vec_temp = getVecVecFromCSV_string(filename_);
+
+	if (!(0 <= row_big && row_big < s_vec_vec_temp.size())) row_big = s_vec_vec_temp.size() - 1;
+	if (!(0 <= row_small && row_small < row_big)) row_small = 0;
+	if (!(0 <= col_big && col_big < s_vec_vec_temp[0].size())) col_big = s_vec_vec_temp[0].size() - 1;
+	if (!(0 <= col_small && col_small < col_big)) col_small = 0;
+
+	vector<vector<float>> parameter_vec_vec_new;
+	for (int j = row_small; j < row_big + 1; j++)
+	{
+		vector<float> parameter_vec_new;
+		for (int i = col_small; i < col_big + 1; i++)
+		{
+			float value_;
+			if (s_vec_vec_temp[j][i].size() == 0) continue;
+			else value_ = stof(s_vec_vec_temp[j][i]);
+			parameter_vec_new.push_back(value_);
+		}
+		parameter_vec_vec_new.push_back(parameter_vec_new);
+	}
+
+	if (parameter_vec_init.size() != parameter_vec_vec_new.size())
+		throw std::runtime_error("ERROR(CTimeString::changeParameter): parameter size invalid");
+
+	parameter_vec_vec = parameter_vec_vec_new;
+
+	//count longest string for showing
+	int size_string_longest = 0;
+	for (int i = 0; i < name_vec.size(); i++)
+		if (size_string_longest < name_vec[i].size()) size_string_longest = name_vec[i].size();
+	//show parameter
+	cout << "Parameter list (vector)" << endl;
+	for (int j = 0; j < parameter_vec_vec.size(); j++)
+	{
+		string s_show = name_vec[j];
+		s_show += ":";
+		while (1)
+		{
+			if (s_show.size() < size_string_longest + 1) s_show += " ";
+			else break;
+		}
+		cout << j << ": " << s_show;
+		for (int i = 0; i < parameter_vec_vec[j].size(); i++)
+			cout << "  " << parameter_vec_vec[j][i];
+		cout << endl;
+	}
+	cout << endl;
+
+}

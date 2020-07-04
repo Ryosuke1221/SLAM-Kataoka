@@ -73,7 +73,12 @@ public:
 	static void showParameter(vector<float> parameter_vec, vector<string> name_vec,int i_frame_show = -1);
 	static void changeParameter(vector<float> &parameter_vec, vector<string> name_vec);
 	static void changeParameter(vector<float> &parameter_vec, vector<string> name_vec, string filename_, 
-		int row_small, int row_big, int col_small, int col_big);
+		int row_small, int row_big, int col_);
+	static void changeParameter_2dimension(vector<vector<float>> &parameter_vec_vec, vector<string> name_vec, vector<float> parameter_vec_init);
+	static void changeParameter_2dimension(vector<vector<float>> &parameter_vec_vec, vector<string> name_vec, vector<float> parameter_vec_init,
+		string filename_, int row_small, int col_small, int row_big, int col_big);
+	static void calcParameterPattern(vector<vector<float>> &pattern_vec_vec,vector<vector<float>> parameter_vec_vec);
+
 
 	template<typename T>
 	static vector<vector<T>> getMatrixCSVFromVecVec(vector<vector<T>> saved_data_vec_vec)
