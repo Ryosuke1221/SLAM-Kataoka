@@ -823,3 +823,26 @@ void CTimeString::removeSameParameter(vector<vector<float>> &parameter_vec_vec)
 		parameter_vec_vec[j] = parameter_vec_new;
 	}
 }
+
+void CTimeString::sortStringVector2d(vector<vector<string>> &s_vecvec, int index_arg)
+{
+	vector<pair<int, int>> frame_pair_vec;
+	for (int j = 0; j < s_vecvec.size(); j++)
+		frame_pair_vec.push_back(make_pair(stoi(s_vecvec[j][index_arg]), j));
+	for (int i = 0; i < frame_pair_vec.size(); i++)
+	{
+		for (int j = frame_pair_vec.size() - 1; j > i; j--)
+		{
+			if (frame_pair_vec[j].first < frame_pair_vec[j - 1].first)
+				swap(frame_pair_vec[j], frame_pair_vec[j - 1]);
+		}
+	}
+	vector<vector<string>> s_input_vecvec_new;
+	for (int j = 0; j < frame_pair_vec.size(); j++)
+	{
+		vector<string> s_input_vec_new;
+		s_input_vecvec_new.push_back(s_vecvec[frame_pair_vec[j].second]);
+	}
+	s_vecvec.clear();
+	s_vecvec = s_input_vecvec_new;
+}

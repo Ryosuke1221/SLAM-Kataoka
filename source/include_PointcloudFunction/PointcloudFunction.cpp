@@ -2230,13 +2230,12 @@ void CPointcloudFunction::GlobalRegistration_FPFH_SAC_IA()
 	{
 		cout << "0: registration of 2 frames" << endl;
 		cout << "1: registration of all frames and output files(.csv and .pcd)" << endl;
-		cout << "2: fusion .csv" << endl;
-		cout << "3: output matrix of convergence from _fusion.csv" << endl;
-		cout << "4: watch points selected by FPFH with some radius" << endl;
-		cout << "5: output error of fpfh value (2 frames)" << endl;
-		cout << "6: output error of fpfh value (all frames)" << endl;
-		cout << "7: output show FPFH variance (all frames)" << endl;
-		cout << "8: vary parameter by some patterns (all frames)" << endl;
+		cout << "2: output fusion and matrix(of convergence) by .csv" << endl;
+		cout << "3: watch points selected by FPFH with some radius" << endl;
+		cout << "4: output error of fpfh value (2 frames)" << endl;
+		cout << "5: output error of fpfh value (all frames)" << endl;
+		cout << "6: output show FPFH variance (all frames)" << endl;
+		cout << "7: vary parameter by some patterns (all frames)" << endl;
 		cout << "select ->";
 		int i_method;
 
@@ -2247,152 +2246,18 @@ void CPointcloudFunction::GlobalRegistration_FPFH_SAC_IA()
 		else if (i_method == 1)
 			GR_FPFH_SAC_IA_Allframes(dir_, parameter_vec);
 		else if (i_method == 2)
-		{
-			string dir_process;
-			//get folder name
-			{
-				vector<string> filenames_folder;
-				CTimeString::getFileNames_folder(dir_, filenames_folder);
-				for (int i = 0; i < filenames_folder.size(); i++)
-				{
-					string s_i = to_string(i);
-					if (s_i.size() < 2) s_i = " " + s_i;
-					cout << "i:" << s_i << " " << filenames_folder[i] << endl;
-
-				}
-				int i_folder;
-				cout << "select: folder which has divided .csv files" << endl;
-				cout << "->";
-				cin >> i_folder;
-				dir_process = dir_ + "/" + filenames_folder[i_folder];
-			}
-
-			//get vecvec from .csv s
-			vector<string> filenames_csv;
-			CTimeString::getFileNames_extension(dir_process, filenames_csv, "_output.csv");
-			vector<vector<string>> s_output_vecvec;
-			for (int j = 0; j < filenames_csv.size(); j++)	//file iteration
-			{
-				vector<vector<string>> s_output_vecvec_temp;
-				s_output_vecvec_temp = CTimeString::getVecVecFromCSV_string(dir_process + "/" + filenames_csv[j]);
-				if (j == 0) s_output_vecvec = s_output_vecvec_temp;
-				else
-				{
-					for (int i = 0; i < s_output_vecvec_temp.size(); i++)	//rows iteration
-					{
-						if (i == 0) continue;
-						s_output_vecvec.push_back(s_output_vecvec_temp[i]);
-					}
-				}
-			}
-			//save .csv
-			CTimeString::getCSVFromVecVec(s_output_vecvec, dir_process + "/"
-				+ filenames_csv[0].substr(0, filenames_csv[0].size() - 4) + "_fusion.csv");
-		}
+			GR_FPFH_getFusionMatrinx(dir_);
 		else if (i_method == 3)
-		{
-			string dir_process;
-			//get folder name
-			{
-				vector<string> filenames_folder;
-				CTimeString::getFileNames_folder(dir_, filenames_folder);
-				for (int i = 0; i < filenames_folder.size(); i++)
-				{
-					string s_i = to_string(i);
-					if (s_i.size() < 2) s_i = " " + s_i;
-					cout << "i:" << s_i << " " << filenames_folder[i] << endl;
-
-				}
-				int i_folder;
-				cout << "select: folder which has _fusion.csv files" << endl;
-				cout << "->";
-				cin >> i_folder;
-				dir_process = dir_ + "/" + filenames_folder[i_folder];
-			}
-			//input file name
-			vector<string> filenames_csv;
-			CTimeString::getFileNames_extension(dir_process, filenames_csv, "_fusion.csv");
-			if (filenames_csv.size() != 1)
-			{
-				cout << "ERROR: one fusion.csv have not been found" << endl;
-				return;
-			}
-			//get vecvec from .csv s
-			vector<vector<string>> s_input_vecvec;
-			{
-				vector<vector<string>> s_temp_vecvec;
-				s_temp_vecvec = CTimeString::getVecVecFromCSV_string(dir_process + "/" + filenames_csv[0]);
-				for (int j = 14; j < s_temp_vecvec.size() - 3; j++)
-				{
-					vector<string> s_input_vec;
-					s_input_vec = s_temp_vecvec[j];
-					s_input_vecvec.push_back(s_input_vec);
-				}
-			}
-			//get frame size
-			int frame_end = 0;
-			frame_end = stoi(s_input_vecvec.back()[0]) + 1;
-			//init s_output_vecvec
-			vector<vector<string>> s_output_vecvec;
-			for (int j = 0; j < frame_end + 1; j++)
-			{
-				vector<string> s_output_vec;
-				s_output_vec.resize(frame_end + 1);
-				s_output_vecvec.push_back(s_output_vec);
-			}
-			//fill except value cell
-			for (int j = 0; j < s_output_vecvec.size(); j++)
-			{
-				for (int i = 0; i < s_output_vecvec[j].size(); i++)
-				{
-					if (j == i || j > i) s_output_vecvec[j][i] = "-";
-				}
-			}
-			//fill value cell
-			for (int j = 0; j < s_input_vecvec.size(); j++)
-			{
-				cout << "j:" << j << endl;
-				int i_tgt, i_src;
-				bool b_convergence = false;
-				i_tgt = stoi(s_input_vecvec[j][0]);
-				i_src = stoi(s_input_vecvec[j][1]);
-				b_convergence = stoi(s_input_vecvec[j][8]);
-				if (b_convergence) s_output_vecvec[i_tgt][i_src] = to_string(1);
-				else s_output_vecvec[i_tgt][i_src] = to_string(0);
-			}
-			//make matrix
-			s_output_vecvec = CTimeString::getMatrixCSVFromVecVec(s_output_vecvec);
-			//add matrix under fusion
-			{
-				vector<vector<string>> s_temp_vecvec;
-				s_temp_vecvec = CTimeString::getVecVecFromCSV_string(dir_process + "/" + filenames_csv[0]);
-				vector<string> s_temp_vec;
-				s_temp_vecvec.push_back(s_temp_vec);
-				for (int j = 0; j < s_output_vecvec.size(); j++)
-				{
-					s_temp_vecvec.push_back(s_output_vecvec[j]);
-				}
-				s_output_vecvec.clear();
-				s_output_vecvec = s_temp_vecvec;
-			}
-			//output file
-			string filename_;
-			filename_ = filenames_csv[0].substr(0, filenames_csv[0].size() - 4) + "_matrix.csv";
-			CTimeString::getCSVFromVecVec(s_output_vecvec, dir_process + "/" + filename_);
-		}
-		else if (i_method == 4)
 			GR_FPFH_SelectPoint(dir_, parameter_vec);
-
-		else if (i_method == 5)
+		else if (i_method == 4)
 			GR_FPFH_error(dir_, parameter_vec);
-
-		else if (i_method == 6)
+		else if (i_method == 5)
 			GR_FPFH_error_AllFrames(dir_, parameter_vec);
 
-		else if (i_method == 7)
+		else if (i_method == 6)
 			GR_FPFH_variance_AllFrames(dir_, parameter_vec);
 
-		else if (i_method == 8)
+		else if (i_method == 7)
 			GR_FPFH_varyParameter(dir_, parameter_vec);
 
 		else break;
@@ -2402,6 +2267,213 @@ void CPointcloudFunction::GlobalRegistration_FPFH_SAC_IA()
 
 	return;
 }
+
+void CPointcloudFunction::GR_FPFH_getFusionMatrinx(string dir_)
+{
+	//select folder
+	string dir_process;
+	{
+		vector<string> filenames_folder;
+		CTimeString::getFileNames_folder(dir_, filenames_folder);
+		for (int i = 0; i < filenames_folder.size(); i++)
+		{
+			string s_i = to_string(i);
+			if (s_i.size() < 2) s_i = " " + s_i;
+			cout << "i:" << s_i << " " << filenames_folder[i] << endl;
+		}
+		int i_folder;
+		cout << "select: folder which has divided .csv files" << endl;
+		cout << "->";
+		cin >> i_folder;
+		dir_process = dir_ + "/" + filenames_folder[i_folder];
+
+	}
+
+	////make _fusion.csv
+	//{
+	//	//get vecvec from .csv s
+	//	vector<string> filenames_csv;
+	//	CTimeString::getFileNames_extension(dir_process, filenames_csv, "_output.csv");
+	//	vector<vector<string>> s_output_vecvec;
+	//	for (int j = 0; j < filenames_csv.size(); j++)	//file iteration
+	//	{
+	//		vector<vector<string>> s_output_vecvec_temp;
+	//		s_output_vecvec_temp = CTimeString::getVecVecFromCSV_string(dir_process + "/" + filenames_csv[j]);
+	//		if (j == 0) s_output_vecvec = s_output_vecvec_temp;
+	//		else
+	//		{
+	//			for (int i = 0; i < s_output_vecvec_temp.size(); i++)	//rows iteration
+	//			{
+	//				if (i == 0) continue;
+	//				s_output_vecvec.push_back(s_output_vecvec_temp[i]);
+	//			}
+	//		}
+	//	}
+	//	//save _fusion.csv
+	//	CTimeString::getCSVFromVecVec(s_output_vecvec, dir_process + "/"
+	//		+ filenames_csv[0].substr(0, filenames_csv[0].size() - 4) + "_fusion.csv");
+	//}
+	
+	//make _matrix.csv
+	{
+		//input file name
+		vector<string> filenames_csv;
+		CTimeString::getFileNames_extension(dir_process, filenames_csv, "_fusion.csv");
+		if (filenames_csv.size() != 1)
+		{
+			cout << "ERROR: one fusion.csv have not been found" << endl;
+			return;
+		}
+		//get vecvec from .csv s
+		vector<vector<string>> s_input_vecvec;
+		{
+			vector<vector<string>> s_temp_vecvec;
+			s_temp_vecvec = CTimeString::getVecVecFromCSV_string(dir_process + "/" + filenames_csv[0]);
+			for (int j = 14; j < s_temp_vecvec.size() - 3; j++)
+			{
+				vector<string> s_input_vec;
+				s_input_vec = s_temp_vecvec[j];
+				s_input_vecvec.push_back(s_input_vec);
+			}
+		}
+
+		//show
+		for (int j = 0; j < s_input_vecvec.size(); j++)
+		{
+			cout << "j:" << j;
+			for (int i = 0; i < 10; i++)
+				cout << "  " << s_input_vecvec[j][i];
+			cout << endl;
+		}
+		cout << endl;
+
+		//sort by tgt frame
+		CTimeString::sortStringVector2d(s_input_vecvec, 0);
+
+		//show
+		for (int j = 0; j < s_input_vecvec.size(); j++)
+		{
+			cout << "j:" << j;
+			for (int i = 0; i < 10; i++)
+				cout << "  " << s_input_vecvec[j][i];
+			cout << endl;
+		}
+		cout << endl;
+		//calc largest frame
+		int i_frame_largest = 0;
+		{
+			for (int j = 0; j < s_input_vecvec.size(); j++)
+			{
+				if (stoi(s_input_vecvec[j][1]) > i_frame_largest)
+					i_frame_largest = stoi(s_input_vecvec[j][1]);
+			}
+		}
+		//sort by src frame
+		{
+			vector<vector<string>> s_input_vecvec_new;
+			vector<vector<string>> s_input_vecvec_unit;
+			int i_tgt = 0;
+			int idx = 0;
+			while (1)
+			{
+				bool b_end_inFrame = false;
+				if (i_tgt == stoi(s_input_vecvec[idx][0]))
+					s_input_vecvec_unit.push_back(s_input_vecvec[idx]);
+				if (s_input_vecvec.size() == idx + 1)
+					b_end_inFrame = true;
+				else if (i_tgt != stoi(s_input_vecvec[idx + 1][0]))
+					b_end_inFrame = true;
+				if (b_end_inFrame)
+				{
+					CTimeString::sortStringVector2d(s_input_vecvec_unit, 1);
+					for (int j = 0; j < s_input_vecvec_unit.size(); j++)
+					{
+						s_input_vecvec_new.push_back(s_input_vecvec_unit[j]);
+					}
+					s_input_vecvec_unit.clear();
+					i_tgt++;
+					if (i_frame_largest == i_tgt) break;
+					continue;
+
+				}
+				idx++;
+				if (s_input_vecvec.size() == idx) break;
+			}
+			s_input_vecvec.clear();
+			s_input_vecvec = s_input_vecvec_new;
+		}
+
+		//show
+		for (int j = 0; j < s_input_vecvec.size(); j++)
+		{
+			cout << "j:" << j;
+			for (int i = 0; i < 10; i++)
+				cout << "  " << s_input_vecvec[j][i];
+			cout << endl;
+		}
+		cout << endl;
+
+
+		{
+			int aa;
+			cin >> aa;
+		}
+
+
+		//get frame size
+		int frame_end = 0;
+		frame_end = stoi(s_input_vecvec.back()[0]) + 1;
+		//init s_output_vecvec
+		vector<vector<string>> s_output_vecvec;
+		for (int j = 0; j < frame_end + 1; j++)
+		{
+			vector<string> s_output_vec;
+			s_output_vec.resize(frame_end + 1);
+			s_output_vecvec.push_back(s_output_vec);
+		}
+		//fill except value cell
+		for (int j = 0; j < s_output_vecvec.size(); j++)
+		{
+			for (int i = 0; i < s_output_vecvec[j].size(); i++)
+			{
+				if (j == i || j > i) s_output_vecvec[j][i] = "-";
+			}
+		}
+		//fill value cell
+		for (int j = 0; j < s_input_vecvec.size(); j++)
+		{
+			cout << "j:" << j << endl;
+			int i_tgt, i_src;
+			bool b_convergence = false;
+			i_tgt = stoi(s_input_vecvec[j][0]);
+			i_src = stoi(s_input_vecvec[j][1]);
+			b_convergence = stoi(s_input_vecvec[j][8]);
+			if (b_convergence) s_output_vecvec[i_tgt][i_src] = to_string(1);
+			else s_output_vecvec[i_tgt][i_src] = to_string(0);
+		}
+		//make matrix
+		s_output_vecvec = CTimeString::getMatrixCSVFromVecVec(s_output_vecvec);
+		//add matrix under fusion
+		{
+			vector<vector<string>> s_temp_vecvec;
+			s_temp_vecvec = CTimeString::getVecVecFromCSV_string(dir_process + "/" + filenames_csv[0]);
+			vector<string> s_temp_vec;
+			s_temp_vecvec.push_back(s_temp_vec);
+			for (int j = 0; j < s_output_vecvec.size(); j++)
+			{
+				s_temp_vecvec.push_back(s_output_vecvec[j]);
+			}
+			s_output_vecvec.clear();
+			s_output_vecvec = s_temp_vecvec;
+		}
+		//output file
+		string filename_;
+		filename_ = filenames_csv[0].substr(0, filenames_csv[0].size() - 4) + "_matrix.csv";
+		CTimeString::getCSVFromVecVec(s_output_vecvec, dir_process + "/" + filename_);
+	}
+	
+}
+
 
 void CPointcloudFunction::GR_FPFH_SAC_IA_2frames(string dir_, vector<float> parameter_vec)
 {

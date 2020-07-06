@@ -160,6 +160,7 @@ public:
 	void DrawTrajectory();
 	void DoSegmentation();
 	void GlobalRegistration_FPFH_SAC_IA();
+	void GR_FPFH_getFusionMatrinx(string dir_);
 	void GR_FPFH_SAC_IA_2frames(string dir_, vector<float> parameter_vec);
 	void GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> parameter_vec, bool b_changeParameter = true);
 	bool GR_FPFH_SAC_IA_Allframes_isSkip(int i_tgt, int i_src);
