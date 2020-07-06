@@ -252,7 +252,8 @@ void CPointcloudFunction::show_sequent()
 			//cout << "reading:" << filenames_[index_] << endl;
 			pcl::io::loadPCDFile(dir_ + "/" + filenames_[index_], *cloud_);
 			cout << "showing:" << filenames_[index_] <<" size:" << cloud_->size() << endl;
-			pv.setPointCloud(cloud_);
+			//pv.setPointCloud(cloud_);
+			pv.setPointCloud(cloud_, filenames_[index_]);
 
 			//remove ground plane
 			if (cloud_->size() != 0 && b_plane)
@@ -433,7 +434,7 @@ void CPointcloudFunction::FreeSpace()
 	typedef typename pcl::PointXYZRGB T_PointType;
 
 	pcl::PointCloud<T_PointType>::Ptr cloud_(new pcl::PointCloud<T_PointType>());
-	string filename_ = "../../data/008nir.pcd";
+	string filename_ = "../../data/008XYZRGB_naraha.pcd";
 	pcl::io::loadPCDFile(filename_,*cloud_);
 
 	CPointVisualization<T_PointType> pv;
@@ -447,7 +448,11 @@ void CPointcloudFunction::FreeSpace()
 
 	pv.setPointCloud(cloud_);
 
-
+	////pv.M_viewer->addText("test", 10., 10.);
+	//pv.M_viewer->addText("test2", 100., 100., 100, 255, 255, 255);
+	//pv.M_viewer->addText("test3", 100., 100., 20, 255, 255, 255);
+	//pv.M_viewer->addText("test4", 0., 0., 30, 1, 1, 1);
+	////pv.M_viewer->addText3D;
 
 	while (1)
 	{
@@ -457,15 +462,15 @@ void CPointcloudFunction::FreeSpace()
 
 	pv.setWindowName("test");
 
-	//outlier
+	////outlier
 
-	pv.setPointCloud(cloud_);
+	//pv.setPointCloud(cloud_);
 
-	while (1)
-	{
-		pv.updateViewer();
-		if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
-	}
+	//while (1)
+	//{
+	//	pv.updateViewer();
+	//	if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
+	//}
 
 
 	pv.closeViewer();

@@ -32,7 +32,9 @@ class CPointVisualization
 	typedef typename pcl::visualization::PointCloudColorHandlerGenericField<T_PointType> T_ColorHandlerGenericField;	//XYZI
 	typedef typename pcl::visualization::PointCloudColorHandlerRGBField<T_PointType> T_ColorHandlerRGBField;			//XYZRGB
 
+//public:
 	boost::shared_ptr<pcl::visualization::PCLVisualizer> M_viewer;
+//private:
 	boost::shared_ptr<T_ColorHandler> M_handler;
 	string M_name_window;
 	boost::mutex M_mutex;
@@ -60,6 +62,8 @@ class CPointVisualization
 	int M_num_PointCloudShowing;
 	int M_i_viewer1, M_i_viewer2;
 
+	int M_num_text;
+
 	vector<string> M_s_arrow_vec, M_s_line_vec, M_s_cylinder_vec, M_s_number_vec, M_s_trajectory_vec;
 	void drawNumber_OnetoNine(pcl::PointXYZRGB point_center, int num_arg, double length_horizontal_arg, string s_name);
 
@@ -84,6 +88,7 @@ public:
 	void setWindowName(const string name_window_arg);
 
 	void setPointCloud(T_PointCloudPtr cloud_arg);
+	void setPointCloud(T_PointCloudPtr cloud_arg, string s_name);
 	void setPointCloud(T_PointCloudPtr cloud_arg1, T_PointCloudPtr cloud_arg2);
 	void updateViewer();
 	void closeViewer();
@@ -119,6 +124,7 @@ CPointVisualization<T_PointType>::CPointVisualization()
 	, M_cloud_second(new pcl::PointCloud<T_PointType>)
 	, M_cloud_normal(new pcl::PointCloud<pcl::Normal>)
 	, M_b_useNormal(false)
+	, M_num_text(0)
 {
 	setWindowName("init");
 
@@ -295,6 +301,19 @@ void CPointVisualization<T_PointType>::setPointCloud(T_PointCloudPtr cloud_arg)
 	if (!M_b_useNormal || M_cloud_->size() == 0) return;
 	addProcess_InsetPointCloud();
 }
+
+template < typename T_PointType >
+void CPointVisualization<T_PointType>::setPointCloud(T_PointCloudPtr cloud_arg, string s_name)
+{
+	if (M_num_text == 0)
+		M_viewer->addText(s_name, 0., 0., 20, 1., 1., 1., "text");
+	else
+		M_viewer->updateText(s_name, 0., 0., "text");
+
+	M_num_text++;
+	setPointCloud(cloud_arg);
+}
+
 
 template < typename T_PointType >
 void CPointVisualization<T_PointType>::setPointCloud(T_PointCloudPtr cloud_arg1, T_PointCloudPtr cloud_arg2)
