@@ -78,6 +78,7 @@ public:
 	static void changeParameter_2dimension(vector<vector<float>> &parameter_vec_vec, vector<string> name_vec, vector<float> parameter_vec_init,
 		string filename_, int row_small, int col_small, int row_big, int col_big);
 	static void calcParameterPattern(vector<vector<float>> &pattern_vec_vec,vector<vector<float>> parameter_vec_vec);
+	static void removeSameParameter(vector<vector<float>> &parameter_vec_vec);
 
 
 	template<typename T>

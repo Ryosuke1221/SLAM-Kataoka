@@ -707,6 +707,8 @@ void CTimeString::calcParameterPattern(vector<vector<float>> &pattern_vec_vec, v
 		}
 	}
 
+	removeSameParameter(parameter_vec_vec);
+
 	cout << "show pattern" << endl;
 	for (int j = 0; j < pattern_vec_vec.size(); j++)
 	{
@@ -768,6 +770,8 @@ void CTimeString::changeParameter_2dimension(vector<vector<float>> &parameter_ve
 
 	parameter_vec_vec = parameter_vec_vec_new;
 
+	removeSameParameter(parameter_vec_vec);
+
 	//count longest string for showing
 	int size_string_longest = 0;
 	for (int i = 0; i < name_vec.size(); i++)
@@ -790,4 +794,32 @@ void CTimeString::changeParameter_2dimension(vector<vector<float>> &parameter_ve
 	}
 	cout << endl;
 
+}
+
+void CTimeString::removeSameParameter(vector<vector<float>> &parameter_vec_vec)
+{
+
+	for (int j = 0; j < parameter_vec_vec.size(); j++)
+	{
+		vector<float> parameter_vec = parameter_vec_vec[j];
+		vector<float> parameter_vec_new;
+		//sort
+		sort(parameter_vec.begin(), parameter_vec.end());
+		//remove same value
+		float value_last;
+		for (int i = 0; i < parameter_vec.size(); i++)
+		{
+			if (i == 0)
+			{
+				parameter_vec_new.push_back(parameter_vec[i]);
+			}
+			else
+			{
+				if (value_last != parameter_vec[i])
+					parameter_vec_new.push_back(parameter_vec[i]);
+			}
+			value_last = parameter_vec[i];
+		}
+		parameter_vec_vec[j] = parameter_vec_new;
+	}
 }
