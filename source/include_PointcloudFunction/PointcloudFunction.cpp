@@ -2270,6 +2270,8 @@ void CPointcloudFunction::GlobalRegistration_FPFH_SAC_IA()
 
 void CPointcloudFunction::GR_FPFH_getFusionMatrinx(string dir_)
 {
+	bool b_sort_table = false;
+
 	//select folder
 	string dir_process;
 	{
@@ -2289,30 +2291,30 @@ void CPointcloudFunction::GR_FPFH_getFusionMatrinx(string dir_)
 
 	}
 
-	////make _fusion.csv
-	//{
-	//	//get vecvec from .csv s
-	//	vector<string> filenames_csv;
-	//	CTimeString::getFileNames_extension(dir_process, filenames_csv, "_output.csv");
-	//	vector<vector<string>> s_output_vecvec;
-	//	for (int j = 0; j < filenames_csv.size(); j++)	//file iteration
-	//	{
-	//		vector<vector<string>> s_output_vecvec_temp;
-	//		s_output_vecvec_temp = CTimeString::getVecVecFromCSV_string(dir_process + "/" + filenames_csv[j]);
-	//		if (j == 0) s_output_vecvec = s_output_vecvec_temp;
-	//		else
-	//		{
-	//			for (int i = 0; i < s_output_vecvec_temp.size(); i++)	//rows iteration
-	//			{
-	//				if (i == 0) continue;
-	//				s_output_vecvec.push_back(s_output_vecvec_temp[i]);
-	//			}
-	//		}
-	//	}
-	//	//save _fusion.csv
-	//	CTimeString::getCSVFromVecVec(s_output_vecvec, dir_process + "/"
-	//		+ filenames_csv[0].substr(0, filenames_csv[0].size() - 4) + "_fusion.csv");
-	//}
+	//make _fusion.csv
+	{
+		//get vecvec from .csv s
+		vector<string> filenames_csv;
+		CTimeString::getFileNames_extension(dir_process, filenames_csv, "_output.csv");
+		vector<vector<string>> s_output_vecvec;
+		for (int j = 0; j < filenames_csv.size(); j++)	//file iteration
+		{
+			vector<vector<string>> s_output_vecvec_temp;
+			s_output_vecvec_temp = CTimeString::getVecVecFromCSV_string(dir_process + "/" + filenames_csv[j]);
+			if (j == 0) s_output_vecvec = s_output_vecvec_temp;
+			else
+			{
+				for (int i = 0; i < s_output_vecvec_temp.size(); i++)	//rows iteration
+				{
+					if (i == 0) continue;
+					s_output_vecvec.push_back(s_output_vecvec_temp[i]);
+				}
+			}
+		}
+		//save _fusion.csv
+		CTimeString::getCSVFromVecVec(s_output_vecvec, dir_process + "/"
+			+ filenames_csv[0].substr(0, filenames_csv[0].size() - 4) + "_fusion.csv");
+	}
 	
 	//make _matrix.csv
 	{
@@ -2337,38 +2339,21 @@ void CPointcloudFunction::GR_FPFH_getFusionMatrinx(string dir_)
 			}
 		}
 
-		//show
+		//get frame size
+		int frame_end = 0;
+		//frame_end = stoi(s_input_vecvec.back()[0]) + 1;
 		for (int j = 0; j < s_input_vecvec.size(); j++)
 		{
-			cout << "j:" << j;
-			for (int i = 0; i < 10; i++)
-				cout << "  " << s_input_vecvec[j][i];
-			cout << endl;
+			if (stoi(s_input_vecvec[j][1]) > frame_end)
+				frame_end = stoi(s_input_vecvec[j][1]);
 		}
-		cout << endl;
 
 		//sort by tgt frame
-		CTimeString::sortStringVector2d(s_input_vecvec, 0);
+		if(b_sort_table)
+			CTimeString::sortStringVector2d(s_input_vecvec, 0);
 
-		//show
-		for (int j = 0; j < s_input_vecvec.size(); j++)
-		{
-			cout << "j:" << j;
-			for (int i = 0; i < 10; i++)
-				cout << "  " << s_input_vecvec[j][i];
-			cout << endl;
-		}
-		cout << endl;
-		//calc largest frame
-		int i_frame_largest = 0;
-		{
-			for (int j = 0; j < s_input_vecvec.size(); j++)
-			{
-				if (stoi(s_input_vecvec[j][1]) > i_frame_largest)
-					i_frame_largest = stoi(s_input_vecvec[j][1]);
-			}
-		}
 		//sort by src frame
+		if(b_sort_table)
 		{
 			vector<vector<string>> s_input_vecvec_new;
 			vector<vector<string>> s_input_vecvec_unit;
@@ -2392,7 +2377,7 @@ void CPointcloudFunction::GR_FPFH_getFusionMatrinx(string dir_)
 					}
 					s_input_vecvec_unit.clear();
 					i_tgt++;
-					if (i_frame_largest == i_tgt) break;
+					if (frame_end == i_tgt) break;
 					continue;
 
 				}
@@ -2403,26 +2388,16 @@ void CPointcloudFunction::GR_FPFH_getFusionMatrinx(string dir_)
 			s_input_vecvec = s_input_vecvec_new;
 		}
 
-		//show
-		for (int j = 0; j < s_input_vecvec.size(); j++)
-		{
-			cout << "j:" << j;
-			for (int i = 0; i < 10; i++)
-				cout << "  " << s_input_vecvec[j][i];
-			cout << endl;
-		}
-		cout << endl;
+		////show
+		//for (int j = 0; j < s_input_vecvec.size(); j++)
+		//{
+		//	cout << "j:" << j;
+		//	for (int i = 0; i < 10; i++)
+		//		cout << "  " << s_input_vecvec[j][i];
+		//	cout << endl;
+		//}
+		//cout << endl;
 
-
-		{
-			int aa;
-			cin >> aa;
-		}
-
-
-		//get frame size
-		int frame_end = 0;
-		frame_end = stoi(s_input_vecvec.back()[0]) + 1;
 		//init s_output_vecvec
 		vector<vector<string>> s_output_vecvec;
 		for (int j = 0; j < frame_end + 1; j++)
