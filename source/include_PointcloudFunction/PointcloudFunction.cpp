@@ -2793,172 +2793,176 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> pa
 	string time_end_FPFH = CTimeString::getTimeString();
 	cout << "time_end_FPFH:" << time_end_FPFH << endl;
 
-	for (int i_tgt = i_tgt_start; i_tgt < cloud_vec.size() - 1; i_tgt++)
+	vector<pair<int, int>> frame_pair_vec;
+	frame_pair_vec = GR_FPFH_SAC_IA_get_frame_pair_vec(dir_);
+
+	for (int i_frame_pair = 0; i_frame_pair < frame_pair_vec.size(); i_frame_pair++)
 	{
-		for (int i_src = i_tgt + 1; i_src < cloud_vec.size(); i_src++)
+		int i_tgt = frame_pair_vec[i_frame_pair].first;
+		int i_src = frame_pair_vec[i_frame_pair].second;
+
+		string time_start_frame = CTimeString::getTimeString();
+
+		bool b_hasConverged = false;
+		vector<int> inlier_;
+		float fitnessscore;
+		int frame_failed = 0;
+		Eigen::Matrix4d transform_ = Eigen::Matrix4d::Identity();
+		bool b_cout_RANSAC = false;
+
+		cout << "i_tgt:" << i_tgt << " i_src:" << i_src << endl;
+
+		b_hasConverged = CKataokaPCL::align_SAC_AI_RANSAC<T_PointType>(transform_, inlier_, fitnessscore, frame_failed,
+			cloud_vec[i_src], fpfh_vec[i_src], cloud_vec[i_tgt], fpfh_vec[i_tgt],
+			voxel_size, MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC, InlierFraction_SAC,
+			MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC, max_RANSAC, b_cout_RANSAC);
+
+		//save pointcloud
+		pcl::PointCloud<T_PointType>::Ptr cloud_src(new pcl::PointCloud<T_PointType>());
+		pcl::PointCloud<T_PointType>::Ptr cloud_src_true(new pcl::PointCloud<T_PointType>());
+		pcl::PointCloud<T_PointType>::Ptr cloud_tgt(new pcl::PointCloud<T_PointType>());
+		cloud_src->clear();
+		cloud_src_true->clear();
+		cloud_tgt->clear();
+		//VGF
+		const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
+		sor->setLeafSize(voxel_size, voxel_size, voxel_size);
+		sor->setInputCloud(cloud_vec[i_src]);
+		sor->filter(*cloud_src);
+		sor->setInputCloud(cloud_vec[i_tgt]);
+		sor->filter(*cloud_tgt);
+		//color
+		for (int i = 0; i < cloud_tgt->size(); i++)
 		{
-			string time_start_frame = CTimeString::getTimeString();
+			cloud_tgt->points[i].r = 255;
+			cloud_tgt->points[i].g = 0;
+			cloud_tgt->points[i].b = 0;
+		}
+		for (int i = 0; i < cloud_src->size(); i++)
+		{
+			cloud_src->points[i].r = 0;
+			cloud_src->points[i].g = 255;
+			cloud_src->points[i].b = 0;
+		}
+		//transform
+		pcl::copyPointCloud(*cloud_src, *cloud_src_true);		//evaluation
+		{
+			Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
+			Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(transform_);
+			pcl::transformPointCloud(*cloud_src, *cloud_src, Trans_temp);
+		}
 
-			if (GR_FPFH_SAC_IA_Allframes_isSkip(i_tgt, i_src)) continue;
-
-			bool b_hasConverged = false;
-			vector<int> inlier_;
-			float fitnessscore;
-			int frame_failed = 0;
-			Eigen::Matrix4d transform_ = Eigen::Matrix4d::Identity();
-			bool b_cout_RANSAC = false;
-
-			cout << "i_tgt:" << i_tgt << " i_src:" << i_src << endl;
-
-			b_hasConverged = CKataokaPCL::align_SAC_AI_RANSAC<T_PointType>(transform_, inlier_, fitnessscore, frame_failed,
-				cloud_vec[i_src], fpfh_vec[i_src], cloud_vec[i_tgt], fpfh_vec[i_tgt],
-				voxel_size, MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC, InlierFraction_SAC,
-				MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC, max_RANSAC, b_cout_RANSAC);
-
-			//save pointcloud
-			pcl::PointCloud<T_PointType>::Ptr cloud_src(new pcl::PointCloud<T_PointType>());
-			pcl::PointCloud<T_PointType>::Ptr cloud_src_true(new pcl::PointCloud<T_PointType>());
-			pcl::PointCloud<T_PointType>::Ptr cloud_tgt(new pcl::PointCloud<T_PointType>());
-			cloud_src->clear();
-			cloud_src_true->clear();
-			cloud_tgt->clear();
-			//VGF
-			const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
-			sor->setLeafSize(voxel_size, voxel_size, voxel_size);
-			sor->setInputCloud(cloud_vec[i_src]);
-			sor->filter(*cloud_src);
-			sor->setInputCloud(cloud_vec[i_tgt]);
-			sor->filter(*cloud_tgt);
-			//color
-			for (int i = 0; i < cloud_tgt->size(); i++)
+		//distance
+		double distance_ = 0.;
+		{
+			Eigen::Matrix4d T_i_src = Eigen::Matrix4d::Identity();
+			Eigen::Matrix4d T_i1_tgt = Eigen::Matrix4d::Identity();
+			Eigen::Matrix4d T_i_GL = Eigen::Matrix4d::Identity();
+			//T_i_src = T_i1_tgt * T_i_GL
+			T_i_src = CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
+			T_i1_tgt = CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]);
+			T_i_GL = T_i1_tgt.inverse() * T_i_src;
+			Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
+			Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(T_i_GL);
+			pcl::transformPointCloud(*cloud_src_true, *cloud_src_true, Trans_temp);
+			//distance to true
+			for (size_t i = 0; i < cloud_src->size(); i++)
 			{
-				cloud_tgt->points[i].r = 255;
-				cloud_tgt->points[i].g = 0;
-				cloud_tgt->points[i].b = 0;
-			}
-			for (int i = 0; i < cloud_src->size(); i++)
-			{
-				cloud_src->points[i].r = 0;
-				cloud_src->points[i].g = 255;
-				cloud_src->points[i].b = 0;
-			}
-			//transform
-			pcl::copyPointCloud(*cloud_src, *cloud_src_true);		//evaluation
-			{
-				Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-				Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(transform_);
-				pcl::transformPointCloud(*cloud_src, *cloud_src, Trans_temp);
-			}
+				T_PointType point_, point_true;
+				point_ = cloud_src->points[i];
+				point_ = cloud_src->points.at(i);
+				point_true = cloud_src_true->points[i];
+				const float sqrt_before =
+					pow(point_.x - point_true.x, 2.)
+					+ pow(point_.y - point_true.y, 2.)
+					+ pow(point_.z - point_true.z, 2.);
+				distance_ += static_cast<double>(sqrt(
+					pow(point_.x - point_true.x, 2.)
+					+ pow(point_.y - point_true.y, 2.)
+					+ pow(point_.z - point_true.z, 2.)));
 
-			//distance
-			double distance_ = 0.;
-			{
-				Eigen::Matrix4d T_i_src = Eigen::Matrix4d::Identity();
-				Eigen::Matrix4d T_i1_tgt = Eigen::Matrix4d::Identity();
-				Eigen::Matrix4d T_i_GL = Eigen::Matrix4d::Identity();
-				//T_i_src = T_i1_tgt * T_i_GL
-				T_i_src = CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
-				T_i1_tgt = CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]);
-				T_i_GL = T_i1_tgt.inverse() * T_i_src;
-				Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-				Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(T_i_GL);
-				pcl::transformPointCloud(*cloud_src_true, *cloud_src_true, Trans_temp);
-				//distance to true
-				for (size_t i = 0; i < cloud_src->size(); i++)
-				{
-					T_PointType point_, point_true;
-					point_ = cloud_src->points[i];
-					point_ = cloud_src->points.at(i);
-					point_true = cloud_src_true->points[i];
-					const float sqrt_before =
-						pow(point_.x - point_true.x, 2.)
-						+ pow(point_.y - point_true.y, 2.)
-						+ pow(point_.z - point_true.z, 2.);
-					distance_ += static_cast<double>(sqrt(
-						pow(point_.x - point_true.x, 2.)
-						+ pow(point_.y - point_true.y, 2.)
-						+ pow(point_.z - point_true.z, 2.)));
-
-				}
-				if (cloud_src->size() != 0) distance_ /= cloud_src->size();
-				else distance_ = 100.;
-				cout << "distance_:" << distance_ << endl;
 			}
+			if (cloud_src->size() != 0) distance_ /= cloud_src->size();
+			else distance_ = 100.;
+			cout << "distance_:" << distance_ << endl;
+		}
 
-			//median
-			double median_ = CKataokaPCL::getMedianDistance(cloud_src, cloud_tgt);
-			cout << "median_:" << median_ << endl;
+		//median
+		double median_ = CKataokaPCL::getMedianDistance(cloud_src, cloud_tgt);
+		cout << "median_:" << median_ << endl;
 
-			//add for saving
-			*cloud_tgt += *cloud_src;
-			//filename for saving
-			string s_filename_output;
-			{
-				string s_src;
-				s_src = to_string(i_src);
-				if (s_src.size() < 3) s_src = "0" + s_src;
-				if (s_src.size() < 3) s_src = "0" + s_src;
-				string s_tgt;
-				s_tgt = to_string(i_tgt);
-				if (s_tgt.size() < 3) s_tgt = "0" + s_tgt;
-				if (s_tgt.size() < 3) s_tgt = "0" + s_tgt;
-				string s_convergence;
-				if (b_hasConverged) s_convergence = to_string(1);
-				else s_convergence = to_string(0);
-				s_filename_output = "T" + s_tgt + "S" + s_src + "C" + s_convergence + "_XYZRGB.pcd";
-			}
+		//add for saving
+		*cloud_tgt += *cloud_src;
+		//filename for saving
+		string s_filename_output;
+		{
+			string s_src;
+			s_src = to_string(i_src);
+			if (s_src.size() < 3) s_src = "0" + s_src;
+			if (s_src.size() < 3) s_src = "0" + s_src;
+			string s_tgt;
+			s_tgt = to_string(i_tgt);
+			if (s_tgt.size() < 3) s_tgt = "0" + s_tgt;
+			if (s_tgt.size() < 3) s_tgt = "0" + s_tgt;
+			string s_convergence;
+			if (b_hasConverged) s_convergence = to_string(1);
+			else s_convergence = to_string(0);
+			s_filename_output = "T" + s_tgt + "S" + s_src + "C" + s_convergence + "_XYZRGB.pcd";
+		}
+		//save
+		pcl::io::savePCDFile<T_PointType>(dir_ + "/" + s_newfoldername + "/" + s_filename_output, *cloud_tgt);
+
+		//output csv
+		Eigen::Vector6d transform_vec = Eigen::Vector6d::Zero();
+		transform_vec = CKataokaPCL::calcVector6dFromHomogeneousMatrix(transform_);
+		string time_end_frame = CTimeString::getTimeString();
+		string time_elapsed_frame = CTimeString::getTimeElapsefrom2Strings(time_start_frame, time_end_frame);
+		vector<string> s_temp_vec;
+		s_temp_vec.push_back(to_string(i_tgt));
+		s_temp_vec.push_back(to_string(i_src));
+		s_temp_vec.push_back(to_string(cloud_vec[i_tgt]->size()));
+		s_temp_vec.push_back(to_string(cloud_vec[i_src]->size()));
+		s_temp_vec.push_back(to_string(fpfh_vec[i_tgt]->size()));
+		s_temp_vec.push_back(to_string(fpfh_vec[i_src]->size()));
+		s_temp_vec.push_back(to_string(inlier_.size()));
+		s_temp_vec.push_back(to_string((float)inlier_.size() / (float)fpfh_vec[i_src]->size()));
+		s_temp_vec.push_back(to_string((int)b_hasConverged));
+		s_temp_vec.push_back(to_string(max_RANSAC - frame_failed) + "(/" + to_string(max_RANSAC) + ")");
+		s_temp_vec.push_back(to_string(distance_));
+		s_temp_vec.push_back(to_string(median_));
+		s_temp_vec.push_back(to_string(fitnessscore));
+		s_temp_vec.push_back(time_elapsed_frame);
+		s_temp_vec.push_back(to_string(transform_vec(0, 0)));	//X
+		s_temp_vec.push_back(to_string(transform_vec(1, 0)));	//Y
+		s_temp_vec.push_back(to_string(transform_vec(2, 0)));	//Z
+		s_temp_vec.push_back(to_string(transform_vec(3, 0)));	//ROLL
+		s_temp_vec.push_back(to_string(transform_vec(4, 0)));	//PITCH
+		s_temp_vec.push_back(to_string(transform_vec(5, 0)));	//YAW
+		s_output_vecvec.push_back(s_temp_vec);
+
+		//regular saving csv
+		string s_elapsed_frame = CTimeString::getTimeElapsefrom2Strings(time_regular, time_end_frame);
+		cout << "time_elapsed from last .csv output: " << s_elapsed_frame << endl;
+		cout << "time_elapsed from start:            " << CTimeString::getTimeElapsefrom2Strings(time_start, time_end_frame) << endl;
+		int elapsed_millisec = CTimeString::getTimeElapsefrom2Strings_millisec(time_regular, time_end_frame);
+		int elapsed_minute = (int)(((float)elapsed_millisec / 1000.) / 60.);
+		if (elapsed_minute >= th_minute_CSV)
+		{
 			//save
-			pcl::io::savePCDFile<T_PointType>(dir_ + "/" + s_newfoldername + "/" + s_filename_output, *cloud_tgt);
+			CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + s_newfoldername + "/" + time_regular + "_output.csv");
+			time_regular = CTimeString::getTimeString();
+			//clear s_output_vecvec
+			s_output_vecvec.clear();
+			GR_addToOutputString_OutputHeader(s_output_vecvec);
+		}
+		cout << endl;
 
-			//output csv
-			Eigen::Vector6d transform_vec = Eigen::Vector6d::Zero();
-			transform_vec = CKataokaPCL::calcVector6dFromHomogeneousMatrix(transform_);
-			string time_end_frame = CTimeString::getTimeString();
-			string time_elapsed_frame = CTimeString::getTimeElapsefrom2Strings(time_start_frame, time_end_frame);
-			vector<string> s_temp_vec;
-			s_temp_vec.push_back(to_string(i_tgt));
-			s_temp_vec.push_back(to_string(i_src));
-			s_temp_vec.push_back(to_string(cloud_vec[i_tgt]->size()));
-			s_temp_vec.push_back(to_string(cloud_vec[i_src]->size()));
-			s_temp_vec.push_back(to_string(fpfh_vec[i_tgt]->size()));
-			s_temp_vec.push_back(to_string(fpfh_vec[i_src]->size()));
-			s_temp_vec.push_back(to_string(inlier_.size()));
-			s_temp_vec.push_back(to_string((float)inlier_.size() / (float)fpfh_vec[i_src]->size()));
-			s_temp_vec.push_back(to_string((int)b_hasConverged));
-			s_temp_vec.push_back(to_string(max_RANSAC - frame_failed) + "(/" + to_string(max_RANSAC) + ")");
-			s_temp_vec.push_back(to_string(distance_));
-			s_temp_vec.push_back(to_string(median_));
-			s_temp_vec.push_back(to_string(fitnessscore));
-			s_temp_vec.push_back(time_elapsed_frame);
-			s_temp_vec.push_back(to_string(transform_vec(0, 0)));	//X
-			s_temp_vec.push_back(to_string(transform_vec(1, 0)));	//Y
-			s_temp_vec.push_back(to_string(transform_vec(2, 0)));	//Z
-			s_temp_vec.push_back(to_string(transform_vec(3, 0)));	//ROLL
-			s_temp_vec.push_back(to_string(transform_vec(4, 0)));	//PITCH
-			s_temp_vec.push_back(to_string(transform_vec(5, 0)));	//YAW
-			s_output_vecvec.push_back(s_temp_vec);
-
-			//regular saving csv
-			string s_elapsed_frame = CTimeString::getTimeElapsefrom2Strings(time_regular, time_end_frame);
-			cout << "time_elapsed from last .csv output: " << s_elapsed_frame << endl;
-			cout << "time_elapsed from start:            " << CTimeString::getTimeElapsefrom2Strings(time_start, time_end_frame) << endl;
-			int elapsed_millisec = CTimeString::getTimeElapsefrom2Strings_millisec(time_regular, time_end_frame);
-			int elapsed_minute = (int)(((float)elapsed_millisec / 1000.) / 60.);
-			if (elapsed_minute >= th_minute_CSV)
-			{
-				//save
-				CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + s_newfoldername + "/" + time_regular + "_output.csv");
-				time_regular = CTimeString::getTimeString();
-				//clear s_output_vecvec
-				s_output_vecvec.clear();
-				GR_addToOutputString_OutputHeader(s_output_vecvec);
-			}
-
+		if (i_frame_pair % 5 == 0 && !b_changeParameter)
+		{
+			cout << "Parameter list" << endl;
+			CTimeString::showParameter(parameter_vec, name_parameter_vec);
 			cout << endl;
 		}
-		cout << "Parameter list" << endl;
-		if (!b_changeParameter) CTimeString::showParameter(parameter_vec, name_parameter_vec);
-		cout << endl;
 	}
 
 	string time_end = CTimeString::getTimeString();
@@ -2982,124 +2986,97 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> pa
 	}
 
 	CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + s_newfoldername + "/" + time_end + "_output.csv");
+
+	cout << endl;
 }
 
-bool CPointcloudFunction::GR_FPFH_SAC_IA_Allframes_isSkip(int i_tgt, int i_src)
+vector<pair<int, int>> CPointcloudFunction::GR_FPFH_SAC_IA_get_frame_pair_vec(string dir_)
 {
-	bool b_skip = false;
+	vector<pair<int, int>> frame_pair_vec;
 
-	if (i_tgt == 0)
-	{
-		if (i_src == 6) b_skip = true;
-		else if (i_src == 7) b_skip = true;
-		else if (i_src == 9) b_skip = true;
-	}
-	else if (i_tgt == 1)
-	{
-		if (i_src == 6) b_skip = true;
-		else if (i_src == 9) b_skip = true;
-	}
-	else if (i_tgt == 2)
-	{
-		if (i_src == 6) b_skip = true;
-		else if (i_src == 7) b_skip = true;
-		else if (i_src == 8) b_skip = true;
-		else if (i_src == 9) b_skip = true;
-		else if (i_src == 10) b_skip = true;
-		else if (i_src == 11) b_skip = true;
-		else if (i_src == 12) b_skip = true;
-	}
-	else if (i_tgt == 3)
-	{
-		if (i_src == 9) b_skip = true;
-		else if (i_src == 13) b_skip = true;
-	}
-	else if (i_tgt == 4)
-	{
-		if (i_src == 8) b_skip = true;
-		else if (i_src == 9) b_skip = true;
-		else if (i_src == 10) b_skip = true;
-		else if (i_src == 11) b_skip = true;
-		else if (i_src == 12) b_skip = true;
-		else if (i_src == 13) b_skip = true;
-	}
-	else if (i_tgt == 5)
-	{
-		if (i_src == 9) b_skip = true;
-		else if (i_src == 10) b_skip = true;
-		else if (i_src == 11) b_skip = true;
-		else if (i_src == 12) b_skip = true;
-		else if (i_src == 13) b_skip = true;
-	}
-	else if (i_tgt == 6)
-	{
-		if (i_src == 9) b_skip = true;
-		else if (i_src == 10) b_skip = true;
-		else if (i_src == 11) b_skip = true;
-		else if (i_src == 12) b_skip = true;
-		else if (i_src == 13) b_skip = true;
-		else if (i_src == 14) b_skip = true;
-	}
-	else if (i_tgt == 7)
-	{
-		if (i_src == 9) b_skip = true;
-		else if (i_src == 10) b_skip = true;
-		else if (i_src == 11) b_skip = true;
-		else if (i_src == 12) b_skip = true;
-		else if (i_src == 13) b_skip = true;
-		else if (i_src == 14) b_skip = true;
-	}
-	else if (i_tgt == 8)
-	{
-		if (i_src == 14) b_skip = true;
-	}
-	else if (i_tgt == 9)
-	{
-		if (i_src == 14) b_skip = true;
-		else if (i_src == 15) b_skip = true;
-		else if (i_src == 16) b_skip = true;
-	}
-	else if (i_tgt == 10)
-	{
-		if (i_src == 14) b_skip = true;
-		else if (i_src == 16) b_skip = true;
-	}
-	else if (i_tgt == 11)
-	{
-		if (i_src == 14) b_skip = true;
-		else if (i_src == 15) b_skip = true;
-		else if (i_src == 16) b_skip = true;
-	}
-	else if (i_tgt == 12)
-	{
-		if (i_src == 15) b_skip = true;
-		else if (i_src == 16) b_skip = true;
-	}
-	else if (i_tgt == 13)
-	{
-		if (i_src == 16) b_skip = true;
-	}
-	else if (i_tgt == 14)
-	{
+	vector<vector<bool>> b_ignore_vecvec;
+	vector<vector<bool>> b_ahead_vecvec;
 
-	}
-	else if (i_tgt == 15)
+	//input from text
+	vector<vector<string>> s_matrix_vecvec;
 	{
+		//input text
+		vector<vector<string>> s_matrix_vecvec_temp;
+		s_matrix_vecvec_temp = CTimeString::getVecVecFromCSV_string(dir_ + "/" + "matrix_ignore_ahead.csv");
+		for (int j = 1; j < s_matrix_vecvec_temp.size(); j++)
+		{
+			vector<string> s_frame_vec;
+			for (int i = 1; i < s_matrix_vecvec_temp[j].size(); i++)
+			{
+				s_frame_vec.push_back(s_matrix_vecvec_temp[j][i]);
+			}
+			s_matrix_vecvec.push_back(s_frame_vec);
+		}
 
-	}
-	else if (i_tgt == 16)
-	{
+		//init ignore and ahead
+		for (int j = 0; j < s_matrix_vecvec.size(); j++)
+		{
+			vector<bool> b_vecvec;
+			for (int i = 0; i < s_matrix_vecvec.size(); i++)
+				b_vecvec.push_back(false);
+			b_ignore_vecvec.push_back(b_vecvec);
+		}
+		for (int j = 0; j < s_matrix_vecvec.size(); j++)
+		{
+			vector<bool> b_vecvec;
+			for (int i = 0; i < s_matrix_vecvec.size(); i++)
+				b_vecvec.push_back(false);
+			b_ahead_vecvec.push_back(b_vecvec);
+		}
 
+		//extract from vecvec
+		for (int i_tgt = 0; i_tgt < s_matrix_vecvec.size(); i_tgt++)
+		{
+			for (int i_src = 0; i_src < s_matrix_vecvec.size(); i_src++)
+			{
+				string s_value = s_matrix_vecvec[i_tgt][i_src];
+				if (s_value.size() == 0 || s_value == "-")
+					continue;
+				else if (stoi(s_value) == -1)
+				{
+					b_ignore_vecvec[i_tgt][i_src] = true;
+					cout << "i_tgt:" << i_tgt << " i_src:" << i_src << "  ignored" << endl;
+
+				}
+				else if (stoi(s_value) == 1)
+				{
+					b_ahead_vecvec[i_tgt][i_src] = true;
+					cout << "i_tgt:" << i_tgt << " i_src:" << i_src << "  aheaded" << endl;
+				}
+			}
+		}
 	}
 
-	if (b_skip)
+	//ahead loop
+	for (int i_tgt = 0; i_tgt < s_matrix_vecvec.size() - 1; i_tgt++)
 	{
-		cout << "i_tgt:" << i_tgt << " i_src:" << i_src << "  skiped" << endl;
+		for (int i_src = i_tgt + 1; i_src < s_matrix_vecvec.size(); i_src++)
+		{
+			if (!b_ahead_vecvec[i_tgt][i_src]) continue;
+			frame_pair_vec.push_back(make_pair(i_tgt, i_src));
+			b_ignore_vecvec[i_tgt][i_src] = true;
+		}
 	}
 
-	return b_skip;
+	//normal loop
+	for (int i_tgt = 0; i_tgt < s_matrix_vecvec.size() - 1; i_tgt++)
+	{
+		for (int i_src = i_tgt + 1; i_src < s_matrix_vecvec.size(); i_src++)
+		{
+			if (b_ignore_vecvec[i_tgt][i_src]) continue;
+			frame_pair_vec.push_back(make_pair(i_tgt, i_src));
+			b_ignore_vecvec[i_tgt][i_src] = true;
+		}
+	}
+
+	cout << endl;
+	return frame_pair_vec;
 }
-
 
 void CPointcloudFunction::GR_addToOutputString_OutputHeader(vector<vector<string>> &s_output_vecvec)
 {

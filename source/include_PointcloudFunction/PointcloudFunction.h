@@ -163,7 +163,7 @@ public:
 	void GR_FPFH_getFusionMatrinx(string dir_);
 	void GR_FPFH_SAC_IA_2frames(string dir_, vector<float> parameter_vec);
 	void GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> parameter_vec, bool b_changeParameter = true);
-	bool GR_FPFH_SAC_IA_Allframes_isSkip(int i_tgt, int i_src);
+	vector<pair<int, int>> GR_FPFH_SAC_IA_get_frame_pair_vec(string dir_);
 	void GR_addToOutputString_OutputHeader(vector<vector<string>> &s_output_vecvec);
 	void GR_FPFH_SelectPoint(string dir_, vector<float> parameter_vec);
 	void GR_FPFH_error(string dir_, vector<float> parameter_vec);
