@@ -160,7 +160,10 @@ public:
 	void DrawTrajectory();
 	void DoSegmentation();
 	void GlobalRegistration_FPFH_SAC_IA();
-	void GR_FPFH_getFusionMatrinx(string dir_);
+	void GR_FPFH_getResultAnalysis(string dir_, string s_folder);
+	void GR_FPFH_makeFusionCSV(string dir_, string s_folder);
+	void GR_FPFH_makeMatrix(string dir_);
+	void GR_FPFH_makeSuccessEstimation(string dir_);
 	void GR_FPFH_SAC_IA_2frames(string dir_, vector<float> parameter_vec);
 	void GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> parameter_vec, bool b_changeParameter = true);
 	vector<pair<int, int>> GR_FPFH_SAC_IA_get_frame_pair_vec(string dir_);
