@@ -70,6 +70,7 @@ public:
 	static void makenewfolder(string dir, string newfoldername);//relative path
 
 	static vector<string> inputSomeString();
+	static vector<string> inputSomeString_fromCSV(string s_filename);
 	static void showParameter(vector<float> parameter_vec, vector<string> name_vec,int i_frame_show = -1);
 	static void changeParameter(vector<float> &parameter_vec, vector<string> name_vec);
 	static void changeParameter(vector<float> &parameter_vec, vector<string> name_vec, string filename_, 
@@ -114,6 +115,23 @@ public:
 			}
 		}
 		return save_vec_vec;
+	}
+
+	template<typename T>
+	static vector<vector<T>> getTranspositionOfVecVec(vector<vector<T>> T_vecvec)
+	{
+		vector<vector<T>> T_vecvec_output;
+		int rows, cols;
+		rows = T_vecvec[0].size();
+		cols = T_vecvec.size();
+		for (int j = 0; j < rows; j++)
+		{
+			vector<T> T_vec_output;
+			for (int i = 0; i < cols; i++)
+				T_vec_output.push_back(T_vecvec[i][j]);
+			T_vecvec_output.push_back(T_vec_output);
+		}
+		return T_vecvec_output;
 	}
 
 

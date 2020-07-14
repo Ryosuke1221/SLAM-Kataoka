@@ -470,6 +470,19 @@ vector<string> CTimeString::inputSomeString()
 	return s_vec;
 }
 
+vector<string> CTimeString::inputSomeString_fromCSV(string s_filename)
+{
+	vector<string> s_vec_output;
+
+	vector<vector<string>> s_vecvec = getVecVecFromCSV_string(s_filename);
+	for (int j = 0; j < s_vecvec.size(); j++)
+		for (int i = 0; i < s_vecvec[j].size(); i++)
+			s_vec_output.push_back(s_vecvec[j][i]);
+
+	return s_vec_output;
+}
+
+
 void CTimeString::showParameter(vector<float> parameter_vec, vector<string> name_vec, int i_frame_show)
 {
 	if (i_frame_show == -1) i_frame_show = name_vec.size() - 1;

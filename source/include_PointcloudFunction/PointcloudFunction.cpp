@@ -2238,11 +2238,12 @@ void CPointcloudFunction::GlobalRegistration_FPFH_SAC_IA()
 		cout << "0: registration of 2 frames" << endl;
 		cout << "1: registration of all frames and output files(.csv and .pcd)" << endl;
 		cout << "2: output fusion and matrix(of convergence) by .csv" << endl;
-		cout << "3: watch points selected by FPFH with some radius" << endl;
-		cout << "4: output error of fpfh value (2 frames)" << endl;
-		cout << "5: output error of fpfh value (all frames)" << endl;
-		cout << "6: output show FPFH variance (all frames)" << endl;
-		cout << "7: vary parameter by some patterns (all frames)" << endl;
+		cout << "3: output EST of patterns by .csv" << endl;
+		cout << "4: watch points selected by FPFH with some radius" << endl;
+		cout << "5: output error of fpfh value (2 frames)" << endl;
+		cout << "6: output error of fpfh value (all frames)" << endl;
+		cout << "7: output show FPFH variance (all frames)" << endl;
+		cout << "8: vary parameter by some patterns (all frames)" << endl;
 		cout << "select ->";
 		int i_method;
 
@@ -2282,8 +2283,18 @@ void CPointcloudFunction::GlobalRegistration_FPFH_SAC_IA()
 					if (s_i.size() < 2) s_i = " " + s_i;
 					cout << "i:" << s_i << " " << filenames_folder[i] << endl;
 				}
+				cout << endl;
+				cout << "input folder you want to calc (can input multinumber)" << endl;
 				vector<string> s_input_vec;
-				s_input_vec = CTimeString::inputSomeString();
+				bool b_useCSV = false;
+				{
+					cout << "select: input number by csv or not  yes:1  no:0" << endl;
+					cout << "->";
+					cin >> b_useCSV;
+				}
+				if (!b_useCSV) s_input_vec = CTimeString::inputSomeString();
+				else s_input_vec = CTimeString::inputSomeString_fromCSV(dir_ + "/" + "num_vector.csv");
+
 				cout << "s_input_vec.size():" << s_input_vec.size() << endl;
 				for (int i = 0; i < s_input_vec.size(); i++)
 					i_folder_vec.push_back(stoi(s_input_vec[i]));
@@ -2294,14 +2305,16 @@ void CPointcloudFunction::GlobalRegistration_FPFH_SAC_IA()
 			
 		}
 		else if (i_method == 3)
-			GR_FPFH_SelectPoint(dir_, parameter_vec);
+			GR_FPFH_getResultOfPatterns(dir_);
 		else if (i_method == 4)
-			GR_FPFH_error(dir_, parameter_vec);
+			GR_FPFH_SelectPoint(dir_, parameter_vec);
 		else if (i_method == 5)
-			GR_FPFH_error_AllFrames(dir_, parameter_vec);
+			GR_FPFH_error(dir_, parameter_vec);
 		else if (i_method == 6)
-			GR_FPFH_variance_AllFrames(dir_, parameter_vec);
+			GR_FPFH_error_AllFrames(dir_, parameter_vec);
 		else if (i_method == 7)
+			GR_FPFH_variance_AllFrames(dir_, parameter_vec);
+		else if (i_method == 8)
 			GR_FPFH_varyParameter(dir_, parameter_vec);
 		else break;
 
@@ -2313,9 +2326,6 @@ void CPointcloudFunction::GlobalRegistration_FPFH_SAC_IA()
 
 void CPointcloudFunction::GR_FPFH_getResultAnalysis(string dir_, string s_folder)
 {
-	////select folder
-	string dir_process;
-
 	//string s_folder;
 	//{
 	//	vector<string> filenames_folder;
@@ -2332,8 +2342,6 @@ void CPointcloudFunction::GR_FPFH_getResultAnalysis(string dir_, string s_folder
 	//	cin >> i_folder;
 	//	s_folder = filenames_folder[i_folder];
 	//}
-
-	dir_process = dir_ + "/" + s_folder;
 
 	GR_FPFH_makeFusionCSV(dir_, s_folder);
 
@@ -2366,8 +2374,14 @@ void CPointcloudFunction::GR_FPFH_makeFusionCSV(string dir_, string s_folder)
 	//CTimeString::getCSVFromVecVec(s_output_vecvec, dir_process + "/"
 	//	+ filenames_csv[0].substr(0, filenames_csv[0].size() - 4) + "_fusion.csv");
 	//save _fusion.csv
+	string s_folder_new;
+	{
+		vector<int> find_vec = CTimeString::find_all(s_folder, "_checked");
+		if (0 != find_vec.size()) s_folder_new = s_folder.substr(0, find_vec[0]);
+		else s_folder_new = s_folder;
+	}
 	CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + s_folder + "/"
-		+ s_folder + "_output_fusion.csv");
+		+ s_folder_new + "_output_fusion.csv");
 }
 
 
@@ -2505,7 +2519,6 @@ void CPointcloudFunction::GR_FPFH_makeMatrix(string dir_)
 		s_output_vecvec = s_temp_vecvec;
 	}
 
-	//output file
 	string filename_;
 	filename_ = filenames_csv[0].substr(0, filenames_csv[0].size() - 4) + "_matrix.csv";
 	CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + filename_);
@@ -2578,6 +2591,11 @@ void CPointcloudFunction::GR_FPFH_makeSuccessEstimation(string dir_)
 		vector<string> s_vec_temp;
 		s_input_vecvec_matrix.push_back(s_vec_temp);
 	}
+	{
+		vector<string> s_vec_temp;
+		s_vec_temp.push_back("Success_Estimation");
+		s_input_vecvec_matrix.push_back(s_vec_temp);
+	}
 
 	//show success
 	int num_suc_est_sum = 0;
@@ -2604,6 +2622,135 @@ void CPointcloudFunction::GR_FPFH_makeSuccessEstimation(string dir_)
 	filename_ = filenames_csv[0].substr(0, filenames_csv[0].size() - 4) + "_SucEst.csv";
 	CTimeString::getCSVFromVecVec(s_input_vecvec_matrix, dir_ + "/" + filename_);
 
+}
+
+void CPointcloudFunction::GR_FPFH_getResultOfPatterns(string dir_)
+{
+	vector<string> filenames_folder;
+	vector<int> i_folder_vec;
+	{
+		CTimeString::getFileNames_folder(dir_, filenames_folder);
+		for (int i = 0; i < filenames_folder.size(); i++)
+		{
+			string s_i = to_string(i);
+			if (s_i.size() < 2) s_i = " " + s_i;
+			cout << "i:" << s_i << " " << filenames_folder[i] << endl;
+		}
+		cout << endl;
+		cout << "input folder you want to calc (can input multinumber)" << endl;
+		vector<string> s_input_vec;
+		bool b_useCSV = false;
+		{
+			cout << "select: input number by csv or not  yes:1  no:0" << endl;
+			cout << "->";
+			cin >> b_useCSV;
+		}
+		if(!b_useCSV) s_input_vec = CTimeString::inputSomeString();
+		else s_input_vec = CTimeString::inputSomeString_fromCSV(dir_ + "/" + "num_vector.csv");
+		cout << "s_input_vec.size():" << s_input_vec.size() << endl;
+		for (int i = 0; i < s_input_vec.size(); i++)
+			i_folder_vec.push_back(stoi(s_input_vec[i]));
+	}
+
+	vector<vector<string>> s_output_vecvec;
+	{
+		vector<string> s_output_vec;
+		s_output_vec.push_back("");
+		s_output_vec.push_back("voxel_size");
+		s_output_vec.push_back("radius_normal_FPFH");
+		s_output_vec.push_back("radius_FPFH");
+		s_output_vec.push_back("MaxCorrespondenceDistance_SAC");
+		s_output_vec.push_back("SimilarityThreshold_SAC");
+		s_output_vec.push_back("InlierFraction_SAC");
+		s_output_vec.push_back("MaximumIterations_SAC");
+		s_output_vec.push_back("NumberOfSamples_SAC");
+		s_output_vec.push_back("CorrespondenceRandomness_SAC");
+		s_output_vec.push_back("max_RANSAC");
+		s_output_vec.push_back("est");
+		s_output_vec.push_back("failed");
+		s_output_vecvec.push_back(s_output_vec);
+	}
+
+	for (int i = 0; i < i_folder_vec.size(); i++)
+		s_output_vecvec.push_back(
+			GR_FPFH_getResultOfOnePattern(dir_, filenames_folder[i_folder_vec[i]]));
+
+	//transposition
+	{
+		vector<vector<string>> s_output_vecvec_temp;
+		s_output_vecvec_temp = CTimeString::getTranspositionOfVecVec(s_output_vecvec);
+		s_output_vecvec = s_output_vecvec_temp;
+	}
+
+	string s_t = CTimeString::getTimeString();
+	CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/ESTResult_" + s_t + ".csv");
+}
+
+
+vector<string> CPointcloudFunction::GR_FPFH_getResultOfOnePattern(string dir_, string s_folder)
+{
+	vector<string> s_vec_output;
+	{
+		string s_folder_clern;
+		vector<int> find_vec = CTimeString::find_all(s_folder, "_checked");
+		if (0 == find_vec.size()) s_folder_clern = s_folder;
+		else s_folder_clern = s_folder.substr(0, find_vec[0]);
+		s_vec_output.push_back(s_folder_clern);
+	}
+
+	vector<vector<string>> s_vecvec_temp;
+	{
+		vector<string> filenames_;
+		CTimeString::getFileNames_extension(dir_ + "/" + s_folder, filenames_,"_SucEst.csv");
+		if (filenames_.size() != 1)
+		{
+			cout << "ERROR: one fusion.csv have not been found" << endl;
+			return s_vec_output;
+		}
+		s_vecvec_temp = CTimeString::getVecVecFromCSV_string(
+			dir_ + "/" + s_folder + "/" + filenames_[0]);
+	}
+
+	for (int j = 1; j < 11; j++)
+		s_vec_output.push_back(s_vecvec_temp[j][4]);
+	vector<vector<string>> s_vecvec_est;
+	{
+		bool b_useLine = false;
+		for (int j = 0; j < s_vecvec_temp.size(); j++)
+		{
+			if (b_useLine)
+				s_vecvec_est.push_back(s_vecvec_temp[j]);
+			if ("Success_Estimation" == s_vecvec_temp[j][0])
+				b_useLine = true;
+		}
+	}
+
+	//extract sum value
+	{
+		string s_sum = s_vecvec_est.back()[1];
+		vector<int> find_vec = CTimeString::find_all(s_sum, "/");
+		s_vec_output.push_back(s_sum.substr(0, find_vec[0]));
+	}
+
+	//extract alone frames
+	vector<bool> b_alone_vec;
+	for (int j = 0; j < s_vecvec_est.size() - 1; j++)
+	{
+		string s_success = s_vecvec_est[j][1];
+		vector<int> find_vec = CTimeString::find_all(s_success, "/");
+		bool b_alone = false;
+		if (stoi(s_success.substr(0, find_vec[0])) == 0)
+			b_alone = true;
+		b_alone_vec.push_back(b_alone);
+	}
+	string s_frames;
+	for (int i = 0; i < b_alone_vec.size(); i++)
+	{
+		if (b_alone_vec[i])
+			s_frames += to_string(i) + " ";
+	}
+	s_vec_output.push_back(s_frames);
+	return s_vec_output;
 }
 
 
