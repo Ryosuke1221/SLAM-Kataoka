@@ -81,6 +81,7 @@ public:
 	static void calcParameterPattern(vector<vector<float>> &pattern_vec_vec,vector<vector<float>> parameter_vec_vec);
 	static void removeSameParameter(vector<vector<float>> &parameter_vec_vec);
 	static void sortStringVector2d(vector<vector<string>> &s_vecvec, int index_arg);
+	static void sortStringVector2d_2ingredient(vector<vector<string>> &s_vecvec, int ing_large, int ing_small);
 
 	template<typename T>
 	static vector<vector<T>> getMatrixCSVFromVecVec(vector<vector<T>> saved_data_vec_vec)

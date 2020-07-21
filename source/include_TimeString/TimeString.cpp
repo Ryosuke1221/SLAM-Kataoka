@@ -859,3 +859,56 @@ void CTimeString::sortStringVector2d(vector<vector<string>> &s_vecvec, int index
 	s_vecvec.clear();
 	s_vecvec = s_input_vecvec_new;
 }
+
+void CTimeString::sortStringVector2d_2ingredient(vector<vector<string>> &s_vecvec, int ing_large, int ing_small)
+{
+	////show
+	//for (int j = 0; j < s_vecvec.size(); j++)
+	//{
+	//	for (int i = 0; i < s_vecvec[j].size(); i++)
+	//		cout << s_vecvec[j][i] << "  ";
+	//	cout << endl;
+	//}
+
+	//large sort
+	CTimeString::sortStringVector2d(s_vecvec, ing_large);
+
+	//small sort while sustaining large sort
+	vector<vector<string>> s_vecvec_new;
+	vector<vector<string>> s_input_vecvec_1unit;
+	int i_tgt = 0;
+	int idx = 0;
+	while (1)
+	{
+		bool b_end_inFrame = false;
+		if (i_tgt == stoi(s_vecvec[idx][ing_large]))
+			s_input_vecvec_1unit.push_back(s_vecvec[idx]);
+
+		if (s_vecvec.size() == idx + 1)
+			b_end_inFrame = true;
+
+		else if (i_tgt != stoi(s_vecvec[idx + 1][ing_large]))
+			b_end_inFrame = true;
+
+		if (b_end_inFrame)
+		{
+			CTimeString::sortStringVector2d(s_input_vecvec_1unit, ing_small);
+			for (int j = 0; j < s_input_vecvec_1unit.size(); j++)
+				s_vecvec_new.push_back(s_input_vecvec_1unit[j]);
+			s_input_vecvec_1unit.clear();
+
+			i_tgt++;
+			//if (frame_end == i_tgt) break;
+			if (s_vecvec.size() == idx + 1) break;
+
+			continue;
+
+		}
+		idx++;
+		//if (s_vecvec.size() == idx) break;
+	}
+
+	s_vecvec.clear();
+	s_vecvec = s_vecvec_new;
+}
+
