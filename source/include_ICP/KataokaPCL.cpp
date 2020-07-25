@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "KataokaPCL.h"
 
 CKataokaPCL::CKataokaPCL()
@@ -2331,4 +2332,32 @@ vector<float> CKataokaPCL::getFPFHVariance(pcl::PointCloud<pcl::FPFHSignature33>
 		fpfh_hist_SquaredError[i] /= num_valid_points;
 
 	return fpfh_hist_SquaredError;
+}
+
+int CKataokaPCL::do_exp_getCharaOfPoint_NarahaWinter(pcl::PointXYZRGB point_arg, vector<double> th_vec)
+{
+	int chara_value = 0;
+	int value_none = 0;
+	int value_w = 1;	//water
+	int value_l = 2;	//laser reflection is large
+
+	double th_water = th_vec[0];
+	double th_laser = th_vec[1];
+
+	if (point_arg.r < th_water) chara_value = value_w;
+	else if (point_arg.g > th_laser) chara_value = value_l;
+	else chara_value = value_none;
+
+	if (point_arg.r == 255)//velodyne only
+	{
+		if (point_arg.g > th_laser) chara_value = value_l;
+		else chara_value = value_none;
+	}
+	else if (point_arg.g == 255)//velodyne and nir
+	{
+		if (point_arg.r < th_water) chara_value = value_w;
+		else chara_value = value_none;
+	}
+
+	return chara_value;
 }

@@ -284,6 +284,8 @@ public:
 	static Eigen::Vector6d calcRobotPosition_6DoF(Eigen::Vector6d pos_before, Eigen::Vector6d disp_odometry,
 		Eigen::Vector6d pose_sensor, Eigen::Vector6d disp_registration);
 
+	static int do_exp_getCharaOfPoint_NarahaWinter(pcl::PointXYZRGB point_arg, vector<double> th_vec);
+
 	template <class T_PointType>
 	static Eigen::Vector3d getWeightPoint(pcl::PointCloud<T_PointType> cloud_)
 	{

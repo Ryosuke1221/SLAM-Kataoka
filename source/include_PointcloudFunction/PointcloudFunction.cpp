@@ -4409,36 +4409,20 @@ void CPointcloudFunction::DoICP_proposed_AllFrames()
 	}
 
 	//ICP instance
-	CKataokaPCL icp_instance;
 	int i_method_;
 	i_method_ = 1;
-	{
-		//icp
-		int MaximumIterations;
-		double MaxCorrespondenceDistance, EuclideanFitnessEpsilon, TransformationEpsilon;
-		MaximumIterations = 50000;
-		MaxCorrespondenceDistance = 1.;
-		EuclideanFitnessEpsilon = 1e-5;
-		TransformationEpsilon = 1e-6;
-		//attributed
-		double penalty_chara, dist_search, weight_dist_chara;
-		penalty_chara = 2.;
-		dist_search = MaxCorrespondenceDistance;
-		weight_dist_chara = 2.;
-		//insert
-		icp_instance.setMothodInt(i_method_);
-		icp_instance.setMaximumIterations(MaximumIterations);
-		icp_instance.setMaxCorrespondenceDistance(MaxCorrespondenceDistance);
-		icp_instance.setEuclideanFitnessEpsilon(EuclideanFitnessEpsilon);
-		icp_instance.setTransformationEpsilon(TransformationEpsilon);
-		if(i_method_ == 1) icp_instance.setCharaParameter(penalty_chara, dist_search, weight_dist_chara);
-		
-		//icp_instance.setInputSource(M_pPointCloud_alignment_Source);
-		//icp_instance.setInputTarget(M_pPointCloud_alignment_Target);
-		//M_kataokaPCL->setCharaVector_src(M_Chara_vec_vec[M_i_cnt]);
-		//M_kataokaPCL->setCharaVector_tgt(M_Chara_vec_vec[M_i_cnt - 1]);
-
-	}
+	//icp
+	int MaximumIterations;
+	double MaxCorrespondenceDistance, EuclideanFitnessEpsilon, TransformationEpsilon;
+	MaximumIterations = 50000;
+	MaxCorrespondenceDistance = 1.;
+	EuclideanFitnessEpsilon = 1e-5;
+	TransformationEpsilon = 1e-6;
+	//attributed
+	double penalty_chara, dist_search, weight_dist_chara;
+	penalty_chara = 2.;
+	dist_search = MaxCorrespondenceDistance;
+	weight_dist_chara = 2.;
 
 	//vector<vector<string>> s_output_vecvec;
 
@@ -4509,6 +4493,7 @@ void CPointcloudFunction::DoICP_proposed_AllFrames()
 
 	for (int j = 0; j < initPos_vec.size(); j++)
 	{
+
 		int i_tgt = initPos_vec[j].i_tgt;
 		int i_src = initPos_vec[j].i_src;
 
@@ -4533,23 +4518,65 @@ void CPointcloudFunction::DoICP_proposed_AllFrames()
 		//int frame_failed = 0;
 		Eigen::Matrix4d transform_ = Eigen::Matrix4d::Identity();
 		//bool b_cout_RANSAC = false;
+		Eigen::Vector6d Registration_Vector = Eigen::Vector6d::Zero();
 
 		cout << "i_tgt:" << i_tgt << " i_src:" << i_src << endl;
 
-		icp_instance.setInputTarget(cloud_tgt);
-		icp_instance.setInputSource(cloud_src);
-		if (i_method_ == 1)
+		if (i_method_ == 0)
 		{
-			icp_instance.setCharaVector_tgt(chara_vecvec[i_tgt]);
-			icp_instance.setCharaVector_src(chara_vecvec[i_src]);
-		}
+			pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> align_ICP;
 
-		//align
-		icp_instance.align();
-		b_hasConverged = icp_instance.hasConverged();
+			align_ICP.setInputSource(M_pPointCloud_alignment_Source);
+			align_ICP.setInputTarget(M_pPointCloud_alignment_Target);
+			align_ICP.setMaximumIterations(MaximumIterations);
+			align_ICP.setMaxCorrespondenceDistance(MaxCorrespondenceDistance);
+			align_ICP.setEuclideanFitnessEpsilon(EuclideanFitnessEpsilon);
+			//M_kataokaPCL->setTransformationEpsilon(TransformationEpsilon);
+			align_ICP.align(*M_pPointCloud_Temp);
+			Eigen::Vector6d trans_vec_temp = Eigen::Vector6d::Zero();
+			trans_vec_temp = CKataokaPCL::calcVector6dFromHomogeneousMatrix(
+				align_ICP.getFinalTransformation().cast<double>());
+			//trans_temp = align_ICP->getFinalTransformation().cast<double>();
+			//auto trans_temp2 = align_ICP->getFinalTransformation().cast<double>();
+			//trans_vec_temp = CKataokaPCL::calcVector6dFromHomogeneousMatrix(trans_temp);
+			M_x_ICP = trans_vec_temp(0, 0);
+			M_y_ICP = trans_vec_temp(1, 0);
+			M_z_ICP = trans_vec_temp(2, 0);
+			M_pitch_ICP = trans_vec_temp(3, 0);
+			M_roll_ICP = trans_vec_temp(4, 0);
+			M_yaw_ICP = trans_vec_temp(5, 0);
+			string t2 = CTimeString::getTimeString();
+
+			//align
+			align_ICP_proposed.align();
+			b_hasConverged = align_ICP_proposed.hasConverged();
+			Registration_Vector = align_ICP_proposed.getFinalTransformation_Vec();
+
+		}
+		else if (i_method_ == 1)
+		{
+			CKataokaPCL align_ICP_proposed;
+			//parameter
+			align_ICP_proposed.setMothodInt(i_method_);
+			align_ICP_proposed.setMaximumIterations(MaximumIterations);
+			align_ICP_proposed.setMaxCorrespondenceDistance(MaxCorrespondenceDistance);
+			align_ICP_proposed.setEuclideanFitnessEpsilon(EuclideanFitnessEpsilon);
+			align_ICP_proposed.setTransformationEpsilon(TransformationEpsilon);
+			align_ICP_proposed.setCharaParameter(penalty_chara, dist_search, weight_dist_chara);
+			//data
+			align_ICP_proposed.setInputTarget(cloud_tgt);
+			align_ICP_proposed.setInputSource(cloud_src);
+			align_ICP_proposed.setCharaVector_tgt(chara_vecvec[i_tgt]);
+			align_ICP_proposed.setCharaVector_src(chara_vecvec[i_src]);
+			//align
+			align_ICP_proposed.align();
+			b_hasConverged = align_ICP_proposed.hasConverged();
+			Registration_Vector = align_ICP_proposed.getFinalTransformation_Vec();
+		}
 		cout << "b_hasConverged:" << b_hasConverged << endl;
-		Eigen::Vector6d ICP_Vector = Eigen::Vector6d::Zero();
-		ICP_Vector = icp_instance.getFinalTransformation_Vec();
+
+
+
 
 
 		//save pointcloud
