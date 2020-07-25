@@ -1,4 +1,3 @@
-#include "StdAfx.h"
 #include "KataokaPCL.h"
 
 CKataokaPCL::CKataokaPCL()
@@ -731,51 +730,50 @@ void CKataokaPCL::determineCorrespondences_chara(Correspondences_Kataoka &corres
 	cout << "correspondences size = " << nr_valid_correspondences << endl;
 }
 
-
-void CKataokaPCL::determineCorrespondences_argPC(pcl::Correspondences &correspondences, double max_distance,
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud_src, pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud_tgt)
-{
-
-	//cout << "determineCorrespondences" << endl;
-
-	double max_dist_sqr;
-	max_dist_sqr = max_distance * max_distance;
-
-	//cout<<"correspondences"
-
-	correspondences.resize(p_cloud_src->size());
-
-	//cout << "M_pPointCloud_source->size() = " << M_pPointCloud_source->size() << endl;
-	//cout << "M_pPointCloud_target->size() = " << M_pPointCloud_target->size() << endl;
-
-	std::vector<int> index(1);
-	std::vector<float> distance(1);
-	unsigned int nr_valid_correspondences = 0;
-
-	pcl::KdTreeFLANN<pcl::PointXYZRGB> match_search;
-
-	match_search.setInputCloud(p_cloud_tgt);
-
-	for (size_t i = 0; i < p_cloud_src->size(); ++i)
-	{
-
-		int found_neighs = match_search.nearestKSearch(p_cloud_src->at(i), 1, index, distance);
-
-		if (distance[0] > max_dist_sqr)		//squared
-			continue;
-		pcl::Correspondence corr;
-		corr.index_query = i;
-		corr.index_match = index[0];
-		corr.distance = distance[0];
-		correspondences[nr_valid_correspondences++] = corr;
-	}
-
-	correspondences.resize(nr_valid_correspondences);
-
-	//cout << "correspondences size = " << correspondences.size() << endl;
-	//cout << "correspondences size = " << (int)(correspondences.size()) << endl;
-	cout << "correspondences size = " << nr_valid_correspondences << endl;
-}
+//void CKataokaPCL::determineCorrespondences_argPC(pcl::Correspondences &correspondences, double max_distance,
+//	pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud_src, pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud_tgt)
+//{
+//
+//	//cout << "determineCorrespondences" << endl;
+//
+//	double max_dist_sqr;
+//	max_dist_sqr = max_distance * max_distance;
+//
+//	//cout<<"correspondences"
+//
+//	correspondences.resize(p_cloud_src->size());
+//
+//	//cout << "M_pPointCloud_source->size() = " << M_pPointCloud_source->size() << endl;
+//	//cout << "M_pPointCloud_target->size() = " << M_pPointCloud_target->size() << endl;
+//
+//	std::vector<int> index(1);
+//	std::vector<float> distance(1);
+//	unsigned int nr_valid_correspondences = 0;
+//
+//	pcl::KdTreeFLANN<pcl::PointXYZRGB> match_search;
+//
+//	match_search.setInputCloud(p_cloud_tgt);
+//
+//	for (size_t i = 0; i < p_cloud_src->size(); ++i)
+//	{
+//
+//		int found_neighs = match_search.nearestKSearch(p_cloud_src->at(i), 1, index, distance);
+//
+//		if (distance[0] > max_dist_sqr)		//squared
+//			continue;
+//		pcl::Correspondence corr;
+//		corr.index_query = i;
+//		corr.index_match = index[0];
+//		corr.distance = distance[0];
+//		correspondences[nr_valid_correspondences++] = corr;
+//	}
+//
+//	correspondences.resize(nr_valid_correspondences);
+//
+//	//cout << "correspondences size = " << correspondences.size() << endl;
+//	//cout << "correspondences size = " << (int)(correspondences.size()) << endl;
+//	cout << "correspondences size = " << nr_valid_correspondences << endl;
+//}
 
 void CKataokaPCL::determineCorrespondences_argPC_chara(pcl::Correspondences &correspondences, double max_distance,
 	double penalty_chara, double dist_search_arg, double weight_dist_chara,
@@ -2334,7 +2332,7 @@ vector<float> CKataokaPCL::getFPFHVariance(pcl::PointCloud<pcl::FPFHSignature33>
 	return fpfh_hist_SquaredError;
 }
 
-int CKataokaPCL::do_exp_getCharaOfPoint_NarahaWinter(pcl::PointXYZRGB point_arg, vector<double> th_vec)
+int CKataokaPCL::ICP_Chara_getCharaOfPoint_NarahaWinter(pcl::PointXYZRGB point_arg, vector<double> th_vec)
 {
 	int chara_value = 0;
 	int value_none = 0;
@@ -2360,4 +2358,18 @@ int CKataokaPCL::do_exp_getCharaOfPoint_NarahaWinter(pcl::PointXYZRGB point_arg,
 	}
 
 	return chara_value;
+}
+
+vector<int> CKataokaPCL::ICP_Chara_GetCharaData(pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_PointCloud_arg)
+{
+	vector<int> chara_vec;
+	for (int i = 0; i < p_PointCloud_arg->size(); i++)
+	{
+		auto point_ = p_PointCloud_arg->points[i];
+		vector<double> th_vec;
+		th_vec.push_back(100.);	//th of nir
+		th_vec.push_back(55.);	//th of laser reflection
+		chara_vec.push_back(ICP_Chara_getCharaOfPoint_NarahaWinter(point_, th_vec));
+	}
+	return chara_vec;
 }

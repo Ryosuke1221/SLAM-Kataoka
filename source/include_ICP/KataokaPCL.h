@@ -178,8 +178,8 @@ public:
 
 	double getDistanceOf2PointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud1_arg, pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud2_arg);
 
-	void determineCorrespondences_argPC(pcl::Correspondences &correspondences, double max_distance,
-		pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud_src, pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud_tgt);
+	//void determineCorrespondences_argPC(pcl::Correspondences &correspondences, double max_distance,
+	//	pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud_src, pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud_tgt);
 
 	int do_exp_getCharaOfPoint_Todai(double x_, double y_, double z_);
 
@@ -270,7 +270,6 @@ public:
 	float getCorrMedianDistance(CorrespondencesPtr_Spring2 correspondences);
 	static float getCorrMedianDistance(pcl::Correspondences correspondences);
 
-
 	//20200519
 	static Eigen::Matrix4d calcHomogeneousMatrixFromVector6d(double X_, double Y_, double Z_,
 		double Roll_, double Pitch_, double Yaw_);
@@ -284,7 +283,8 @@ public:
 	static Eigen::Vector6d calcRobotPosition_6DoF(Eigen::Vector6d pos_before, Eigen::Vector6d disp_odometry,
 		Eigen::Vector6d pose_sensor, Eigen::Vector6d disp_registration);
 
-	static int do_exp_getCharaOfPoint_NarahaWinter(pcl::PointXYZRGB point_arg, vector<double> th_vec);
+	static int ICP_Chara_getCharaOfPoint_NarahaWinter(pcl::PointXYZRGB point_arg, vector<double> th_vec);
+	static vector<int> ICP_Chara_GetCharaData(pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_PointCloud_arg);
 
 	template <class T_PointType>
 	static Eigen::Vector3d getWeightPoint(pcl::PointCloud<T_PointType> cloud_)
@@ -313,26 +313,7 @@ public:
 		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src, boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_tgt)
 	{
 		//corr
-		pcl::Correspondences correspondences;
-		{
-			correspondences.resize(cloud_src->size());
-			std::vector<int> index(1);
-			std::vector<float> distance(1);
-			unsigned int nr_valid_correspondences = 0;
-			pcl::KdTreeFLANN<T_PointType> match_search;
-			match_search.setInputCloud(cloud_tgt->makeShared());
-			for (size_t i = 0; i < cloud_src->size(); ++i)
-			{
-				int found_neighs = match_search.nearestKSearch(cloud_src->at(i), 1, index, distance);
-				pcl::Correspondence corr;
-				corr.index_query = i;
-				corr.index_match = index[0];
-				corr.distance = distance[0];	//squared
-				correspondences[nr_valid_correspondences++] = corr;
-			}
-			correspondences.resize(nr_valid_correspondences);
-			//cout << "correspondences size = " << nr_valid_correspondences << endl;
-		}
+		pcl::Correspondences correspondences = determineCorrespondences_output(cloud_src, cloud_tgt);
 		//call median function
 		return getCorrMedianDistance(correspondences);
 	}
@@ -883,5 +864,32 @@ public:
 		sor.filter(*cloud_filtered);
 		cloud_output->clear();
 		pcl::copyPointCloud(*cloud_filtered, *cloud_output);
+	}
+	template <class T_PointType>
+
+	static pcl::Correspondences determineCorrespondences_output(
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src, 
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_tgt,
+		float th_distance = 100.)
+	{
+		pcl::Correspondences correspondences;
+		correspondences.resize(cloud_src->size());
+		std::vector<int> index(1);
+		std::vector<float> distance(1);
+		unsigned int nr_valid_correspondences = 0;
+		pcl::KdTreeFLANN<T_PointType> match_search;
+		match_search.setInputCloud(cloud_tgt->makeShared());
+		for (size_t i = 0; i < cloud_src->size(); ++i)
+		{
+			int found_neighs = match_search.nearestKSearch(cloud_src->at(i), 1, index, distance);
+			if (th_distance * th_distance < distance[0]) continue;
+			pcl::Correspondence corr;
+			corr.index_query = i;
+			corr.index_match = index[0];
+			corr.distance = distance[0];	//squared
+			correspondences[nr_valid_correspondences++] = corr;
+		}
+		correspondences.resize(nr_valid_correspondences);
+		return correspondences;
 	}
 };

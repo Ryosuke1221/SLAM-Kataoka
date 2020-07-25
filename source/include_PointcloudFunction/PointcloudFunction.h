@@ -169,7 +169,7 @@ public:
 	void GR_FPFH_SAC_IA_2frames(string dir_, vector<float> parameter_vec);
 	void GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> parameter_vec, bool b_changeParameter = true);
 	vector<pair<int, int>> GR_FPFH_SAC_IA_get_frame_pair_vec(string dir_);
-	void GR_addToOutputString_OutputHeader(vector<vector<string>> &s_output_vecvec);
+	void GR_addToOutputString_OutputHeader_FPFH(vector<vector<string>> &s_output_vecvec);
 	void GR_FPFH_SelectPoint(string dir_, vector<float> parameter_vec);
 	void GR_FPFH_error(string dir_, vector<float> parameter_vec);
 	void GR_FPFH_error_AllFrames(string dir_, vector<float> parameter_vec, bool b_changeParameter = true);
@@ -177,4 +177,6 @@ public:
 	void GR_FPFH_varyParameter(string dir_, vector<float> parameter_vec_arg);
 	void DoOutlierRejector();
 	void DoICP_proposed_AllFrames();
+	void GR_addToOutputString_OutputHeader_ICP(vector<vector<string>> &s_output_vecvec);
+
 };
