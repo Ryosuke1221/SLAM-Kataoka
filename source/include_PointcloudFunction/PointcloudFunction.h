@@ -162,7 +162,7 @@ public:
 	void GlobalRegistration_FPFH_SAC_IA();
 	void GR_FPFH_getResultAnalysis(string dir_, string s_folder);
 	void GR_FPFH_makeFusionCSV(string dir_, string s_folder);
-	void GR_FPFH_makeMatrix(string dir_);
+	vector<vector<string>> GR_FPFH_makeMatrix(vector<vector<int>> int_vecvec);
 	void GR_FPFH_makeSuccessEstimation(string dir_);
 	void GR_FPFH_getResultOfPatterns(string dir_);
 	vector<string> GR_FPFH_getResultOfOnePattern(string dir_, string s_folder);

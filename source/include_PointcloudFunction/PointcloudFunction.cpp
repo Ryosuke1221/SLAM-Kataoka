@@ -2238,7 +2238,7 @@ void CPointcloudFunction::GlobalRegistration_FPFH_SAC_IA()
 		cout << "0: registration of 2 frames" << endl;
 		cout << "1: registration of all frames and output files(.csv and .pcd)" << endl;
 		cout << "2: output fusion and matrix(of convergence) by .csv" << endl;
-		cout << "3: output EST of patterns by .csv" << endl;
+		cout << "3: output ESTs of patterns by .csv" << endl;
 		cout << "4: watch points selected by FPFH with some radius" << endl;
 		cout << "5: output error of fpfh value (2 frames)" << endl;
 		cout << "6: output error of fpfh value (all frames)" << endl;
@@ -2406,41 +2406,14 @@ void CPointcloudFunction::GR_FPFH_makeFusionCSV(string dir_, string s_folder)
 		+ s_folder_new + "_output_fusion.csv");
 }
 
-
-void CPointcloudFunction::GR_FPFH_makeMatrix(string dir_)
+vector<vector<string>> CPointcloudFunction::GR_FPFH_makeMatrix(vector<vector<int>> int_vecvec)
 {
-	bool b_sort_table = false;
-	b_sort_table = true;
-
-	//input file name
-	vector<string> filenames_csv;
-	CTimeString::getFileNames_extension(dir_, filenames_csv, "_fusion.csv");
-	if (filenames_csv.size() != 1)
-	{
-		cout << "ERROR: one fusion.csv have not been found" << endl;
-		return;
-	}
-
-	//get vecvec from .csv s
-	vector<vector<string>> s_input_vecvec;
-	{
-		vector<vector<string>> s_temp_vecvec;
-		s_temp_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + filenames_csv[0]);
-		for (int j = 14; j < s_temp_vecvec.size() - 3; j++)
-		{
-			vector<string> s_input_vec;
-			s_input_vec = s_temp_vecvec[j];
-			s_input_vecvec.push_back(s_input_vec);
-		}
-	}
-
 	//get frame size
 	int frame_end = 0;
-	//frame_end = stoi(s_input_vecvec.back()[0]) + 1;
-	for (int j = 0; j < s_input_vecvec.size(); j++)
+	for (int j = 0; j < int_vecvec.size(); j++)
 	{
-		if (stoi(s_input_vecvec[j][1]) > frame_end)
-			frame_end = stoi(s_input_vecvec[j][1]);
+		if (int_vecvec[j][1] > frame_end)
+			frame_end = int_vecvec[j][1];
 	}
 
 	////show
@@ -2472,36 +2445,37 @@ void CPointcloudFunction::GR_FPFH_makeMatrix(string dir_)
 	}
 
 	//fill value cell
-	for (int j = 0; j < s_input_vecvec.size(); j++)
+	for (int j = 0; j < int_vecvec.size(); j++)
 	{
-		//cout << "j:" << j << endl;
 		int i_tgt, i_src;
 		bool b_convergence = false;
-		i_tgt = stoi(s_input_vecvec[j][0]);
-		i_src = stoi(s_input_vecvec[j][1]);
-		b_convergence = stoi(s_input_vecvec[j][8]);
-		if (b_convergence) s_output_vecvec[i_tgt][i_src] = to_string(1);
-		else s_output_vecvec[i_tgt][i_src] = to_string(0);
+		int EstSuc;
+		i_tgt = int_vecvec[j][0];
+		i_src = int_vecvec[j][1];
+		EstSuc = int_vecvec[j][2];
+		s_output_vecvec[i_tgt][i_src] = to_string(EstSuc);
 	}
 
 	//make matrix
 	s_output_vecvec = CTimeString::getMatrixCSVFromVecVec(s_output_vecvec);
 
-	//add matrix under fusion
-	{
-		vector<vector<string>> s_temp_vecvec;
-		s_temp_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + filenames_csv[0]);
-		vector<string> s_temp_vec;
-		s_temp_vecvec.push_back(s_temp_vec);
-		for (int j = 0; j < s_output_vecvec.size(); j++)
-			s_temp_vecvec.push_back(s_output_vecvec[j]);
-		s_output_vecvec.clear();
-		s_output_vecvec = s_temp_vecvec;
-	}
+	////add matrix under fusion
+	//{
+	//	vector<vector<string>> s_temp_vecvec;
+	//	s_temp_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + filenames_csv[0]);
+	//	vector<string> s_temp_vec;
+	//	s_temp_vecvec.push_back(s_temp_vec);
+	//	for (int j = 0; j < s_output_vecvec.size(); j++)
+	//		s_temp_vecvec.push_back(s_output_vecvec[j]);
+	//	s_output_vecvec.clear();
+	//	s_output_vecvec = s_temp_vecvec;
+	//}
 
-	string filename_;
-	filename_ = filenames_csv[0].substr(0, filenames_csv[0].size() - 4) + "_matrix.csv";
-	CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + filename_);
+	//string filename_;
+	//filename_ = filenames_csv[0].substr(0, filenames_csv[0].size() - 4) + "_matrix.csv";
+	//CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + filename_);
+
+	return s_output_vecvec;
 }
 
 void CPointcloudFunction::GR_FPFH_makeSuccessEstimation(string dir_)
@@ -2555,36 +2529,36 @@ void CPointcloudFunction::GR_FPFH_makeSuccessEstimation(string dir_)
 	th_distance = 4.;	//10
 	th_median = 1.8;	//11
 
-	vector<vector<int>> b_est_vecvec_EachRows;
+	vector<vector<int>> i_est_vecvec_EachRows;
 	for (int j = 0; j < s_value_vecvec_EachRows.size(); j++)
 	{
-		vector<int> b_est_vec_EachRows;
+		vector<int> i_est_vec_EachRows;
 		int i_tgt, i_src;
 		i_tgt = stoi(s_value_vecvec_EachRows[j][0]);
 		i_src = stoi(s_value_vecvec_EachRows[j][1]);
 
-		b_est_vec_EachRows.push_back(i_tgt);
-		b_est_vec_EachRows.push_back(i_src);
+		i_est_vec_EachRows.push_back(i_tgt);
+		i_est_vec_EachRows.push_back(i_src);
 
 		num_called_vec[i_tgt]++;
 		num_called_vec[i_src]++;
 
 		if (!(th_distance >= stof(s_value_vecvec_EachRows[j][10])
 			&& th_median >= stof(s_value_vecvec_EachRows[j][11])))
-			b_est_vec_EachRows.push_back(0);
+			i_est_vec_EachRows.push_back(0);
 		else
 		{
 			num_success_vec[i_tgt]++;
 			num_success_vec[i_src]++;
-			b_est_vec_EachRows.push_back(1);
+			i_est_vec_EachRows.push_back(1);
 		}
-		b_est_vecvec_EachRows.push_back(b_est_vec_EachRows);
+		i_est_vecvec_EachRows.push_back(i_est_vec_EachRows);
 	}
 
 	s_output_vecvec[13].push_back("suc_est");
 
-	for (int j = 0; j < b_est_vecvec_EachRows.size(); j++)
-		s_output_vecvec[j + 14].push_back(to_string(b_est_vecvec_EachRows[j][2]));
+	for (int j = 0; j < i_est_vecvec_EachRows.size(); j++)
+		s_output_vecvec[j + 14].push_back(to_string(i_est_vecvec_EachRows[j][2]));
 
 	{
 		vector<string> s_vec_temp;
@@ -2616,23 +2590,28 @@ void CPointcloudFunction::GR_FPFH_makeSuccessEstimation(string dir_)
 		s_output_vecvec.push_back(s_vec_temp);
 	}
 
-	//{
-	//	vector<string> s_vec_temp;
-	//	s_output_vecvec.push_back(s_vec_temp);
-	//}
-	//{
-	//	vector<string> s_vec_temp;
-	//	s_vec_temp.push_back("Matrix_SucEst");
-	//	s_output_vecvec.push_back(s_vec_temp);
-	//}
+	{
+		vector<string> s_vec_temp;
+		s_output_vecvec.push_back(s_vec_temp);
+	}
+	{
+		vector<string> s_vec_temp;
+		s_vec_temp.push_back("Matrix_SucEst");
+		s_output_vecvec.push_back(s_vec_temp);
+	}
 
 	//make matrix
+	vector<vector<string>> s_suc_mat_vecvec;
+	s_suc_mat_vecvec = GR_FPFH_makeMatrix(i_est_vecvec_EachRows);
+
+	//push back matrix
+	for (int j = 0; j < s_suc_mat_vecvec.size(); j++)
+		s_output_vecvec.push_back(s_suc_mat_vecvec[j]);
 
 	//output file
 	string filename_;
 	filename_ = filenames_csv[0].substr(0, filenames_csv[0].size() - 4) + "_SucEst.csv";
 	CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + filename_);
-
 }
 
 void CPointcloudFunction::GR_FPFH_getResultOfPatterns(string dir_)
