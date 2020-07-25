@@ -176,4 +176,5 @@ public:
 	void GR_FPFH_variance_AllFrames(string dir_, vector<float> parameter_vec, bool b_changeParameter = true);
 	void GR_FPFH_varyParameter(string dir_, vector<float> parameter_vec_arg);
 	void DoOutlierRejector();
+	void DoICP_proposed_AllFrames();
 };
