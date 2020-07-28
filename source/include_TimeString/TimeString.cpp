@@ -811,30 +811,31 @@ void CTimeString::changeParameter_2dimension(vector<vector<float>> &parameter_ve
 
 void CTimeString::removeSameParameter(vector<vector<float>> &parameter_vec_vec)
 {
-
 	for (int j = 0; j < parameter_vec_vec.size(); j++)
+		removeSameValue_fromVector(parameter_vec_vec[j]);
+}
+
+void CTimeString::sortVector2d(vector<vector<float>> &f_vecvec, int index_arg)
+{
+	vector<pair<int, int>> frame_pair_vec;
+	for (int j = 0; j < f_vecvec.size(); j++)
+		frame_pair_vec.push_back(make_pair(f_vecvec[j][index_arg], j));
+	for (int i = 0; i < frame_pair_vec.size(); i++)
 	{
-		vector<float> parameter_vec = parameter_vec_vec[j];
-		vector<float> parameter_vec_new;
-		//sort
-		sort(parameter_vec.begin(), parameter_vec.end());
-		//remove same value
-		float value_last;
-		for (int i = 0; i < parameter_vec.size(); i++)
+		for (int j = frame_pair_vec.size() - 1; j > i; j--)
 		{
-			if (i == 0)
-			{
-				parameter_vec_new.push_back(parameter_vec[i]);
-			}
-			else
-			{
-				if (value_last != parameter_vec[i])
-					parameter_vec_new.push_back(parameter_vec[i]);
-			}
-			value_last = parameter_vec[i];
+			if (frame_pair_vec[j].first < frame_pair_vec[j - 1].first)
+				swap(frame_pair_vec[j], frame_pair_vec[j - 1]);
 		}
-		parameter_vec_vec[j] = parameter_vec_new;
 	}
+	vector<vector<float>> f_input_vecvec_new;
+	for (int j = 0; j < frame_pair_vec.size(); j++)
+	{
+		vector<float> s_input_vec_new;
+		f_input_vecvec_new.push_back(f_vecvec[frame_pair_vec[j].second]);
+	}
+	f_vecvec.clear();
+	f_vecvec = f_input_vecvec_new;
 }
 
 void CTimeString::sortStringVector2d(vector<vector<string>> &s_vecvec, int index_arg)
@@ -912,3 +913,178 @@ void CTimeString::sortStringVector2d_2ingredient(vector<vector<string>> &s_vecve
 	s_vecvec = s_vecvec_new;
 }
 
+vector<vector<int>> CTimeString::getIntCluster_SomeToSome(vector<vector<int>> value_vecvec, bool b_recursive)
+{
+	//calc max and min
+	int max_value = 0;
+	int min_value = 100000;
+	for (int j = 0; j < value_vecvec.size(); j++)
+	{
+		for (int i = 0; i < value_vecvec[j].size(); i++)
+		{
+			if (max_value < value_vecvec[j][i]) max_value = value_vecvec[j][i];
+			if (min_value > value_vecvec[j][i]) min_value = value_vecvec[j][i];
+		}
+	}
+
+	vector<int> cluster_belong_vec;
+	cluster_belong_vec.resize(max_value + 1);
+	fill(cluster_belong_vec.begin(), cluster_belong_vec.end(), -1);
+	cluster_belong_vec[min_value] = 0;
+
+	vector<vector<int>> cluster_SameRelation_vecvec;
+
+	//make cluster
+	int cluster_newest = 0;
+	for (int j = 0; j < value_vecvec.size(); j++)
+	{
+		vector<int> value_vec_notBlank;
+		for (int i = 0; i < value_vecvec[j].size(); i++)
+		{
+			if (cluster_belong_vec[value_vecvec[j][i]] != -1)
+				value_vec_notBlank.push_back(value_vecvec[j][i]);
+		}
+		if (value_vec_notBlank.size() == 0)
+		{
+			cluster_newest++;
+			for (int i = 0; i < value_vecvec[j].size(); i++)
+				cluster_belong_vec[value_vecvec[j][i]] = cluster_newest;
+		}
+		else if (value_vec_notBlank.size() == 1)
+		{
+			for (int i = 0; i < value_vecvec[j].size(); i++)
+				cluster_belong_vec[value_vecvec[j][i]]
+				= cluster_belong_vec[value_vec_notBlank[0]];
+
+		}
+		else
+		{
+			vector<int> cluster_vec_notBlank;
+			for (int i = 0; i < value_vec_notBlank.size(); i++)
+				cluster_vec_notBlank.push_back(cluster_belong_vec[value_vec_notBlank[i]]);
+			//detect same cluster in cluster_vec_notBlank
+			CTimeString::removeSameValue_fromVector(cluster_vec_notBlank);
+			if (cluster_vec_notBlank.size() == 1)
+			{
+				for (int i = 0; i < value_vecvec[j].size(); i++)
+					cluster_belong_vec[value_vecvec[j][i]]
+					= cluster_vec_notBlank[0];
+			}
+			else
+			{
+				for (int i = 0; i < value_vecvec[j].size(); i++)
+				{
+					if (cluster_belong_vec[value_vecvec[j][i]] == -1)
+						cluster_belong_vec[value_vecvec[j][i]]
+						= cluster_vec_notBlank[0];
+				}
+				cluster_SameRelation_vecvec.push_back(cluster_vec_notBlank);
+			}
+		}
+	}
+
+	//merge cluster
+	vector<vector<bool>> matrix_RClu_CVal_vecvec;
+	//init
+	for (int j = 0; j < cluster_newest + 1; j++)
+	{
+		vector<bool> matrix_RClu_CVal_vec;
+		for (int i = 0; i < max_value + 1; i++)
+			matrix_RClu_CVal_vec.push_back(false);
+		matrix_RClu_CVal_vecvec.push_back(matrix_RClu_CVal_vec);
+	}
+	//input
+	for (int i = 0; i < cluster_belong_vec.size(); i++)
+	{
+		if (cluster_belong_vec[i] == -1) continue;
+		matrix_RClu_CVal_vecvec[cluster_belong_vec[i]][i] = true;
+	}
+	//merge
+	vector<vector<int>> value_cluster_vecvec_new;
+	vector<vector<int>> cluster_SameRelation_vecvec_new;
+	{
+		//check it refering value
+		vector<vector<int>> merge_check_vecvec;
+		for (int i = 0; i < cluster_belong_vec.size(); i++)
+		{
+			if (cluster_belong_vec[i] == -1) continue;
+			vector<int> merge_check_vec;
+			for (int j = 0; j < cluster_newest + 1; j++)
+				if (matrix_RClu_CVal_vecvec[j][i])
+					merge_check_vec.push_back(j);
+			merge_check_vecvec.push_back(merge_check_vec);
+		}
+		//merge cluster
+		for (int i = 0; i < merge_check_vecvec.size(); i++)
+			cluster_SameRelation_vecvec.push_back(merge_check_vecvec[i]);
+		//call
+		int num_called_multiple = 1;
+		{
+			vector<int> call_cluster;
+			call_cluster.resize(cluster_newest + 1);
+			fill(call_cluster.begin(), call_cluster.end(), 0);
+			for (int j = 0; j < cluster_SameRelation_vecvec.size(); j++)
+				for (int i = 0; i < cluster_SameRelation_vecvec[j].size(); i++)
+					call_cluster[cluster_SameRelation_vecvec[j][i]]++;
+			for (int i = 0; i < call_cluster.size(); i++)
+				num_called_multiple *= call_cluster[i];
+		}
+		//calc
+		if (num_called_multiple != 1) //the index of each cluster called once in cluster_SameRelation_vecvec
+		{
+			cluster_SameRelation_vecvec_new
+				= getIntCluster_SomeToSome(cluster_SameRelation_vecvec, true);
+		}
+		else
+			cluster_SameRelation_vecvec_new = cluster_SameRelation_vecvec;
+
+		
+	}
+	//output
+	vector<vector<int>> value_cluster_vecvec;
+	for (int j = 0; j < matrix_RClu_CVal_vecvec.size(); j++)
+	{
+		vector<int> value_cluster_vec;
+		for (int i = 0; i < matrix_RClu_CVal_vecvec[j].size(); i++)
+		{
+			if (!matrix_RClu_CVal_vecvec[j][i]) continue;
+			value_cluster_vec.push_back(i);
+		}
+		value_cluster_vecvec.push_back(value_cluster_vec);	//exists same values
+	}
+	for (int j = 0; j < cluster_SameRelation_vecvec_new.size(); j++)
+	{
+		vector<int> value_cluster_vec_new;
+		for (int i = 0; i < cluster_SameRelation_vecvec_new[j].size(); i++)
+		{
+			value_cluster_vec_new.insert(value_cluster_vec_new.end(),
+				value_cluster_vecvec[cluster_SameRelation_vecvec_new[j][i]].begin(),
+				value_cluster_vecvec[cluster_SameRelation_vecvec_new[j][i]].end());
+		}
+		value_cluster_vecvec_new.push_back(value_cluster_vec_new);	//exists same values
+	}
+	//remove same value
+	for (int j = 0; j < value_cluster_vecvec_new.size(); j++)
+		CTimeString::removeSameValue_fromVector(value_cluster_vecvec_new[j]);
+
+	//sort to descending order in not recursive call
+	if (!b_recursive)
+	{
+		vector<vector<int>> value_cluster_vecvec_temp;
+		vector<vector<float>> size_vecvec;
+		for (int j = 0; j < value_cluster_vecvec_new.size(); j++)
+		{
+			vector<float> size_vec;
+			size_vec.push_back(value_cluster_vecvec_new[j].size());
+			size_vec.push_back(j);
+			size_vecvec.push_back(size_vec);
+		}
+		CTimeString::sortVector2d(size_vecvec, 0);
+		for (int j = size_vecvec.size() - 1; j >= 0; j--)
+			value_cluster_vecvec_temp.push_back(value_cluster_vecvec_new[(int)size_vecvec[j][1]]);
+		value_cluster_vecvec_new.clear();
+		value_cluster_vecvec_new = value_cluster_vecvec_temp;
+	}
+
+	return value_cluster_vecvec_new;
+}

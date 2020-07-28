@@ -79,9 +79,12 @@ public:
 	static void changeParameter_2dimension(vector<vector<float>> &parameter_vec_vec, vector<string> name_vec, vector<float> parameter_vec_init,
 		string filename_, int row_small, int col_small, int row_big, int col_big);
 	static void calcParameterPattern(vector<vector<float>> &pattern_vec_vec,vector<vector<float>> parameter_vec_vec);
+	//static void removeSameParameter_vec(vector<float> &parameter_vec);
 	static void removeSameParameter(vector<vector<float>> &parameter_vec_vec);
+	static void sortVector2d(vector<vector<float>> &f_vecvec, int index_arg);
 	static void sortStringVector2d(vector<vector<string>> &s_vecvec, int index_arg);
 	static void sortStringVector2d_2ingredient(vector<vector<string>> &s_vecvec, int ing_large, int ing_small);
+	static vector<vector<int>> getIntCluster_SomeToSome(vector<vector<int>> value_vecvec, bool b_recursive = false);
 
 	template<typename T>
 	static vector<vector<T>> getMatrixCSVFromVecVec(vector<vector<T>> saved_data_vec_vec)
@@ -135,6 +138,25 @@ public:
 		return T_vecvec_output;
 	}
 
+	template<typename T>
+	static void removeSameValue_fromVector(vector<T> &parameter_vec)
+	{
+		vector<T> parameter_vec_new;
+		//sort
+		sort(parameter_vec.begin(), parameter_vec.end());
+		//remove same value
+		T value_last;
+		for (int i = 0; i < parameter_vec.size(); i++)
+		{
+			if (i == 0)
+				parameter_vec_new.push_back(parameter_vec[i]);
+			else
+				if (value_last != parameter_vec[i])
+					parameter_vec_new.push_back(parameter_vec[i]);
+			value_last = parameter_vec[i];
+		}
+		parameter_vec = parameter_vec_new;
+	}
 
 private:
 	static bool getDirectoryExistance(string foder_Path);

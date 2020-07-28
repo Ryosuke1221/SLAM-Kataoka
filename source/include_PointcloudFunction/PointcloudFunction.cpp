@@ -22,7 +22,8 @@ void CPointcloudFunction::all_process()
 		EN_Segmentation,
 		EN_GR_FPFH_SAC_IA,
 		EN_DoOutlierRejector,
-		EN_ICP_Proposed_AllFrames
+		EN_ICP_Proposed_AllFrames,
+		EN_Evaluate_LoopClosure
 	};
 
 	while (!b_finish)
@@ -44,6 +45,7 @@ void CPointcloudFunction::all_process()
 		cout << " " << EN_GR_FPFH_SAC_IA << ": GR_FPFH_SAC_IA" << endl;
 		cout << " " << EN_DoOutlierRejector << ": DoOutlierRejector" << endl;
 		cout << " " << EN_ICP_Proposed_AllFrames << ": ICP_Proposed_AllFrames" << endl;
+		cout << " " << EN_Evaluate_LoopClosure << ": Evaluate_LoopClosure" << endl;
 
 		cout <<"WhichProcess: ";
 		cin >> WhichProcess;
@@ -113,6 +115,10 @@ void CPointcloudFunction::all_process()
 
 		case EN_ICP_Proposed_AllFrames:
 			DoICP_proposed_AllFrames();
+			break;
+
+		case EN_Evaluate_LoopClosure:
+			DoEvaluation_LoopClosure_AttributedICP();
 			break;
 
 		default:
@@ -2500,6 +2506,7 @@ void CPointcloudFunction::GR_FPFH_makeSuccessEstimation(string dir_)
 	th_median = 1.8;	//11
 
 	vector<vector<int>> i_est_vecvec_EachRows;
+	vector<vector<int>> frames_forClustering_vecvec;
 	for (int j = 0; j < s_value_vecvec_EachRows.size(); j++)
 	{
 		vector<int> i_est_vec_EachRows;
@@ -2521,6 +2528,10 @@ void CPointcloudFunction::GR_FPFH_makeSuccessEstimation(string dir_)
 			num_success_vec[i_tgt]++;
 			num_success_vec[i_src]++;
 			i_est_vec_EachRows.push_back(1);
+			vector<int> frames_forClustering_vec;
+			frames_forClustering_vec.push_back(i_tgt);
+			frames_forClustering_vec.push_back(i_src);
+			frames_forClustering_vecvec.push_back(frames_forClustering_vec);
 		}
 		i_est_vecvec_EachRows.push_back(i_est_vec_EachRows);
 	}
@@ -2557,6 +2568,30 @@ void CPointcloudFunction::GR_FPFH_makeSuccessEstimation(string dir_)
 		vector<string> s_vec_temp;
 		s_vec_temp.push_back("sum");
 		s_vec_temp.push_back(to_string(num_suc_est_sum) + "/(" + to_string(num_called_sum) + ")");
+		s_output_vecvec.push_back(s_vec_temp);
+	}
+	{
+		vector<string> s_vec_temp;
+		s_output_vecvec.push_back(s_vec_temp);
+	}
+
+	//clustering
+	{
+		vector<vector<int>> frames_forClustering_vecvec_new;
+		frames_forClustering_vecvec_new = 
+			CTimeString::getIntCluster_SomeToSome(frames_forClustering_vecvec);
+		//show biggest cluster
+		vector<string> s_vec_temp;
+		s_vec_temp.push_back("cluster");
+		string s_cluster;
+		for (int i = 0; i < frames_forClustering_vecvec_new[0].size(); i++)
+			s_cluster = s_cluster + to_string(frames_forClustering_vecvec_new[0][i]) + " ";
+		s_vec_temp.push_back(s_cluster);
+		s_output_vecvec.push_back(s_vec_temp);
+		//show size of biggest cluster
+		s_vec_temp.clear();
+		s_vec_temp.push_back("cluster_size");
+		s_vec_temp.push_back(to_string(frames_forClustering_vecvec_new[0].size()));
 		s_output_vecvec.push_back(s_vec_temp);
 	}
 
@@ -2628,6 +2663,8 @@ void CPointcloudFunction::GR_FPFH_getResultOfPatterns(string dir_)
 		s_output_vec.push_back("max_RANSAC");
 		s_output_vec.push_back("est");
 		s_output_vec.push_back("failed");
+		s_output_vec.push_back("cluster_biggest");
+		s_output_vec.push_back("cluster_size");
 		s_output_vecvec.push_back(s_output_vec);
 	}
 
@@ -2645,7 +2682,6 @@ void CPointcloudFunction::GR_FPFH_getResultOfPatterns(string dir_)
 	string s_t = CTimeString::getTimeString();
 	CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/ESTResult_" + s_t + ".csv");
 }
-
 
 vector<string> CPointcloudFunction::GR_FPFH_getResultOfOnePattern(string dir_, string s_folder)
 {
@@ -2673,6 +2709,7 @@ vector<string> CPointcloudFunction::GR_FPFH_getResultOfOnePattern(string dir_, s
 
 	for (int j = 1; j < 11; j++)
 		s_vec_output.push_back(s_vecvec_temp[j][4]);
+
 	vector<vector<string>> s_vecvec_est;
 	{
 		bool b_useLine = false;
@@ -2682,9 +2719,9 @@ vector<string> CPointcloudFunction::GR_FPFH_getResultOfOnePattern(string dir_, s
 				s_vecvec_est.push_back(s_vecvec_temp[j]);
 			if ("Success_Estimation" == s_vecvec_temp[j][0])
 				b_useLine = true;
+			if ("cluster" == s_vecvec_temp[j + 2][0]) break;
 		}
 	}
-
 	//extract sum value
 	{
 		string s_sum = s_vecvec_est.back()[1];
@@ -2710,6 +2747,27 @@ vector<string> CPointcloudFunction::GR_FPFH_getResultOfOnePattern(string dir_, s
 			s_frames += to_string(i) + " ";
 	}
 	s_vec_output.push_back(s_frames);
+
+	//cluster
+	vector<vector<string>> s_vecvec_cluster;
+	{
+		bool b_useLine = false;
+		for (int j = 0; j < s_vecvec_temp.size(); j++)
+		{
+			if (b_useLine)
+				s_vecvec_cluster.push_back(s_vecvec_temp[j]);
+			if ("cluster" == s_vecvec_temp[j + 1][0])
+				b_useLine = true;
+			if ("Matrix_SucEst" == s_vecvec_temp[j + 2][0]) break;
+		}
+	}
+	//extract cluster value
+	{
+		string s_cluster = s_vecvec_cluster[0][1];
+		string s_size_cluster = s_vecvec_cluster[1][1];
+		s_vec_output.push_back(s_cluster);
+		s_vec_output.push_back(s_size_cluster);
+	}
 	return s_vec_output;
 }
 
@@ -4314,21 +4372,38 @@ void CPointcloudFunction::DoICP_proposed_AllFrames()
 	//typedef pcl::PointXYZ T_PointType;
 	typedef pcl::PointXYZRGB T_PointType;
 
-	pcl::PointCloud<T_PointType>::Ptr cloud_temp(new pcl::PointCloud<T_PointType>());
-
 	string dir_ = "../../data/process_DoICP_proposed_AllFrames";
 
-	struct SInitPos
-	{
-		int i_tgt;
-		int i_src;
-		Eigen::Vector6d Init_Vector;
-		SInitPos() { Init_Vector = Eigen::Vector6d::Zero(); }
-	};
+	//parameter
+	//icp
+	int MaximumIterations;
+	double MaxCorrespondenceDistance, EuclideanFitnessEpsilon, TransformationEpsilon;
+	MaximumIterations = 50000;
+	MaxCorrespondenceDistance = 1.;
+	EuclideanFitnessEpsilon = 1e-5;
+	TransformationEpsilon = 1e-6;
+	//attributed
+	double penalty_chara, dist_search, weight_dist_chara;
+	penalty_chara = 2.;
+	dist_search = MaxCorrespondenceDistance;
+	weight_dist_chara = 2.;
 
-	//input initPos
+	//vec
+	vector<float> parameter_vec;
+	parameter_vec.push_back(MaximumIterations);
+	parameter_vec.push_back(MaxCorrespondenceDistance);
+	parameter_vec.push_back(EuclideanFitnessEpsilon);
+	parameter_vec.push_back(TransformationEpsilon);
+	parameter_vec.push_back(penalty_chara);
+	parameter_vec.push_back(dist_search);
+	parameter_vec.push_back(weight_dist_chara);
+
+	ICP_proposed_givenParameter(dir_, parameter_vec);
+}
+
+void CPointcloudFunction::ICP_proposed_givenParameter(string dir_, vector<float> parameter_vec)
+{
 	vector<vector<string>> s_output_vecvec;
-	vector<SInitPos> initPos_vec;
 	string filename_csv_selected;
 	{
 		//input file name
@@ -4347,25 +4422,6 @@ void CPointcloudFunction::DoICP_proposed_AllFrames()
 		filename_csv_selected = filenames_csv[i_select];
 		cout << i_select << "(" << filename_csv_selected << ")" << endl;
 		s_output_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + filename_csv_selected);
-		for (int j = 14; j < s_output_vecvec.size(); j++)
-		{
-			SInitPos initPos_;
-			if (s_output_vecvec[j + 1][0] == "Sum elapsed time") break;
-			//14 15 16 17 18 19  20
-			if (1 == stoi(s_output_vecvec[j][20]))
-			{
-				initPos_.i_tgt = stoi(s_output_vecvec[j][0]);
-				initPos_.i_src = stoi(s_output_vecvec[j][1]);
-				initPos_.Init_Vector << 
-					stod(s_output_vecvec[j][14])
-					, stod(s_output_vecvec[j][15])
-					, stod(s_output_vecvec[j][16])
-					, stod(s_output_vecvec[j][17])
-					, stod(s_output_vecvec[j][18])
-					, stod(s_output_vecvec[j][19]);
-				initPos_vec.push_back(initPos_);
-			}
-		}
 	}
 
 	vector<string> name_parameter_vec;
@@ -4377,6 +4433,136 @@ void CPointcloudFunction::DoICP_proposed_AllFrames()
 	name_parameter_vec.push_back("penalty_chara");
 	name_parameter_vec.push_back("dist_search");
 	name_parameter_vec.push_back("weight_dist_chara");
+
+	{
+		vector<string> s_temp_vec;
+		s_temp_vec.push_back("");
+		s_output_vecvec.push_back(s_temp_vec);
+	}
+	{
+		vector<string> s_temp_vec;
+		s_temp_vec.push_back("Input: " + filename_csv_selected);
+		s_output_vecvec.push_back(s_temp_vec);
+	}
+	{
+		vector<string> s_temp_vec;
+		s_temp_vec.push_back("");
+		s_output_vecvec.push_back(s_temp_vec);
+	}
+
+	//push_back parameter information to s_output_vecvec
+	{
+		vector<string> s_temp_vec;
+		s_temp_vec.push_back("Parameter_ICP");
+		s_output_vecvec.push_back(s_temp_vec);
+	}
+	for (int i = 0; i < name_parameter_vec.size(); i++)
+	{
+		vector<string> s_temp_vec;
+		s_temp_vec.push_back(name_parameter_vec[i]);
+		s_temp_vec.push_back("");
+		s_temp_vec.push_back("");
+		s_temp_vec.push_back("");
+		s_temp_vec.push_back(to_string(parameter_vec[i]));
+		s_output_vecvec.push_back(s_temp_vec);
+	}
+
+	string time_start = CTimeString::getTimeString();
+	//string time_regular = time_start;
+	cout << "time_start:" << time_start << endl;
+	//make new folder
+	string s_newfoldername = time_start;
+	CTimeString::makenewfolder(dir_, s_newfoldername);
+
+	//ICP
+	{
+		vector<string> s_temp_vec;
+		s_temp_vec.push_back("");
+		s_output_vecvec.push_back(s_temp_vec);
+	}
+	{
+		vector<string> s_temp_vec;
+		s_temp_vec.push_back("Result_ICP");
+		s_output_vecvec.push_back(s_temp_vec);
+	}
+	GR_addToOutputString_OutputHeader_ICP(s_output_vecvec);
+	ICP_proposed_only1method(dir_, s_newfoldername, s_output_vecvec, parameter_vec, 0);
+
+	//ICP_proposed
+	{
+		vector<string> s_temp_vec;
+		s_temp_vec.push_back("");
+		s_output_vecvec.push_back(s_temp_vec);
+	}
+	{
+		vector<string> s_temp_vec;
+		s_temp_vec.push_back("Result_ICP_proposed");
+		s_output_vecvec.push_back(s_temp_vec);
+	}
+	GR_addToOutputString_OutputHeader_ICP(s_output_vecvec);
+	ICP_proposed_only1method(dir_, s_newfoldername, s_output_vecvec, parameter_vec, 1);
+
+	string time_end = CTimeString::getTimeString();
+	string time_elapsed = CTimeString::getTimeElapsefrom2Strings(time_start, time_end);
+	cout << "time_elapsed:" << time_elapsed << endl;
+
+	CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + s_newfoldername + "/" + time_start + "_output_ICP.csv");
+	cout << endl;
+}
+
+void CPointcloudFunction::ICP_proposed_only1method(
+	string dir_, string s_folder, vector<vector<string>> &s_input_vecvec, vector<float> parameter_vec, int i_method)
+{
+	//parameter
+	//icp
+	int MaximumIterations;
+	float MaxCorrespondenceDistance, EuclideanFitnessEpsilon, TransformationEpsilon;
+	MaximumIterations = (int)parameter_vec[0];
+	MaxCorrespondenceDistance = parameter_vec[1];
+	EuclideanFitnessEpsilon = parameter_vec[2];
+	TransformationEpsilon = parameter_vec[3];
+	//attributed
+	float penalty_chara, dist_search, weight_dist_chara;
+	penalty_chara = parameter_vec[4];
+	dist_search = parameter_vec[5];
+	weight_dist_chara = parameter_vec[6];
+
+	//typedef pcl::PointXYZ T_PointType;
+	typedef pcl::PointXYZRGB T_PointType;
+
+	pcl::PointCloud<T_PointType>::Ptr cloud_temp(new pcl::PointCloud<T_PointType>());
+
+	struct SInitPos
+	{
+		int i_tgt;
+		int i_src;
+		Eigen::Vector6d Init_Vector;
+		SInitPos() { Init_Vector = Eigen::Vector6d::Zero(); }
+	};
+
+	//input initPos
+	vector<SInitPos> initPos_vec;
+	{
+		for (int j = 14; j < s_input_vecvec.size(); j++)
+		{
+			SInitPos initPos_;
+			if (s_input_vecvec[j + 1][0] == "Sum elapsed time") break;
+			//14 15 16 17 18 19  20
+			if (1 == stoi(s_input_vecvec[j][20]))
+			{
+				initPos_.i_tgt = stoi(s_input_vecvec[j][0]);
+				initPos_.i_src = stoi(s_input_vecvec[j][1]);
+				initPos_.Init_Vector <<
+					stod(s_input_vecvec[j][14])
+					, stod(s_input_vecvec[j][15])
+					, stod(s_input_vecvec[j][16])
+					, stod(s_input_vecvec[j][17])
+					, stod(s_input_vecvec[j][18])
+					, stod(s_input_vecvec[j][19]);
+				initPos_vec.push_back(initPos_);
+			}
+		}
+	}
 
 	//input pointcloud
 	vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec;
@@ -4418,90 +4604,7 @@ void CPointcloudFunction::DoICP_proposed_AllFrames()
 		}
 	}
 
-	//if (b_changeParameter)
-	//	CTimeString::changeParameter(parameter_vec, name_parameter_vec);
-
-	//parameter
-	int i_method_;
-	i_method_ = 0;
-	//i_method_ = 1;
-	//icp
-	int MaximumIterations;
-	double MaxCorrespondenceDistance, EuclideanFitnessEpsilon, TransformationEpsilon;
-	MaximumIterations = 50000;
-	MaxCorrespondenceDistance = 1.;
-	EuclideanFitnessEpsilon = 1e-5;
-	TransformationEpsilon = 1e-6;
-	//attributed
-	double penalty_chara, dist_search, weight_dist_chara;
-	penalty_chara = 2.;
-	dist_search = MaxCorrespondenceDistance;
-	weight_dist_chara = 2.;
-	//vec
-	vector<double> parameter_vec;
-	parameter_vec.push_back(i_method_);
-	parameter_vec.push_back(MaximumIterations);
-	parameter_vec.push_back(MaxCorrespondenceDistance);
-	parameter_vec.push_back(EuclideanFitnessEpsilon);
-	parameter_vec.push_back(TransformationEpsilon);
-	parameter_vec.push_back(penalty_chara);
-	parameter_vec.push_back(dist_search);
-	parameter_vec.push_back(weight_dist_chara);
-
-	{
-		vector<string> s_temp_vec;
-		s_temp_vec.push_back("");
-		s_output_vecvec.push_back(s_temp_vec);
-	}
-	{
-		vector<string> s_temp_vec;
-		s_temp_vec.push_back("Input: " + filename_csv_selected);
-		s_output_vecvec.push_back(s_temp_vec);
-	}
-	{
-		vector<string> s_temp_vec;
-		s_temp_vec.push_back("");
-		s_output_vecvec.push_back(s_temp_vec);
-	}
-
-
-	//push_back parameter information to s_output_vecvec
-	{
-		vector<string> s_temp_vec;
-		s_temp_vec.push_back("Parameter_ICP");
-		s_output_vecvec.push_back(s_temp_vec);
-	}
-	for (int i = 0; i < name_parameter_vec.size(); i++)
-	{
-		vector<string> s_temp_vec;
-		s_temp_vec.push_back(name_parameter_vec[i]);
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back("");
-		s_temp_vec.push_back(to_string(parameter_vec[i]));
-		s_output_vecvec.push_back(s_temp_vec);
-	}
-
-	{
-		vector<string> s_temp_vec;
-		s_temp_vec.push_back("");
-		s_output_vecvec.push_back(s_temp_vec);
-	}
-	{
-		vector<string> s_temp_vec;
-		s_temp_vec.push_back("Result_ICP");
-		s_output_vecvec.push_back(s_temp_vec);
-	}
-
-	GR_addToOutputString_OutputHeader_ICP(s_output_vecvec);
-
-	string time_start = CTimeString::getTimeString();
-	string time_regular = time_start;
-	cout << "time_start:" << time_start << endl;
-	//make new folder
-	string s_newfoldername = time_start;
-	CTimeString::makenewfolder(dir_, s_newfoldername);
-
+	vector<vector<string>> s_output_vecvec;
 	for (int j = 0; j < initPos_vec.size(); j++)
 	{
 
@@ -4534,7 +4637,7 @@ void CPointcloudFunction::DoICP_proposed_AllFrames()
 
 		cout << "i_tgt:" << i_tgt << " i_src:" << i_src << endl;
 
-		if (i_method_ == 0)
+		if (i_method == 0)
 		{
 			pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> align_ICP;
 			//parameter
@@ -4552,11 +4655,11 @@ void CPointcloudFunction::DoICP_proposed_AllFrames()
 				align_ICP.getFinalTransformation().cast<double>());
 			fitnessscore = align_ICP.getFitnessScore();
 		}
-		else if (i_method_ == 1)
+		else if (i_method == 1)
 		{
 			CKataokaPCL align_ICP_proposed;
 			//parameter
-			align_ICP_proposed.setMothodInt(i_method_);
+			align_ICP_proposed.setMothodInt(i_method);
 			align_ICP_proposed.setMaximumIterations(MaximumIterations);
 			align_ICP_proposed.setMaxCorrespondenceDistance(MaxCorrespondenceDistance);
 			align_ICP_proposed.setEuclideanFitnessEpsilon(EuclideanFitnessEpsilon);
@@ -4575,7 +4678,6 @@ void CPointcloudFunction::DoICP_proposed_AllFrames()
 		}
 		cout << "b_hasConverged:" << b_hasConverged << endl;
 
-		//pcl::PointCloud<T_PointType>::Ptr cloud_src_true(new pcl::PointCloud<T_PointType>());
 		//color (src, whiten)
 		{
 			int i_add = 100;
@@ -4679,9 +4781,11 @@ void CPointcloudFunction::DoICP_proposed_AllFrames()
 			string s_convergence;
 			if (b_hasConverged) s_convergence = to_string(1);
 			else s_convergence = to_string(0);
-			s_filename_output = "T" + s_tgt + "S" + s_src + "_XYZRGB.pcd";
+			s_filename_output = "T" + s_tgt + "S" + s_src + "_XYZRGB";
+			if (i_method == 1) s_filename_output += "_proposed";
+			s_filename_output += ".pcd";
 			//save
-			pcl::io::savePCDFile<T_PointType>(dir_ + "/" + s_newfoldername + "/" + s_filename_output, *cloud_tgt);
+			pcl::io::savePCDFile<T_PointType>(dir_ + "/" + s_folder + "/" + s_filename_output, *cloud_tgt);
 		}
 
 		//output csv
@@ -4707,55 +4811,17 @@ void CPointcloudFunction::DoICP_proposed_AllFrames()
 		s_temp_vec.push_back(to_string(transform_vec(4, 0)));	//PITCH
 		s_temp_vec.push_back(to_string(transform_vec(5, 0)));	//YAW
 		s_output_vecvec.push_back(s_temp_vec);
-
-		////regular saving csv
-		//string s_elapsed_frame = CTimeString::getTimeElapsefrom2Strings(time_regular, time_end_frame);
-		//cout << "time_elapsed from last .csv output: " << s_elapsed_frame << endl;
-		//cout << "time_elapsed from start:            " << CTimeString::getTimeElapsefrom2Strings(time_start, time_end_frame) << endl;
-		//int elapsed_millisec = CTimeString::getTimeElapsefrom2Strings_millisec(time_regular, time_end_frame);
-		//int elapsed_minute = (int)(((float)elapsed_millisec / 1000.) / 60.);
-		//if (elapsed_minute >= th_minute_CSV)
-		//{
-		//	//save
-		//	CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + s_newfoldername + "/" + time_regular + "_output.csv");
-		//	time_regular = CTimeString::getTimeString();
-		//	//clear s_output_vecvec
-		//	s_output_vecvec.clear();
-		//	GR_addToOutputString_OutputHeader(s_output_vecvec);
-		//}
-		//cout << endl;
-
-		//if (i_frame_pair % 5 == 0 && !b_changeParameter)
-		//{
-		//	cout << "Parameter list" << endl;
-		//	CTimeString::showParameter(parameter_vec, name_parameter_vec);
-		//	cout << endl;
-		//}
-
 		cout << endl;
 	}
 
-	string time_end = CTimeString::getTimeString();
-	string time_elapsed = CTimeString::getTimeElapsefrom2Strings(time_start, time_end);
-	cout << "time_elapsed:" << time_elapsed << endl;
-
-	{
-		vector<string> s_temp_vec;
-		s_temp_vec.push_back("");
-		s_output_vecvec.push_back(s_temp_vec);
-	}
-	{
-		vector<string> s_temp_vec;
-		s_temp_vec.push_back("Sum elapsed time");
-		s_output_vecvec.push_back(s_temp_vec);
-	}
-	{
-		vector<string> s_temp_vec;
-		s_temp_vec.push_back(time_elapsed);
-		s_output_vecvec.push_back(s_temp_vec);
-	}
-
-	//CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + s_newfoldername + "/" + time_end + "_output.csv");
-	CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + s_newfoldername + "/" + time_start + "_output_ICP.csv");
-	cout << endl;
+	//pushback
+	for (int j = 0; j < s_output_vecvec.size(); j++)
+		s_input_vecvec.push_back(s_output_vecvec[j]);
 }
+
+
+void CPointcloudFunction::DoEvaluation_LoopClosure_AttributedICP()
+{
+
+}
+
