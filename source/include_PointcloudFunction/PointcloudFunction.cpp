@@ -4455,7 +4455,7 @@ void CPointcloudFunction::DoICP_proposed_AllFrames()
 	}
 	{
 		vector<string> s_temp_vec;
-		s_temp_vec.push_back("inputed:" + filename_csv_selected);
+		s_temp_vec.push_back("Input: " + filename_csv_selected);
 		s_output_vecvec.push_back(s_temp_vec);
 	}
 	{
@@ -4756,6 +4756,6 @@ void CPointcloudFunction::DoICP_proposed_AllFrames()
 	}
 
 	//CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + s_newfoldername + "/" + time_end + "_output.csv");
-	CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + s_newfoldername + "/" + time_start + "_output.csv");
+	CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + s_newfoldername + "/" + time_start + "_output_ICP.csv");
 	cout << endl;
 }
