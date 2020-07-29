@@ -159,6 +159,7 @@ public:
 	KEYNUM getKEYNUM();
 	void DrawTrajectory();
 	void DoSegmentation();
+
 	void GlobalRegistration_FPFH_SAC_IA();
 	void GR_FPFH_getResultAnalysis(string dir_, string s_folder);
 	void GR_FPFH_makeFusionCSV(string dir_, string s_folder);
@@ -175,12 +176,15 @@ public:
 	void GR_FPFH_error_AllFrames(string dir_, vector<float> parameter_vec, bool b_changeParameter = true);
 	void GR_FPFH_variance_AllFrames(string dir_, vector<float> parameter_vec, bool b_changeParameter = true);
 	void GR_FPFH_varyParameter(string dir_, vector<float> parameter_vec_arg);
+
 	void DoOutlierRejector();
+
 	void DoICP_proposed_AllFrames();
 	void DoICP_proposed_givenParameter(string dir_, vector<float> parameter_vec);
 	void DoICP_proposed_only1method(
 		string dir_, string s_folder, vector<vector<string>> &s_input_vecvec, vector<float> parameter_vec, int i_method);
 	void DoICP_addToOutputString_OutputHeader(vector<vector<string>> &s_output_vecvec);
+
 	void DoEvaluation_AttributedICP_Optimization();
 	void DoEvaluation_Optimization_addToFile(string dir_,
 		string s_newfoldername, vector<vector<string>> &s_input_vecvec);
