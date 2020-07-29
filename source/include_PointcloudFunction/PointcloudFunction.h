@@ -177,8 +177,8 @@ public:
 	void GR_FPFH_varyParameter(string dir_, vector<float> parameter_vec_arg);
 	void DoOutlierRejector();
 	void DoICP_proposed_AllFrames();
-	void ICP_proposed_givenParameter(string dir_, vector<float> parameter_vec);
-	void ICP_proposed_only1method(
+	void DoICP_proposed_givenParameter(string dir_, vector<float> parameter_vec);
+	void DoICP_proposed_only1method(
 		string dir_, string s_folder, vector<vector<string>> &s_input_vecvec, vector<float> parameter_vec, int i_method);
 	void GR_addToOutputString_OutputHeader_ICP(vector<vector<string>> &s_output_vecvec);
 	void DoEvaluation_AttributedICP_Optimization();

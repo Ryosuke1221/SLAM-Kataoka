@@ -4398,10 +4398,10 @@ void CPointcloudFunction::DoICP_proposed_AllFrames()
 	parameter_vec.push_back(dist_search);
 	parameter_vec.push_back(weight_dist_chara);
 
-	ICP_proposed_givenParameter(dir_, parameter_vec);
+	DoICP_proposed_givenParameter(dir_, parameter_vec);
 }
 
-void CPointcloudFunction::ICP_proposed_givenParameter(string dir_, vector<float> parameter_vec)
+void CPointcloudFunction::DoICP_proposed_givenParameter(string dir_, vector<float> parameter_vec)
 {
 	vector<vector<string>> s_output_vecvec;
 	string filename_csv_selected;
@@ -4486,7 +4486,7 @@ void CPointcloudFunction::ICP_proposed_givenParameter(string dir_, vector<float>
 		s_output_vecvec.push_back(s_temp_vec);
 	}
 	GR_addToOutputString_OutputHeader_ICP(s_output_vecvec);
-	ICP_proposed_only1method(dir_, s_newfoldername, s_output_vecvec, parameter_vec, 0);
+	DoICP_proposed_only1method(dir_, s_newfoldername, s_output_vecvec, parameter_vec, 0);
 
 	//ICP_proposed
 	{
@@ -4500,7 +4500,7 @@ void CPointcloudFunction::ICP_proposed_givenParameter(string dir_, vector<float>
 		s_output_vecvec.push_back(s_temp_vec);
 	}
 	GR_addToOutputString_OutputHeader_ICP(s_output_vecvec);
-	ICP_proposed_only1method(dir_, s_newfoldername, s_output_vecvec, parameter_vec, 1);
+	DoICP_proposed_only1method(dir_, s_newfoldername, s_output_vecvec, parameter_vec, 1);
 
 	string time_end = CTimeString::getTimeString();
 	string time_elapsed = CTimeString::getTimeElapsefrom2Strings(time_start, time_end);
@@ -4510,7 +4510,7 @@ void CPointcloudFunction::ICP_proposed_givenParameter(string dir_, vector<float>
 	cout << endl;
 }
 
-void CPointcloudFunction::ICP_proposed_only1method(
+void CPointcloudFunction::DoICP_proposed_only1method(
 	string dir_, string s_folder, vector<vector<string>> &s_input_vecvec, vector<float> parameter_vec, int i_method)
 {
 	//parameter
@@ -4824,36 +4824,50 @@ void CPointcloudFunction::DoEvaluation_AttributedICP_Optimization()
 {
 	string dir_ = "../../data/process_AttributedICP_Optimization";
 
-	//input file
-	vector<string> filenames_csv;
-	CTimeString::getFileNames_extension(dir_, filenames_csv, "_optimization.csv");
-	for (int i = 0; i < filenames_csv.size(); i++)
+	vector<string> filenames_input;
 	{
-		string s_i = to_string(i);
-		if (s_i.size() < 2) s_i = " " + s_i;
-		cout << "i:" << s_i << " " << filenames_csv[i] << endl;
+		vector<string> filenames_temp;
+		CTimeString::getFileNames_extension(dir_,filenames_temp, "_optimization.csv");
+		for (int i = 0; i < filenames_temp.size(); i++)
+		{
+			string s_i = to_string(i);
+			if (s_i.size() < 2) s_i = " " + s_i;
+			cout << "i:" << s_i << " " << filenames_temp[i] << endl;
+		}
+		cout << endl;
+		cout << "input .csv you want to calc (can input multinumber)" << endl;
+		vector<string> s_input_vec;
+		bool b_useCSV = false;
+		{
+			cout << "select: input number by csv or not  yes:1  no:0" << endl;
+			cout << "->";
+			cin >> b_useCSV;
+		}
+		if (!b_useCSV) s_input_vec = CTimeString::inputSomeString();
+		else s_input_vec = CTimeString::inputSomeString_fromCSV(dir_ + "/" + "num_vector.csv");
+		cout << "s_input_vec.size():" << s_input_vec.size() << endl;
+		for (int i = 0; i < s_input_vec.size(); i++)
+			filenames_input.push_back(filenames_temp[stoi(s_input_vec[i])]);
 	}
-	cout << endl;
-	cout << "select .csv you want to calc ->" << endl;
-	int i_select;
-	cin >> i_select;
-	string filename_input;
-	filename_input = filenames_csv[i_select];
 
-	string time_start = CTimeString::getTimeString();
-	cout << "time_start:" << time_start << endl;
-	//make new folder
-	string s_newfoldername = time_start;
-	CTimeString::makenewfolder(dir_, s_newfoldername);
+	for (int j = 0; j < filenames_input.size(); j++)
+	{
+		string filename_input = filenames_input[j];
+		string time_start = CTimeString::getTimeString();
+		cout << "time_start:" << time_start << endl;
+		//make new folder
+		string s_newfoldername = time_start;
+		CTimeString::makenewfolder(dir_, s_newfoldername);
 
-	vector<vector<string>> s_output_vecvec;
-	s_output_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + filename_input);
-	DoEvaluation_Optimization_addToFile(dir_, s_newfoldername, s_output_vecvec);
+		vector<vector<string>> s_output_vecvec;
+		s_output_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + filename_input);
+		DoEvaluation_Optimization_addToFile(dir_, s_newfoldername, s_output_vecvec);
 
-	//output
-	string filename_output;
-	filename_output = s_newfoldername + "_evaluation.csv";
-	CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + s_newfoldername + "/" + filename_output);
+		//output
+		string filename_output;
+		filename_output = s_newfoldername + "_evaluation.csv";
+		CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + s_newfoldername + "/" + filename_output);
+	}
 }
 
 void CPointcloudFunction::DoEvaluation_Optimization_addToFile(string dir_,
