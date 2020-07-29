@@ -181,6 +181,12 @@ public:
 	void ICP_proposed_only1method(
 		string dir_, string s_folder, vector<vector<string>> &s_input_vecvec, vector<float> parameter_vec, int i_method);
 	void GR_addToOutputString_OutputHeader_ICP(vector<vector<string>> &s_output_vecvec);
-	void DoEvaluation_LoopClosure_AttributedICP();
+	void DoEvaluation_AttributedICP_Optimization();
+	void DoEvaluation_Optimization_addToFile(string dir_,
+		string s_newfoldername, vector<vector<string>> &s_input_vecvec);
+	void DoEvaluation_Optimization_calculation(string dir_, string s_folder, vector<Eigen::Vector6d> trajectoryVector_vec,
+		vector<int> frames_all, int i_method,
+		vector<double> &error_relative_vec, vector<double> &error_absolute_vec,
+		vector<double> &median_vec, double &map_mean);
 
 };
