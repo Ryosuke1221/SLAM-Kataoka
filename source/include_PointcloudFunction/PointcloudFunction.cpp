@@ -2771,7 +2771,6 @@ vector<string> CPointcloudFunction::GR_FPFH_getResultOfOnePattern(string dir_, s
 	return s_vec_output;
 }
 
-
 void CPointcloudFunction::GR_FPFH_SAC_IA_2frames(string dir_, vector<float> parameter_vec)
 {
 	//typedef pcl::PointXYZ T_PointType;
@@ -4347,7 +4346,7 @@ void CPointcloudFunction::GR_FPFH_varyParameter(string dir_, vector<float> param
 	cout << endl;
 }
 
-void CPointcloudFunction::GR_addToOutputString_OutputHeader_ICP(vector<vector<string>> &s_output_vecvec)
+void CPointcloudFunction::DoICP_addToOutputString_OutputHeader(vector<vector<string>> &s_output_vecvec)
 {
 	vector<string> s_temp_vec;
 	s_temp_vec.push_back("target");
@@ -4485,7 +4484,7 @@ void CPointcloudFunction::DoICP_proposed_givenParameter(string dir_, vector<floa
 		s_temp_vec.push_back("Result_ICP");
 		s_output_vecvec.push_back(s_temp_vec);
 	}
-	GR_addToOutputString_OutputHeader_ICP(s_output_vecvec);
+	DoICP_addToOutputString_OutputHeader(s_output_vecvec);
 	DoICP_proposed_only1method(dir_, s_newfoldername, s_output_vecvec, parameter_vec, 0);
 
 	//ICP_proposed
@@ -4499,7 +4498,7 @@ void CPointcloudFunction::DoICP_proposed_givenParameter(string dir_, vector<floa
 		s_temp_vec.push_back("Result_ICP_proposed");
 		s_output_vecvec.push_back(s_temp_vec);
 	}
-	GR_addToOutputString_OutputHeader_ICP(s_output_vecvec);
+	DoICP_addToOutputString_OutputHeader(s_output_vecvec);
 	DoICP_proposed_only1method(dir_, s_newfoldername, s_output_vecvec, parameter_vec, 1);
 
 	string time_end = CTimeString::getTimeString();
