@@ -5464,7 +5464,7 @@ void CPointcloudFunction::DoEvaluation_AttributedICP_Optimization_mergeResult()
 vector<string> CPointcloudFunction::DoEvaluation_AttributedICP_Optimization_mergeResult_OnePattern(string dir_, string s_folder)
 {
 	vector<string> s_vec_output;
-	s_vec_output.push_back("");
+	s_vec_output.push_back(s_folder);
 
 	vector<vector<string>> s_input_vecvec;
 	{
