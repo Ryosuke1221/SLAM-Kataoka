@@ -4373,55 +4373,74 @@ void CPointcloudFunction::DoICP_proposed_AllFrames()
 
 	string dir_ = "../../data/process_DoICP_proposed_AllFrames";
 
-	//parameter
-	//icp
-	int MaximumIterations;
-	double MaxCorrespondenceDistance, EuclideanFitnessEpsilon, TransformationEpsilon;
-	MaximumIterations = 50000;
-	MaxCorrespondenceDistance = 1.;
-	EuclideanFitnessEpsilon = 1e-5;
-	TransformationEpsilon = 1e-6;
-	//attributed
-	double penalty_chara, dist_search, weight_dist_chara;
-	penalty_chara = 2.;
-	dist_search = MaxCorrespondenceDistance;
-	weight_dist_chara = 2.;
-
-	//vec
-	vector<float> parameter_vec;
-	parameter_vec.push_back(MaximumIterations);
-	parameter_vec.push_back(MaxCorrespondenceDistance);
-	parameter_vec.push_back(EuclideanFitnessEpsilon);
-	parameter_vec.push_back(TransformationEpsilon);
-	parameter_vec.push_back(penalty_chara);
-	parameter_vec.push_back(dist_search);
-	parameter_vec.push_back(weight_dist_chara);
-
-	DoICP_proposed_givenParameter(dir_, parameter_vec);
-}
-
-void CPointcloudFunction::DoICP_proposed_givenParameter(string dir_, vector<float> parameter_vec)
-{
-	vector<vector<string>> s_output_vecvec;
-	string filename_csv_selected;
+	vector<string> filenames_input;
 	{
-		//input file name
-		vector<string> filenames_csv;
-		CTimeString::getFileNames_extension(dir_, filenames_csv, "_SucEst.csv");
-		for (int i = 0; i < filenames_csv.size(); i++)
+		vector<string> filenames_temp;
+		CTimeString::getFileNames_extension(dir_, filenames_temp, "_SucEst.csv");
+		for (int i = 0; i < filenames_temp.size(); i++)
 		{
 			string s_i = to_string(i);
 			if (s_i.size() < 2) s_i = " " + s_i;
-			cout << "i:" << s_i << " " << filenames_csv[i] << endl;
+			cout << "i:" << s_i << " " << filenames_temp[i] << endl;
 		}
 		cout << endl;
-		cout << "select .csv you want to calc ->" << endl;
-		int i_select;
-		cin >> i_select;
-		filename_csv_selected = filenames_csv[i_select];
-		cout << i_select << "(" << filename_csv_selected << ")" << endl;
-		s_output_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + filename_csv_selected);
+		cout << "input .csv you want to calc (can input multinumber)" << endl;
+		vector<string> s_input_vec;
+		bool b_useCSV = false;
+		{
+			cout << "select: input number by csv or not  yes:1  no:0" << endl;
+			cout << "->";
+			cin >> b_useCSV;
+		}
+		if (!b_useCSV) s_input_vec = CTimeString::inputSomeString();
+		else s_input_vec = CTimeString::inputSomeString_fromCSV(dir_ + "/" + "num_vector.csv");
+		cout << "s_input_vec.size():" << s_input_vec.size() << endl;
+		for (int i = 0; i < s_input_vec.size(); i++)
+			filenames_input.push_back(filenames_temp[stoi(s_input_vec[i])]);
 	}
+
+	//for (int j = 0; j < filenames_input.size(); j++)
+	//{
+	//	string filename_csv_input;
+	//	filename_csv_input = filenames_input[j];
+	//	vector<float> parameter_vec;
+	//	{
+	//		int MaximumIterations;
+	//		MaximumIterations = 50000;
+	//		double MaxCorrespondenceDistance, EuclideanFitnessEpsilon, TransformationEpsilon;
+	//		MaxCorrespondenceDistance = 1.;
+	//		EuclideanFitnessEpsilon = 1e-5;
+	//		TransformationEpsilon = 1e-6;
+	//		//attributed
+	//		double penalty_chara, dist_search, weight_dist_chara;
+	//		penalty_chara = 2.;
+	//		dist_search = MaxCorrespondenceDistance;
+	//		weight_dist_chara = 2.;
+	//		//vector
+	//		parameter_vec.push_back(MaximumIterations);
+	//		parameter_vec.push_back(MaxCorrespondenceDistance);
+	//		parameter_vec.push_back(EuclideanFitnessEpsilon);
+	//		parameter_vec.push_back(TransformationEpsilon);
+	//		parameter_vec.push_back(penalty_chara);
+	//		parameter_vec.push_back(dist_search);
+	//		parameter_vec.push_back(weight_dist_chara);
+	//	}
+	//	DoICP_proposed_givenParameter(dir_, filename_csv_input, parameter_vec);
+	//}
+
+	for (int j = 0; j < filenames_input.size(); j++)
+	{
+		string filename_csv_input;
+		filename_csv_input = filenames_input[j];
+		DoICP_proposed_varyParameters(dir_, filename_csv_input);
+	}
+
+}
+
+void CPointcloudFunction::DoICP_proposed_givenParameter(string dir_, string filename_csv, vector<float> parameter_vec)
+{
+	vector<vector<string>> s_output_vecvec;
+	s_output_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + filename_csv);
 
 	vector<string> name_parameter_vec;
 	name_parameter_vec.push_back("i_method_");
@@ -4440,7 +4459,7 @@ void CPointcloudFunction::DoICP_proposed_givenParameter(string dir_, vector<floa
 	}
 	{
 		vector<string> s_temp_vec;
-		s_temp_vec.push_back("Input: " + filename_csv_selected);
+		s_temp_vec.push_back("Input: " + filename_csv);
 		s_output_vecvec.push_back(s_temp_vec);
 	}
 	{
@@ -4818,8 +4837,69 @@ void CPointcloudFunction::DoICP_proposed_only1method(
 		s_input_vecvec.push_back(s_output_vecvec[j]);
 }
 
+void CPointcloudFunction::DoICP_proposed_varyParameters(string dir_, string filename_csv)
+{
+	vector<vector<float>> pattern_vecvec;
+	{
+		vector<vector<float>> parameter_vecvec;
+		parameter_vecvec = CTimeString::inputParameters_2dimension(
+			dir_ + "/" + "parameter_vecvec.csv", 1, 4);
+		CTimeString::calcParameterPattern(pattern_vecvec, parameter_vecvec);
+	}
+
+	cout << "show patterns" << endl;
+	for (int j = 0; j < pattern_vecvec.size(); j++)
+	{
+		cout << j << ":";
+		for (int i = 0; i < pattern_vecvec[j].size(); i++)
+		{
+			string s_value;
+			s_value = to_string(pattern_vecvec[j][i]);
+			if (s_value.size() < 4) s_value = " " + s_value;
+			if (s_value.size() < 4) s_value = " " + s_value;
+			if (s_value.size() < 4) s_value = " " + s_value;
+			cout << "  " << s_value;
+		}
+		cout << endl;
+	}
+
+	vector<string> s_name_parameter;
+	s_name_parameter.push_back("MaximumIterations");
+	s_name_parameter.push_back("MaxCorrespondenceDistance");
+	s_name_parameter.push_back("EuclideanFitnessEpsilon");
+	s_name_parameter.push_back("TransformationEpsilon");
+	s_name_parameter.push_back("penalty_chara");
+	s_name_parameter.push_back("dist_search");
+	s_name_parameter.push_back("weight_dist_chara");
+
+	for (int j = 0; j < pattern_vecvec.size(); j++)
+	{
+		vector<float> parameter_vec;
+		parameter_vec = pattern_vecvec[j];
+		cout << "parameter" << endl;
+		for (int i = 0; i < s_name_parameter.size(); i++)
+			cout << s_name_parameter[i] << ": " << parameter_vec[i] << endl;
+		DoICP_proposed_givenParameter(dir_, filename_csv, parameter_vec);
+		cout << endl;
+	}
+}
 
 void CPointcloudFunction::DoEvaluation_AttributedICP_Optimization()
+{
+
+	int i_method;
+	cout << "select: optimization:0  mergeResult:1" << endl;
+	cout << "->";
+	cin >> i_method;
+
+	if(i_method == 0)
+		DoEvaluation_AttributedICP_Optimization_files();
+	else if(i_method == 1)
+		DoEvaluation_AttributedICP_Optimization_mergeResult();
+
+}
+
+void CPointcloudFunction::DoEvaluation_AttributedICP_Optimization_files()
 {
 	string dir_ = "../../data/process_AttributedICP_Optimization";
 
@@ -5325,4 +5405,126 @@ void CPointcloudFunction::DoEvaluation_Optimization_calculation(string dir_, str
 	}
 }
 
+void CPointcloudFunction::DoEvaluation_AttributedICP_Optimization_mergeResult()
+{
+	string dir_ = "../../data/process_AttributedICP_Optimization";
+
+	//THIS
+	vector<string> filenames_folder;
+	vector<int> i_folder_vec;
+	{
+		CTimeString::getFileNames_folder(dir_, filenames_folder);
+		for (int i = 0; i < filenames_folder.size(); i++)
+		{
+			string s_i = to_string(i);
+			if (s_i.size() < 2) s_i = " " + s_i;
+			cout << "i:" << s_i << " " << filenames_folder[i] << endl;
+		}
+		cout << endl;
+		cout << "input folder you want to calc (can input multinumber)" << endl;
+		vector<string> s_input_vec;
+		bool b_useCSV = false;
+		{
+			cout << "select: input number by csv or not  yes:1  no:0" << endl;
+			cout << "->";
+			cin >> b_useCSV;
+		}
+		if (!b_useCSV) s_input_vec = CTimeString::inputSomeString();
+		else s_input_vec = CTimeString::inputSomeString_fromCSV(dir_ + "/" + "num_vector.csv");
+		cout << "s_input_vec.size():" << s_input_vec.size() << endl;
+		for (int i = 0; i < s_input_vec.size(); i++)
+			i_folder_vec.push_back(stoi(s_input_vec[i]));
+	}
+
+	vector<vector<string>> s_output_vecvec;
+	{
+		vector<string> s_output_vec;
+		s_output_vec.push_back("");
+		s_output_vec.push_back("Pos_relative");
+		s_output_vec.push_back("Pos_absolute");
+		s_output_vec.push_back("Mean_map");
+		s_output_vec.push_back("cluster_biggest");
+		s_output_vec.push_back("cluster_size");
+		s_output_vecvec.push_back(s_output_vec);
+	}
+
+	for (int i = 0; i < i_folder_vec.size(); i++)
+		s_output_vecvec.push_back(
+			DoEvaluation_AttributedICP_Optimization_mergeResult_OnePattern(dir_, filenames_folder[i_folder_vec[i]]));
+
+	//transposition
+	{
+		vector<vector<string>> s_output_vecvec_temp;
+		s_output_vecvec_temp = CTimeString::getTranspositionOfVecVec(s_output_vecvec);
+		s_output_vecvec = s_output_vecvec_temp;
+	}
+
+	string s_t = CTimeString::getTimeString();
+	CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/EvaluationResult_" + s_t + ".csv");
+	
+}
+
+vector<string> CPointcloudFunction::DoEvaluation_AttributedICP_Optimization_mergeResult_OnePattern(string dir_, string s_folder)
+{
+	vector<string> s_vec_output;
+	s_vec_output.push_back("");
+
+	vector<vector<string>> s_input_vecvec;
+	{
+		vector<string> filenames_;
+		CTimeString::getFileNames_extension(dir_ + "/" + s_folder, filenames_, "_evaluation.csv");
+		if (filenames_.size() != 1)
+		{
+			cout << "ERROR: one fusion.csv have not been found" << endl;
+			return s_vec_output;
+		}
+		s_input_vecvec = CTimeString::getVecVecFromCSV_string(
+			dir_ + "/" + s_folder + "/" + filenames_[0]);
+	}
+	bool b_calc = false;
+	int i_pos_start;
+	int num_frames_deleted = 0;
+	vector<int> frames_valid;
+	for (int j = 14; j < s_input_vecvec.size(); j++)
+	{
+		if (s_input_vecvec[j - 2][0] == "Evaluation_OptimizedICP_proposed")
+		{
+			b_calc = true;
+			i_pos_start = j;
+		}
+		if (!b_calc) continue;
+		int i_frame = j - i_pos_start;
+		if (s_input_vecvec[j + 2][0] == "Compare") break;
+
+		if (stoi(s_input_vecvec[j][7]) == 0)
+			frames_valid.push_back(i_frame);
+		else
+			num_frames_deleted++;
+	}
+	double error_relative_vec_mean_compare;
+	double error_absolute_vec_mean_compare;
+	double map_mean_compare;
+	for (int j = 14; j < s_input_vecvec.size(); j++)
+	{
+		if (s_input_vecvec[j][0] == "Compare")
+		{
+			error_relative_vec_mean_compare = stod(s_input_vecvec[j][8]);
+			error_absolute_vec_mean_compare = stod(s_input_vecvec[j][9]);
+			map_mean_compare = stod(s_input_vecvec[j][11]);
+		}
+	}
+	s_vec_output.push_back(to_string(error_relative_vec_mean_compare));
+	s_vec_output.push_back(to_string(error_absolute_vec_mean_compare));
+	s_vec_output.push_back(to_string(map_mean_compare));
+
+	//cluster
+	{
+		string s_cluster;
+		for (int i = 0; i < frames_valid.size(); i++)
+			s_cluster += to_string(frames_valid[i]) + " ";
+		s_vec_output.push_back(s_cluster);
+		s_vec_output.push_back(to_string(frames_valid.size()));
+	}
+	return s_vec_output;
+}
 

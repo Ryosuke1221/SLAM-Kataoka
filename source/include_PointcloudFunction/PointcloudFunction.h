@@ -180,17 +180,21 @@ public:
 	void DoOutlierRejector();
 
 	void DoICP_proposed_AllFrames();
-	void DoICP_proposed_givenParameter(string dir_, vector<float> parameter_vec);
+	void DoICP_proposed_givenParameter(string dir_, string filename_csv, vector<float> parameter_vec);
 	void DoICP_proposed_only1method(
 		string dir_, string s_folder, vector<vector<string>> &s_input_vecvec, vector<float> parameter_vec, int i_method);
 	void DoICP_addToOutputString_OutputHeader(vector<vector<string>> &s_output_vecvec);
+	void DoICP_proposed_varyParameters(string dir_, string filename_csv);
 
 	void DoEvaluation_AttributedICP_Optimization();
+	void DoEvaluation_AttributedICP_Optimization_files();
 	void DoEvaluation_Optimization_addToFile(string dir_,
 		string s_newfoldername, vector<vector<string>> &s_input_vecvec);
 	void DoEvaluation_Optimization_calculation(string dir_, string s_folder, vector<Eigen::Vector6d> trajectoryVector_vec,
 		vector<int> frames_all, int i_method,
 		vector<double> &error_relative_vec, vector<double> &error_absolute_vec,
 		vector<double> &median_vec, double &map_mean);
+	void DoEvaluation_AttributedICP_Optimization_mergeResult();
+	vector<string> DoEvaluation_AttributedICP_Optimization_mergeResult_OnePattern(string dir_, string s_folder);
 
 };
