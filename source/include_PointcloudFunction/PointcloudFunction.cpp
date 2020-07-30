@@ -4443,13 +4443,12 @@ void CPointcloudFunction::DoICP_proposed_givenParameter(string dir_, string file
 	s_output_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + filename_csv);
 
 	vector<string> name_parameter_vec;
-	name_parameter_vec.push_back("i_method_");
+	//name_parameter_vec.push_back("i_method_");
 	name_parameter_vec.push_back("MaximumIterations");
 	name_parameter_vec.push_back("MaxCorrespondenceDistance");
 	name_parameter_vec.push_back("EuclideanFitnessEpsilon");
 	name_parameter_vec.push_back("TransformationEpsilon");
 	name_parameter_vec.push_back("penalty_chara");
-	name_parameter_vec.push_back("dist_search");
 	name_parameter_vec.push_back("weight_dist_chara");
 
 	{
@@ -4540,10 +4539,9 @@ void CPointcloudFunction::DoICP_proposed_only1method(
 	EuclideanFitnessEpsilon = parameter_vec[2];
 	TransformationEpsilon = parameter_vec[3];
 	//attributed
-	float penalty_chara, dist_search, weight_dist_chara;
+	float penalty_chara, weight_dist_chara;
 	penalty_chara = parameter_vec[4];
-	dist_search = parameter_vec[5];
-	weight_dist_chara = parameter_vec[6];
+	weight_dist_chara = parameter_vec[5];
 
 	//typedef pcl::PointXYZ T_PointType;
 	typedef pcl::PointXYZRGB T_PointType;
@@ -4682,7 +4680,7 @@ void CPointcloudFunction::DoICP_proposed_only1method(
 			align_ICP_proposed.setMaxCorrespondenceDistance(MaxCorrespondenceDistance);
 			align_ICP_proposed.setEuclideanFitnessEpsilon(EuclideanFitnessEpsilon);
 			align_ICP_proposed.setTransformationEpsilon(TransformationEpsilon);
-			align_ICP_proposed.setCharaParameter(penalty_chara, dist_search, weight_dist_chara);
+			align_ICP_proposed.setCharaParameter(penalty_chara, MaxCorrespondenceDistance, weight_dist_chara);
 			//data
 			align_ICP_proposed.setInputTarget(cloud_tgt);
 			align_ICP_proposed.setInputSource(cloud_src_transformed);
@@ -4869,7 +4867,6 @@ void CPointcloudFunction::DoICP_proposed_varyParameters(string dir_, string file
 	s_name_parameter.push_back("EuclideanFitnessEpsilon");
 	s_name_parameter.push_back("TransformationEpsilon");
 	s_name_parameter.push_back("penalty_chara");
-	s_name_parameter.push_back("dist_search");
 	s_name_parameter.push_back("weight_dist_chara");
 
 	for (int j = 0; j < pattern_vecvec.size(); j++)
