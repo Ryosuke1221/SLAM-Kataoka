@@ -809,6 +809,39 @@ void CTimeString::changeParameter_2dimension(vector<vector<float>> &parameter_ve
 
 }
 
+vector<vector<float>> CTimeString::inputParameters_2dimension(string filename_, int row_small, int col_small)
+{
+	vector<vector<float>> parameter_vecvec;
+	{
+		vector<vector<string>> s_input_vecvec;
+		s_input_vecvec = getVecVecFromCSV_string(filename_);
+		for (int j = 0; j < s_input_vecvec.size(); j++)
+		{
+			if (j < row_small) continue;
+			vector<float> parameter_vec;
+			for (int i = 0; i < s_input_vecvec[j].size(); i++)
+			{
+				if (i < col_small) continue;
+				if (s_input_vecvec[j][i] == "") continue;
+				parameter_vec.push_back(stof(s_input_vecvec[j][i]));
+			}
+			parameter_vecvec.push_back(parameter_vec);
+		}
+	}
+	//remove same parameter
+	for (int j = 0; j < parameter_vecvec.size(); j++)
+		removeSameValue_fromVector(parameter_vecvec[j]);
+	cout << "show parameters" << endl;
+	for (int j = 0; j < parameter_vecvec.size(); j++)
+	{
+		cout << "parameter[" << j << "]:  ";
+		for (int i = 0; i < parameter_vecvec[j].size(); i++)
+			cout << parameter_vecvec[j][i] << " " << endl;
+		cout << endl;
+	}
+	return parameter_vecvec;
+}
+
 void CTimeString::removeSameParameter(vector<vector<float>> &parameter_vec_vec)
 {
 	for (int j = 0; j < parameter_vec_vec.size(); j++)
