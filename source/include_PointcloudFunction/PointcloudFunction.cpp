@@ -150,8 +150,8 @@ void CPointcloudFunction::show_sequent()
 	dir_ = dir_ + "/" + dir_folder_vec[i_select];
 	cout << endl;
 
-	//typedef typename pcl::PointXYZI PointType_func;
-	typedef typename pcl::PointXYZRGB PointType_func;
+	typedef typename pcl::PointXYZI PointType_func;
+	//typedef typename pcl::PointXYZRGB PointType_func;
 
 	bool b_useTXT = false;
 	//b_useTXT = true;
