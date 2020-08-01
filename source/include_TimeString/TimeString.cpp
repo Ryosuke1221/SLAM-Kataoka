@@ -1121,3 +1121,41 @@ vector<vector<int>> CTimeString::getIntCluster_SomeToSome(vector<vector<int>> va
 
 	return value_cluster_vecvec_new;
 }
+
+vector<vector<string>> CTimeString::getMatrixData_fromFormatOfFPFH(vector<vector<string>> s_input_vecvec,
+	string s_start, int i_pos_start_fromS, string s_end, int i_pos_end_fromS)
+{
+	int i_pos_init = 14;
+	bool b_calc = false;
+	int i_pos_start;
+	vector<vector<string>> s_output_vecvec;
+	for (int j = i_pos_init; j < s_input_vecvec.size(); j++)
+	{
+		if (s_input_vecvec[j - i_pos_start_fromS][0] == s_start && !b_calc)	//start
+		{
+			b_calc = true;
+			i_pos_start = j;
+		}
+		if (!b_calc) continue;
+		s_output_vecvec.push_back(s_input_vecvec[j]);
+		if (i_pos_end_fromS > 0 && j == s_input_vecvec.size() - 1) break;
+		else if (s_input_vecvec[j - i_pos_end_fromS][0] == s_end) break;
+	}
+	if (!b_calc) cout << s_start << "not found." << endl;
+	return s_output_vecvec;
+}
+
+vector<int> CTimeString::getValidFrame(vector<vector<double>> trajectoryVector_vec)
+{
+	vector<int> frames_validOrNot;
+	for (int j = 0; j < trajectoryVector_vec.size(); j++)
+	{
+		int num_invalid = 0;
+		for (int i = 0; i < 6; i++)
+			if (trajectoryVector_vec[j][i] == -1) num_invalid++;
+		if (num_invalid == 6) frames_validOrNot.push_back(-1);
+		else frames_validOrNot.push_back(j);
+	}
+	return frames_validOrNot;
+}
+

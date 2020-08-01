@@ -892,4 +892,5 @@ public:
 		correspondences.resize(nr_valid_correspondences);
 		return correspondences;
 	}
+
 };
