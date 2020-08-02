@@ -1141,20 +1141,25 @@ vector<vector<string>> CTimeString::getMatrixData_fromFormatOfFPFH(vector<vector
 		if (i_pos_end_fromS > 0 && j == s_input_vecvec.size() - 1) break;
 		else if (s_input_vecvec[j - i_pos_end_fromS][0] == s_end) break;
 	}
-	if (!b_calc) cout << s_start << "not found." << endl;
+	if (!b_calc) cout << s_start << " not found." << endl;
 	return s_output_vecvec;
 }
 
 vector<int> CTimeString::getValidFrame(vector<vector<double>> trajectoryVector_vec)
 {
 	vector<int> frames_validOrNot;
+	int num_validFrames = 0;
 	for (int j = 0; j < trajectoryVector_vec.size(); j++)
 	{
 		int num_invalid = 0;
 		for (int i = 0; i < 6; i++)
 			if (trajectoryVector_vec[j][i] == -1) num_invalid++;
 		if (num_invalid == 6) frames_validOrNot.push_back(-1);
-		else frames_validOrNot.push_back(j);
+		else
+		{
+			frames_validOrNot.push_back(num_validFrames);
+			num_validFrames++;
+		}
 	}
 	return frames_validOrNot;
 }

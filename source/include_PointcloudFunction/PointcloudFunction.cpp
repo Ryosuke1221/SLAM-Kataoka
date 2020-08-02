@@ -4868,6 +4868,8 @@ void CPointcloudFunction::DoEvaluation_AttributedICP_Optimization()
 
 void CPointcloudFunction::DoEvaluation_AttributedICP_Optimization_files()
 {
+	typedef pcl::PointXYZRGB T_PointType;
+
 	string dir_ = "../../data/process_AttributedICP_Optimization";
 
 	vector<string> filenames_input;
@@ -4896,6 +4898,20 @@ void CPointcloudFunction::DoEvaluation_AttributedICP_Optimization_files()
 			filenames_input.push_back(filenames_temp[stoi(s_input_vec[i])]);
 	}
 
+	//input pointcloud
+	vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec;
+	{
+		vector<string> filenames_;
+		CTimeString::getFileNames_extension(dir_, filenames_, ".pcd");
+		for (int i = 0; i < filenames_.size(); i++)
+		{
+			pcl::PointCloud<T_PointType>::Ptr cloud(new pcl::PointCloud<T_PointType>());
+			pcl::io::loadPCDFile(dir_ + "/" + filenames_[i], *cloud);
+			cloud->is_dense = true;
+			cloud_vec.push_back(cloud);
+		}
+	}
+
 	for (int j = 0; j < filenames_input.size(); j++)
 	{
 		string filename_input = filenames_input[j];
@@ -4907,7 +4923,7 @@ void CPointcloudFunction::DoEvaluation_AttributedICP_Optimization_files()
 
 		vector<vector<string>> s_output_vecvec;
 		s_output_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + filename_input);
-		DoEvaluation_Optimization_addToFile(dir_, s_newfoldername, s_output_vecvec);
+		DoEvaluation_Optimization_addToFile(dir_, s_newfoldername, s_output_vecvec, cloud_vec);
 
 		//output
 		string filename_output;
@@ -4917,11 +4933,12 @@ void CPointcloudFunction::DoEvaluation_AttributedICP_Optimization_files()
 }
 
 void CPointcloudFunction::DoEvaluation_Optimization_addToFile(string dir_,
-	string s_newfoldername, vector<vector<string>> &s_input_vecvec)
+	string s_newfoldername, vector<vector<string>> &s_input_vecvec,
+	vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloud_vec)
 {
-	int num_frames = 0;
+	typedef pcl::PointXYZRGB T_PointType;
 
-	//ICP
+	//input trajectory of ICP
 	vector<Eigen::Vector6d> trajectoryVector_vec_ICP;
 	{
 		vector<vector<string>> s_temp_vecvec;
@@ -4941,7 +4958,7 @@ void CPointcloudFunction::DoEvaluation_Optimization_addToFile(string dir_,
 		}
 	}
 
-	//ICP_proposed
+	//input trajectory of ICP_proposed
 	vector<Eigen::Vector6d> trajectoryVector_vec_ICP_proposed;
 	{
 		vector<vector<string>> s_temp_vecvec;
@@ -4964,6 +4981,7 @@ void CPointcloudFunction::DoEvaluation_Optimization_addToFile(string dir_,
 	vector<int> frames_all;
 	{
 		vector<vector<double>> temp_vecvec;
+		int num_validFrames = 0;
 		for (int j = 0; j < trajectoryVector_vec_ICP_proposed.size(); j++)
 		{
 			Eigen::Vector6d trajectoryVector_ = trajectoryVector_vec_ICP_proposed[j];
@@ -4979,7 +4997,15 @@ void CPointcloudFunction::DoEvaluation_Optimization_addToFile(string dir_,
 		frames_all = CTimeString::getValidFrame(temp_vecvec);
 	}
 
-	vector<vector<string>> s_output_vecvec;
+	//copy and decrease pointcloud
+	vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec_new;
+	for (int j = 0; j < cloud_vec.size(); j++)
+	{
+		if (frames_all[j] == -1) continue;
+		pcl::PointCloud<T_PointType>::Ptr cloud(new pcl::PointCloud<T_PointType>());
+		pcl::copyPointCloud(*cloud_vec[j],*cloud);
+		cloud_vec_new.push_back(cloud);
+	}
 
 	vector<string> s_headers_evaluation;
 	s_headers_evaluation.push_back("Frame");
@@ -4995,11 +5021,17 @@ void CPointcloudFunction::DoEvaluation_Optimization_addToFile(string dir_,
 	s_headers_evaluation.push_back("Median_cloud");
 	s_headers_evaluation.push_back("Mean_map");
 
-	vector<vector<double>> evaluations_compare_vecvec;
+	vector<vector<double>> compare_posRelative_vecvec;
+	vector<double> compare_mean_posRelative_vec;
+	vector<vector<double>> compare_posAbsolute_vecvec;
+
+	vector<double> compare_mean_posAbsolute_vec;
+	vector<double> compare_meanMap_vec;
+
+	vector<vector<string>> s_output_vecvec;
 
 	//calc ICP
 	{
-		vector<double> evaluations_compare_vec;
 		{
 			vector<string> s_temp_vec;
 			s_output_vecvec.push_back(s_temp_vec);
@@ -5014,8 +5046,11 @@ void CPointcloudFunction::DoEvaluation_Optimization_addToFile(string dir_,
 		vector<double> error_absolute_vec;
 		vector<double> median_vec;
 		double map_mean;
-		DoEvaluation_Optimization_calculation(dir_, s_newfoldername, trajectoryVector_vec_ICP, frames_all, 0,
-			error_relative_vec, error_absolute_vec, median_vec, map_mean);
+		DoEvaluation_Optimization_calculation(dir_, s_newfoldername, trajectoryVector_vec_ICP, 
+			cloud_vec_new, frames_all, 0, error_relative_vec, error_absolute_vec, median_vec, map_mean);
+		compare_posRelative_vecvec.push_back(error_relative_vec);
+		compare_posAbsolute_vecvec.push_back(error_absolute_vec);
+		compare_meanMap_vec.push_back(map_mean);
 		for (int j = 0; j < trajectoryVector_vec_ICP.size(); j++)
 		{
 			vector<string> s_temp_vec;
@@ -5062,6 +5097,8 @@ void CPointcloudFunction::DoEvaluation_Optimization_addToFile(string dir_,
 				error_absolute_vec_mean += error_absolute_vec[i];
 			if (error_absolute_vec.size() == 0) error_absolute_vec_mean = 10000;
 			else error_absolute_vec_mean /= (float)error_absolute_vec.size();
+			compare_mean_posRelative_vec.push_back(error_relative_vec_mean);
+			compare_mean_posAbsolute_vec.push_back(error_absolute_vec_mean);
 			vector<string> s_temp_vec;
 			s_temp_vec.push_back("Mean");
 			for (int i = 0; i < 7; i++)
@@ -5073,15 +5110,10 @@ void CPointcloudFunction::DoEvaluation_Optimization_addToFile(string dir_,
 			s_output_vecvec.push_back(s_temp_vec);
 		}
 		cout << endl;
-		evaluations_compare_vec.push_back(error_relative_vec_mean);
-		evaluations_compare_vec.push_back(error_absolute_vec_mean);
-		evaluations_compare_vec.push_back(map_mean);
-		evaluations_compare_vecvec.push_back(evaluations_compare_vec);
 	}
 
 	//calc ICP_proposed
 	{
-		vector<double> evaluations_compare_vec;
 		{
 			vector<string> s_temp_vec;
 			s_output_vecvec.push_back(s_temp_vec);
@@ -5092,12 +5124,16 @@ void CPointcloudFunction::DoEvaluation_Optimization_addToFile(string dir_,
 			s_output_vecvec.push_back(s_temp_vec);
 		}
 		s_output_vecvec.push_back(s_headers_evaluation);
+
 		vector<double> error_relative_vec;
 		vector<double> error_absolute_vec;
 		vector<double> median_vec;
 		double map_mean;
-		DoEvaluation_Optimization_calculation(dir_, s_newfoldername, trajectoryVector_vec_ICP_proposed, frames_all, 1,
-			error_relative_vec, error_absolute_vec, median_vec, map_mean);
+		DoEvaluation_Optimization_calculation(dir_, s_newfoldername, trajectoryVector_vec_ICP_proposed,
+			cloud_vec_new, frames_all, 1, error_relative_vec, error_absolute_vec, median_vec, map_mean);
+		compare_posRelative_vecvec.push_back(error_relative_vec);
+		compare_posAbsolute_vecvec.push_back(error_absolute_vec);
+		compare_meanMap_vec.push_back(map_mean);
 		for (int j = 0; j < trajectoryVector_vec_ICP_proposed.size(); j++)
 		{
 			vector<string> s_temp_vec;
@@ -5144,6 +5180,8 @@ void CPointcloudFunction::DoEvaluation_Optimization_addToFile(string dir_,
 				error_absolute_vec_mean += error_absolute_vec[i];
 			if (error_absolute_vec.size() == 0) error_absolute_vec_mean = 10000;
 			else error_absolute_vec_mean /= (float)error_absolute_vec.size();
+			compare_mean_posRelative_vec.push_back(error_relative_vec_mean);
+			compare_mean_posAbsolute_vec.push_back(error_absolute_vec_mean);
 			vector<string> s_temp_vec;
 			s_temp_vec.push_back("Mean");
 			for (int i = 0; i < 7; i++)
@@ -5155,23 +5193,10 @@ void CPointcloudFunction::DoEvaluation_Optimization_addToFile(string dir_,
 			s_output_vecvec.push_back(s_temp_vec);
 		}
 		cout << endl;
-		evaluations_compare_vec.push_back(error_relative_vec_mean);
-		evaluations_compare_vec.push_back(error_absolute_vec_mean);
-		evaluations_compare_vec.push_back(map_mean);
-		evaluations_compare_vecvec.push_back(evaluations_compare_vec);
 	}
 
 	//compare
 	{
-		double error_relative_vec_mean_compare;
-		double error_absolute_vec_mean_compare;
-		double map_mean_compare;
-		error_relative_vec_mean_compare =
-			evaluations_compare_vecvec[1][0] - evaluations_compare_vecvec[0][0];
-		error_absolute_vec_mean_compare =
-			evaluations_compare_vecvec[1][1] - evaluations_compare_vecvec[0][1];
-		map_mean_compare =
-			evaluations_compare_vecvec[1][2] - evaluations_compare_vecvec[0][2];
 		{
 			vector<string> s_temp_vec;
 			s_output_vecvec.push_back(s_temp_vec);
@@ -5179,14 +5204,73 @@ void CPointcloudFunction::DoEvaluation_Optimization_addToFile(string dir_,
 		{
 			vector<string> s_temp_vec;
 			s_temp_vec.push_back("Compare");
-			for (int i = 0; i < 7; i++)
-				s_temp_vec.push_back("");
-			s_temp_vec.push_back(to_string(error_relative_vec_mean_compare));
-			s_temp_vec.push_back(to_string(error_absolute_vec_mean_compare));
-			s_temp_vec.push_back("");
-			s_temp_vec.push_back(to_string(map_mean_compare));
 			s_output_vecvec.push_back(s_temp_vec);
 		}
+		{
+			vector<string> s_temp_vec;
+			for (int j = 0; j < s_headers_evaluation.size(); j++)
+			{
+				if ((1 <= j && j <= 6) || j == 10)
+					s_temp_vec.push_back("");
+				else
+					s_temp_vec.push_back(s_headers_evaluation[j]);
+			}
+			s_output_vecvec.push_back(s_temp_vec);
+		}
+		for (int j = 0; j < frames_all.size(); j++)
+		{
+			vector<string> s_temp_vec;
+			s_temp_vec.push_back(to_string(j));
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			if (frames_all[j] != -1)
+			{
+				s_temp_vec.push_back("0");
+				double compare_posRelative =
+					compare_posRelative_vecvec[1][frames_all[j]] - compare_posRelative_vecvec[0][frames_all[j]];
+				s_temp_vec.push_back(to_string(compare_posRelative));
+				double compare_posAbsolute =
+					compare_posAbsolute_vecvec[1][frames_all[j]] - compare_posAbsolute_vecvec[0][frames_all[j]];
+				s_temp_vec.push_back(to_string(compare_posAbsolute));
+			}
+			else
+			{
+				s_temp_vec.push_back("1");
+				s_temp_vec.push_back("");
+				s_temp_vec.push_back("");
+			}
+			s_output_vecvec.push_back(s_temp_vec);
+		}
+
+		{
+			vector<string> s_temp_vec;
+			s_temp_vec.push_back("Mean");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			s_temp_vec.push_back("");
+			//mean of relative
+			double compare_mean_posRelative;
+			compare_mean_posRelative = compare_mean_posRelative_vec[1] - compare_mean_posRelative_vec[0];
+			s_temp_vec.push_back(to_string(compare_mean_posRelative));
+			//mean of absolute
+			double compare_mean_posAbsolute;
+			compare_mean_posAbsolute = compare_mean_posAbsolute_vec[1] - compare_mean_posAbsolute_vec[0];
+			s_temp_vec.push_back(to_string(compare_mean_posAbsolute));
+			s_temp_vec.push_back("");
+			double compare_meanMap = compare_meanMap_vec[1] - compare_meanMap_vec[0];
+			s_temp_vec.push_back(to_string(compare_meanMap));
+			s_temp_vec.push_back("");
+			s_output_vecvec.push_back(s_temp_vec);
+		}
+
 	}
 
 	//output
@@ -5195,25 +5279,16 @@ void CPointcloudFunction::DoEvaluation_Optimization_addToFile(string dir_,
 }
 
 void CPointcloudFunction::DoEvaluation_Optimization_calculation(string dir_, string s_folder, vector<Eigen::Vector6d> trajectoryVector_vec,
-	vector<int> frames_all, int i_method,
+	vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloud_vec, vector<int> frames_all, int i_method,
 	vector<double> &error_relative_vec, vector<double> &error_absolute_vec,
 	vector<double> &median_vec, double &map_mean)
 {
 	typedef pcl::PointXYZRGB T_PointType;
 
-	//input pointcloud
-	vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec;
-	{
-		vector<string> filenames_;
-		CTimeString::getFileNames_extension(dir_, filenames_, ".pcd");
-		for (int i = 0; i < filenames_.size(); i++)
-		{
-			pcl::PointCloud<T_PointType>::Ptr cloud(new pcl::PointCloud<T_PointType>());
-			pcl::io::loadPCDFile(dir_ + "/" + filenames_[i], *cloud);
-			cloud->is_dense = true;
-			cloud_vec.push_back(cloud);
-		}
-	}
+	//adjust trajectory
+	for (int j = trajectoryVector_vec.size() - 1; j >= 0; j--)
+		if (frames_all[j] == -1) 
+			trajectoryVector_vec.erase(trajectoryVector_vec.begin() + j);
 
 	//true trajectory
 	vector<Eigen::Vector6d> trajectoryVector_vec_TRUE;
@@ -5222,6 +5297,7 @@ void CPointcloudFunction::DoEvaluation_Optimization_calculation(string dir_, str
 		vector<vector<double>> trajectory_vecvec_temp = CTimeString::getVecVecFromCSV(dir_ + "/" + filename_true);
 		for (int i = 0; i < trajectory_vecvec_temp.size(); i++)
 		{
+			if (frames_all[i] == -1) continue;
 			Eigen::Vector6d Pos_temp = Eigen::Vector6d::Zero();
 			Pos_temp << trajectory_vecvec_temp[i][1], trajectory_vecvec_temp[i][2],
 				trajectory_vecvec_temp[i][3], trajectory_vecvec_temp[i][4],
@@ -5235,8 +5311,7 @@ void CPointcloudFunction::DoEvaluation_Optimization_calculation(string dir_, str
 	vector<Eigen::Matrix4d> displacementMat_vector_TRUE;
 	for (int j = 0; j < trajectoryVector_vec.size(); j++)
 	{
-		if (frames_all[j] == -1) continue;
-		int i_frame_adjusted = frames_all[j];
+		int i_frame_adjusted = j;
 		Eigen::Matrix4d displacementMat_ = Eigen::Matrix4d::Identity();
 		Eigen::Matrix4d displacementMat_TRUE = Eigen::Matrix4d::Identity();
 		if (i_frame_adjusted == 0)
@@ -5276,8 +5351,7 @@ void CPointcloudFunction::DoEvaluation_Optimization_calculation(string dir_, str
 	//calc median of pointcloud distance by relative position
 	for (int j = 0; j < cloud_vec.size(); j++)
 	{
-		if (frames_all[j] == -1) continue;
-		int i_frame_adjusted = frames_all[j];
+		int i_frame_adjusted = j;
 		if (i_frame_adjusted == 0)
 		{
 			median_vec.push_back(0.);	//median_vec
@@ -5303,8 +5377,7 @@ void CPointcloudFunction::DoEvaluation_Optimization_calculation(string dir_, str
 	pcl::PointCloud<T_PointType>::Ptr cloud_map_TRUE(new pcl::PointCloud<T_PointType>());
 	for (int j = 0; j < cloud_vec.size(); j++)
 	{
-		if (frames_all[j] == -1) continue;
-		int i_frame_adjusted = frames_all[j];
+		int i_frame_adjusted = j;
 		if (i_frame_adjusted == 0)
 		{
 			median_vec.push_back(0.);	//median_vec
@@ -5359,7 +5432,6 @@ void CPointcloudFunction::DoEvaluation_AttributedICP_Optimization_mergeResult()
 {
 	string dir_ = "../../data/process_AttributedICP_Optimization";
 
-	//THIS
 	vector<string> filenames_folder;
 	vector<int> i_folder_vec;
 	{
@@ -5387,14 +5459,51 @@ void CPointcloudFunction::DoEvaluation_AttributedICP_Optimization_mergeResult()
 	}
 
 	vector<vector<string>> s_output_vecvec;
+	//header of output file
 	{
+		//get frame size
+		int num_allFrames;
+		{
+			vector<vector<string>> s_temp1_vecvec;
+			{
+				vector<string> filenames_temp1;
+				CTimeString::getFileNames_extension(dir_ + "/" + filenames_folder[i_folder_vec[0]], filenames_temp1, "_evaluation.csv");
+				if (filenames_temp1.size() != 1)
+				{
+					cout << "ERROR: one fusion.csv have not been found" << endl;
+				}
+				s_temp1_vecvec = CTimeString::getVecVecFromCSV_string(
+					dir_ + "/" + filenames_folder[i_folder_vec[0]] + "/" + filenames_temp1[0]);
+			}
+			vector<vector<string>> s_temp2_vecvec;
+			s_temp2_vecvec = CTimeString::getMatrixData_fromFormatOfFPFH(
+				s_temp1_vecvec, "Evaluation_OptimizedICP", 2, "Mean", -1);
+			num_allFrames = stoi(s_temp2_vecvec.back()[0]);
+			num_allFrames++;
+			cout << "num_allFrames:" << num_allFrames << endl;
+		}
 		vector<string> s_output_vec;
-		s_output_vec.push_back("");
+		s_output_vec.push_back("Filename");
+		s_output_vec.push_back("MaximumIterations");
+		s_output_vec.push_back("MaxCorrespondenceDistance");
+		s_output_vec.push_back("EuclideanFitnessEpsilon");
+		s_output_vec.push_back("TransformationEpsilon");
+		s_output_vec.push_back("penalty_chara");
+		s_output_vec.push_back("weight_dist_chara");
+		s_output_vec.push_back("edge_inf_threshold");
+		s_output_vec.push_back("max_correspondence_distance");
+		s_output_vec.push_back("edge_prune_threshold");
 		s_output_vec.push_back("Pos_relative");
+		for (int j = 0; j < num_allFrames; j++)
+			s_output_vec.push_back(to_string(j));
 		s_output_vec.push_back("Pos_absolute");
+		for (int j = 0; j < num_allFrames; j++)
+			s_output_vec.push_back(to_string(j));
+		s_output_vec.push_back("Mean_relative");
+		s_output_vec.push_back("Mean_absolute");
 		s_output_vec.push_back("Mean_map");
-		s_output_vec.push_back("cluster_biggest");
-		s_output_vec.push_back("cluster_size");
+		s_output_vec.push_back("Cluster_biggest");
+		s_output_vec.push_back("Cluster_size");
 		s_output_vecvec.push_back(s_output_vec);
 	}
 
@@ -5402,16 +5511,15 @@ void CPointcloudFunction::DoEvaluation_AttributedICP_Optimization_mergeResult()
 		s_output_vecvec.push_back(
 			DoEvaluation_AttributedICP_Optimization_mergeResult_OnePattern(dir_, filenames_folder[i_folder_vec[i]]));
 
-	//transposition
-	{
-		vector<vector<string>> s_output_vecvec_temp;
-		s_output_vecvec_temp = CTimeString::getTranspositionOfVecVec(s_output_vecvec);
-		s_output_vecvec = s_output_vecvec_temp;
-	}
+	////transposition
+	//{
+	//	vector<vector<string>> s_output_vecvec_temp;
+	//	s_output_vecvec_temp = CTimeString::getTranspositionOfVecVec(s_output_vecvec);
+	//	s_output_vecvec = s_output_vecvec_temp;
+	//}
 
 	string s_t = CTimeString::getTimeString();
 	CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/EvaluationResult_" + s_t + ".csv");
-	
 }
 
 vector<string> CPointcloudFunction::DoEvaluation_AttributedICP_Optimization_mergeResult_OnePattern(string dir_, string s_folder)
@@ -5432,49 +5540,83 @@ vector<string> CPointcloudFunction::DoEvaluation_AttributedICP_Optimization_merg
 			dir_ + "/" + s_folder + "/" + filenames_[0]);
 	}
 
-	vector<vector<string>> s_temp_vecvec;
-	s_temp_vecvec = CTimeString::getMatrixData_fromFormatOfFPFH(s_input_vecvec, "Evaluation_OptimizedICP_proposed", 2, "", 1);
-	vector<int> frames_all;
+	//ICP parameter
 	{
-		vector<vector<double>> temp_vecvec;
-		for (int j = 0; j < s_temp_vecvec.size(); j++)
-		{
-			if (s_temp_vecvec[j][0] == "Mean") break;
-			vector<double> temp_vec;
-			temp_vec.push_back(stod(s_temp_vecvec[j][1]));
-			temp_vec.push_back(stod(s_temp_vecvec[j][2]));
-			temp_vec.push_back(stod(s_temp_vecvec[j][3]));
-			temp_vec.push_back(stod(s_temp_vecvec[j][4]));
-			temp_vec.push_back(stod(s_temp_vecvec[j][5]));
-			temp_vec.push_back(stod(s_temp_vecvec[j][6]));
-			temp_vecvec.push_back(temp_vec);
-		}
-		frames_all = CTimeString::getValidFrame(temp_vecvec);
+		vector<vector<string>> s_temp_vecvec;
+		s_temp_vecvec = CTimeString::getMatrixData_fromFormatOfFPFH(s_input_vecvec, "Parameter_ICP", 1, "Result_ICP", -2);
+		s_vec_output.push_back(s_temp_vecvec[0][4]);
+		s_vec_output.push_back(s_temp_vecvec[1][4]);
+		s_vec_output.push_back(s_temp_vecvec[2][4]);
+		s_vec_output.push_back(s_temp_vecvec[3][4]);
+		s_vec_output.push_back(s_temp_vecvec[4][4]);
+		s_vec_output.push_back(s_temp_vecvec[5][4]);
 	}
 
-	double error_relative_vec_mean_compare;
-	double error_absolute_vec_mean_compare;
-	double map_mean_compare;
-	error_relative_vec_mean_compare = stod(s_temp_vecvec.back()[8]);
-	error_absolute_vec_mean_compare = stod(s_temp_vecvec.back()[9]);
-	map_mean_compare = stod(s_temp_vecvec.back()[11]);
-
-	s_vec_output.push_back(to_string(error_relative_vec_mean_compare));
-	s_vec_output.push_back(to_string(error_absolute_vec_mean_compare));
-	s_vec_output.push_back(to_string(map_mean_compare));
-
-	//cluster
-	int num_valid = 0;
+	//PoseGraphOptimization parameter
 	{
-		string s_cluster;
-		for (int j = 0; j < frames_all.size(); j++)
+		vector<vector<string>> s_temp_vecvec;
+		s_temp_vecvec = CTimeString::getMatrixData_fromFormatOfFPFH(
+			s_input_vecvec, "Parameter_PoseGraphOptimization", 2, "Result_PoseGraphOptimization", -2);
+		s_vec_output.push_back(s_temp_vecvec[0][4]);
+		s_vec_output.push_back(s_temp_vecvec[1][4]);
+		s_vec_output.push_back(s_temp_vecvec[2][4]);
+	}
+
+	s_vec_output.push_back("");
+
+	//Compare
+	{
+		vector<vector<string>> s_temp_vecvec;
+		s_temp_vecvec = CTimeString::getMatrixData_fromFormatOfFPFH(
+			s_input_vecvec, "Compare", 2, "", 1);
+
+		vector<int> frames_all;
 		{
-			if (frames_all[j] == -1) continue;
-			s_cluster += to_string(frames_all[j]) + " ";
-			num_valid++;
+			int num_validFrames = 0;
+			for (int j = 0; j < s_temp_vecvec.size(); j++)
+			{
+				if (s_temp_vecvec[j][0] == "Mean") break;
+				if (s_temp_vecvec[j][7] == "1") frames_all.push_back(-1);
+				else
+				{
+					frames_all.push_back(num_validFrames);
+					num_validFrames++;
+				}
+			}
+		}
+
+		//Pos_relative
+		for (int j = 0; j < frames_all.size(); j++)
+			s_vec_output.push_back(s_temp_vecvec[j][8]);
+
+		s_vec_output.push_back("");
+
+		//Pos_absolute
+		for (int j = 0; j < frames_all.size(); j++)
+			s_vec_output.push_back(s_temp_vecvec[j][9]);
+
+		//Mean_relative
+		s_vec_output.push_back(s_temp_vecvec.back()[8]);
+		//Mean_absolute
+		s_vec_output.push_back(s_temp_vecvec.back()[9]);
+		//Mean_map
+		s_vec_output.push_back(s_temp_vecvec.back()[11]);
+
+		//cluster
+		vector<int> frames_valid;
+		string s_cluster;
+		{
+			int num_validFrames = 0;
+			for (int j = 0; j < frames_all.size(); j++)
+			{
+				if (frames_all[j] == -1) continue;
+				frames_valid.push_back(num_validFrames);
+				s_cluster += to_string(j) + " ";
+				num_validFrames++;
+			}
 		}
 		s_vec_output.push_back(s_cluster);
-		s_vec_output.push_back(to_string(num_valid));
+		s_vec_output.push_back(to_string(frames_valid.size()));
 	}
 
 	return s_vec_output;
