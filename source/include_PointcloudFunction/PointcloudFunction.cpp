@@ -475,7 +475,9 @@ void CPointcloudFunction::FreeSpace()
 
 	pcl::PointCloud<T_PointType>::Ptr clouds_init(new pcl::PointCloud<T_PointType>());
 	pcl::PointCloud<T_PointType>::Ptr clouds_result(new pcl::PointCloud<T_PointType>());
-	*clouds_init = *cloud_tgt + *cloud_src;
+	//*clouds_init = *cloud_tgt + *cloud_src;
+	*clouds_init += *cloud_tgt;
+	*clouds_init += *cloud_src;
 
 	//align by FPFH
 	Eigen::Matrix4d transform_ = Eigen::Matrix4d::Identity();
@@ -566,6 +568,7 @@ void CPointcloudFunction::FreeSpace()
 			align.setInlierFraction(InlierFraction_SAC);						//th of inlier number
 			align.align(*temp_);
 			transform_ = align.getFinalTransformation().cast<double>();
+			cout << "" << align.hasConverged();
 		}
 	}
 
