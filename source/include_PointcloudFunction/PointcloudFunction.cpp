@@ -453,48 +453,148 @@ void CPointcloudFunction::FreeSpace()
 	//typedef typename pcl::PointXYZI T_PointType;
 	typedef typename pcl::PointXYZRGB T_PointType;
 
-	pcl::PointCloud<T_PointType>::Ptr cloud_(new pcl::PointCloud<T_PointType>());
-	string filename_ = "../../data/008XYZRGB_naraha.pcd";
-	pcl::io::loadPCDFile(filename_,*cloud_);
+	pcl::PointCloud<T_PointType>::Ptr cloud_tgt(new pcl::PointCloud<T_PointType>());
+	pcl::PointCloud<T_PointType>::Ptr cloud_src(new pcl::PointCloud<T_PointType>());
+	string filename_tgt = "../../data/000XYZRGB_naraha.pcd";
+	string filename_src = "../../data/001XYZRGB_naraha.pcd";
+	pcl::io::loadPCDFile(filename_tgt, *cloud_tgt);
+	pcl::io::loadPCDFile(filename_src, *cloud_src);
+	//color
+	for (int i = 0; i < cloud_tgt->size(); i++)
+	{
+		cloud_tgt->points[i].r = 255;
+		cloud_tgt->points[i].g = 0;
+		cloud_tgt->points[i].b = 0;
+	}
+	for (int i = 0; i < cloud_src->size(); i++)
+	{
+		cloud_src->points[i].r = 0;
+		cloud_src->points[i].g = 255;
+		cloud_src->points[i].b = 0;
+	}
 
+	pcl::PointCloud<T_PointType>::Ptr clouds_init(new pcl::PointCloud<T_PointType>());
+	pcl::PointCloud<T_PointType>::Ptr clouds_result(new pcl::PointCloud<T_PointType>());
+	*clouds_init = *cloud_tgt + *cloud_src;
+
+	//align by FPFH
+	Eigen::Matrix4d transform_ = Eigen::Matrix4d::Identity();
+	{
+		float voxel_size;
+		voxel_size = 0.1;
+
+		float radius_normal_FPFH, radius_FPFH;
+		radius_normal_FPFH = 0.15;
+		radius_FPFH = 0.25;
+
+		float MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC, InlierFraction_SAC;
+		MaxCorrespondenceDistance_SAC = 0.4;
+		int MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC;
+		SimilarityThreshold_SAC = 0.01f;
+		InlierFraction_SAC = 0.25;
+		MaximumIterations_SAC = 500;
+		NumberOfSamples_SAC = 10;
+		CorrespondenceRandomness_SAC = 10;
+
+		pcl::PointCloud<T_PointType>::Ptr cloud_tgt_VGF(new pcl::PointCloud<T_PointType>());
+		pcl::PointCloud<T_PointType>::Ptr cloud_src_VGF(new pcl::PointCloud<T_PointType>());
+		{
+			const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
+			sor->setLeafSize(voxel_size, voxel_size, voxel_size);
+			sor->setInputCloud(cloud_tgt);
+			sor->filter(*cloud_tgt_VGF);
+			sor->setInputCloud(cloud_src);
+			sor->filter(*cloud_src_VGF);
+
+		}
+		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt(new pcl::PointCloud<pcl::FPFHSignature33>);
+		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src(new pcl::PointCloud<pcl::FPFHSignature33>);
+		{
+			const auto view_point = T_PointType(0.0, 10.0, 10.0);
+			const pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
+			const pcl::NormalEstimation<T_PointType, pcl::Normal>::Ptr ne(new pcl::NormalEstimation<T_PointType, pcl::Normal>);
+			const pcl::search::KdTree<T_PointType>::Ptr kdtree(new pcl::search::KdTree<T_PointType>);
+			ne->setInputCloud(cloud_tgt);
+			ne->setRadiusSearch(radius_normal_FPFH);
+			ne->setSearchMethod(kdtree);
+			ne->setViewPoint(view_point.x, view_point.y, view_point.z);
+			ne->compute(*normals);
+			const pcl::FPFHEstimation<T_PointType, pcl::Normal, pcl::FPFHSignature33>::Ptr fpfhe(new pcl::FPFHEstimation<T_PointType, pcl::Normal, pcl::FPFHSignature33>);
+			fpfhe->setInputCloud(cloud_tgt_VGF);
+			fpfhe->setSearchSurface(cloud_tgt);
+			fpfhe->setInputNormals(normals);
+			fpfhe->setSearchMethod(kdtree);
+			fpfhe->setRadiusSearch(radius_FPFH);
+			fpfhe->compute(*fpfh_tgt);
+		}
+		{
+			const auto view_point = T_PointType(0.0, 10.0, 10.0);
+			const pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
+			const pcl::NormalEstimation<T_PointType, pcl::Normal>::Ptr ne(new pcl::NormalEstimation<T_PointType, pcl::Normal>);
+			const pcl::search::KdTree<T_PointType>::Ptr kdtree(new pcl::search::KdTree<T_PointType>);
+			ne->setInputCloud(cloud_src);
+			ne->setRadiusSearch(radius_normal_FPFH);
+			ne->setSearchMethod(kdtree);
+			ne->setViewPoint(view_point.x, view_point.y, view_point.z);
+			ne->compute(*normals);
+			const pcl::FPFHEstimation<T_PointType, pcl::Normal, pcl::FPFHSignature33>::Ptr fpfhe(new pcl::FPFHEstimation<T_PointType, pcl::Normal, pcl::FPFHSignature33>);
+			fpfhe->setInputCloud(cloud_src_VGF);
+			fpfhe->setSearchSurface(cloud_src);
+			fpfhe->setInputNormals(normals);
+			fpfhe->setSearchMethod(kdtree);
+			fpfhe->setRadiusSearch(radius_FPFH);
+			fpfhe->compute(*fpfh_src);
+		}
+
+		//align
+		{
+			cout << "cloud_src_VGF->size():" << cloud_src_VGF->size() << endl;
+			cout << "fpfh_src->size():" << fpfh_src->size() << endl;
+			cout << "cloud_tgt_VGF->size():" << cloud_tgt_VGF->size() << endl;
+			cout << "fpfh_tgt->size():" << fpfh_tgt->size() << endl;
+			boost::shared_ptr<pcl::PointCloud<T_PointType>> temp_(new pcl::PointCloud<T_PointType>);
+			pcl::SampleConsensusPrerejective<T_PointType, T_PointType, pcl::FPFHSignature33> align;
+			align.setInputSource(cloud_src_VGF);
+			align.setSourceFeatures(fpfh_src);
+			align.setInputTarget(cloud_tgt_VGF);
+			align.setTargetFeatures(fpfh_tgt);
+			align.setMaximumIterations(MaximumIterations_SAC);
+			align.setNumberOfSamples(NumberOfSamples_SAC);
+			align.setCorrespondenceRandomness(CorrespondenceRandomness_SAC);
+			align.setSimilarityThreshold(SimilarityThreshold_SAC);				//th of corr rejecter
+			align.setMaxCorrespondenceDistance(MaxCorrespondenceDistance_SAC);	//related to th of computing fitness score
+			align.setInlierFraction(InlierFraction_SAC);						//th of inlier number
+			align.align(*temp_);
+			transform_ = align.getFinalTransformation().cast<double>();
+		}
+	}
+
+	//transform
+	{
+		Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
+		Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(transform_);
+		pcl::transformPointCloud(*cloud_src, *cloud_src, Trans_temp);
+	}
+	*clouds_result = *cloud_tgt + *cloud_src;
+
+	//showing
 	CPointVisualization<T_PointType> pv;
 	pv.setWindowName("test");
 
-	////add color
-	//for (int i = 0; i < cloud_->size(); i++)
-	//{
-	//	cloud_->points[i].r = 255;
-	//}
-
-	pv.setPointCloud(cloud_);
-
-	////pv.M_viewer->addText("test", 10., 10.);
-	//pv.M_viewer->addText("test2", 100., 100., 100, 255, 255, 255);
-	//pv.M_viewer->addText("test3", 100., 100., 20, 255, 255, 255);
-	//pv.M_viewer->addText("test4", 0., 0., 30, 1, 1, 1);
-	////pv.M_viewer->addText3D;
+	pv.setPointCloud(clouds_init);
+	cout << "showing initial" << endl;
 
 	while (1)
 	{
 		pv.updateViewer();
+		if (GetAsyncKeyState(VK_SPACE) & 1)
+		{
+			pv.setPointCloud(clouds_result);
+			cout << "showing result" << endl;
+		}
 		if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
 	}
-
-	pv.setWindowName("test");
-
-	////outlier
-
-	//pv.setPointCloud(cloud_);
-
-	//while (1)
-	//{
-	//	pv.updateViewer();
-	//	if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
-	//}
-
-
 	pv.closeViewer();
-
 }
 
 void CPointcloudFunction::filterNIRPointCloud_naraha()
