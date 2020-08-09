@@ -2423,10 +2423,11 @@ void CPointcloudFunction::GlobalRegistration_FPFH_SAC_IA()
 
 void CPointcloudFunction::GR_FPFH_getResultAnalysis(string dir_, string s_folder)
 {
-
+	cout << "calc " << s_folder << endl;
 	GR_FPFH_makeFusionCSV(dir_, s_folder);
 
 	GR_FPFH_makeSuccessEstimation(dir_ + "/" + s_folder);
+	cout << endl;
 }
 
 void CPointcloudFunction::GR_FPFH_makeFusionCSV(string dir_, string s_folder)
@@ -2448,6 +2449,13 @@ void CPointcloudFunction::GR_FPFH_makeFusionCSV(string dir_, string s_folder)
 				s_output_vecvec.push_back(s_output_vecvec_temp[i]);
 			}
 		}
+	}
+
+	//avoid error of "not found Sum elapsed time"
+	if (s_output_vecvec[s_output_vecvec.size() - 2][0] != "Sum elapsed time")
+	{
+		cout << "ERROR: Sum_elapsed_time not found" << endl;
+		return;
 	}
 
 	//sort

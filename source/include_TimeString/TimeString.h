@@ -126,9 +126,26 @@ public:
 	static vector<vector<T>> getTranspositionOfVecVec(vector<vector<T>> T_vecvec)
 	{
 		vector<vector<T>> T_vecvec_output;
-		int rows, cols;
-		rows = T_vecvec[0].size();
-		cols = T_vecvec.size();
+		int rows = 0;
+		int cols = 0;
+		rows = T_vecvec.size();
+
+		for (int j = 0; j < T_vecvec.size(); j++)
+			if (cols < T_vecvec[j].size()) cols = T_vecvec[j].size();
+
+		//fill blank ingredient
+		for (int j = 0; j < T_vecvec.size(); j++)
+		{
+			int error_cols = cols - T_vecvec[j].size();
+			for (int i = 0; i < error_cols; i++)
+			{
+				T temp;
+				T_vecvec[j].push_back(temp);
+			}
+		}
+
+		swap(rows, cols);
+
 		for (int j = 0; j < rows; j++)
 		{
 			vector<T> T_vec_output;
