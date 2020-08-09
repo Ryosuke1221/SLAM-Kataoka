@@ -2319,17 +2319,16 @@ void CPointcloudFunction::GlobalRegistration_FPFH_SAC_IA()
 	SimilarityThreshold_SAC = 0.01f;
 	//SimilarityThreshold_SAC = 0.5f;
 	//SimilarityThreshold_SAC = 0.75f;
-	//InlierFraction_SAC = 0.25f;
+	InlierFraction_SAC = 0.25f;
 	//InlierFraction_SAC = 0.15f;
-	InlierFraction_SAC = 0.10f;
 	//MaximumIterations_SAC = 500000;
 	MaximumIterations_SAC = 500;
+	//MaximumIterations_SAC = 100;
 	//MaximumIterations_SAC = 50000;
 	//MaximumIterations_SAC = 10000;
 	//NumberOfSamples_SAC = 4;//8 & 8
 	//NumberOfSamples_SAC = 10;
-	NumberOfSamples_SAC = 100;
-	//NumberOfSamples_SAC = 10;
+	NumberOfSamples_SAC = 10;
 	//CorrespondenceRandomness_SAC = 2;
 	CorrespondenceRandomness_SAC = 10;
 
@@ -3028,6 +3027,9 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> pa
 	th_minute_CSV = 20;
 	//th_minute_CSV = 2;	//for debug
 
+	bool b_useClusterNotification = false;
+	b_useClusterNotification = true;
+
 	vector<string> name_parameter_vec;
 	name_parameter_vec.push_back("voxel_size");
 	name_parameter_vec.push_back("radius_normal_FPFH");
@@ -3363,6 +3365,49 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> pa
 	}
 
 	CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + s_newfoldername + "/" + time_end + "_output.csv");
+	
+	GR_FPFH_getResultAnalysis(dir_, s_newfoldername);
+
+	//cluster size
+	if(b_useClusterNotification)
+	{
+		vector<vector<string>> s_vecvec;
+		{
+			vector<vector<string>> s_input_vecvec;
+			vector<string> filenames_;
+			CTimeString::getFileNames_extension(dir_ + "/" + s_newfoldername, filenames_, "_SucEst.csv");
+			if (filenames_.size() != 1)
+			{
+				cout << "ERROR: one _SucEst.csv have not been found" << endl;
+				return;
+			}
+			s_input_vecvec = CTimeString::getVecVecFromCSV_string(
+				dir_ + "/" + s_newfoldername + "/" + filenames_[0]);
+			s_vecvec = CTimeString::getMatrixData_fromFormatOfFPFH(s_input_vecvec, "Result", 2, "Sum elapsed time", -2);
+		}
+
+		vector<vector<int>> pairs_vecvec;
+		for (int j = 0; j < s_vecvec.size(); j++)
+		{
+			if (stoi(s_vecvec[j][20]) == 0) continue;
+			vector<int> pairs_vec;
+			int i_tgt = stoi(s_vecvec[j][0]);
+			int i_src = stoi(s_vecvec[j][1]);
+			pairs_vec.push_back(i_tgt);
+			pairs_vec.push_back(i_src);
+			pairs_vecvec.push_back(pairs_vec);
+		}
+		vector<vector<int>> cluster_vecvec;
+		cluster_vecvec = CTimeString::getIntCluster_SomeToSome(pairs_vecvec);
+		cout << "cluster_vecvec[0].size():" << cluster_vecvec[0].size() << endl;
+		if (cluster_vecvec[0].size() >= 10)
+		{
+			vector<vector<string>> s_temp;
+			vector<string> s_temp2;
+			s_temp.push_back(s_temp2);
+			CTimeString::getCSVFromVecVec(s_temp, dir_ + "/" + s_newfoldername +"_hasClusterSize" + to_string(cluster_vecvec[0].size()) +  ".csv");
+		}
+	}
 
 	cout << endl;
 }
