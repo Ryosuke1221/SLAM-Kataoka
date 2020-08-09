@@ -150,8 +150,8 @@ void CPointcloudFunction::show_sequent()
 	dir_ = dir_ + "/" + dir_folder_vec[i_select];
 	cout << endl;
 
-	typedef typename pcl::PointXYZI PointType_func;
-	//typedef typename pcl::PointXYZRGB PointType_func;
+	//typedef typename pcl::PointXYZI PointType_func;
+	typedef typename pcl::PointXYZRGB PointType_func;
 
 	bool b_useTXT = false;
 	//b_useTXT = true;
@@ -4438,12 +4438,13 @@ void CPointcloudFunction::DoICP_proposed_AllFrames()
 	typedef pcl::PointXYZRGB T_PointType;
 
 	int i_method;
-	cout << "select: single parameter:0  vary parameters:1" << endl;
+	cout << "select: single parameter:0  vary parameters:1  merge results:2" << endl;
 	cout << "->";
 	cin >> i_method;
 
 	string dir_ = "../../data/process_DoICP_proposed_AllFrames";
 	vector<string> filenames_input;
+	if (i_method == 0 || i_method == 1)
 	{
 		vector<string> filenames_temp;
 		CTimeString::getFileNames_extension(dir_, filenames_temp, "_SucEst.csv");
@@ -4480,13 +4481,14 @@ void CPointcloudFunction::DoICP_proposed_AllFrames()
 				int MaximumIterations;
 				MaximumIterations = 50000;
 				double MaxCorrespondenceDistance, EuclideanFitnessEpsilon, TransformationEpsilon;
-				MaxCorrespondenceDistance = 1.;
+				//MaxCorrespondenceDistance = 1.;
+				MaxCorrespondenceDistance = 0.25;	//SII2021
 				EuclideanFitnessEpsilon = 1e-5;
 				TransformationEpsilon = 1e-6;
 				//attributed
 				double penalty_chara, dist_search, weight_dist_chara;
-				penalty_chara = 2.;
-				weight_dist_chara = 2.;
+				penalty_chara = 1.;
+				weight_dist_chara = 2.;				//SII2021
 				//vector
 				parameter_vec.push_back(MaximumIterations);
 				parameter_vec.push_back(MaxCorrespondenceDistance);
@@ -4508,6 +4510,9 @@ void CPointcloudFunction::DoICP_proposed_AllFrames()
 			DoICP_proposed_varyParameters(dir_, filename_csv_input);
 		}
 	}
+
+	else if (i_method == 2)
+		DoICP_proposed_mergeResult();
 }
 
 void CPointcloudFunction::DoICP_proposed_givenParameter(string dir_, string filename_csv, vector<float> parameter_vec)
@@ -4603,6 +4608,13 @@ void CPointcloudFunction::DoICP_proposed_givenParameter(string dir_, string file
 void CPointcloudFunction::DoICP_proposed_only1method(
 	string dir_, string s_folder, vector<vector<string>> &s_input_vecvec, vector<float> parameter_vec, int i_method)
 {
+	bool b_calcOnlyBiggestCluster = false;
+	b_calcOnlyBiggestCluster = true;
+	vector<int> frames_all;
+
+	bool b_skip_artifitial = false;
+	b_skip_artifitial = true;
+
 	//parameter
 	//icp
 	int MaximumIterations;
@@ -4638,8 +4650,22 @@ void CPointcloudFunction::DoICP_proposed_only1method(
 			//14 15 16 17 18 19  20
 			if (1 == stoi(s_temp_vecvec[j][20]))
 			{
-				initPos_.i_tgt = stoi(s_temp_vecvec[j][0]);
-				initPos_.i_src = stoi(s_temp_vecvec[j][1]);
+				int i_tgt = stoi(s_temp_vecvec[j][0]);
+				int i_src = stoi(s_temp_vecvec[j][1]);
+				
+				if (b_skip_artifitial)
+				{
+					//skip(compare conventional with proposed)
+					if (i_tgt == 0 && i_src == 14) continue;
+					if (i_tgt == 10 && i_src == 12) continue;
+					if (i_tgt == 11 && i_src == 13) continue;
+					//skip(for clear looking)
+					if (i_tgt == 1 && i_src == 15) continue;
+					if (i_tgt == 2 && i_src == 15) continue;
+				}
+
+				initPos_.i_tgt = i_tgt;
+				initPos_.i_src = i_src;
 				initPos_.Init_Vector <<
 					stod(s_temp_vecvec[j][14])
 					, stod(s_temp_vecvec[j][15])
@@ -4663,6 +4689,67 @@ void CPointcloudFunction::DoICP_proposed_only1method(
 			pcl::io::loadPCDFile(dir_ + "/" + filenames_[i], *cloud);
 			cloud->is_dense = true;
 			cloud_vec.push_back(cloud);
+		}
+	}
+	for (int j = 0; j < cloud_vec.size(); j++)
+		frames_all.push_back(j);
+
+	if (b_calcOnlyBiggestCluster)
+	{
+		frames_all.clear();
+		//calc frames that should be deleted
+		{
+			vector<vector<int>> value_vecvec;
+
+			for (int j = 0; j < initPos_vec.size(); j++)
+			{
+				vector<int> value_vec;
+				value_vec.push_back(initPos_vec[j].i_tgt);
+				value_vec.push_back(initPos_vec[j].i_src);
+				value_vecvec.push_back(value_vec);
+			}
+			for (int j = 0; j < value_vecvec.size(); j++)
+			{
+				cout << "j:" << j;
+				for (int i = 0; i < value_vecvec[j].size(); i++)
+					cout << " " << value_vecvec[j][i];
+				cout << endl;
+			}
+			cout << endl;
+
+			vector<vector<int>> value_vecvec_new;
+			value_vecvec_new = CTimeString::getIntCluster_SomeToSome(value_vecvec);
+			cout << "finished" << endl;
+			for (int j = 0; j < value_vecvec_new.size(); j++)
+			{
+				cout << "j:" << j;
+				for (int i = 0; i < value_vecvec_new[j].size(); i++)
+					cout << " " << value_vecvec_new[j][i];
+				cout << endl;
+			}
+			cout << endl;
+
+			//not contained to bigger cluster
+			vector<bool> b_frames_isInBiggerCluster;
+			b_frames_isInBiggerCluster.resize(cloud_vec.size());
+			fill(b_frames_isInBiggerCluster.begin(), b_frames_isInBiggerCluster.end(), false);
+			for (int i = 0; i < value_vecvec_new[0].size(); i++)
+				b_frames_isInBiggerCluster[value_vecvec_new[0][i]] = true;
+
+			int index_new = 0;
+			for (int i = 0; i < cloud_vec.size(); i++)
+			{
+				if (b_frames_isInBiggerCluster[i])
+				{
+					frames_all.push_back(index_new);
+					index_new++;
+				}
+				else frames_all.push_back(-1);
+			}
+
+			cout << "show deleted frames and others" << endl;
+			for (int i = 0; i < frames_all.size(); i++)
+				cout << "i:" << i << " " << frames_all[i] << endl;
 		}
 	}
 
@@ -4699,6 +4786,9 @@ void CPointcloudFunction::DoICP_proposed_only1method(
 
 		int i_tgt = initPos_vec[j].i_tgt;
 		int i_src = initPos_vec[j].i_src;
+
+		if (frames_all[i_tgt] == -1) continue;
+		if (frames_all[i_src] == -1) continue;
 
 		pcl::PointCloud<T_PointType>::Ptr cloud_tgt(new pcl::PointCloud<T_PointType>());
 		pcl::PointCloud<T_PointType>::Ptr cloud_src(new pcl::PointCloud<T_PointType>());
@@ -4952,6 +5042,230 @@ void CPointcloudFunction::DoICP_proposed_varyParameters(string dir_, string file
 		DoICP_proposed_givenParameter(dir_, filename_csv, parameter_vec);
 		cout << endl;
 	}
+}
+
+void CPointcloudFunction::DoICP_proposed_mergeResult()
+{
+	bool b_useMedian = false;
+	//b_useMedian = true;
+
+	string dir_ = "../../data/process_DoICP_proposed_AllFrames";
+
+	vector<string> filenames_folder;
+	vector<int> i_folder_vec;
+	{
+		CTimeString::getFileNames_folder(dir_, filenames_folder);
+		for (int i = 0; i < filenames_folder.size(); i++)
+		{
+			string s_i = to_string(i);
+			if (s_i.size() < 2) s_i = " " + s_i;
+			cout << "i:" << s_i << " " << filenames_folder[i] << endl;
+		}
+		cout << endl;
+		cout << "input folder you want to calc (can input multinumber)" << endl;
+		vector<string> s_input_vec;
+		bool b_useCSV = false;
+		{
+			cout << "select: input number by csv or not  yes:1  no:0" << endl;
+			cout << "->";
+			cin >> b_useCSV;
+		}
+		if (!b_useCSV) s_input_vec = CTimeString::inputSomeString();
+		else s_input_vec = CTimeString::inputSomeString_fromCSV(dir_ + "/" + "num_vector.csv");
+		cout << "s_input_vec.size():" << s_input_vec.size() << endl;
+		for (int i = 0; i < s_input_vec.size(); i++)
+			i_folder_vec.push_back(stoi(s_input_vec[i]));
+	}
+
+	vector<vector<string>> s_output_vecvec;
+	//header of output file
+	{
+		vector<string> s_output_vec;
+		s_output_vec.push_back("Filename");
+		s_output_vec.push_back("MaximumIterations");
+		s_output_vec.push_back("MaxCorrespondenceDistance");
+		s_output_vec.push_back("EuclideanFitnessEpsilon");
+		s_output_vec.push_back("TransformationEpsilon");
+		s_output_vec.push_back("penalty_chara");
+		s_output_vec.push_back("weight_dist_chara");
+		s_output_vec.push_back("Cluster");
+		if(b_useMedian)
+			s_output_vec.push_back("Distance_Median_Transformation");
+		else 
+			s_output_vec.push_back("Distance_Transformation");
+		s_output_vecvec.push_back(s_output_vec);
+	}
+
+	for (int i = 0; i < i_folder_vec.size(); i++)
+		s_output_vecvec.push_back(
+			DoICP_proposed_mergeResult_OnePattern(dir_, filenames_folder[i_folder_vec[i]], b_useMedian));
+
+	////transposition
+	//{
+	//	vector<vector<string>> s_output_vecvec_temp;
+	//	s_output_vecvec_temp = CTimeString::getTranspositionOfVecVec(s_output_vecvec);
+	//	s_output_vecvec = s_output_vecvec_temp;
+	//}
+
+	string s_t = CTimeString::getTimeString();
+	CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/ICPResult_" + s_t + ".csv");
+}
+
+vector<string> CPointcloudFunction::DoICP_proposed_mergeResult_OnePattern(string dir_, string s_folder, bool b_useMedian)
+{
+	bool b_useTransformation = false;
+	//b_useTransformation = true;
+
+	vector<string> s_vec_output;
+	s_vec_output.push_back(s_folder);
+
+	vector<vector<string>> s_input_vecvec;
+	{
+		vector<string> filenames_;
+		CTimeString::getFileNames_extension(dir_ + "/" + s_folder, filenames_, "_output_ICP.csv");
+		if (filenames_.size() != 1)
+		{
+			cout << "ERROR: one fusion.csv have not been found" << endl;
+			return s_vec_output;
+		}
+		s_input_vecvec = CTimeString::getVecVecFromCSV_string(
+			dir_ + "/" + s_folder + "/" + filenames_[0]);
+	}
+
+	//ICP parameter
+	{
+		vector<vector<string>> s_temp_vecvec;
+		s_temp_vecvec = CTimeString::getMatrixData_fromFormatOfFPFH(s_input_vecvec, "Parameter_ICP", 1, "Result_ICP", -2);
+		s_vec_output.push_back(s_temp_vecvec[0][4]);
+		s_vec_output.push_back(s_temp_vecvec[1][4]);
+		s_vec_output.push_back(s_temp_vecvec[2][4]);
+		s_vec_output.push_back(s_temp_vecvec[3][4]);
+		s_vec_output.push_back(s_temp_vecvec[4][4]);
+		s_vec_output.push_back(s_temp_vecvec[5][4]);
+	}
+
+	//Cluster
+	vector<int> frames_all;
+	{
+		vector<vector<string>> s_temp_vecvec;
+		s_temp_vecvec = CTimeString::getMatrixData_fromFormatOfFPFH(
+			s_input_vecvec, "Result_ICP", 2, "Result_ICP_proposed", -2);
+		//init frames_all
+		{
+			int num_frames = 0;
+			for (int j = 0; j < s_temp_vecvec.size(); j++)
+			{
+				int i_tgt;
+				int i_src;
+				i_tgt = stod(s_temp_vecvec[j][0]);
+				i_src = stod(s_temp_vecvec[j][1]);
+				if (num_frames < i_tgt) num_frames = i_tgt;
+				if (num_frames < i_src) num_frames = i_src;
+			}
+			num_frames++;
+			for (int j = 0; j < num_frames; j++)
+				frames_all.push_back(-1);
+		}
+		//clustering
+		{
+			vector<vector<int>> value_vecvec;
+			for (int j = 0; j < s_temp_vecvec.size(); j++)
+			{
+				vector<int> value_vec;
+				int i_tgt;
+				int i_src;
+				i_tgt = stod(s_temp_vecvec[j][0]);
+				i_src = stod(s_temp_vecvec[j][1]);
+				value_vec.push_back(i_tgt);
+				value_vec.push_back(i_src);
+				value_vecvec.push_back(value_vec);
+			}
+			vector<vector<int>> value_vecvec_new;
+			value_vecvec_new = CTimeString::getIntCluster_SomeToSome(value_vecvec);
+			int frame_valid = 0;
+			for (int j = 0; j < value_vecvec_new[0].size(); j++)
+			{
+				frames_all[value_vecvec_new[0][j]] = frame_valid;
+				frame_valid++;
+			}
+			//cout << "show deleted frames and others" << endl;
+			//for (int i = 0; i < frames_all.size(); i++)
+			//	cout << "i:" << i << " " << frames_all[i] << endl;
+		}
+		//add cluster to s_vec_output
+		string s_cluster;
+		for (int j = 0; j < frames_all.size(); j++)
+			if (frames_all[j] != -1) s_cluster += to_string(j) + " ";
+		s_vec_output.push_back(s_cluster);
+	}
+
+	//input ICP
+	vector<vector<double>> value_vecvec_ICP;
+	{
+		vector<vector<string>> s_temp_vecvec;
+		s_temp_vecvec = CTimeString::getMatrixData_fromFormatOfFPFH(
+			s_input_vecvec, "Result_ICP", 2, "Result_ICP_proposed", -2);
+		for (int j = 0; j < s_temp_vecvec.size(); j++)
+		{
+			int i_tgt;
+			int i_src;
+			i_tgt = stod(s_temp_vecvec[j][0]);
+			i_src = stod(s_temp_vecvec[j][1]);
+			if (frames_all[i_tgt] == -1) continue;
+			if (frames_all[i_src] == -1) continue;
+			vector<double> value_vec;
+			value_vec.push_back(i_tgt);
+			value_vec.push_back(i_src);
+			value_vec.push_back(stod(s_temp_vecvec[j][3]));
+			value_vec.push_back(stod(s_temp_vecvec[j][4]));
+			value_vec.push_back(stod(s_temp_vecvec[j][5]));
+			value_vecvec_ICP.push_back(value_vec);
+		}
+	}
+	//input ICP_proposed
+	vector<vector<double>> value_vecvec_ICP_proposed;
+	{
+		vector<vector<string>> s_temp_vecvec;
+		s_temp_vecvec = CTimeString::getMatrixData_fromFormatOfFPFH(
+			s_input_vecvec, "Result_ICP_proposed", 2, "", 1);
+		for (int j = 0; j < s_temp_vecvec.size(); j++)
+		{
+			int i_tgt;
+			int i_src;
+			i_tgt = stod(s_temp_vecvec[j][0]);
+			i_src = stod(s_temp_vecvec[j][1]);
+			if (frames_all[i_tgt] == -1) continue;
+			if (frames_all[i_src] == -1) continue;
+			vector<double> value_vec;
+			value_vec.push_back(i_tgt);
+			value_vec.push_back(i_src);
+			value_vec.push_back(stod(s_temp_vecvec[j][3]));
+			value_vec.push_back(stod(s_temp_vecvec[j][4]));
+			value_vec.push_back(stod(s_temp_vecvec[j][5]));
+			value_vecvec_ICP_proposed.push_back(value_vec);
+		}
+	}
+
+	//Compare
+	for (int j = 0; j < value_vecvec_ICP.size(); j++)
+	{
+		string s_frame_pair = to_string((int)value_vecvec_ICP[j][0])
+			+ "--" + to_string((int)value_vecvec_ICP[j][1]);
+		double compare_distance;
+		compare_distance = value_vecvec_ICP_proposed[j][2] - value_vecvec_ICP[j][2];
+		double compare_median;
+		compare_median = value_vecvec_ICP_proposed[j][3] - value_vecvec_ICP[j][3];
+		double compare_transformation;
+		compare_transformation = value_vecvec_ICP_proposed[j][4] - value_vecvec_ICP[j][4];
+		s_vec_output.push_back(s_frame_pair);
+		s_vec_output.push_back(to_string(compare_distance));
+		if(b_useMedian)
+			s_vec_output.push_back(to_string(compare_median));
+		if (b_useTransformation)
+			s_vec_output.push_back(to_string(compare_transformation));
+	}
+
+	return s_vec_output;
 }
 
 void CPointcloudFunction::DoEvaluation_AttributedICP_Optimization()

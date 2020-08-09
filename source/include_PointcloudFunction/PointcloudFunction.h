@@ -185,6 +185,8 @@ public:
 		string dir_, string s_folder, vector<vector<string>> &s_input_vecvec, vector<float> parameter_vec, int i_method);
 	void DoICP_addToOutputString_OutputHeader(vector<vector<string>> &s_output_vecvec);
 	void DoICP_proposed_varyParameters(string dir_, string filename_csv);
+	void DoICP_proposed_mergeResult();
+	vector<string> DoICP_proposed_mergeResult_OnePattern(string dir_, string s_folder, bool b_useMedian);
 
 	void DoEvaluation_AttributedICP_Optimization();
 	void DoEvaluation_AttributedICP_Optimization_files();
