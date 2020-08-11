@@ -692,6 +692,144 @@ public:
 	}
 
 	template <class T_PointType>
+	static bool align_SAC_AI_RANSAC_TRUE(
+		Eigen::Matrix4d &transformation_result, vector<int> &Inlier_, float &FitnessScore, int &frame_failed,
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src, pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_tgt, pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt,
+		float voxel_size, float MaxCorrespondenceDistance, float SimilarityThreshold,
+		float InlierFraction, int MaximumIterations, int NumberOfSamples, int CorrespondenceRandomness, int max_iteration, bool b_cout,
+		Eigen::Matrix4d transformation_true, float th_distance)
+	{
+		int index_iteration = 0;
+		frame_failed = 0;
+		vector<pair<float, Eigen::Matrix4d>> output_vec;
+		vector<vector<int>> inlier_vec;
+		vector<float> fitnessscore_vec;
+
+		while (1)
+		{
+			Eigen::Matrix4d transform_ = Eigen::Matrix4d::Identity();
+			bool b_hasConverged = false;
+			vector<int> inlier_;
+			float fitnessscore;
+
+			b_hasConverged = CKataokaPCL::align_SAC_AI<T_PointType>(transform_, inlier_, fitnessscore,
+				cloud_src, fpfh_src, cloud_tgt, fpfh_tgt,
+				voxel_size, MaxCorrespondenceDistance, SimilarityThreshold,
+				InlierFraction, MaximumIterations, NumberOfSamples, CorrespondenceRandomness);
+
+			cout << "index_iteration:" << index_iteration << endl;
+			if (b_cout)
+			{
+				cout << "b_hasConverged:" << b_hasConverged << endl;
+				cout << "fitnessscore:" << fitnessscore << endl;
+				cout << "inlier_.size():" << inlier_.size() << endl;
+				cout << endl;
+			}
+
+			//estimation
+			bool b_estimation = false;
+			double distance_ = 0.;
+			if (b_hasConverged)
+			{
+				boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src_est(new pcl::PointCloud<T_PointType>());
+				boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src_estTRUE(new pcl::PointCloud<T_PointType>());
+
+				pcl::copyPointCloud(*cloud_src, *cloud_src_est);
+				pcl::copyPointCloud(*cloud_src, *cloud_src_estTRUE);
+				{
+					Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
+					Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(transform_);
+					pcl::transformPointCloud(*cloud_src_est, *cloud_src_est, Trans_temp);
+				}
+				{
+					Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
+					Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(transformation_true);
+					pcl::transformPointCloud(*cloud_src_estTRUE, *cloud_src_estTRUE, Trans_temp);
+				}
+				//distance to true
+				for (size_t i = 0; i < cloud_src_est->size(); i++)
+				{
+					T_PointType point_, point_true;
+					point_ = cloud_src_est->points[i];
+					point_true = cloud_src_estTRUE->points[i];
+					const float sqrt_before =
+						pow(point_.x - point_true.x, 2.)
+						+ pow(point_.y - point_true.y, 2.)
+						+ pow(point_.z - point_true.z, 2.);
+					distance_ += static_cast<double>(sqrt(
+						pow(point_.x - point_true.x, 2.)
+						+ pow(point_.y - point_true.y, 2.)
+						+ pow(point_.z - point_true.z, 2.)));
+
+				}
+				if (cloud_src_est->size() != 0) distance_ /= cloud_src_est->size();
+				else distance_ = 100.;
+
+				if (distance_ < th_distance) b_estimation = true;
+			}
+
+			if (b_estimation)
+			{
+				//output_vec.push_back(make_pair((float)inlier_.size() / (float)fpfh_src->size(), transform_));
+				output_vec.push_back(make_pair(distance_, transform_));
+				inlier_vec.push_back(inlier_);
+				fitnessscore_vec.push_back(fitnessscore);
+			}
+			else
+				frame_failed++;
+
+			index_iteration++;
+			if (index_iteration >= max_iteration) break;
+
+		}
+
+		//for (int i = 0; i < output_vec.size(); i++)
+		//{
+		//	cout << "i:" << i << " score:" << output_vec[i].first << endl;
+		//	cout << output_vec[i].second << endl;
+		//	cout << endl;
+		//}
+
+		//select most good value
+		float score_min = th_distance;
+		int i_best;
+		for (int i = 0; i < output_vec.size(); i++)
+		{
+			if (output_vec[i].first < score_min)
+			{
+				score_min = output_vec[i].first;
+				i_best = i;
+			}
+		}
+
+		cout << "Show Result" << endl;
+		cout << "frame_failed:" << frame_failed << "(/" << max_iteration << ")" << endl;
+		if (output_vec.size() != 0)
+		{
+			cout << "converged final transformation" << endl;
+			cout << "i:" << i_best << " score:" << output_vec[i_best].first << endl;
+			cout << output_vec[i_best].second << endl;
+			transformation_result = output_vec[i_best].second;
+			Inlier_ = inlier_vec[i_best];
+			FitnessScore = fitnessscore_vec[i_best];
+		}
+		else
+		{
+			transformation_result = Eigen::Matrix4d::Identity();
+			Inlier_.clear();
+			FitnessScore = 1000.;
+		}
+
+		cout << "align finished" << endl;
+
+		bool b_hasConverged = false;
+		if (output_vec.size() != 0) b_hasConverged = true;
+		return b_hasConverged;
+		return false;
+	}
+
+	template <class T_PointType>
 	static vector<float> getErrorOfFPFHSource(float &median_arg,
 		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src, boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_tgt,
 		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src, pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt,

@@ -2574,9 +2574,8 @@ void CPointcloudFunction::GR_FPFH_makeSuccessEstimation(string dir_)
 	vector<int> num_called_vec;
 	num_called_vec.resize(frame_end + 1);
 	fill(num_called_vec.begin(), num_called_vec.end(), 0);
-	float th_distance, th_median;
-	th_distance = 4.;	//10
-	th_median = 1.8;	//11
+	float th_distance;
+	th_distance = 2.3;	//10
 
 	vector<vector<int>> i_est_vecvec_EachRows;
 	vector<vector<int>> frames_forClustering_vecvec;
@@ -2593,8 +2592,7 @@ void CPointcloudFunction::GR_FPFH_makeSuccessEstimation(string dir_)
 		num_called_vec[i_tgt]++;
 		num_called_vec[i_src]++;
 
-		if (!(th_distance >= stof(s_value_vecvec_EachRows[j][10])
-			&& th_median >= stof(s_value_vecvec_EachRows[j][11])))
+		if (!(th_distance >= stof(s_value_vecvec_EachRows[j][10])))
 			i_est_vec_EachRows.push_back(0);
 		else
 		{
@@ -3030,6 +3028,9 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> pa
 	bool b_useClusterNotification = false;
 	b_useClusterNotification = true;
 
+	bool b_useRANSAC_EST = false;
+	b_useRANSAC_EST = true;
+
 	vector<string> name_parameter_vec;
 	name_parameter_vec.push_back("voxel_size");
 	name_parameter_vec.push_back("radius_normal_FPFH");
@@ -3175,6 +3176,8 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> pa
 	vector<pair<int, int>> frame_pair_vec;
 	frame_pair_vec = GR_FPFH_SAC_IA_get_frame_pair_vec(dir_);
 
+	vector<pair<int, int>> frame_pair_est;
+
 	for (int i_frame_pair = 0; i_frame_pair < frame_pair_vec.size(); i_frame_pair++)
 	{
 		int i_tgt = frame_pair_vec[i_frame_pair].first;
@@ -3191,10 +3194,32 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> pa
 
 		cout << "i_tgt:" << i_tgt << " i_src:" << i_src << endl;
 
-		b_hasConverged = CKataokaPCL::align_SAC_AI_RANSAC<T_PointType>(transform_, inlier_, fitnessscore, frame_failed,
-			cloud_vec[i_src], fpfh_vec[i_src], cloud_vec[i_tgt], fpfh_vec[i_tgt],
-			voxel_size, MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC, InlierFraction_SAC,
-			MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC, max_RANSAC, b_cout_RANSAC);
+		//b_useRANSAC_EST
+		if (!b_useRANSAC_EST)
+		{
+			b_hasConverged = CKataokaPCL::align_SAC_AI_RANSAC<T_PointType>(transform_, inlier_, fitnessscore, frame_failed,
+				cloud_vec[i_src], fpfh_vec[i_src], cloud_vec[i_tgt], fpfh_vec[i_tgt],
+				voxel_size, MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC, InlierFraction_SAC,
+				MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC, max_RANSAC, b_cout_RANSAC);
+		}
+		else
+		{
+			Eigen::Matrix4d T_src_TRUE = Eigen::Matrix4d::Identity();
+			T_src_TRUE = CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]).inverse()
+				* CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
+
+			b_hasConverged = CKataokaPCL::align_SAC_AI_RANSAC_TRUE<T_PointType>(transform_, inlier_, fitnessscore, frame_failed,
+				cloud_vec[i_src], fpfh_vec[i_src], cloud_vec[i_tgt], fpfh_vec[i_tgt],
+				voxel_size, MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC, InlierFraction_SAC,
+				MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC, 
+				max_RANSAC, b_cout_RANSAC, T_src_TRUE, 2.3);
+
+			if (b_hasConverged)
+				frame_pair_est.push_back(make_pair(i_tgt, i_src));
+			cout << "show frames estimated success" << endl;
+			for (int j = 0; j < frame_pair_est.size(); j++)
+				cout << "i_tgt:" << frame_pair_est[j].first << " i_src:" << frame_pair_est[j].second << endl;
+		}
 
 		//save pointcloud
 		pcl::PointCloud<T_PointType>::Ptr cloud_src(new pcl::PointCloud<T_PointType>());
@@ -3400,7 +3425,7 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> pa
 		vector<vector<int>> cluster_vecvec;
 		cluster_vecvec = CTimeString::getIntCluster_SomeToSome(pairs_vecvec);
 		cout << "cluster_vecvec[0].size():" << cluster_vecvec[0].size() << endl;
-		if (cluster_vecvec[0].size() >= 10)
+		if (cluster_vecvec[0].size() >= 11)
 		{
 			vector<vector<string>> s_temp;
 			vector<string> s_temp2;
@@ -4666,7 +4691,7 @@ void CPointcloudFunction::DoICP_proposed_only1method(
 	vector<int> frames_all;
 
 	bool b_skip_artifitial = false;
-	b_skip_artifitial = true;
+	//b_skip_artifitial = true;
 
 	//parameter
 	//icp
