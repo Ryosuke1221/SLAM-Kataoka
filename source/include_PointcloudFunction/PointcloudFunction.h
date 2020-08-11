@@ -169,6 +169,9 @@ public:
 	vector<string> GR_FPFH_getResultOfOnePattern(string dir_, string s_folder);
 	void GR_FPFH_SAC_IA_2frames(string dir_, vector<float> parameter_vec);
 	void GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> parameter_vec, bool b_changeParameter = true);
+	vector<string> GR_FPFH_SAC_IA_Allframes_OnePair(string dir_, vector<float> parameter_vec, int i_tgt, int i_src,
+		vector<boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>>> cloud_vec, vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> fpfh_vec,
+		vector<Eigen::Vector6d> trajectory_vec, bool b_useRANSAC_EST, bool b_useOutputPointcloud);
 	vector<pair<int, int>> GR_FPFH_SAC_IA_get_frame_pair_vec(string dir_);
 	void GR_addToOutputString_OutputHeader_FPFH(vector<vector<string>> &s_output_vecvec);
 	void GR_FPFH_SelectPoint(string dir_, vector<float> parameter_vec);
@@ -176,6 +179,7 @@ public:
 	void GR_FPFH_error_AllFrames(string dir_, vector<float> parameter_vec, bool b_changeParameter = true);
 	void GR_FPFH_variance_AllFrames(string dir_, vector<float> parameter_vec, bool b_changeParameter = true);
 	void GR_FPFH_varyParameter(string dir_, vector<float> parameter_vec_arg);
+	void GR_FPFH_FixFusion(string dir_, string s_folder);
 
 	void DoOutlierRejector();
 

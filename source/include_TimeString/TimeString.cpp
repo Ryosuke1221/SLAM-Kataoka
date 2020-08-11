@@ -379,6 +379,11 @@ void CTimeString::makenewfolder(string dir, string newfoldername)
 	sys_ns::create_directory(dir + "/" + newfoldername);
 }
 
+void CTimeString::movefile(string path_before, string path_after)
+{
+	sys_ns::rename(path_before, path_after);
+}
+
 bool CTimeString::getFileNames_folder(std::string folderPath, std::vector<std::string> &file_names)
 {
 	vector<string> filenames_;

@@ -68,6 +68,7 @@ public:
 	static void copyfile(string filename_from, string filename_to);//full path
 	static void deletefile(string filename_delete);//full path
 	static void makenewfolder(string dir, string newfoldername);//relative path
+	static void movefile(string path_before, string path_after);
 
 	static vector<string> inputSomeString();
 	static vector<string> inputSomeString_fromCSV(string s_filename);
