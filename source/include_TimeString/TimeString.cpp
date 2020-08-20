@@ -853,11 +853,11 @@ void CTimeString::removeSameParameter(vector<vector<float>> &parameter_vec_vec)
 		removeSameValue_fromVector(parameter_vec_vec[j]);
 }
 
-void CTimeString::sortVector2d(vector<vector<float>> &f_vecvec, int index_arg)
+void CTimeString::sortVector2d(vector<vector<float>> &f_vecvec, int index_value)
 {
-	vector<pair<int, int>> frame_pair_vec;
+	vector<pair<float, int>> frame_pair_vec;
 	for (int j = 0; j < f_vecvec.size(); j++)
-		frame_pair_vec.push_back(make_pair(f_vecvec[j][index_arg], j));
+		frame_pair_vec.push_back(make_pair(f_vecvec[j][index_value], j));
 	for (int i = 0; i < frame_pair_vec.size(); i++)
 	{
 		for (int j = frame_pair_vec.size() - 1; j > i; j--)
