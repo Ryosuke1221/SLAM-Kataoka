@@ -1150,22 +1150,3 @@ vector<vector<string>> CTimeString::getMatrixData_fromFormatOfFPFH(vector<vector
 	return s_output_vecvec;
 }
 
-vector<int> CTimeString::getValidFrame(vector<vector<double>> trajectoryVector_vec)
-{
-	vector<int> frames_validOrNot;
-	int num_validFrames = 0;
-	for (int j = 0; j < trajectoryVector_vec.size(); j++)
-	{
-		int num_invalid = 0;
-		for (int i = 0; i < 6; i++)
-			if (trajectoryVector_vec[j][i] == -1) num_invalid++;
-		if (num_invalid == 6) frames_validOrNot.push_back(-1);
-		else
-		{
-			frames_validOrNot.push_back(num_validFrames);
-			num_validFrames++;
-		}
-	}
-	return frames_validOrNot;
-}
-

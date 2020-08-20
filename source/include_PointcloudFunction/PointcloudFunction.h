@@ -195,12 +195,12 @@ public:
 	void DoEvaluation_AttributedICP_Optimization();
 	void DoEvaluation_AttributedICP_Optimization_files();
 	void DoEvaluation_Optimization_addToFile(string dir_,
-		string s_newfoldername, vector<vector<string>> &s_input_vecvec, 
+		string s_newfoldername, vector<vector<string>> &s_input_vecvec,
 		vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloud_vec);
 	void DoEvaluation_Optimization_calculation(string dir_, string s_folder, vector<Eigen::Vector6d> trajectoryVector_vec,
-		vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloud_vec, vector<int> frames_all, int i_method,
-		vector<double> &error_relative_vec, vector<double> &error_absolute_vec,
-		vector<double> &median_vec, double &map_mean);
+		vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloud_vec, vector<Eigen::Vector6d> trajectoryVector_vec_TRUE,
+		int i_method, vector<double> &error_relative_vec, vector<double> &error_absolute_vec,
+		vector<double> &frameCloudMedian_vec, double &map_mean);
 	void DoEvaluation_AttributedICP_Optimization_mergeResult();
 	vector<string> DoEvaluation_AttributedICP_Optimization_mergeResult_OnePattern(string dir_, string s_folder);
 

@@ -179,7 +179,6 @@ public:
 
 	static vector<vector<string>> getMatrixData_fromFormatOfFPFH(vector<vector<string>> s_input_vecvec,
 		string s_start, int i_pos_start_fromS, string s_finish, int i_pos_finish_fromS);
-	static vector<int> getValidFrame(vector<vector<double>> trajectoryVector_vec);
 
 private:
 	static bool getDirectoryExistance(string foder_Path);
