@@ -2490,10 +2490,21 @@ void CPointcloudFunction::GR_FPFH_makeFusionCSV(string dir_, string s_folder)
 		for (int j = s_output_vecvec.size() - 3; j < s_output_vecvec.size(); j++)
 			s_output_vecvec_back.push_back(s_output_vecvec[j]);
 		//do sorting
-		CTimeString::sortStringVector2d_2ingredient(s_output_vecvec_forSort, 0, 1);
+		{
+			vector<vector<int>> sort_vecvec;
+			for (int j = 0; j < s_output_vecvec_forSort.size(); j++)
+			{
+				vector<int> sort_vec;
+				sort_vec.push_back(stoi(s_output_vecvec_forSort[j][0]));
+				sort_vec.push_back(stoi(s_output_vecvec_forSort[j][1]));
+				sort_vec.push_back(j);
+				sort_vecvec.push_back(sort_vec);
+			}
+			CTimeString::sortVector2d_2dimension(sort_vecvec, 0, 1, false);
+			for (int j = 0; j < sort_vecvec.size(); j++)
+				s_output_vecvec_front.push_back(s_output_vecvec_forSort[sort_vecvec[j][2]]);
+		}
 		//output
-		for (int j = 0; j < s_output_vecvec_forSort.size(); j++)
-			s_output_vecvec_front.push_back(s_output_vecvec_forSort[j]);
 		for (int j = 0; j < s_output_vecvec_back.size(); j++)
 			s_output_vecvec_front.push_back(s_output_vecvec_back[j]);
 		s_output_vecvec.clear();
@@ -4458,7 +4469,7 @@ void CPointcloudFunction::GR_FPFH_varyParameter(string dir_, vector<float> param
 		//CTimeString::changeParameter_2dimension(parameter_vec_vec, name_parameter_vec, parameter_vec_arg);
 		CTimeString::changeParameter_2dimension(parameter_vec_vec, name_parameter_vec, parameter_vec_arg,
 			dir_ + "/" + "parameter_vecvec.csv", 1, 4, -1, -1);
-		CTimeString::calcParameterPattern(pattern_vec_vec_new, parameter_vec_vec);
+		pattern_vec_vec_new = CTimeString::calcVectorPairPattern(parameter_vec_vec);
 		//write new parameter_vec_vec
 		{
 			vector<vector<string>> s_vec_vec;
@@ -5325,7 +5336,7 @@ void CPointcloudFunction::DoICP_proposed_varyParameters(string dir_, string file
 		vector<vector<float>> parameter_vecvec;
 		parameter_vecvec = CTimeString::inputParameters_2dimension(
 			dir_ + "/" + "parameter_vecvec.csv", 1, 4);
-		CTimeString::calcParameterPattern(pattern_vecvec, parameter_vecvec);
+		pattern_vecvec = CTimeString::calcVectorPairPattern(parameter_vecvec);
 	}
 
 	cout << "show patterns" << endl;

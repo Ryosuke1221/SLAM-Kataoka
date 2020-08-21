@@ -699,54 +699,6 @@ void CTimeString::changeParameter_2dimension(vector<vector<float>> &parameter_ve
 
 }
 
-void CTimeString::calcParameterPattern(vector<vector<float>> &pattern_vec_vec, vector<vector<float>> parameter_vec_vec)
-{
-	//make pattern_vec_vec
-	int num_pattern;
-	num_pattern = 1;
-	for (int j = 0; j < parameter_vec_vec.size(); j++)
-		num_pattern *= parameter_vec_vec[j].size();
-	pattern_vec_vec.resize(num_pattern);
-	for (int j = 0; j < num_pattern; j++)
-		pattern_vec_vec[j].resize(parameter_vec_vec.size());
-
-	//insert to pattern_vec_vec
-	for (int j = 0; j < num_pattern; j++)
-	{
-		int i_devide = num_pattern;
-		int i_residual = j;
-		for (int i = 0; i < parameter_vec_vec.size(); i++)
-		{
-			int idx;
-			i_devide /= parameter_vec_vec[i].size();
-			idx = i_residual / i_devide;
-			i_residual %= i_devide;
-			pattern_vec_vec[j][i] = parameter_vec_vec[i][idx];
-		}
-	}
-
-	removeSameParameter(parameter_vec_vec);
-
-	cout << "show pattern" << endl;
-	for (int j = 0; j < pattern_vec_vec.size(); j++)
-	{
-		cout << j << ":";
-		for (int i = 0; i < pattern_vec_vec[j].size(); i++)
-		{
-			string s_value;
-			s_value = to_string(pattern_vec_vec[j][i]);
-			if (s_value.size() < 4) s_value = " " + s_value;
-			if (s_value.size() < 4) s_value = " " + s_value;
-			if (s_value.size() < 4) s_value = " " + s_value;
-			cout << "  " << s_value;
-
-		}
-		cout << endl;
-	}
-	cout << endl;
-
-}
-
 void CTimeString::changeParameter_2dimension(vector<vector<float>> &parameter_vec_vec, vector<string> name_vec, vector<float> parameter_vec_init,
 	string filename_, int row_small, int col_small, int row_big, int col_big)
 {
@@ -754,12 +706,6 @@ void CTimeString::changeParameter_2dimension(vector<vector<float>> &parameter_ve
 	showParameter(parameter_vec_init, name_vec);
 
 	parameter_vec_vec.clear();
-
-	//cout << "press 1 and Enter if you have closed file" << endl;
-	//{
-	//	int aa;
-	//	cin >> aa;
-	//}
 
 	vector<vector<string>> s_vec_vec_temp;
 	s_vec_vec_temp = getVecVecFromCSV_string(filename_);
@@ -788,7 +734,7 @@ void CTimeString::changeParameter_2dimension(vector<vector<float>> &parameter_ve
 
 	parameter_vec_vec = parameter_vec_vec_new;
 
-	removeSameParameter(parameter_vec_vec);
+	removeSameValue_vecvec_VectorPairPattern(parameter_vec_vec);
 
 	//count longest string for showing
 	int size_string_longest = 0;
@@ -835,7 +781,7 @@ vector<vector<float>> CTimeString::inputParameters_2dimension(string filename_, 
 	}
 	//remove same parameter
 	for (int j = 0; j < parameter_vecvec.size(); j++)
-		removeSameValue_fromVector(parameter_vecvec[j]);
+		removeSameValue_vec_VectorPairPattern(parameter_vecvec[j]);
 	cout << "show parameters" << endl;
 	for (int j = 0; j < parameter_vecvec.size(); j++)
 	{
@@ -845,110 +791,6 @@ vector<vector<float>> CTimeString::inputParameters_2dimension(string filename_, 
 		cout << endl;
 	}
 	return parameter_vecvec;
-}
-
-void CTimeString::removeSameParameter(vector<vector<float>> &parameter_vec_vec)
-{
-	for (int j = 0; j < parameter_vec_vec.size(); j++)
-		removeSameValue_fromVector(parameter_vec_vec[j]);
-}
-
-void CTimeString::sortVector2d(vector<vector<float>> &f_vecvec, int index_value)
-{
-	vector<pair<float, int>> frame_pair_vec;
-	for (int j = 0; j < f_vecvec.size(); j++)
-		frame_pair_vec.push_back(make_pair(f_vecvec[j][index_value], j));
-	for (int i = 0; i < frame_pair_vec.size(); i++)
-	{
-		for (int j = frame_pair_vec.size() - 1; j > i; j--)
-		{
-			if (frame_pair_vec[j].first < frame_pair_vec[j - 1].first)
-				swap(frame_pair_vec[j], frame_pair_vec[j - 1]);
-		}
-	}
-	vector<vector<float>> f_input_vecvec_new;
-	for (int j = 0; j < frame_pair_vec.size(); j++)
-	{
-		vector<float> s_input_vec_new;
-		f_input_vecvec_new.push_back(f_vecvec[frame_pair_vec[j].second]);
-	}
-	f_vecvec.clear();
-	f_vecvec = f_input_vecvec_new;
-}
-
-void CTimeString::sortStringVector2d(vector<vector<string>> &s_vecvec, int index_arg)
-{
-	vector<pair<int, int>> frame_pair_vec;
-	for (int j = 0; j < s_vecvec.size(); j++)
-		frame_pair_vec.push_back(make_pair(stoi(s_vecvec[j][index_arg]), j));
-	for (int i = 0; i < frame_pair_vec.size(); i++)
-	{
-		for (int j = frame_pair_vec.size() - 1; j > i; j--)
-		{
-			if (frame_pair_vec[j].first < frame_pair_vec[j - 1].first)
-				swap(frame_pair_vec[j], frame_pair_vec[j - 1]);
-		}
-	}
-	vector<vector<string>> s_input_vecvec_new;
-	for (int j = 0; j < frame_pair_vec.size(); j++)
-	{
-		vector<string> s_input_vec_new;
-		s_input_vecvec_new.push_back(s_vecvec[frame_pair_vec[j].second]);
-	}
-	s_vecvec.clear();
-	s_vecvec = s_input_vecvec_new;
-}
-
-void CTimeString::sortStringVector2d_2ingredient(vector<vector<string>> &s_vecvec, int ing_large, int ing_small)
-{
-	////show
-	//for (int j = 0; j < s_vecvec.size(); j++)
-	//{
-	//	for (int i = 0; i < s_vecvec[j].size(); i++)
-	//		cout << s_vecvec[j][i] << "  ";
-	//	cout << endl;
-	//}
-
-	//large sort
-	CTimeString::sortStringVector2d(s_vecvec, ing_large);
-
-	//small sort while sustaining large sort
-	vector<vector<string>> s_vecvec_new;
-	vector<vector<string>> s_input_vecvec_1unit;
-	int i_tgt = 0;
-	int idx = 0;
-	while (1)
-	{
-		bool b_end_inFrame = false;
-		if (i_tgt == stoi(s_vecvec[idx][ing_large]))
-			s_input_vecvec_1unit.push_back(s_vecvec[idx]);
-
-		if (s_vecvec.size() == idx + 1)
-			b_end_inFrame = true;
-
-		else if (i_tgt != stoi(s_vecvec[idx + 1][ing_large]))
-			b_end_inFrame = true;
-
-		if (b_end_inFrame)
-		{
-			CTimeString::sortStringVector2d(s_input_vecvec_1unit, ing_small);
-			for (int j = 0; j < s_input_vecvec_1unit.size(); j++)
-				s_vecvec_new.push_back(s_input_vecvec_1unit[j]);
-			s_input_vecvec_1unit.clear();
-
-			i_tgt++;
-			//if (frame_end == i_tgt) break;
-			if (s_vecvec.size() == idx + 1) break;
-
-			continue;
-
-		}
-		idx++;
-		//if (s_vecvec.size() == idx) break;
-	}
-
-	s_vecvec.clear();
-	s_vecvec = s_vecvec_new;
 }
 
 vector<vector<int>> CTimeString::getIntCluster_SomeToSome(vector<vector<int>> value_vecvec, bool b_recursive)
@@ -1001,7 +843,7 @@ vector<vector<int>> CTimeString::getIntCluster_SomeToSome(vector<vector<int>> va
 			for (int i = 0; i < value_vec_notBlank.size(); i++)
 				cluster_vec_notBlank.push_back(cluster_belong_vec[value_vec_notBlank[i]]);
 			//detect same cluster in cluster_vec_notBlank
-			CTimeString::removeSameValue_fromVector(cluster_vec_notBlank);
+			removeSameValue_vec_VectorPairPattern(cluster_vec_notBlank);
 			if (cluster_vec_notBlank.size() == 1)
 			{
 				for (int i = 0; i < value_vecvec[j].size(); i++)
@@ -1103,7 +945,7 @@ vector<vector<int>> CTimeString::getIntCluster_SomeToSome(vector<vector<int>> va
 	}
 	//remove same value
 	for (int j = 0; j < value_cluster_vecvec_new.size(); j++)
-		CTimeString::removeSameValue_fromVector(value_cluster_vecvec_new[j]);
+		removeSameValue_vec_VectorPairPattern(value_cluster_vecvec_new[j]);
 
 	//sort to descending order in not recursive call
 	if (!b_recursive)

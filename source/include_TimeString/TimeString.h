@@ -80,12 +80,154 @@ public:
 	static void changeParameter_2dimension(vector<vector<float>> &parameter_vec_vec, vector<string> name_vec, vector<float> parameter_vec_init,
 		string filename_, int row_small, int col_small, int row_big, int col_big);
 	static vector<vector<float>> inputParameters_2dimension(string filename_, int row_small, int col_small);
-	static void calcParameterPattern(vector<vector<float>> &pattern_vec_vec,vector<vector<float>> parameter_vec_vec);
-	//static void removeSameParameter_vec(vector<float> &parameter_vec);
-	static void removeSameParameter(vector<vector<float>> &parameter_vec_vec);
-	static void sortVector2d(vector<vector<float>> &f_vecvec, int index_arg);
-	static void sortStringVector2d(vector<vector<string>> &s_vecvec, int index_arg);
-	static void sortStringVector2d_2ingredient(vector<vector<string>> &s_vecvec, int ing_large, int ing_small);
+
+	template<typename T>
+	static vector<vector<T>> calcVectorPairPattern(vector<vector<T>> vectorPair_vecvec)
+	{
+		vector<vector<T>> pattern_vecvec;
+
+		//make pattern_vec_vec
+		int num_pattern;
+		num_pattern = 1;
+		for (int j = 0; j < vectorPair_vecvec.size(); j++)
+			num_pattern *= vectorPair_vecvec[j].size();
+		pattern_vecvec.resize(num_pattern);
+		for (int j = 0; j < num_pattern; j++)
+			pattern_vecvec[j].resize(vectorPair_vecvec.size());
+
+		//insert to pattern_vec_vec
+		for (int j = 0; j < num_pattern; j++)
+		{
+			int i_devide = num_pattern;
+			int i_residual = j;
+			for (int i = 0; i < vectorPair_vecvec.size(); i++)
+			{
+				int idx;
+				i_devide /= vectorPair_vecvec[i].size();
+				idx = i_residual / i_devide;
+				i_residual %= i_devide;
+				pattern_vecvec[j][i] = vectorPair_vecvec[i][idx];
+			}
+		}
+
+		//removeSameParameter(vectorPair_vecvec);
+		removeSameValue_vecvec_VectorPairPattern(vectorPair_vecvec);
+
+		cout << "show pattern" << endl;
+		for (int j = 0; j < pattern_vecvec.size(); j++)
+		{
+			string s_j = to_string(j);
+			if (s_j.size() < 4) s_j = " " + s_j;
+			if (s_j.size() < 4) s_j = " " + s_j;
+			if (s_j.size() < 4) s_j = " " + s_j;
+			cout << s_j << ":";
+			for (int i = 0; i < pattern_vecvec[j].size(); i++)
+			{
+				string s_value;
+				s_value = to_string(pattern_vecvec[j][i]);
+				if (s_value.size() < 4) s_value = " " + s_value;
+				if (s_value.size() < 4) s_value = " " + s_value;
+				if (s_value.size() < 4) s_value = " " + s_value;
+				cout << "  " << s_value;
+
+			}
+			cout << endl;
+		}
+		cout << endl;
+
+		return pattern_vecvec;
+	}
+
+	template<typename T>
+	static void removeSameValue_vecvec_VectorPairPattern(vector<vector<T>> &vectorPair_vecvec)
+	{
+		for (int j = 0; j < vectorPair_vecvec.size(); j++)
+			removeSameValue_vec_VectorPairPattern(vectorPair_vecvec[j]);
+	}
+
+	template<typename T>
+	static void removeSameValue_vec_VectorPairPattern(vector<T> &vectorPair_vec)
+	{
+		vector<T> vectorPair_vec_new;
+		//sort
+		sort(vectorPair_vec.begin(), vectorPair_vec.end());
+		//remove same value
+		T value_last;
+		for (int i = 0; i < vectorPair_vec.size(); i++)
+		{
+			if (i == 0)
+				vectorPair_vec_new.push_back(vectorPair_vec[i]);
+			else
+				if (value_last != vectorPair_vec[i])
+					vectorPair_vec_new.push_back(vectorPair_vec[i]);
+			value_last = vectorPair_vec[i];
+		}
+		vectorPair_vec = vectorPair_vec_new;
+	}
+
+	template<typename T>
+	static void sortVector2d(vector<vector<T>> &value_vecvec, int index_arg, int b_ascending = true)
+	{
+		vector<pair<T, int>> frame_pair_vec;
+		for (int j = 0; j < value_vecvec.size(); j++)
+			frame_pair_vec.push_back(make_pair(value_vecvec[j][index_arg], j));
+		for (int i = 0; i < frame_pair_vec.size(); i++)
+		{
+			for (int j = frame_pair_vec.size() - 1; j > i; j--)
+			{
+				bool b_swap = false;
+				if (b_ascending && frame_pair_vec[j].first < frame_pair_vec[j - 1].first)
+					b_swap = true;
+				else if(!b_ascending && frame_pair_vec[j].first > frame_pair_vec[j - 1].first)
+					b_swap = true;
+				if(b_swap) swap(frame_pair_vec[j], frame_pair_vec[j - 1]);
+			}
+		}
+		vector<vector<T>> value_input_vecvec_new;
+		for (int j = 0; j < frame_pair_vec.size(); j++)
+		{
+			value_input_vecvec_new.push_back(value_vecvec[frame_pair_vec[j].second]);
+		}
+		value_vecvec.clear();
+		value_vecvec = value_input_vecvec_new;
+	}
+
+	template<typename T>
+	static void sortVector2d_2dimension(vector<vector<T>> &value_vecvec, int index_first, int index_second, int b_ascending = true)
+	{
+		vector<vector<T>> value_vecvec_new;
+		sortVector2d(value_vecvec, index_first, b_ascending);
+		vector<vector<int>> index_sameFirstValue_vecvec;
+		{
+			vector<int> index_sameFirstValue_vec;
+			T value_pickup;
+			for (int j = 0; j < value_vecvec.size(); j++)
+			{
+				if (j == 0) value_pickup = value_vecvec[j][index_first];
+				else if (value_pickup != value_vecvec[j][index_first])
+				{
+					index_sameFirstValue_vecvec.push_back(index_sameFirstValue_vec);
+					index_sameFirstValue_vec.clear();
+					value_pickup = value_vecvec[j][index_first];
+
+				}
+				index_sameFirstValue_vec.push_back(j);
+				if (j == value_vecvec.size() - 1)
+					index_sameFirstValue_vecvec.push_back(index_sameFirstValue_vec);
+			}
+		}
+		for (int j = 0; j < index_sameFirstValue_vecvec.size(); j++)
+		{
+			vector<vector<T>> value_vecvec_1firstValue;
+			for (int i = 0; i < index_sameFirstValue_vecvec[j].size(); i++)
+				value_vecvec_1firstValue.push_back(value_vecvec[index_sameFirstValue_vecvec[j][i]]);
+			sortVector2d(value_vecvec_1firstValue, index_second, b_ascending);
+			value_vecvec_new.insert(value_vecvec_new.end(), value_vecvec_1firstValue.begin(), value_vecvec_1firstValue.end());
+		}
+		value_vecvec.clear();
+		value_vecvec = value_vecvec_new;
+	}
+	
 	static vector<vector<int>> getIntCluster_SomeToSome(vector<vector<int>> value_vecvec, bool b_recursive = false);
 
 	template<typename T>
@@ -155,26 +297,6 @@ public:
 			T_vecvec_output.push_back(T_vec_output);
 		}
 		return T_vecvec_output;
-	}
-
-	template<typename T>
-	static void removeSameValue_fromVector(vector<T> &parameter_vec)
-	{
-		vector<T> parameter_vec_new;
-		//sort
-		sort(parameter_vec.begin(), parameter_vec.end());
-		//remove same value
-		T value_last;
-		for (int i = 0; i < parameter_vec.size(); i++)
-		{
-			if (i == 0)
-				parameter_vec_new.push_back(parameter_vec[i]);
-			else
-				if (value_last != parameter_vec[i])
-					parameter_vec_new.push_back(parameter_vec[i]);
-			value_last = parameter_vec[i];
-		}
-		parameter_vec = parameter_vec_new;
 	}
 
 	static vector<vector<string>> getMatrixData_fromFormatOfFPFH(vector<vector<string>> s_input_vecvec,
