@@ -120,7 +120,7 @@ void CPointcloudFunction::all_process()
 			break;
 
 		case EN_Evaluate_ICP_property_Optimization:
-			DoEvaluation_ICP_property_Optimization();
+			DoEvaluation_ICP_property();
 			break;
 
 		case EN_DoMappingFromTrajectory:
@@ -5432,22 +5432,22 @@ vector<string> CPointcloudFunction::DoICP_proposed_mergeResult_OnePattern(string
 	return s_vec_output;
 }
 
-void CPointcloudFunction::DoEvaluation_ICP_property_Optimization()
+void CPointcloudFunction::DoEvaluation_ICP_property()
 {
 	int i_method;
 	cout << "select: optimization:0  mergeResult:1" << endl;
 	cout << "->";
 	cin >> i_method;
 
-	string dir_ = "../../data/process11_ICP_property_Optimization";
+	string dir_ = "../../data/process11_DoEvaluation_ICP_property";
 
 	if(i_method == 0)
-		DoEvaluation_ICP_property_Optimization_files(dir_);
+		DoEvaluation_ICP_property_files(dir_);
 	else if(i_method == 1)
-		DoEvaluation_ICP_property_Optimization_mergeResult(dir_);
+		DoEvaluation_ICP_property_mergeResult(dir_);
 }
 
-void CPointcloudFunction::DoEvaluation_ICP_property_Optimization_files(string dir_)
+void CPointcloudFunction::DoEvaluation_ICP_property_files(string dir_)
 {
 	typedef pcl::PointXYZRGB T_PointType;
 
@@ -5502,7 +5502,7 @@ void CPointcloudFunction::DoEvaluation_ICP_property_Optimization_files(string di
 
 		vector<vector<string>> s_output_vecvec;
 		s_output_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + filename_input);
-		DoEvaluation_Optimization_addToFile(dir_, s_newfoldername, s_output_vecvec, cloud_vec);
+		DoEvaluation_ICP_property_addToFile(dir_, s_newfoldername, s_output_vecvec, cloud_vec);
 
 		//output
 		string filename_output;
@@ -5511,7 +5511,7 @@ void CPointcloudFunction::DoEvaluation_ICP_property_Optimization_files(string di
 	}
 }
 
-void CPointcloudFunction::DoEvaluation_Optimization_addToFile(string dir_,
+void CPointcloudFunction::DoEvaluation_ICP_property_addToFile(string dir_,
 	string s_newfoldername, vector<vector<string>> &s_input_vecvec,
 	vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloud_vec)
 {
@@ -5629,7 +5629,7 @@ void CPointcloudFunction::DoEvaluation_Optimization_addToFile(string dir_,
 	//calc ICP
 	{
 		int i_method = 0;
-		DoEvaluation_Optimization_calculation(dir_, s_newfoldername, trajectoryVector_vec_ICP,
+		DoEvaluation_ICP_property_calculation(dir_, s_newfoldername, trajectoryVector_vec_ICP,
 			cloud_vec, trajectoryVector_vec_TRUE, i_method, error_relative_vecvec[i_method], error_absolute_vecvec[i_method],
 			frameCloudMedian_vecvec[i_method], mean_map_vec[i_method]);
 		double mean_error_relative_vecvec = 0.;
@@ -5698,7 +5698,7 @@ void CPointcloudFunction::DoEvaluation_Optimization_addToFile(string dir_,
 	//calc ICP_proposed
 	{
 		int i_method = 1;
-		DoEvaluation_Optimization_calculation(dir_, s_newfoldername, trajectoryVector_vec_ICP_proposed,
+		DoEvaluation_ICP_property_calculation(dir_, s_newfoldername, trajectoryVector_vec_ICP_proposed,
 			cloud_vec, trajectoryVector_vec_TRUE, i_method, error_relative_vecvec[i_method], error_absolute_vecvec[i_method],
 			frameCloudMedian_vecvec[i_method], mean_map_vec[i_method]);
 		double mean_error_relative_vecvec = 0.;
@@ -5822,7 +5822,7 @@ void CPointcloudFunction::DoEvaluation_Optimization_addToFile(string dir_,
 	s_input_vecvec.insert(s_input_vecvec.end(), s_output_vecvec.begin(), s_output_vecvec.end());
 }
 
-void CPointcloudFunction::DoEvaluation_Optimization_calculation(string dir_, string s_folder, vector<Eigen::Vector6d> trajectoryVector_vec,
+void CPointcloudFunction::DoEvaluation_ICP_property_calculation(string dir_, string s_folder, vector<Eigen::Vector6d> trajectoryVector_vec,
 	vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloud_vec, vector<Eigen::Vector6d> trajectoryVector_vec_TRUE, 
 	int i_method, vector<double> &error_relative_vec, vector<double> &error_absolute_vec,
 	vector<double> &frameCloudMedian_vec, double &map_mean)
@@ -5975,7 +5975,7 @@ void CPointcloudFunction::DoEvaluation_Optimization_calculation(string dir_, str
 	}
 }
 
-void CPointcloudFunction::DoEvaluation_ICP_property_Optimization_mergeResult(string dir_)
+void CPointcloudFunction::DoEvaluation_ICP_property_mergeResult(string dir_)
 {
 	vector<string> filenames_folder;
 	vector<int> i_folder_vec;
@@ -6054,7 +6054,7 @@ void CPointcloudFunction::DoEvaluation_ICP_property_Optimization_mergeResult(str
 
 	for (int i = 0; i < i_folder_vec.size(); i++)
 		s_output_vecvec.push_back(
-			DoEvaluation_ICP_property_Optimization_mergeResult_OnePattern(dir_, filenames_folder[i_folder_vec[i]]));
+			DoEvaluation_ICP_property_mergeResult_OnePattern(dir_, filenames_folder[i_folder_vec[i]]));
 
 	//transposition
 	{
@@ -6067,7 +6067,7 @@ void CPointcloudFunction::DoEvaluation_ICP_property_Optimization_mergeResult(str
 	CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/EvaluationResult_" + s_t + ".csv");
 }
 
-vector<string> CPointcloudFunction::DoEvaluation_ICP_property_Optimization_mergeResult_OnePattern(string dir_, string s_folder)
+vector<string> CPointcloudFunction::DoEvaluation_ICP_property_mergeResult_OnePattern(string dir_, string s_folder)
 {
 	vector<string> s_vec_output;
 	s_vec_output.push_back(s_folder);
