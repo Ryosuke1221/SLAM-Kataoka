@@ -2951,7 +2951,7 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_2frames(string dir_, vector<float> para
 			sor->setLeafSize(voxel_size, voxel_size, voxel_size);
 			sor->setInputCloud(cloud_tgt);
 			sor->filter(*cloud_VGF);
-			fpfh_tgt = CKataokaPCL::computeFPFH<T_PointType>(cloud_VGF, cloud_tgt, radius_normal_FPFH, radius_FPFH);
+			fpfh_tgt = CFPFH_PCL::computeFPFH<T_PointType>(cloud_VGF, cloud_tgt, radius_normal_FPFH, radius_FPFH);
 		}
 		{
 			pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
@@ -2959,7 +2959,7 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_2frames(string dir_, vector<float> para
 			sor->setLeafSize(voxel_size, voxel_size, voxel_size);
 			sor->setInputCloud(cloud_src);
 			sor->filter(*cloud_VGF);
-			fpfh_src = CKataokaPCL::computeFPFH<T_PointType>(cloud_VGF, cloud_src, radius_normal_FPFH, radius_FPFH);
+			fpfh_src = CFPFH_PCL::computeFPFH<T_PointType>(cloud_VGF, cloud_src, radius_normal_FPFH, radius_FPFH);
 		}
 
 		bool b_hasConverged = false;
@@ -2971,7 +2971,7 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_2frames(string dir_, vector<float> para
 
 		cout << "i_tgt:" << i_tgt << " i_src" << i_src << endl;
 
-		b_hasConverged = CKataokaPCL::align_SAC_AI_RANSAC<T_PointType>(transform_, inlier_, fitnessscore, frame_failed,
+		b_hasConverged = CFPFH_PCL::align_SAC_AI_RANSAC<T_PointType>(transform_, inlier_, fitnessscore, frame_failed,
 			cloud_src, fpfh_src, cloud_tgt, fpfh_tgt,
 			voxel_size, MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC, InlierFraction_SAC,
 			MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC, max_RANSAC, b_cout_RANSAC);
@@ -3195,7 +3195,7 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_Allframes(string dir_, vector<float> pa
 		sor->setInputCloud(cloud_vec[i]);
 		sor->filter(*cloud_VGF);
 		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh(new pcl::PointCloud<pcl::FPFHSignature33>);
-		fpfh = CKataokaPCL::computeFPFH<T_PointType>(cloud_VGF,cloud_vec[i], radius_normal_FPFH, radius_FPFH);
+		fpfh = CFPFH_PCL::computeFPFH<T_PointType>(cloud_VGF,cloud_vec[i], radius_normal_FPFH, radius_FPFH);
 		fpfh_vec.push_back(fpfh);
 	}
 
@@ -3361,7 +3361,7 @@ vector<string> CPointcloudFunction::GR_FPFH_SAC_IA_Allframes_OnePair(string dir_
 	bool b_cout_RANSAC = false;
 	if (!b_useRANSAC_EST)
 	{
-		b_hasConverged = CKataokaPCL::align_SAC_AI_RANSAC<pcl::PointXYZRGB>(transform_, inlier_, fitnessscore, frame_failed,
+		b_hasConverged = CFPFH_PCL::align_SAC_AI_RANSAC<pcl::PointXYZRGB>(transform_, inlier_, fitnessscore, frame_failed,
 			cloud_vec[i_src], fpfh_vec[i_src], cloud_vec[i_tgt], fpfh_vec[i_tgt],
 			voxel_size, MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC, InlierFraction_SAC,
 			MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC, max_RANSAC, b_cout_RANSAC);
@@ -3372,7 +3372,7 @@ vector<string> CPointcloudFunction::GR_FPFH_SAC_IA_Allframes_OnePair(string dir_
 		T_src_TRUE = CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]).inverse()
 			* CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
 
-		b_hasConverged = CKataokaPCL::align_SAC_AI_RANSAC_TRUE<pcl::PointXYZRGB>(transform_, inlier_, fitnessscore, frame_failed,
+		b_hasConverged = CFPFH_PCL::align_SAC_AI_RANSAC_TRUE<pcl::PointXYZRGB>(transform_, inlier_, fitnessscore, frame_failed,
 			cloud_vec[i_src], fpfh_vec[i_src], cloud_vec[i_tgt], fpfh_vec[i_tgt],
 			voxel_size, MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC, InlierFraction_SAC,
 			MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC,
@@ -3707,7 +3707,7 @@ void CPointcloudFunction::GR_FPFH_SelectPoint(string dir_, vector<float> paramet
 			sor->setInputCloud(cloud_tgt);
 			sor->filter(*cloud_VGF);
 			//fpfh_tgt = CKataokaPCL::computeFPFH<T_PointType>(*cloud_VGF, *cloud_tgt, radius_normal_FPFH, radius_FPFH);
-			fpfh_tgt = CKataokaPCL::computeFPFH_radius<T_PointType>(index_FPFH_tgt,cloud_VGF, cloud_tgt, radius_normal_FPFH_vec, radius_FPFH);
+			fpfh_tgt = CFPFH_PCL::computeFPFH_radius<T_PointType>(index_FPFH_tgt,cloud_VGF, cloud_tgt, radius_normal_FPFH_vec, radius_FPFH);
 		}
 		{
 			pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
@@ -3716,7 +3716,7 @@ void CPointcloudFunction::GR_FPFH_SelectPoint(string dir_, vector<float> paramet
 			sor->setInputCloud(cloud_src);
 			sor->filter(*cloud_VGF);
 			//fpfh_src = CKataokaPCL::computeFPFH<T_PointType>(*cloud_VGF, *cloud_src, radius_normal_FPFH, radius_FPFH);
-			fpfh_src = CKataokaPCL::computeFPFH_radius<T_PointType>(index_FPFH_src, cloud_VGF, cloud_src, radius_normal_FPFH_vec, radius_FPFH);
+			fpfh_src = CFPFH_PCL::computeFPFH_radius<T_PointType>(index_FPFH_src, cloud_VGF, cloud_src, radius_normal_FPFH_vec, radius_FPFH);
 		}
 
 
@@ -3896,7 +3896,7 @@ void CPointcloudFunction::GR_FPFH_error(string dir_, vector<float> parameter_vec
 			sor->setLeafSize(voxel_size, voxel_size, voxel_size);
 			sor->setInputCloud(cloud_tgt);
 			sor->filter(*cloud_VGF);
-			fpfh_tgt = CKataokaPCL::computeFPFH<T_PointType>(cloud_VGF, cloud_tgt, radius_normal_FPFH, radius_FPFH);
+			fpfh_tgt = CFPFH_PCL::computeFPFH<T_PointType>(cloud_VGF, cloud_tgt, radius_normal_FPFH, radius_FPFH);
 		}
 		{
 			pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
@@ -3904,7 +3904,7 @@ void CPointcloudFunction::GR_FPFH_error(string dir_, vector<float> parameter_vec
 			sor->setLeafSize(voxel_size, voxel_size, voxel_size);
 			sor->setInputCloud(cloud_src);
 			sor->filter(*cloud_VGF);
-			fpfh_src = CKataokaPCL::computeFPFH<T_PointType>(cloud_VGF, cloud_src, radius_normal_FPFH, radius_FPFH);
+			fpfh_src = CFPFH_PCL::computeFPFH<T_PointType>(cloud_VGF, cloud_src, radius_normal_FPFH, radius_FPFH);
 		}
 
 		//vector<int> inlier_;
@@ -3980,7 +3980,7 @@ void CPointcloudFunction::GR_FPFH_error(string dir_, vector<float> parameter_vec
 		//calc error
 		vector<float> error_fpfh_vec;
 		float median_;
-		error_fpfh_vec = CKataokaPCL::getErrorOfFPFHSource_corr(median_, correspondences, fpfh_src, fpfh_tgt);
+		error_fpfh_vec = CFPFH_PCL::getErrorOfFPFHSource_corr(median_, correspondences, fpfh_src, fpfh_tgt);
 
 		////calc variance
 		//vector<float> variance_vec;
@@ -4098,7 +4098,7 @@ void CPointcloudFunction::GR_FPFH_error_AllFrames(string dir_, vector<float> par
 		sor->setInputCloud(cloud_vec[i]);
 		sor->filter(*cloud_VGF);
 		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh(new pcl::PointCloud<pcl::FPFHSignature33>);
-		fpfh = CKataokaPCL::computeFPFH<T_PointType>(cloud_VGF, cloud_vec[i], radius_normal_FPFH, radius_FPFH);
+		fpfh = CFPFH_PCL::computeFPFH<T_PointType>(cloud_VGF, cloud_vec[i], radius_normal_FPFH, radius_FPFH);
 		fpfh_vec.push_back(fpfh);
 	}
 
@@ -4199,7 +4199,7 @@ void CPointcloudFunction::GR_FPFH_error_AllFrames(string dir_, vector<float> par
 			//cacl error
 			vector<float> error_fpfh_vec;
 			float median_;
-			error_fpfh_vec = CKataokaPCL::getErrorOfFPFHSource_corr(median_, correspondences, fpfh_vec[i_src], fpfh_vec[i_tgt]);
+			error_fpfh_vec = CFPFH_PCL::getErrorOfFPFHSource_corr(median_, correspondences, fpfh_vec[i_src], fpfh_vec[i_tgt]);
 			result_vec.push_back((double)median_);
 			//if (b_changeParameter) cout << "i_tgt:" << i_tgt << " i_src:" << i_src << endl;
 			cout << "i_tgt:" << i_tgt << " i_src:" << i_src;
@@ -4400,11 +4400,11 @@ void CPointcloudFunction::GR_FPFH_variance_AllFrames(string dir_, vector<float> 
 		}
 
 		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_(new pcl::PointCloud<pcl::FPFHSignature33>);
-		fpfh_ = CKataokaPCL::computeFPFH<T_PointType>(cloud_VGF, cloud_vec[j], radius_normal_FPFH, radius_FPFH);
+		fpfh_ = CFPFH_PCL::computeFPFH<T_PointType>(cloud_VGF, cloud_vec[j], radius_normal_FPFH, radius_FPFH);
 
 		//calc variance
 		vector<float> variance_vec;
-		variance_vec = CKataokaPCL::getFPFHVariance(fpfh_);
+		variance_vec = CFPFH_PCL::getFPFHVariance(fpfh_);
 		variance_vec_vec.push_back(variance_vec);
 	}
 
@@ -4635,7 +4635,7 @@ void CPointcloudFunction::GR_FPFH_FixFusion(string dir_, string s_folder)
 		sor->setInputCloud(cloud_vec[i]);
 		sor->filter(*cloud_VGF);
 		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh(new pcl::PointCloud<pcl::FPFHSignature33>);
-		fpfh = CKataokaPCL::computeFPFH<T_PointType>(cloud_VGF, cloud_vec[i], radius_normal_FPFH, radius_FPFH);
+		fpfh = CFPFH_PCL::computeFPFH<T_PointType>(cloud_VGF, cloud_vec[i], radius_normal_FPFH, radius_FPFH);
 		fpfh_vec.push_back(fpfh);
 	}
 

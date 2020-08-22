@@ -11,3 +11,7 @@ if( PCL_FOUND )
 	link_directories( ${PCL_LIBRARY_DIRS} )
 	target_link_libraries( lib_ICP ${PCL_LIBRARIES} )
 endif()
+
+#TimeString
+target_include_directories(lib_ICP PUBLIC "${CMAKE_SOURCE_DIR}/include_TimeString")
+target_link_libraries(lib_ICP lib_TimeString)
