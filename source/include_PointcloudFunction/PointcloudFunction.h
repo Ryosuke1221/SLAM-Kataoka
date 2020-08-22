@@ -205,4 +205,6 @@ public:
 	void DoEvaluation_ICP_property_Optimization_mergeResult(string dir_);
 	vector<string> DoEvaluation_ICP_property_Optimization_mergeResult_OnePattern(string dir_, string s_folder);
 
+	void DoMappingFromTrajectory();
+
 };

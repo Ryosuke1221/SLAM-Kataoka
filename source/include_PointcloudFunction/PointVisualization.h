@@ -75,6 +75,8 @@ class CPointVisualization
 		return point;
 	}
 
+	static Eigen::Matrix4d calcHomogeneousMatrixFromVector6d(Eigen::Vector6d XYZRPY_arg);
+
 	static Eigen::Matrix4d calcHomogeneousMatrixFromVector6d(double X_, double Y_, double Z_,
 		double Roll_, double Pitch_, double Yaw_);
 	static Eigen::Affine3f calcAffine3fFromHomogeneousMatrix(Eigen::Matrix4d input_Mat);
@@ -109,8 +111,66 @@ public:
 	void drawLine(pcl::PointXYZRGB point1_, pcl::PointXYZRGB point2_, string s_name = "");
 	void drawLine_cylinder(pcl::PointXYZRGB point1_, pcl::PointXYZRGB point2_, double radius_, string s_name = "");
 	void drawNumber(pcl::PointXYZRGB point_center, int num_arg, string s_name = "");
-	void drawTrajectory(vector<Eigen::Vector6d> trajectory_vec_vec, int i_frame, string s_name = "");
+	void drawTrajectory(vector<Eigen::Vector6d> trajectory_vec_vec, int i_frame, bool b_showNumber, bool b_showArrow, string s_name = "");
 	void deleteTrajectory(string s_name = "");
+
+	void addGrid(float x_max_arg, float y_max_arg, float x_min_arg, float y_min_arg)
+	{
+		typedef pcl::PointXYZRGB T_PointType;
+		T_PointType point_color;
+		//point_color.r = 255;
+		//point_color.g = 255;
+		point_color.r = 180;
+		point_color.g = 180;
+		point_color.b = 0;
+
+		int x_max, y_max, x_min, y_min;
+		x_max = (int)(x_max_arg + 1);
+		y_max = (int)(y_max_arg + 1);
+		x_min = (int)(x_min_arg);
+		y_min = (int)(y_min_arg);
+
+		//point pair
+		pcl::PointCloud<T_PointType>::Ptr cloud_min(new pcl::PointCloud<T_PointType>);
+		pcl::PointCloud<T_PointType>::Ptr cloud_max(new pcl::PointCloud<T_PointType>);
+
+		//horizontal
+		for (int j = y_min; j < y_max + 1; j++)
+		{
+			T_PointType point_min;
+			point_min = point_color;
+			point_min.x = x_min;
+			point_min.y = (float)j;
+			point_min.z = 0.;
+			cloud_min->push_back(point_min);
+			T_PointType point_max;
+			point_max = point_color;
+			point_max.x = x_max;
+			point_max.y = (float)j;
+			point_max.z = 0.;
+			cloud_max->push_back(point_max);
+		}
+		//vertical
+		for (int i = x_min; i < x_max + 1; i++)
+		{
+			T_PointType point_min;
+			point_min = point_color;
+			point_min.x = (float)i;
+			point_min.y = y_min;
+			point_min.z = 0.;
+			cloud_min->push_back(point_min);
+			T_PointType point_max;
+			point_max = point_color;
+			point_max.x = (float)i;
+			point_max.y = y_max;
+			point_max.z = 0.;
+			cloud_max->push_back(point_max);
+		}
+
+		//draw line
+		for (int j = 0; j < cloud_min->size(); j++)
+			drawLine(cloud_min->points[j], cloud_max->points[j], "grid_line" + to_string(j));
+	}
 };
 
 //https://qiita.com/i153/items/38f9688a9c80b2cb7da7
@@ -188,6 +248,34 @@ Eigen::Matrix4d CPointVisualization<T_PointType>::calcHomogeneousMatrixFromVecto
 	transformation_Position = T_mat * Yaw_mat * Pitch_mat * Roll_mat;
 	return transformation_Position;
 }
+
+template < typename T_PointType >
+Eigen::Matrix4d CPointVisualization<T_PointType>::calcHomogeneousMatrixFromVector6d(Eigen::Vector6d XYZRPY_arg)
+{
+	Eigen::Matrix4d	transformation_Position = Eigen::Matrix4d::Identity();
+	Eigen::Matrix4d T_mat = Eigen::Matrix4d::Identity();
+	Eigen::Matrix4d Roll_mat = Eigen::Matrix4d::Identity();
+	Eigen::Matrix4d Pitch_mat = Eigen::Matrix4d::Identity();
+	Eigen::Matrix4d Yaw_mat = Eigen::Matrix4d::Identity();
+	T_mat(0, 3) = XYZRPY_arg(0, 0);
+	T_mat(1, 3) = XYZRPY_arg(1, 0);
+	T_mat(2, 3) = XYZRPY_arg(2, 0);
+	Roll_mat(1, 1) = cos(XYZRPY_arg(3, 0));
+	Roll_mat(1, 2) = -sin(XYZRPY_arg(3, 0));
+	Roll_mat(2, 1) = sin(XYZRPY_arg(3, 0));
+	Roll_mat(2, 2) = cos(XYZRPY_arg(3, 0));
+	Pitch_mat(0, 0) = cos(XYZRPY_arg(4, 0));
+	Pitch_mat(2, 0) = -sin(XYZRPY_arg(4, 0));
+	Pitch_mat(0, 2) = sin(XYZRPY_arg(4, 0));
+	Pitch_mat(2, 2) = cos(XYZRPY_arg(4, 0));
+	Yaw_mat(0, 0) = cos(XYZRPY_arg(5, 0));
+	Yaw_mat(0, 1) = -sin(XYZRPY_arg(5, 0));
+	Yaw_mat(1, 0) = sin(XYZRPY_arg(5, 0));
+	Yaw_mat(1, 1) = cos(XYZRPY_arg(5, 0));
+	transformation_Position = T_mat * Yaw_mat * Pitch_mat * Roll_mat;
+	return transformation_Position;
+}
+
 
 template < typename T_PointType >
 Eigen::Affine3f CPointVisualization<T_PointType>::calcAffine3fFromHomogeneousMatrix(Eigen::Matrix4d input_Mat)
@@ -1166,7 +1254,8 @@ void CPointVisualization<T_PointType>::useNormal(double radius_arg, int level_ar
 }
 
 template < typename T_PointType >
-void CPointVisualization<T_PointType>::drawTrajectory(vector<Eigen::Vector6d> trajectory_vec_vec, int i_frame, string s_name)
+void CPointVisualization<T_PointType>::drawTrajectory(vector<Eigen::Vector6d> trajectory_vec_vec, int i_frame, 
+	bool b_showNumber, bool b_showArrow, string s_name)
 {
 	if (i_frame > trajectory_vec_vec.size() - 1) i_frame = trajectory_vec_vec.size() - 1;
 
@@ -1188,15 +1277,16 @@ void CPointVisualization<T_PointType>::drawTrajectory(vector<Eigen::Vector6d> tr
 	vector<unsigned char> color_number_first;
 	vector<unsigned char> color_arrow_first;
 	//color_trajectory_first << 1, 1, 1;
+
+	color_trajectory_first.push_back(153);
 	color_trajectory_first.push_back(0);
 	color_trajectory_first.push_back(255);
-	color_trajectory_first.push_back(0);
-	color_number_first.push_back(102);
 	color_number_first.push_back(255);
-	color_number_first.push_back(51);
-	color_arrow_first.push_back(0);
+	color_number_first.push_back(0);
+	color_number_first.push_back(0);
 	color_arrow_first.push_back(255);
-	color_arrow_first.push_back(153);
+	color_arrow_first.push_back(102);
+	color_arrow_first.push_back(0);
 
 	vector<unsigned char> color_trajectory_second;
 	vector<unsigned char> color_number_second;
@@ -1231,8 +1321,9 @@ void CPointVisualization<T_PointType>::drawTrajectory(vector<Eigen::Vector6d> tr
 			point_pose_arraw.g = color_arrow_second[1];
 			point_pose_arraw.b = color_arrow_second[2];
 		}
-		drawArrow(point_pose_arraw, trajectory_vec_vec[i](3, 0), trajectory_vec_vec[i](4, 0), trajectory_vec_vec[i](5, 0),
-			name_id + "_arrow" + to_string(i));
+		if(b_showArrow)
+			drawArrow(point_pose_arraw, trajectory_vec_vec[i](3, 0), trajectory_vec_vec[i](4, 0), trajectory_vec_vec[i](5, 0),
+				name_id + "_arrow" + to_string(i));
 
 		//draw frame number
 		pcl::PointXYZRGB point_frame;
@@ -1250,7 +1341,8 @@ void CPointVisualization<T_PointType>::drawTrajectory(vector<Eigen::Vector6d> tr
 			point_frame.g = color_number_second[1];
 			point_frame.b = color_number_second[2];
 		}
-		drawNumber(point_frame, i, name_id + "_number" + to_string(i));
+		if(b_showNumber) 
+			drawNumber(point_frame, i, name_id + "_number" + to_string(i));
 
 		if (i != 0)
 		{
