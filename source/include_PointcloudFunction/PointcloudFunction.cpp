@@ -23,7 +23,7 @@ void CPointcloudFunction::all_process()
 		EN_GR_FPFH_SAC_IA,
 		EN_DoOutlierRejector,
 		EN_ICP_Proposed_AllFrames,
-		EN_Evaluate_AttributedICP_Optimization
+		EN_Evaluate_ICP_property_Optimization
 	};
 
 	while (!b_finish)
@@ -45,7 +45,7 @@ void CPointcloudFunction::all_process()
 		cout << " " << EN_GR_FPFH_SAC_IA << ": GR_FPFH_SAC_IA" << endl;
 		cout << " " << EN_DoOutlierRejector << ": DoOutlierRejector" << endl;
 		cout << " " << EN_ICP_Proposed_AllFrames << ": ICP_Proposed_AllFrames" << endl;
-		cout << " " << EN_Evaluate_AttributedICP_Optimization << ": Evaluate_AttributedICP_Optimization" << endl;
+		cout << " " << EN_Evaluate_ICP_property_Optimization << ": Evaluate_ICP_property_Optimization" << endl;
 
 		cout <<"WhichProcess: ";
 		cin >> WhichProcess;
@@ -117,8 +117,8 @@ void CPointcloudFunction::all_process()
 			DoICP_proposed_AllFrames();
 			break;
 
-		case EN_Evaluate_AttributedICP_Optimization:
-			DoEvaluation_AttributedICP_Optimization();
+		case EN_Evaluate_ICP_property_Optimization:
+			DoEvaluation_ICP_property_Optimization();
 			break;
 
 		default:
@@ -346,7 +346,7 @@ void CPointcloudFunction::getPCDFromCSV_naraha()
 	string file_dir;
 	//file_dir = "../../data/temp/02 velo&nir all frame";
 	//file_dir = "../../data/temp";
-	file_dir = "../../data/process_GetPcdFromCSV";
+	file_dir = "../../data/process2_GetPcdFromCSV";
 
 	string s_csv = "02 velo&nir all frame";
 
@@ -605,7 +605,7 @@ void CPointcloudFunction::filterNIRPointCloud_naraha()
 	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>());
 	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_temp(new pcl::PointCloud<pcl::PointXYZI>());
 	pcl::ApproximateVoxelGrid<pcl::PointXYZI> VGFilter;
-	string dir_ = "../../data/process_FilterPointCloud";
+	string dir_ = "../../data/process3_FilterPointCloud";
 	string s_subdir = "_before";
 	//double th_VGF = 0.01;
 	double th_VGF = 0.05;
@@ -709,7 +709,7 @@ void CPointcloudFunction::getCSVFromPointCloud()
 {
 	cout << "start .csv method" << endl;
 	string dir_;
-	dir_ = "../../data/temp";
+	dir_ = "../../data/process4_CSV_FromPointCloud";
 	vector<string> filenames_;
 	//CTimeString::getFileNames_extension(file_dir, filenames_, "nir.pcd");
 	CTimeString::getFileNames_extension(dir_, filenames_, ".pcd");
@@ -752,7 +752,7 @@ void CPointcloudFunction::HandRegistration()
 
 	string dir_;
 	//dir_ = "../../data/temp/_Hand";
-	dir_ = "../../data/process_handregistration";
+	dir_ = "../../data/process1_handregistration";
 
 	bool b_RemoveGround = true;
 	//b_RemoveGround = false;
@@ -1270,7 +1270,7 @@ CPointcloudFunction::KEYNUM CPointcloudFunction::getKEYNUM()
 void CPointcloudFunction::combinePointCloud_naraha()
 {
 	string dir_;
-	dir_ = "../../data/process_CombinePointCloud";
+	dir_ = "../../data/process5_CombinePointCloud";
 	string subdir_;
 	subdir_ = "_before";
 
@@ -1496,7 +1496,7 @@ void CPointcloudFunction::DynamicTranslation()
 	bool b_inputTranslation = false;
 
 	string dir_;
-	dir_ = "../../data/temp/_DynamicTranslation";
+	dir_ = "../../data/process6_DynamicTranslation";
 
 	typedef typename pcl::PointXYZI PointType_func;
 	//typedef typename pcl::PointXYZRGB PointType_func;
@@ -2102,7 +2102,7 @@ void CPointcloudFunction::DrawTrajectory()
 	typedef typename pcl::PointXYZRGB T_PointType;
 
 	//read file name
-	string dir = "../../data/process_DrawTrajectory";
+	string dir = "../../data/process7_DrawTrajectory";
 	vector<string> filenames_txt;
 	CTimeString::getFileNames_extension(dir, filenames_txt, ".csv");
 
@@ -2215,7 +2215,7 @@ void CPointcloudFunction::DoSegmentation()
 	//typedef typename pcl::PointXYZI T_PointType;
 	typedef typename pcl::PointXYZRGB T_PointType;
 
-	string dir_ = "../../data/process_DoSegmentation";
+	string dir_ = "../../data/process8_DoSegmentation";
 
 	float Tolerance;
 	cout << "input : th_tolerance" << endl;
@@ -2294,7 +2294,7 @@ void CPointcloudFunction::DoSegmentation()
 void CPointcloudFunction::GlobalRegistration_FPFH_SAC_IA()
 {
 	string dir_;
-	dir_ = "../../data/process_GR_FPFH_SAC_IA";
+	dir_ = "../../data/process9_GR_FPFH_SAC_IA";
 
 	vector<float> parameter_vec;
 
@@ -3679,22 +3679,6 @@ void CPointcloudFunction::GR_FPFH_SelectPoint(string dir_, vector<float> paramet
 		//compute fpfh
 		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt(new pcl::PointCloud<pcl::FPFHSignature33>);
 		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src(new pcl::PointCloud<pcl::FPFHSignature33>);
-		//{
-		//	pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
-		//	const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
-		//	sor->setLeafSize(voxel_size, voxel_size, voxel_size);
-		//	sor->setInputCloud(cloud_tgt);
-		//	sor->filter(*cloud_VGF);
-		//	fpfh_tgt = CKataokaPCL::computeFPFH<T_PointType>(*cloud_VGF, *cloud_tgt, radius_normal_FPFH, radius_FPFH);
-		//}
-		//{
-		//	pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
-		//	const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
-		//	sor->setLeafSize(voxel_size, voxel_size, voxel_size);
-		//	sor->setInputCloud(cloud_src);
-		//	sor->filter(*cloud_VGF);
-		//	fpfh_src = CKataokaPCL::computeFPFH<T_PointType>(*cloud_VGF, *cloud_src, radius_normal_FPFH, radius_FPFH);
-		//}
 
 		//radius_normal_FPFH_vec
 		vector<int> index_FPFH_tgt;
@@ -3706,7 +3690,6 @@ void CPointcloudFunction::GR_FPFH_SelectPoint(string dir_, vector<float> paramet
 			sor->setLeafSize(voxel_size, voxel_size, voxel_size);
 			sor->setInputCloud(cloud_tgt);
 			sor->filter(*cloud_VGF);
-			//fpfh_tgt = CKataokaPCL::computeFPFH<T_PointType>(*cloud_VGF, *cloud_tgt, radius_normal_FPFH, radius_FPFH);
 			fpfh_tgt = CFPFH_PCL::computeFPFH_radius<T_PointType>(index_FPFH_tgt,cloud_VGF, cloud_tgt, radius_normal_FPFH_vec, radius_FPFH);
 		}
 		{
@@ -3715,7 +3698,6 @@ void CPointcloudFunction::GR_FPFH_SelectPoint(string dir_, vector<float> paramet
 			sor->setLeafSize(voxel_size, voxel_size, voxel_size);
 			sor->setInputCloud(cloud_src);
 			sor->filter(*cloud_VGF);
-			//fpfh_src = CKataokaPCL::computeFPFH<T_PointType>(*cloud_VGF, *cloud_src, radius_normal_FPFH, radius_FPFH);
 			fpfh_src = CFPFH_PCL::computeFPFH_radius<T_PointType>(index_FPFH_src, cloud_VGF, cloud_src, radius_normal_FPFH_vec, radius_FPFH);
 		}
 
@@ -4312,7 +4294,6 @@ void CPointcloudFunction::DoOutlierRejector()
 			{
 				//use outlier rejector
 				cout << "use outlier rejector" << endl;
-				//CKataokaPCL::rejectOutlier(cloud_, cloud_, Tolerance_out, MinClusterSize_out);
 				CKataokaPCL::Remove_outliers(cloud_, cloud_, Meank_out, StddevMulThresh_out);
 			}
 
@@ -4773,7 +4754,7 @@ void CPointcloudFunction::DoICP_proposed_AllFrames()
 	cout << "->";
 	cin >> i_method;
 
-	string dir_ = "../../data/process_DoICP_proposed_AllFrames";
+	string dir_ = "../../data/process10_DoICP_proposed_AllFrames";
 	vector<string> filenames_input;
 	if (i_method == 0 || i_method == 1)
 	{
@@ -4816,8 +4797,8 @@ void CPointcloudFunction::DoICP_proposed_AllFrames()
 				MaxCorrespondenceDistance = 0.25;	//SII2021
 				EuclideanFitnessEpsilon = 1e-5;
 				TransformationEpsilon = 1e-6;
-				//attributed
-				double penalty_chara, dist_search, weight_dist_chara;
+				//property
+				double penalty_chara, weight_dist_chara;
 				penalty_chara = 1.;
 				weight_dist_chara = 2.;				//SII2021
 				//vector
@@ -4954,7 +4935,7 @@ void CPointcloudFunction::DoICP_proposed_only1method(
 	MaxCorrespondenceDistance = parameter_vec[1];
 	EuclideanFitnessEpsilon = parameter_vec[2];
 	TransformationEpsilon = parameter_vec[3];
-	//attributed
+	//property
 	float penalty_chara, weight_dist_chara;
 	penalty_chara = parameter_vec[4];
 	weight_dist_chara = parameter_vec[5];
@@ -5174,7 +5155,7 @@ void CPointcloudFunction::DoICP_proposed_only1method(
 			align_ICP_proposed.setMaxCorrespondenceDistance(MaxCorrespondenceDistance);
 			align_ICP_proposed.setEuclideanFitnessEpsilon(EuclideanFitnessEpsilon);
 			align_ICP_proposed.setTransformationEpsilon(TransformationEpsilon);
-			align_ICP_proposed.setCharaParameter(penalty_chara, MaxCorrespondenceDistance, weight_dist_chara);
+			align_ICP_proposed.setCharaParameter(penalty_chara, weight_dist_chara);
 			//data
 			align_ICP_proposed.setInputTarget(cloud_tgt);
 			align_ICP_proposed.setInputSource(cloud_src_transformed);
@@ -5222,6 +5203,7 @@ void CPointcloudFunction::DoICP_proposed_only1method(
 				CKataokaPCL::calcHomogeneousMatrixFromVector6d(Registration_Vector));
 			pcl::transformPointCloud(*cloud_src_transformed, *cloud_src_transformed, Trans_temp);
 		}
+
 		//inlier rate
 		double rate_inlier;
 		if (cloud_src->size() != 0)
@@ -5599,26 +5581,24 @@ vector<string> CPointcloudFunction::DoICP_proposed_mergeResult_OnePattern(string
 	return s_vec_output;
 }
 
-void CPointcloudFunction::DoEvaluation_AttributedICP_Optimization()
+void CPointcloudFunction::DoEvaluation_ICP_property_Optimization()
 {
-
 	int i_method;
 	cout << "select: optimization:0  mergeResult:1" << endl;
 	cout << "->";
 	cin >> i_method;
 
-	if(i_method == 0)
-		DoEvaluation_AttributedICP_Optimization_files();
-	else if(i_method == 1)
-		DoEvaluation_AttributedICP_Optimization_mergeResult();
+	string dir_ = "../../data/process11_ICP_property_Optimization";
 
+	if(i_method == 0)
+		DoEvaluation_ICP_property_Optimization_files(dir_);
+	else if(i_method == 1)
+		DoEvaluation_ICP_property_Optimization_mergeResult(dir_);
 }
 
-void CPointcloudFunction::DoEvaluation_AttributedICP_Optimization_files()
+void CPointcloudFunction::DoEvaluation_ICP_property_Optimization_files(string dir_)
 {
 	typedef pcl::PointXYZRGB T_PointType;
-
-	string dir_ = "../../data/process_AttributedICP_Optimization";
 
 	vector<string> filenames_input;
 	{
@@ -6144,10 +6124,8 @@ void CPointcloudFunction::DoEvaluation_Optimization_calculation(string dir_, str
 	}
 }
 
-void CPointcloudFunction::DoEvaluation_AttributedICP_Optimization_mergeResult()
+void CPointcloudFunction::DoEvaluation_ICP_property_Optimization_mergeResult(string dir_)
 {
-	string dir_ = "../../data/process_AttributedICP_Optimization";
-
 	vector<string> filenames_folder;
 	vector<int> i_folder_vec;
 	{
@@ -6225,7 +6203,7 @@ void CPointcloudFunction::DoEvaluation_AttributedICP_Optimization_mergeResult()
 
 	for (int i = 0; i < i_folder_vec.size(); i++)
 		s_output_vecvec.push_back(
-			DoEvaluation_AttributedICP_Optimization_mergeResult_OnePattern(dir_, filenames_folder[i_folder_vec[i]]));
+			DoEvaluation_ICP_property_Optimization_mergeResult_OnePattern(dir_, filenames_folder[i_folder_vec[i]]));
 
 	//transposition
 	{
@@ -6238,7 +6216,7 @@ void CPointcloudFunction::DoEvaluation_AttributedICP_Optimization_mergeResult()
 	CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/EvaluationResult_" + s_t + ".csv");
 }
 
-vector<string> CPointcloudFunction::DoEvaluation_AttributedICP_Optimization_mergeResult_OnePattern(string dir_, string s_folder)
+vector<string> CPointcloudFunction::DoEvaluation_ICP_property_Optimization_mergeResult_OnePattern(string dir_, string s_folder)
 {
 	vector<string> s_vec_output;
 	s_vec_output.push_back(s_folder);

@@ -157,17 +157,17 @@ private:
 	vector<int> M_chara_src_vec;
 	vector<int> M_chara_tgt_vec;
 
-	double M_proposed_penalty_chara, M_proposed_dist_search, M_proposed_weight_dist_chara;
+	//double M_proposed_penalty_chara, M_proposed_dist_search, M_proposed_weight_dist_chara;
+	double M_proposed_penalty_chara, M_proposed_weight_dist_chara;
 
 public:
 	void setCharaVector_src(vector<int> chara_vec);
 
 	void setCharaVector_tgt(vector<int> chara_vec);
 
-	void setCharaParameter(double penalty_chara, double dist_search, double weight_dist_chara) 
+	void setCharaParameter(double penalty_chara, double weight_dist_chara) 
 	{
 		M_proposed_penalty_chara = penalty_chara;
-		M_proposed_dist_search = dist_search;
 		M_proposed_weight_dist_chara = weight_dist_chara;
 	}
 

@@ -299,7 +299,7 @@ void CKataokaPCL::computeTransformation()
 			break;
 		case 1:
 			determineCorrespondences_chara(*M_correspondences_original,
-				M_proposed_penalty_chara, M_proposed_dist_search, M_proposed_weight_dist_chara);
+				M_proposed_penalty_chara, M_corr_dist_threshold_, M_proposed_weight_dist_chara);
 			cnt = M_correspondences_original->size();
 			break;
 		case 2:
@@ -1064,7 +1064,7 @@ double CKataokaPCL::getFitnessScore_chara()
 
 		int found_neighs = match_search.nearestKSearch(input_transformed->at(i), 1, index, distance);
 
-		if (distance[0] > M_proposed_dist_search * M_proposed_dist_search) continue;
+		if (distance[0] > M_corr_dist_threshold_ * M_corr_dist_threshold_) continue;
 
 		// Add to the fitness score
 		if (M_chara_src_vec[i] == M_chara_tgt_vec[index[0]])

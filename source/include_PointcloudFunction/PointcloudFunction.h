@@ -193,8 +193,8 @@ public:
 	void DoICP_proposed_mergeResult();
 	vector<string> DoICP_proposed_mergeResult_OnePattern(string dir_, string s_folder, bool b_useMedian);
 
-	void DoEvaluation_AttributedICP_Optimization();
-	void DoEvaluation_AttributedICP_Optimization_files();
+	void DoEvaluation_ICP_property_Optimization();
+	void DoEvaluation_ICP_property_Optimization_files(string dir_);
 	void DoEvaluation_Optimization_addToFile(string dir_,
 		string s_newfoldername, vector<vector<string>> &s_input_vecvec,
 		vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloud_vec);
@@ -202,7 +202,7 @@ public:
 		vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloud_vec, vector<Eigen::Vector6d> trajectoryVector_vec_TRUE,
 		int i_method, vector<double> &error_relative_vec, vector<double> &error_absolute_vec,
 		vector<double> &frameCloudMedian_vec, double &map_mean);
-	void DoEvaluation_AttributedICP_Optimization_mergeResult();
-	vector<string> DoEvaluation_AttributedICP_Optimization_mergeResult_OnePattern(string dir_, string s_folder);
+	void DoEvaluation_ICP_property_Optimization_mergeResult(string dir_);
+	vector<string> DoEvaluation_ICP_property_Optimization_mergeResult_OnePattern(string dir_, string s_folder);
 
 };
