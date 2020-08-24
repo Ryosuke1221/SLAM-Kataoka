@@ -207,4 +207,9 @@ public:
 
 	void DoMappingFromTrajectory();
 
+	void DoDifferential();
+	void DoDifferential_1pointcloud(string dir_);
+	void DoDifferential_SomePointclouds(string dir_);
+
+
 };

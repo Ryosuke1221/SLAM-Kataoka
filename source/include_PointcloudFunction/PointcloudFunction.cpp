@@ -24,7 +24,8 @@ void CPointcloudFunction::all_process()
 		EN_DoOutlierRejector,
 		EN_ICP_Proposed_AllFrames,
 		EN_Evaluate_ICP_property_Optimization,
-		EN_DoMappingFromTrajectory
+		EN_DoMappingFromTrajectory,
+		EN_DoDifferential
 	};
 
 	while (!b_finish)
@@ -48,6 +49,7 @@ void CPointcloudFunction::all_process()
 		cout << " " << EN_ICP_Proposed_AllFrames << ": ICP_Proposed_AllFrames" << endl;
 		cout << " " << EN_Evaluate_ICP_property_Optimization << ": Evaluate_ICP_property_Optimization" << endl;
 		cout << " " << EN_DoMappingFromTrajectory << ": DoMappingFromTrajectory" << endl;
+		cout << " " << EN_DoDifferential << ": DoDifferential" << endl;
 
 		cout <<"WhichProcess: ";
 		cin >> WhichProcess;
@@ -125,6 +127,10 @@ void CPointcloudFunction::all_process()
 
 		case EN_DoMappingFromTrajectory:
 			DoMappingFromTrajectory();
+			break;
+
+		case EN_DoDifferential:
+			DoDifferential();
 			break;
 
 		default:
@@ -345,7 +351,7 @@ void CPointcloudFunction::getPCDFromCSV_naraha()
 	string file_dir;
 	//file_dir = "../../data/temp/02 velo&nir all frame";
 	//file_dir = "../../data/temp";
-	file_dir = "../../data/process2_GetPcdFromCSV";
+	file_dir = "../../data/process02_GetPcdFromCSV";
 
 	string s_csv = "02 velo&nir all frame";
 
@@ -448,7 +454,82 @@ void CPointcloudFunction::getPCDFromCSV_naraha()
 
 void CPointcloudFunction::FreeSpace()
 {
-	DoMappingFromTrajectory();
+	//typedef typename pcl::FPFHSignature33 FeatureT;
+	//typedef typename pcl::PointXYZRGB T_PointType;
+
+	//int num_nearest = 10;
+	//num_nearest = 1;
+
+	//string dir_ = "../../data";
+
+	//string s_file_0 = "000XYZRGB_naraha.pcd";
+	//string s_file_1 = "001XYZRGB_naraha.pcd";
+
+	//float voxel_size;
+	//voxel_size = 0.1;
+
+	//float radius_normal_FPFH, radius_FPFH;
+	//radius_normal_FPFH = 0.5;
+	//radius_FPFH = 1.;
+
+
+	//pcl::PointCloud<T_PointType>::Ptr cloud_tgt(new pcl::PointCloud<T_PointType>());
+	//pcl::PointCloud<T_PointType>::Ptr cloud_src(new pcl::PointCloud<T_PointType>());
+	//pcl::io::loadPCDFile(dir_ + "/" + s_file_0, *cloud_tgt);
+	//pcl::io::loadPCDFile(dir_ + "/" + s_file_1, *cloud_src);
+	//cloud_tgt->is_dense = true;
+	//cloud_src->is_dense = true;
+
+	////compute fpfh
+	//pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt(new pcl::PointCloud<pcl::FPFHSignature33>);
+	//pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src(new pcl::PointCloud<pcl::FPFHSignature33>);
+	//{
+	//	pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
+	//	const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
+	//	sor->setLeafSize(voxel_size, voxel_size, voxel_size);
+	//	sor->setInputCloud(cloud_tgt);
+	//	sor->filter(*cloud_VGF);
+	//	fpfh_tgt = CFPFH_PCL::computeFPFH<T_PointType>(cloud_VGF, cloud_tgt, radius_normal_FPFH, radius_FPFH);
+	//}
+	//{
+	//	pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
+	//	const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
+	//	sor->setLeafSize(voxel_size, voxel_size, voxel_size);
+	//	sor->setInputCloud(cloud_src);
+	//	sor->filter(*cloud_VGF);
+	//	fpfh_src = CFPFH_PCL::computeFPFH<T_PointType>(cloud_VGF, cloud_src, radius_normal_FPFH, radius_FPFH);
+	//}
+
+	//pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr feature_tree_(new pcl::KdTreeFLANN<pcl::FPFHSignature33>);
+	//feature_tree_->setInputCloud(fpfh_tgt);
+
+	//int num_index = 100;
+
+	//vector<vector<int>> index_near_vecvec;
+	//vector<vector<float>> squaredDistance_near_vecvec;
+	//
+	//for (int j = 0; j < num_index; j++)
+	//{
+	//	vector<int> index_temp;
+	//	vector<float> squaredDistance_temp;
+
+	//	int found_neighs = feature_tree_->nearestKSearch(*fpfh_src, j, num_nearest, index_temp, squaredDistance_temp);
+	//	index_near_vecvec.push_back(index_temp);
+	//	squaredDistance_near_vecvec.push_back(squaredDistance_temp);
+	//}
+
+	//for (int j = 0; j < index_near_vecvec.size(); j++)
+	//{
+	//	cout << "j:" << j << "  ";
+	//	for (int i = 0; i < num_nearest; i++)
+	//	{
+	//		cout << "i:" << i << " ";
+	//		cout << "index:" << index_near_vecvec[j][i] << " ";
+	//		cout << "distance:" << squaredDistance_near_vecvec[j][i];
+	//	}
+	//	cout << endl;
+	//}
+
 }
 
 void CPointcloudFunction::filterNIRPointCloud_naraha()
@@ -456,7 +537,7 @@ void CPointcloudFunction::filterNIRPointCloud_naraha()
 	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>());
 	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_temp(new pcl::PointCloud<pcl::PointXYZI>());
 	pcl::ApproximateVoxelGrid<pcl::PointXYZI> VGFilter;
-	string dir_ = "../../data/process3_FilterPointCloud";
+	string dir_ = "../../data/process03_FilterPointCloud";
 	string s_subdir = "_before";
 	//double th_VGF = 0.01;
 	double th_VGF = 0.05;
@@ -560,7 +641,7 @@ void CPointcloudFunction::getCSVFromPointCloud()
 {
 	cout << "start .csv method" << endl;
 	string dir_;
-	dir_ = "../../data/process4_CSV_FromPointCloud";
+	dir_ = "../../data/process04_CSV_FromPointCloud";
 	vector<string> filenames_;
 	//CTimeString::getFileNames_extension(file_dir, filenames_, "nir.pcd");
 	CTimeString::getFileNames_extension(dir_, filenames_, ".pcd");
@@ -603,7 +684,7 @@ void CPointcloudFunction::HandRegistration()
 
 	string dir_;
 	//dir_ = "../../data/temp/_Hand";
-	dir_ = "../../data/process1_handregistration";
+	dir_ = "../../data/process01_handregistration";
 
 	bool b_RemoveGround = true;
 	//b_RemoveGround = false;
@@ -1121,7 +1202,7 @@ CPointcloudFunction::KEYNUM CPointcloudFunction::getKEYNUM()
 void CPointcloudFunction::combinePointCloud_naraha()
 {
 	string dir_;
-	dir_ = "../../data/process5_CombinePointCloud";
+	dir_ = "../../data/process05_CombinePointCloud";
 	string subdir_;
 	subdir_ = "_before";
 
@@ -1347,7 +1428,7 @@ void CPointcloudFunction::DynamicTranslation()
 	bool b_inputTranslation = false;
 
 	string dir_;
-	dir_ = "../../data/process6_DynamicTranslation";
+	dir_ = "../../data/process06_DynamicTranslation";
 
 	typedef typename pcl::PointXYZI PointType_func;
 	//typedef typename pcl::PointXYZRGB PointType_func;
@@ -1953,7 +2034,7 @@ void CPointcloudFunction::DrawTrajectory()
 	typedef typename pcl::PointXYZRGB T_PointType;
 
 	//read file name
-	string dir = "../../data/process7_DrawTrajectory";
+	string dir = "../../data/process07_DrawTrajectory";
 	vector<string> filenames_txt;
 	CTimeString::getFileNames_extension(dir, filenames_txt, ".csv");
 
@@ -2066,7 +2147,7 @@ void CPointcloudFunction::DoSegmentation()
 	//typedef typename pcl::PointXYZI T_PointType;
 	typedef typename pcl::PointXYZRGB T_PointType;
 
-	string dir_ = "../../data/process8_DoSegmentation";
+	string dir_ = "../../data/process08_DoSegmentation";
 
 	float Tolerance;
 	cout << "input : th_tolerance" << endl;
@@ -2145,7 +2226,7 @@ void CPointcloudFunction::DoSegmentation()
 void CPointcloudFunction::GlobalRegistration_FPFH_SAC_IA()
 {
 	string dir_;
-	dir_ = "../../data/process9_GR_FPFH_SAC_IA";
+	dir_ = "../../data/process09_GR_FPFH_SAC_IA";
 
 	vector<float> parameter_vec;
 
@@ -6191,8 +6272,12 @@ void CPointcloudFunction::DoMappingFromTrajectory()
 
 	bool b_showNumber = false;
 	b_showNumber = true;
+
 	bool b_showArrow = false;
 	b_showArrow = true;
+
+	bool b_useGrid = false;
+	b_useGrid = true;
 
 	float yaw_trans = 0.;
 	yaw_trans = -7.* D2R;
@@ -6275,7 +6360,7 @@ void CPointcloudFunction::DoMappingFromTrajectory()
 	typedef typename CPointVisualization<T_PointType> CPV;
 	CPV pv;
 	pv.setWindowName("MAP");
-	pv.addGrid(30., 30., -30., -30.);
+	if(b_useGrid) pv.addGrid(30., 30., -30., -30.);
 
 	pcl::PointCloud<T_PointType>::Ptr cloud_map(new pcl::PointCloud<T_PointType>());
 
@@ -6323,7 +6408,437 @@ void CPointcloudFunction::DoMappingFromTrajectory()
 		string s_time = CTimeString::getTimeString();
 		string s_filename_save = "map_" + CTimeString::getTimeString() + ".pcd";
 		pcl::io::savePCDFile<T_PointType>(dir_ + "/" + s_filename_save, *cloud_map);
+	}
+
+}
+
+void CPointcloudFunction::DoDifferential()
+{
+	string dir_ = "../../data/process13_DoDifferential";
+
+	int i_method;
+	cout << "select method:  OnePointcloud:0   SomePointclouds:1" << endl;
+	cout << "->";
+	cin >> i_method;
+
+	if (i_method == 0)
+		DoDifferential_1pointcloud(dir_);
+	else if (i_method == 1)
+		DoDifferential_SomePointclouds(dir_);
+}
+
+void CPointcloudFunction::DoDifferential_1pointcloud(string dir_)
+{
+	typedef typename pcl::PointXYZRGB T_PointType;
+
+	string s_file_0 = "000XYZRGB_naraha.pcd";
+	string s_file_1 = "005XYZRGB_naraha.pcd";
+
+	float radius_differential = 0.5;
+	//{
+	//	cout << "input radius ->";
+	//	float radius_temp;
+	//	cin >> radius_temp;
+	//	if (0 < radius_temp && radius_temp < 3) radius_differential = radius_temp;
+	//	cout << "radius_differential:" << radius_differential << endl;
+	//}
+
+	pcl::PointCloud<T_PointType>::Ptr cloud_(new pcl::PointCloud<T_PointType>());
+	pcl::PointCloud<T_PointType>::Ptr cloud_colored(new pcl::PointCloud<T_PointType>());
+	//pcl::io::loadPCDFile(dir_ + "/" + s_file_0, *cloud_);
+	pcl::io::loadPCDFile(dir_ + "/" + s_file_1, *cloud_);
+	cloud_->is_dense = true;
+
+	pcl::KdTreeFLANN<T_PointType>::Ptr kdtree_(new pcl::KdTreeFLANN<T_PointType>);
+	kdtree_->setInputCloud(cloud_);
+	vector<float> feature_vec;
+
+	cout << "select feature:  Velodyne:1  NIR:0" << endl;
+	bool b_useVelodyneFeature;
+	cin >> b_useVelodyneFeature;
+
+	for (int j = 0; j < cloud_->size(); j++)
+	{
+		if (!b_useVelodyneFeature)
+			feature_vec.push_back((float)((int)cloud_->points[j].r));
+		else
+			feature_vec.push_back((float)((int)cloud_->points[j].g));
+	}
+
+	vector<float> featureDivergence_vec;
+	featureDivergence_vec = CKataokaPCL::getPointCloud_featureDivergence(cloud_, feature_vec, kdtree_, radius_differential);
+
+	//for (int j = 0; j < featureDivergence_vec.size(); j++)
+	//{
+	//	if (j % 100 != 0) continue;
+	//	cout << "j:" << j << "  divergence:" << featureDivergence_vec[j] << endl;
+	//}
+	//cout << endl;
+
+	pcl::copyPointCloud(*cloud_, *cloud_colored);
+
+	vector<int> hist_vec = CTimeString::getHostogram(featureDivergence_vec, 10, true);
+
+	float feature_min = std::numeric_limits<float>::max();
+	float feature_max = -std::numeric_limits<float>::max();
+	float feature_mean = 0.;
+	float feature_median;
+	float feature_first_quartile;
+	float feature_third_quartile;
+
+	for (int j = 0; j < featureDivergence_vec.size(); j++)
+	{
+		if (feature_min > featureDivergence_vec[j]) feature_min = featureDivergence_vec[j];
+		if (feature_max < featureDivergence_vec[j]) feature_max = featureDivergence_vec[j];
+	}
+	//calc median and quartile
+	{
+		vector<float> temp_vec = CTimeString::getMedian_Quartile(featureDivergence_vec);
+		feature_first_quartile = temp_vec[0];
+		feature_median = temp_vec[1];
+		feature_third_quartile = temp_vec[2];
+	}
+	//calc mean
+	{
+		for (int j = 0; j < featureDivergence_vec.size(); j++)
+			feature_mean += featureDivergence_vec[j];
+		if (featureDivergence_vec.size() != 0) feature_mean /= (float)featureDivergence_vec.size();
+		else feature_mean = 10000.;
+	}
+
+	cout << "feature_min:" << feature_min << endl;
+	cout << "feature_max:" << feature_max << endl;
+	cout << "feature_mean:" << feature_mean << endl;
+	cout << "feature_first_quartile:" << feature_first_quartile << endl;
+	cout << "feature_median:" << feature_median << endl;
+	cout << "feature_third_quartile:" << feature_third_quartile << endl;
+
+
+	float th_velodyne_min_color;
+	//th_velodyne_min_color = -4.;
+	th_velodyne_min_color = -20.;
+	//cout << "input th_velodyne_min_color ->";
+	//cin >> th_velodyne_min_color;
+
+	float th_velodyne_max_color;
+	//th_velodyne_max_color = 50.;
+	//th_velodyne_max_color = 20.;
+	//th_velodyne_max_color = 120.;
+	th_velodyne_max_color = 80.;
+	//cout << "input th_velodyne_max_color ->";
+	//cin >> th_velodyne_max_color;
+
+	float th_nir_min_color;
+
+
+	float th_nir_max_color;
+	th_nir_max_color = 100.;
+
+	{
+		vector<vector<string>> s_temp_vecvec;
+		s_temp_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/parameter.csv");
+		for (int j = 0; j < s_temp_vecvec.size(); j++)
+			cout << "j:" << j << " " << "s_temp_vecvec[j].size():" << s_temp_vecvec[j].size() << endl;
+		th_velodyne_min_color = stof(s_temp_vecvec[2][3]);
+		th_velodyne_max_color = stof(s_temp_vecvec[3][3]);
+		th_nir_max_color = stof(s_temp_vecvec[5][3]);
+	}
+
+	for (int j = 0; j < cloud_colored->size(); j++)
+	{
+		//if (fabs(featureDivergence_vec[j]) > 50.)
+		//{
+		//	cloud_colored->points[j].r = 0;
+		//	cloud_colored->points[j].g = 255;
+		//	cloud_colored->points[j].b = 0;
+		//}
+		//else
+		//{
+		//	cloud_colored->points[j].r = 255;
+		//	cloud_colored->points[j].g = 255;
+		//	cloud_colored->points[j].b = 255;
+		//}
+
+
+		vector<std::uint8_t> color_vec;
+		//color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyHSV(featureDivergence_vec[j], feature_max, feature_min);
+
+		if (b_useVelodyneFeature)
+			color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyHSV(featureDivergence_vec[j], th_velodyne_max_color, th_velodyne_min_color);
+		else
+			color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyHSV(featureDivergence_vec[j], th_nir_max_color, feature_min);
+
+		cloud_colored->points[j].r = color_vec[0];
+		cloud_colored->points[j].g = color_vec[1];
+		cloud_colored->points[j].b = color_vec[2];
+	}
+
+	for (int j = 0; j < cloud_colored->size(); j++)
+	{
+		if (fabs(featureDivergence_vec[j]) == 0.)
+		{
+			cloud_colored->points[j].r = 255;
+			cloud_colored->points[j].g = 255;
+			cloud_colored->points[j].b = 255;
+		}
+
+		if (b_useVelodyneFeature)
+		{
+			if (th_velodyne_min_color > featureDivergence_vec[j])
+			{
+				cloud_colored->points[j].r = 255;
+				cloud_colored->points[j].g = 255;
+				cloud_colored->points[j].b = 0;
+			}
+			else if (th_velodyne_max_color < featureDivergence_vec[j])
+			{
+				cloud_colored->points[j].r = 0;
+				cloud_colored->points[j].g = 0;
+				cloud_colored->points[j].b = 255;
+			}
+		}
+		else
+		{
+			//th_velodyne_max_color
+			if (th_nir_max_color < featureDivergence_vec[j])
+			{
+				cloud_colored->points[j].r = 255;
+				cloud_colored->points[j].g = 130;
+				cloud_colored->points[j].b = 0;
+			}
+
+		}
+	}
+
+	Eigen::Affine3f trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
+		CKataokaPCL::calcHomogeneousMatrixFromVector6d(40., 0., 0., 0., 0., 0.));
+	pcl::transformPointCloud(*cloud_colored, *cloud_colored, trans_);
+	*cloud_colored += *cloud_;
+	//pcl::io::savePCDFile<T_PointType>(dir_save + "/cloud_colored.pcd", *cloud_colored);
+
+	typedef typename CPointVisualization<T_PointType> CPV;
+
+	CPV pv;
+	pv.setWindowName("differential");
+
+	while (1)
+	{
+		pv.setPointCloud(cloud_colored);
+		pv.updateViewer();
+		if ((GetAsyncKeyState(VK_ESCAPE) & 1) == 1) break;
+	}
+
+	pv.closeViewer();
+}
+
+void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
+{
+	typedef pcl::PointXYZRGB T_PointType;
+
+	string s_folder;
+	{
+		vector<string> filenames_folder;
+
+		CTimeString::getFileNames_folder(dir_, filenames_folder);
+		for (int i = 0; i < filenames_folder.size(); i++)
+		{
+			string s_i = to_string(i);
+			if (s_i.size() < 2) s_i = " " + s_i;
+			cout << "i:" << s_i << " " << filenames_folder[i] << endl;
+		}
+		cout << endl;
+		cout << "input folder you want to calc ->";
+		int i_folder;
+		cin >> i_folder;
+		s_folder = filenames_folder[i_folder];
 
 	}
+
+	//input pointcloud
+	vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec;
+	{
+		vector<string> filenames_;
+		CTimeString::getFileNames_extension(dir_ + "/" + s_folder, filenames_, ".pcd");
+		for (int i = 0; i < filenames_.size(); i++)
+		{
+			pcl::PointCloud<T_PointType>::Ptr cloud(new pcl::PointCloud<T_PointType>());
+			pcl::io::loadPCDFile(dir_ + "/" + s_folder + "/" + filenames_[i], *cloud);
+			cloud->is_dense = true;
+			cloud_vec.push_back(cloud);
+		}
+	}
+
+	float radius_differential = 0.5;
+
+	float th_velodyne_min_color;
+	th_velodyne_min_color = -10.;
+	float th_velodyne_max_color;
+	th_velodyne_max_color = 3.;
+	float th_nir_min_color;
+	th_nir_min_color = -250.;
+	float th_nir_max_color;
+	th_nir_max_color = 100.;
+
+	//{
+	//	vector<vector<string>> s_temp_vecvec;
+	//	s_temp_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/parameter.csv");
+	//	for (int j = 0; j < s_temp_vecvec.size(); j++)
+	//		cout << "j:" << j << " " << "s_temp_vecvec[j].size():" << s_temp_vecvec[j].size() << endl;
+	//	th_velodyne_min_color = stof(s_temp_vecvec[2][3]);
+	//	th_velodyne_max_color = stof(s_temp_vecvec[3][3]);
+	//	th_nir_max_color = stof(s_temp_vecvec[5][3]);
+	//}
+
+	cout << "select feature:  NIR:0   Velodyne:1" << endl;
+	bool b_useVelodyneFeature;
+	cin >> b_useVelodyneFeature;
+
+	//calc
+	vector<vector<float>> featureDivergence_vecvec;
+	for (int j = 0; j < cloud_vec.size(); j++)
+	{
+		cout << "j:" << j << endl;
+
+		pcl::KdTreeFLANN<T_PointType>::Ptr kdtree_(new pcl::KdTreeFLANN<T_PointType>);
+		kdtree_->setInputCloud(cloud_vec[j]);
+
+		vector<float> feature_vec;
+		for (int i = 0; i < cloud_vec[j]->size(); i++)
+		{
+			if (!b_useVelodyneFeature)
+				feature_vec.push_back((float)((int)cloud_vec[j]->points[i].r));
+			else
+				feature_vec.push_back((float)((int)cloud_vec[j]->points[i].g));
+		}
+
+		vector<float> featureDivergence_vec;
+		featureDivergence_vec = CKataokaPCL::getPointCloud_featureDivergence(cloud_vec[j], feature_vec, kdtree_, radius_differential);
+		featureDivergence_vecvec.push_back(featureDivergence_vec);
+		vector<int> hist_vec = CTimeString::getHostogram(featureDivergence_vec, 10, true);
+		float feature_min = std::numeric_limits<float>::max();
+		float feature_max = -std::numeric_limits<float>::max();
+		float feature_mean = 0.;
+		float feature_median;
+		float feature_first_quartile;
+		float feature_third_quartile;
+
+		for (int i = 0; i < featureDivergence_vec.size(); i++)
+		{
+			if (feature_min > featureDivergence_vec[i]) feature_min = featureDivergence_vec[i];
+			if (feature_max < featureDivergence_vec[i]) feature_max = featureDivergence_vec[i];
+		}
+		//calc median and quartile
+		{
+			vector<float> temp_vec = CTimeString::getMedian_Quartile(featureDivergence_vec);
+			feature_first_quartile = temp_vec[0];
+			feature_median = temp_vec[1];
+			feature_third_quartile = temp_vec[2];
+		}
+		//calc mean
+		{
+			for (int i = 0; i < featureDivergence_vec.size(); i++)
+				feature_mean += featureDivergence_vec[i];
+			if (featureDivergence_vec.size() != 0) feature_mean /= (float)featureDivergence_vec.size();
+			else feature_mean = 10000.;
+		}
+
+		cout << "feature_min:" << feature_min << endl;
+		cout << "feature_max:" << feature_max << endl;
+		cout << "feature_mean:" << feature_mean << endl;
+		cout << "feature_first_quartile:" << feature_first_quartile << endl;
+		cout << "feature_median:" << feature_median << endl;
+		cout << "feature_third_quartile:" << feature_third_quartile << endl;
+		cout << endl;
+	}
+
+	//give color to pointcloud
+	for (int j = 0; j < cloud_vec.size(); j++)
+	{
+		pcl::PointCloud<T_PointType>::Ptr cloud_colored(new pcl::PointCloud<T_PointType>());
+		pcl::copyPointCloud(*cloud_vec[j], *cloud_colored);
+
+		for (int i = 0; i < cloud_vec[j]->size(); i++)
+		{
+			vector<std::uint8_t> color_vec;
+			//color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyHSV(featureDivergence_vec[i], feature_max, feature_min);
+
+			if (b_useVelodyneFeature)
+				color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyHSV(featureDivergence_vecvec[j][i], th_velodyne_max_color, th_velodyne_min_color);
+			else
+				color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyHSV(featureDivergence_vecvec[j][i], th_nir_max_color, th_nir_min_color);
+
+			cloud_colored->points[i].r = color_vec[0];
+			cloud_colored->points[i].g = color_vec[1];
+			cloud_colored->points[i].b = color_vec[2];
+
+			if (fabs(featureDivergence_vecvec[j][i]) == 0.)
+			{
+				cloud_colored->points[i].r = 255;
+				cloud_colored->points[i].g = 255;
+				cloud_colored->points[i].b = 255;
+			}
+
+			if (b_useVelodyneFeature)
+			{
+				if (th_velodyne_min_color > featureDivergence_vecvec[j][i])
+				{
+					cloud_colored->points[j].r = 100;
+					cloud_colored->points[j].g = 100;
+					cloud_colored->points[j].b = 100;
+				}
+				else if (th_velodyne_max_color < featureDivergence_vecvec[j][i])
+				{
+					cloud_colored->points[j].r = 255;
+					cloud_colored->points[j].g = 255;
+					cloud_colored->points[j].b = 0;
+				}
+			}
+			else
+			{
+				if (th_nir_min_color > featureDivergence_vecvec[j][i])
+				{
+					cloud_colored->points[j].r = 100;
+					cloud_colored->points[j].g = 100;
+					cloud_colored->points[j].b = 100;
+				}
+				else if (th_nir_max_color < featureDivergence_vecvec[j][i])
+				{
+					cloud_colored->points[j].r = 255;
+					cloud_colored->points[j].g = 255;
+					cloud_colored->points[j].b = 0;
+				}
+
+			}
+
+		}
+
+		Eigen::Affine3f trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
+			CKataokaPCL::calcHomogeneousMatrixFromVector6d(40., 0., 0., 0., 0., 0.));
+		pcl::transformPointCloud(*cloud_colored, *cloud_colored, trans_);
+		*cloud_vec[j] += *cloud_colored;
+
+	}
+
+	//showing
+	CPointVisualization<T_PointType> pv;
+	pv.setWindowName("differential");
+
+	int index_cloud = 0;
+	while (1)
+	{
+
+		if (((GetAsyncKeyState(VK_SPACE) & 1) == 1) && (index_cloud != cloud_vec.size()))
+		{
+			pv.setPointCloud(cloud_vec[index_cloud]);
+			cout << "index:" << index_cloud << endl;
+			index_cloud++;
+
+		}
+
+		if ((GetAsyncKeyState(VK_ESCAPE) & 1) == 1) break;
+
+		pv.updateViewer();
+	}
+	pv.closeViewer();
 
 }

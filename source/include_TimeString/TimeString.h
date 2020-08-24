@@ -166,7 +166,24 @@ public:
 	}
 
 	template<typename T>
-	static void sortVector2d(vector<vector<T>> &value_vecvec, int index_arg, int b_ascending = true)
+	static void sortVector(vector<T> &value_vec, bool b_ascending = true)
+	{
+		for (int i = 0; i < value_vec.size(); i++)
+		{
+			for (int j = value_vec.size() - 1; j > i; j--)
+			{
+				bool b_swap = false;
+				if (b_ascending && value_vec[j] < value_vec[j - 1])
+					b_swap = true;
+				else if (!b_ascending && value_vec[j] > value_vec[j - 1])
+					b_swap = true;
+				if (b_swap) swap(value_vec[j], value_vec[j - 1]);
+			}
+		}
+	}
+
+	template<typename T>
+	static void sortVector2d(vector<vector<T>> &value_vecvec, int index_arg, bool b_ascending = true)
 	{
 		vector<pair<T, int>> frame_pair_vec;
 		for (int j = 0; j < value_vecvec.size(); j++)
@@ -193,7 +210,7 @@ public:
 	}
 
 	template<typename T>
-	static void sortVector2d_2dimension(vector<vector<T>> &value_vecvec, int index_first, int index_second, int b_ascending = true)
+	static void sortVector2d_2dimension(vector<vector<T>> &value_vecvec, int index_first, int index_second, bool b_ascending = true)
 	{
 		vector<vector<T>> value_vecvec_new;
 		sortVector2d(value_vecvec, index_first, b_ascending);
@@ -226,6 +243,53 @@ public:
 		}
 		value_vecvec.clear();
 		value_vecvec = value_vecvec_new;
+	}
+
+	template<typename T>
+	static T getMedian(vector<T> value_vec)
+	{
+		sortVector(value_vec);
+
+		int size = value_vec.size();
+
+		if (size % 2 == 1)
+			return value_vec[(size - 1) / 2];
+		else
+			return (value_vec[(size / 2) - 1] + value_vec[size / 2]) / 2.;
+	}
+
+	template<typename T>
+	static vector<T> getMedian_Quartile(vector<T> value_vec)
+	{
+		//https://atarimae.biz/archives/19162
+		sortVector(value_vec);
+		int size = value_vec.size();
+		T median_ = getMedian(value_vec);
+		T first_quartile;
+		T third_quartile;
+		if (size % 2 == 1)
+		{
+			vector<T> temp_vec_first;
+			temp_vec_first.insert(temp_vec_first.begin(), value_vec.begin(), value_vec.begin() + (size - 1) / 2);
+			first_quartile = getMedian(temp_vec_first);
+			vector<T> temp_vec_third;
+			temp_vec_third.insert(temp_vec_third.begin(), value_vec.begin() + (size - 1) / 2 + 1, value_vec.end());
+			third_quartile = getMedian(temp_vec_third);
+		}
+		else
+		{
+			vector<T> temp_vec_first;
+			temp_vec_first.insert(temp_vec_first.begin(), value_vec.begin(), value_vec.begin() + (size / 2));
+			first_quartile = getMedian(temp_vec_first);
+			vector<T> temp_vec_third;
+			temp_vec_third.insert(temp_vec_third.begin(), value_vec.begin() + size / 2, value_vec.end());
+			third_quartile = getMedian(temp_vec_third);
+		}
+		vector<T> output_vec;
+		output_vec.push_back(first_quartile);
+		output_vec.push_back(median_);
+		output_vec.push_back(third_quartile);
+		return output_vec;
 	}
 	
 	static vector<vector<int>> getIntCluster_SomeToSome(vector<vector<int>> value_vecvec, bool b_recursive = false);
@@ -301,6 +365,63 @@ public:
 
 	static vector<vector<string>> getMatrixData_fromFormatOfFPFH(vector<vector<string>> s_input_vecvec,
 		string s_start, int i_pos_start_fromS, string s_finish, int i_pos_finish_fromS);
+
+	template<typename T>
+	static vector<int> getHostogram(const vector<T> value_vec, int num_bin, bool b_cout = false)
+	{
+		T value_max = -std::numeric_limits<T>::max();
+		T value_min = std::numeric_limits<T>::max();
+
+		for (int j = 0; j < value_vec.size(); j++)
+		{
+			if (value_max < value_vec[j]) value_max = value_vec[j];
+			if (value_min > value_vec[j]) value_min = value_vec[j];
+		}
+
+		cout << "value_max:" << value_max << endl;
+		cout << "value_min:" << value_min << endl;
+
+		T range_ = (value_max - value_min) / (T)num_bin;
+
+		vector<int> hist_vec;
+		hist_vec.resize(num_bin);
+		fill(hist_vec.begin(), hist_vec.end(), 0);
+
+		for (int j = 0; j < value_vec.size(); j++)
+		{
+			int i_bin = (int)((value_vec[j] - value_min) / range_);
+			if (value_vec[j] == value_max) i_bin--;
+			if (i_bin < 0 || num_bin - 1 < i_bin)
+			{
+				cout << "invalid: i_bin = " << i_bin << endl;
+				cout << "j:" << j << " value_vec[j]:" << value_vec[j] << endl;
+			}
+			hist_vec[i_bin]++;
+		}
+
+		if (b_cout)
+		{
+			for (int j = 0; j < hist_vec.size(); j++)
+			{
+				string s_index = to_string(j);
+				if (s_index.size() < 2) s_index = " " + s_index;
+
+				T value_ = value_min + range_ * j;
+				string s_value = to_string(value_);
+				for (int i = 0; i < 9; i++)
+					if (s_value.size() < 9) s_value = " " + s_value;
+
+				string s_num = to_string(hist_vec[j]);
+				for (int i = 0; i < 6; i++)
+					if (s_num.size() < 6) s_num = " " + s_num;
+
+				cout << "[" << s_index << "] value:" << s_value << " num:" << s_num << endl;
+
+			}
+		}
+
+		return hist_vec;
+	}
 
 private:
 	static bool getDirectoryExistance(string foder_Path);
