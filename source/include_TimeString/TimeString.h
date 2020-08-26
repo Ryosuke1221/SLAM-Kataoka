@@ -381,12 +381,15 @@ public:
 		cout << "value_max:" << value_max << endl;
 		cout << "value_min:" << value_min << endl;
 
-		T range_ = (value_max - value_min) / (T)num_bin;
+		float range_ = (value_max - value_min) / (float)num_bin;
 
 		vector<int> hist_vec;
 		hist_vec.resize(num_bin);
 		fill(hist_vec.begin(), hist_vec.end(), 0);
 
+		vector<float> mean_hist_vec;
+		mean_hist_vec.resize(num_bin);
+		fill(mean_hist_vec.begin(), mean_hist_vec.end(), 0.);
 		for (int j = 0; j < value_vec.size(); j++)
 		{
 			int i_bin = (int)((value_vec[j] - value_min) / range_);
@@ -397,10 +400,33 @@ public:
 				cout << "j:" << j << " value_vec[j]:" << value_vec[j] << endl;
 			}
 			hist_vec[i_bin]++;
+			mean_hist_vec[i_bin] += value_vec[j];
 		}
+		for (int j = 0; j < mean_hist_vec.size(); j++)
+			if (hist_vec[j] != 0) mean_hist_vec[j] / (float)hist_vec[j];
+
+		//calc sigma_deviation
+		vector<float> sigma_deviation_vec;
+		sigma_deviation_vec.resize(num_bin);
+		fill(sigma_deviation_vec.begin(), sigma_deviation_vec.end(), 0.);
+		for (int j = 0; j < sigma_deviation_vec.size(); j++)
+			if (hist_vec[j] == 0) sigma_deviation_vec[j] = -1.;
+		for (int j = 0; j < value_vec.size(); j++)
+		{
+			int i_bin = (int)((value_vec[j] - value_min) / range_);
+			if (value_vec[j] == value_max) i_bin--;
+			sigma_deviation_vec[i_bin] += pow(value_vec[j] - mean_hist_vec[i_bin], 2.) / (float)hist_vec[i_bin];
+		}
+		for (int j = 0; j < sigma_deviation_vec.size(); j++)
+			if (sigma_deviation_vec[j] != -1) sigma_deviation_vec[j] = sqrt(sigma_deviation_vec[j]);
 
 		if (b_cout)
 		{
+			int max_num = 0;
+			for (int j = 0; j < hist_vec.size(); j++)
+				if (max_num < hist_vec[j]) max_num = hist_vec[j];
+			int length_show_max = 110;
+
 			for (int j = 0; j < hist_vec.size(); j++)
 			{
 				string s_index = to_string(j);
@@ -415,7 +441,21 @@ public:
 				for (int i = 0; i < 6; i++)
 					if (s_num.size() < 6) s_num = " " + s_num;
 
-				cout << "[" << s_index << "] value:" << s_value << " num:" << s_num << endl;
+				string s_sigma = to_string(sigma_deviation_vec[j]);
+				for (int i = 0; i < 9; i++)
+					if (s_sigma.size() < 9) s_sigma = " " + s_sigma;
+
+				int length_show = 0;
+				if (max_num != 0) length_show = (int)((float)length_show_max * (float)hist_vec[j] / (float)max_num);
+
+				string s_output = "[" + s_index + "] value(min):" + s_value;
+				s_output += " sigma:" + s_sigma;
+				s_output += " num:" + s_num + "  ";
+				for (int i = 0; i < length_show; i++)
+					if (s_output.size() < length_show) s_output += "-";
+
+				//cout << "[" << s_index << "] value:" << s_value << " num:" << s_num << endl;
+				cout << s_output << endl;
 
 			}
 		}

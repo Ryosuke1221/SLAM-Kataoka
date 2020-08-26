@@ -155,8 +155,8 @@ void CPointcloudFunction::show_sequent()
 	dir_ = dir_ + "/" + dir_folder_vec[i_select];
 	cout << endl;
 
-	//typedef typename pcl::PointXYZI PointType_func;
-	typedef typename pcl::PointXYZRGB PointType_func;
+	typedef typename pcl::PointXYZI PointType_func;
+	//typedef typename pcl::PointXYZRGB PointType_func;
 
 	bool b_useTXT = false;
 	//b_useTXT = true;
@@ -2184,7 +2184,8 @@ void CPointcloudFunction::DoSegmentation()
 		for (int j = 0; j < cloud_cluster_vec.size(); j++)
 		{
 			vector<std::uint8_t> color_vec;
-			color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyHSV(j, cloud_cluster_vec.size(), 0);
+			//color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyHSV(j, cloud_cluster_vec.size() - 1, 0);
+			color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(j, cloud_cluster_vec.size() - 1, 0);
 			//cout << "j:" << j << " r:" << (int)color_vec[0] << " g:" << (int)color_vec[1] << " b:" << (int)color_vec[2] << endl;
 			for (int i = 0; i < cloud_cluster_vec[j]->size(); i++)
 			{
@@ -6416,15 +6417,18 @@ void CPointcloudFunction::DoDifferential()
 {
 	string dir_ = "../../data/process13_DoDifferential";
 
-	int i_method;
-	cout << "select method:  OnePointcloud:0   SomePointclouds:1" << endl;
-	cout << "->";
-	cin >> i_method;
+	//int i_method;
+	//cout << "select method:  OnePointcloud:0   SomePointclouds:1" << endl;
+	//cout << "->";
+	//cin >> i_method;
 
-	if (i_method == 0)
-		DoDifferential_1pointcloud(dir_);
-	else if (i_method == 1)
-		DoDifferential_SomePointclouds(dir_);
+	//if (i_method == 0)
+	//	DoDifferential_1pointcloud(dir_);
+	//else if (i_method == 1)
+	//	DoDifferential_SomePointclouds(dir_);
+
+	DoDifferential_SomePointclouds(dir_);
+
 }
 
 void CPointcloudFunction::DoDifferential_1pointcloud(string dir_)
@@ -6466,7 +6470,7 @@ void CPointcloudFunction::DoDifferential_1pointcloud(string dir_)
 	}
 
 	vector<float> featureDivergence_vec;
-	featureDivergence_vec = CKataokaPCL::getPointCloud_featureDivergence(cloud_, feature_vec, kdtree_, radius_differential);
+	featureDivergence_vec = CKataokaPCL::getPointCloud_featureDivergence(cloud_, feature_vec, kdtree_, radius_differential, 0.25);
 
 	//for (int j = 0; j < featureDivergence_vec.size(); j++)
 	//{
@@ -6654,15 +6658,19 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 
 	}
 
+	cout << "select feature:  NIR:0   Velodyne:1" << endl;
+	bool b_useVelodyneFeature;
+	cin >> b_useVelodyneFeature;
+
 	//input pointcloud
 	vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec;
+	vector<string> filenames_cloud;
 	{
-		vector<string> filenames_;
-		CTimeString::getFileNames_extension(dir_ + "/" + s_folder, filenames_, ".pcd");
-		for (int i = 0; i < filenames_.size(); i++)
+		CTimeString::getFileNames_extension(dir_ + "/" + s_folder, filenames_cloud, ".pcd");
+		for (int i = 0; i < filenames_cloud.size(); i++)
 		{
 			pcl::PointCloud<T_PointType>::Ptr cloud(new pcl::PointCloud<T_PointType>());
-			pcl::io::loadPCDFile(dir_ + "/" + s_folder + "/" + filenames_[i], *cloud);
+			pcl::io::loadPCDFile(dir_ + "/" + s_folder + "/" + filenames_cloud[i], *cloud);
 			cloud->is_dense = true;
 			cloud_vec.push_back(cloud);
 		}
@@ -6671,27 +6679,26 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 	float radius_differential = 0.5;
 
 	float th_velodyne_min_color;
-	th_velodyne_min_color = -10.;
+	th_velodyne_min_color = -4.;
 	float th_velodyne_max_color;
-	th_velodyne_max_color = 3.;
+	th_velodyne_max_color = 3.6;
 	float th_nir_min_color;
-	th_nir_min_color = -250.;
+	th_nir_min_color = -20;
 	float th_nir_max_color;
-	th_nir_max_color = 100.;
+	th_nir_max_color = 70.;
 
-	//{
-	//	vector<vector<string>> s_temp_vecvec;
-	//	s_temp_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/parameter.csv");
-	//	for (int j = 0; j < s_temp_vecvec.size(); j++)
-	//		cout << "j:" << j << " " << "s_temp_vecvec[j].size():" << s_temp_vecvec[j].size() << endl;
-	//	th_velodyne_min_color = stof(s_temp_vecvec[2][3]);
-	//	th_velodyne_max_color = stof(s_temp_vecvec[3][3]);
-	//	th_nir_max_color = stof(s_temp_vecvec[5][3]);
-	//}
+	float sigma_weight;
 
-	cout << "select feature:  NIR:0   Velodyne:1" << endl;
-	bool b_useVelodyneFeature;
-	cin >> b_useVelodyneFeature;
+	{
+		vector<vector<string>> s_temp_vecvec;
+		s_temp_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/parameter.csv");
+		radius_differential = stof(s_temp_vecvec[1][3]);
+		th_velodyne_min_color = stof(s_temp_vecvec[2][3]);
+		th_velodyne_max_color = stof(s_temp_vecvec[3][3]);
+		th_nir_min_color = stof(s_temp_vecvec[4][3]);
+		th_nir_max_color = stof(s_temp_vecvec[5][3]);
+		sigma_weight = stof(s_temp_vecvec[6][3]);
+	}
 
 	//calc
 	vector<vector<float>> featureDivergence_vecvec;
@@ -6712,9 +6719,18 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 		}
 
 		vector<float> featureDivergence_vec;
-		featureDivergence_vec = CKataokaPCL::getPointCloud_featureDivergence(cloud_vec[j], feature_vec, kdtree_, radius_differential);
+		//featureDivergence_vec = CKataokaPCL::getPointCloud_featureDivergence(cloud_vec[j], feature_vec, kdtree_, radius_differential);
+		featureDivergence_vec = CKataokaPCL::getPointCloud_featureDivergence(cloud_vec[j], feature_vec, kdtree_, radius_differential, sigma_weight, true);
 		featureDivergence_vecvec.push_back(featureDivergence_vec);
-		vector<int> hist_vec = CTimeString::getHostogram(featureDivergence_vec, 10, true);
+		{
+			vector<float> feature_calcHistogram;
+			for (int i = 0; i < featureDivergence_vec.size(); i++)
+			{
+				if (!b_useVelodyneFeature && featureDivergence_vec[i] == 0.) continue;
+				feature_calcHistogram.push_back(featureDivergence_vec[i]);
+			}
+			vector<int> hist_vec = CTimeString::getHostogram(feature_calcHistogram, 80, true);
+		}
 		float feature_min = std::numeric_limits<float>::max();
 		float feature_max = -std::numeric_limits<float>::max();
 		float feature_mean = 0.;
@@ -6751,6 +6767,20 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 		cout << endl;
 	}
 
+	{
+		cout << "show histogram of all features" << endl;
+		vector<float> features_all;
+		for (int j = 0; j < featureDivergence_vecvec.size(); j++)
+			features_all.insert(features_all.end(), featureDivergence_vecvec[j].begin(), featureDivergence_vecvec[j].end());
+		vector<float> feature_calcHistogram;
+		for (int j = 0; j < features_all.size(); j++)
+		{
+			if (!b_useVelodyneFeature && features_all[j] == 0.) continue;
+			feature_calcHistogram.push_back(features_all[j]);
+		}
+		vector<int> hist_vec = CTimeString::getHostogram(feature_calcHistogram, 80, true);
+	}
+
 	//give color to pointcloud
 	for (int j = 0; j < cloud_vec.size(); j++)
 	{
@@ -6763,9 +6793,9 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 			//color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyHSV(featureDivergence_vec[i], feature_max, feature_min);
 
 			if (b_useVelodyneFeature)
-				color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyHSV(featureDivergence_vecvec[j][i], th_velodyne_max_color, th_velodyne_min_color);
+				color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(featureDivergence_vecvec[j][i], th_velodyne_max_color, th_velodyne_min_color);
 			else
-				color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyHSV(featureDivergence_vecvec[j][i], th_nir_max_color, th_nir_min_color);
+				color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(featureDivergence_vecvec[j][i], th_nir_max_color, th_nir_min_color);
 
 			cloud_colored->points[i].r = color_vec[0];
 			cloud_colored->points[i].g = color_vec[1];
@@ -6829,7 +6859,7 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 
 		if (((GetAsyncKeyState(VK_SPACE) & 1) == 1) && (index_cloud != cloud_vec.size()))
 		{
-			pv.setPointCloud(cloud_vec[index_cloud]);
+			pv.setPointCloud(cloud_vec[index_cloud], filenames_cloud[index_cloud]);
 			cout << "index:" << index_cloud << endl;
 			index_cloud++;
 

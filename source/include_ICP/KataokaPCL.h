@@ -483,87 +483,75 @@ public:
 		return correspondences;
 	}
 
-	template <class T_PointType>
-	inline static float getDistanceWeight(T_PointType point_match, T_PointType point_query)
+	inline static float getDistanceWeight(float distance_, float sigma_variance, int i_exponentiation = 2)
 	{
-		float distance_ = sqrt(
-			pow(point_match.x - point_query.x, 2.) +
-			pow(point_match.y - point_query.y, 2.) +
-			pow(point_match.z - point_query.z, 2.));
-		float weight_;
-		//if (distance_ != 0.) weight_ = 1. / distance_;
-		//else weight_ = 0.;
-		weight_ = exp(-distance_);
-		return weight_;
+		distance_ = fabs(distance_);
+		if (i_exponentiation == 1) return 1. / (2. * M_PI * sigma_variance * sigma_variance) 
+			* exp(-distance_ / (2. * sigma_variance * sigma_variance));
+		else return 1. / (2. * M_PI * sigma_variance * sigma_variance)
+			* exp(-distance_ * distance_ / (2. * sigma_variance * sigma_variance));
 	}
 
 	template <class T_PointType>
-	static void getPointCloud_featureGradient(
+	static vector<Eigen::Vector3d> getPointCloud_featureGradient(
 		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_, const vector<float> &feature_vec,
-		boost::shared_ptr<pcl::KdTreeFLANN<T_PointType>> kdtree_, const float th_distance,
-		vector<vector<int>> &nearIndex_vecvec, vector<vector<float>> &squaredDistance_vecvec,
-		vector<Eigen::Vector3d> &featureGradientVector_vec)
+		const vector<vector<int>> &nearIndex_vecvec, const vector<vector<float>> &squaredDistance_vecvec, float variance_)
 	{
-		nearIndex_vecvec.clear();
-		squaredDistance_vecvec.clear();
-		featureGradientVector_vec.clear();
+		vector<Eigen::Vector3d> featureGradientVector_vec;
 		for (int j = 0; j < cloud_->size(); j++)
 		{
-			vector<int> nearIndex_vec;
-			vector<float> squaredDistance_vec;
-			kdtree_->radiusSearch(*cloud_, j, th_distance, nearIndex_vec, squaredDistance_vec);
-
 			Eigen::Vector3d featureVector = Eigen::Vector3d::Zero();
-
 			int num_near_valid = 0;
-			//r
-			for (int i = 0; i < nearIndex_vec.size(); i++)
+			for (int i = 0; i < nearIndex_vecvec[j].size(); i++)
 			{
-				if (squaredDistance_vec[i] == 0.) continue;
+				if (squaredDistance_vecvec[j][i] == 0.) continue;
 				T_PointType point_query = cloud_->points[j];
-				T_PointType point_match = cloud_->points[nearIndex_vec[i]];
+				T_PointType point_match = cloud_->points[nearIndex_vecvec[j][i]];
 				Eigen::Vector3d featureVector_1point = Eigen::Vector3d::Zero();
 				featureVector_1point <<
 					point_match.x - point_query.x,
 					point_match.y - point_query.y,
 					point_match.z - point_query.z;
-				//float scara_ = (float)((int)point_match.g - (int)point_query.g)
-				//	* getDistanceWeight(point_match, point_query)
-				//	* getDistanceWeight(point_match, point_query);
-				float scara_ = (float)(feature_vec[nearIndex_vec[i]] - feature_vec[j])
-					* getDistanceWeight(point_match, point_query)
-					* getDistanceWeight(point_match, point_query);
-
+				float scara_ = (float)(feature_vec[nearIndex_vecvec[j][i]] - feature_vec[j])
+					* getDistanceWeight(squaredDistance_vecvec[j][i], variance_)
+					* getDistanceWeight(squaredDistance_vecvec[j][i], variance_);
 				featureVector_1point = scara_ * featureVector_1point;
 				featureVector(0, 0) += featureVector_1point(0, 0);
 				featureVector(1, 0) += featureVector_1point(1, 0);
 				featureVector(2, 0) += featureVector_1point(2, 0);
 				num_near_valid++;
 			}
-			if (num_near_valid != 0)
-			{
-				featureVector = 1. / (float)num_near_valid * featureVector;
-			}
+			if (num_near_valid != 0) featureVector = 1. / (float)num_near_valid * featureVector;
 			featureGradientVector_vec.push_back(featureVector);
-			nearIndex_vecvec.push_back(nearIndex_vec);
-			squaredDistance_vecvec.push_back(squaredDistance_vec);
 		}
+		return featureGradientVector_vec;
 	}
 
 	template <class T_PointType>
 	static vector<float> getPointCloud_featureDivergence(
 		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_, const vector<float> &feature_vec,
-		boost::shared_ptr<pcl::KdTreeFLANN<T_PointType>> kdtree_, const float th_distance)
+		boost::shared_ptr<pcl::KdTreeFLANN<T_PointType>> kdtree_, const float th_distance, float variance_, bool b_useGaussianFilter = false)
 	{
 		vector<float> featureDivergence_vec;
 		vector<vector<int>> nearIndex_vecvec;
 		vector<vector<float>> squaredDistance_vecvec;
+		//nearest
+		for (int j = 0; j < cloud_->size(); j++)
+		{
+			vector<int> nearIndex_vec;
+			vector<float> squaredDistance_vec;
+			kdtree_->radiusSearch(*cloud_, j, th_distance, nearIndex_vec, squaredDistance_vec);
+			nearIndex_vecvec.push_back(nearIndex_vec);
+			squaredDistance_vecvec.push_back(squaredDistance_vec);
+		}
 		vector<Eigen::Vector3d> featureGradientVector_vec;
-		getPointCloud_featureGradient(cloud_, feature_vec, kdtree_, th_distance, nearIndex_vecvec,
-			squaredDistance_vecvec, featureGradientVector_vec);
+		featureGradientVector_vec = getPointCloud_featureGradient(cloud_, feature_vec, nearIndex_vecvec, squaredDistance_vecvec, variance_);
+		//getPointCloud_featureGradient(cloud_, feature_vec, kdtree_, th_distance, nearIndex_vecvec,
+		//	squaredDistance_vecvec, featureGradientVector_vec);
 		for (int j = 0; j < cloud_->size(); j++)
 		{
 			float featureDivergence_ = 0.;
+			int num_near_valid = 0;
 			for (int i = 0; i < nearIndex_vecvec[j].size(); i++)
 			{
 				if (squaredDistance_vecvec[j][i] == 0.) continue;
@@ -577,12 +565,35 @@ public:
 					point_match.z - point_query.z;
 				featureDivergence_ += (differenceVector_pos.transpose()
 					* (featureGradientVector_vec[nearIndex_vecvec[j][i]] - featureGradientVector_vec[j]))(0, 0)
-					* getDistanceWeight(point_match, point_query)
-					* getDistanceWeight(point_match, point_query);
+					* getDistanceWeight(squaredDistance_vecvec[j][i], variance_)
+					* getDistanceWeight(squaredDistance_vecvec[j][i], variance_);
 			}
+			if (num_near_valid != 0) featureDivergence_ /= (float)num_near_valid;
 			featureDivergence_vec.push_back(featureDivergence_);
 		}
-		return featureDivergence_vec;
+		if (!b_useGaussianFilter) return featureDivergence_vec;
+		else return getPointCloud_featureGaussianFilter(cloud_, featureDivergence_vec, nearIndex_vecvec, squaredDistance_vecvec, variance_);
+	}
+
+	template <class T_PointType>
+	static vector<float> getPointCloud_featureGaussianFilter(boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_, 
+		const vector<float> &feature_vec, const vector<vector<int>> &nearIndex_vecvec, const vector<vector<float>> &squaredDistance_vecvec, float variance_)
+	{
+		vector<float> featureGaussianFilter_vec;
+		for (int j = 0; j < cloud_->size(); j++)
+		{
+			float featureGaussianFilte = 0.;
+			float sum_weight = 0.;
+			for (int i = 0; i < nearIndex_vecvec[j].size(); i++)
+			{
+				featureGaussianFilte += feature_vec[nearIndex_vecvec[j][i]] 
+					* getDistanceWeight(squaredDistance_vecvec[j][i], variance_);
+				sum_weight += getDistanceWeight(squaredDistance_vecvec[j][i], variance_);
+			}
+			if (nearIndex_vecvec[j].size() != 0) featureGaussianFilte /= sum_weight;
+			featureGaussianFilter_vec.push_back(featureGaussianFilte);
+		}
+		return featureGaussianFilter_vec;
 	}
 
 };

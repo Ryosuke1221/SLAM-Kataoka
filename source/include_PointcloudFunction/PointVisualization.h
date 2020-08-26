@@ -103,7 +103,102 @@ public:
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr drawNumber_pointcloud(
 		pcl::PointXYZRGB point_center, int num_arg);
 
-	static vector<std::uint8_t> getRGBwithValuebyHSV(double value_, double value_max, double value_min);
+	static vector<std::uint8_t> getRGBwithValuebyHSV(float value_, float value_max, float value_min)
+	{
+		//digital gazou shori(2020/2/26), pp. 81-82.
+		float H_;
+		int h_;
+		H_ = (value_ - value_min) / (value_max - value_min) * 2. * M_PI;
+		if (H_ == 2. * M_PI) H_ = 0.;
+		//cout << "H_:" << H_ * R2D << "[deg]" << endl;
+		h_ = (int)(3. / M_PI * H_);
+		float I_, P_, Q_, S_, T_;
+		I_ = 1.;
+		S_ = 1.;
+		P_ = I_ * (1. - S_);
+		Q_ = I_ * (1. - S_ * (3. / M_PI * H_ - (float)h_));
+		T_ = I_ * (1. - S_ * (1. - 3. / M_PI * H_ + (float)h_));
+		std::uint8_t I_uint8, P_uint8, Q_uint8, T_uint8;
+		I_uint8 = (std::uint8_t)(int)(255 * I_);
+		P_uint8 = (std::uint8_t)(int)(255 * P_);
+		Q_uint8 = (std::uint8_t)(int)(255 * Q_);
+		T_uint8 = (std::uint8_t)(int)(255 * T_);
+		std::uint8_t R_, G_, B_;
+		switch (h_)
+		{
+		case 0:
+			R_ = I_uint8; G_ = T_uint8; B_ = P_uint8;
+			break;
+		case 1:
+			R_ = Q_uint8; G_ = I_uint8; B_ = P_uint8;
+			break;
+		case 2:
+			R_ = P_uint8; G_ = I_uint8; B_ = T_uint8;
+			break;
+		case 3:
+			R_ = P_uint8; G_ = Q_uint8; B_ = I_uint8;
+			break;
+		case 4:
+			R_ = T_uint8; G_ = P_uint8; B_ = I_uint8;
+			break;
+		case 5:
+			R_ = I_uint8; G_ = P_uint8; B_ = Q_uint8;
+			break;
+		}
+		vector<std::uint8_t> color_vec;
+		color_vec.push_back(R_);
+		color_vec.push_back(G_);
+		color_vec.push_back(B_);
+		return color_vec;
+	}
+
+	static vector<std::uint8_t>getRGBwithValuebyPseudoColor(float value_, float value_max, float value_min)
+	{
+		//digital gazou shori(2020/2/26), pp. 93-94.
+		//R is replaced to B
+
+		if (value_ < value_min) value_ = value_min;
+		else if (value_max < value_) value_ = value_max;
+
+		float grad_ = 1. / 0.25;
+		float range_ = value_max - value_min;
+		float value_norlized = (value_ - value_min) / range_;	//0~1
+
+		std::uint8_t R_, G_, B_;
+		float f_R, f_G, f_B;
+
+		//R
+		if (value_norlized < 0.25) f_R = 1.;
+		else if (value_norlized < 0.5) f_R = 1. - (value_norlized - 0.25) * grad_;
+		else f_R = 0.;
+		R_ = (std::uint8_t)(int)(f_R * 255.);
+
+		//G
+		if (value_norlized < 0.25) f_G = value_norlized * grad_;
+		else if (value_norlized < 0.75) f_G = 1.;
+		else f_G = 1. - (value_norlized - 0.75) * grad_;
+		G_ = (std::uint8_t)(int)(f_G * 255.);
+
+		//B
+		if (value_norlized < 0.5) f_B = 0.;
+		else if (value_norlized < 0.75) f_B = (value_norlized - 0.5) * grad_;
+		else f_B = 1.;
+		B_ = (std::uint8_t)(int)(f_B * 255.);
+
+		if (R_ < 0) R_ = 0;
+		else if (255 < R_) R_ = 255;
+		if (G_ < 0) G_ = 0;
+		else if (255 < G_) G_ = 255;
+		if (B_ < 0) B_ = 0;
+		else if (255 < B_) B_ = 255;
+
+		vector<std::uint8_t> color_vec;
+		color_vec.push_back(R_);
+		color_vec.push_back(G_);
+		color_vec.push_back(B_);
+		return color_vec;
+	}
+
 	void useNormal(double radius_arg, int level_arg, float scale_arg);
 	void addProcess_InsetPointCloud();
 
@@ -1192,56 +1287,6 @@ void CPointVisualization<T_PointType>::drawNumber_OnetoNine(
 	}
 
 	return;
-}
-
-template < typename T_PointType >
-vector<std::uint8_t> CPointVisualization<T_PointType>::getRGBwithValuebyHSV(double value_, double value_max, double value_min)
-{
-	//digital gazou shori(2020/2/26), pp. 81-82.
-	float H_;
-	int h_;
-	H_ = ((float)value_ - (float)value_min) / ((float)value_max - (float)value_min) * 2. * M_PI;
-	if (H_ == 2. * M_PI) H_ = 0.;
-	//cout << "H_:" << H_ * R2D << "[deg]" << endl;
-	h_ = (int)(3. / M_PI * H_);
-	float I_, P_, Q_, S_, T_;
-	I_ = 1.;
-	S_ = 1.;
-	P_ = I_ * (1. - S_);
-	Q_ = I_ * (1. - S_ * (3. / M_PI * H_ - (float)h_));
-	T_ = I_ * (1. - S_ * (1. - 3. / M_PI * H_ + (float)h_));
-	std::uint8_t I_uint8, P_uint8, Q_uint8, T_uint8;
-	I_uint8 = (std::uint8_t)(int)(255 * I_);
-	P_uint8 = (std::uint8_t)(int)(255 * P_);
-	Q_uint8 = (std::uint8_t)(int)(255 * Q_);
-	T_uint8 = (std::uint8_t)(int)(255 * T_);
-	std::uint8_t R_, G_, B_;
-	switch (h_)
-	{
-	case 0:
-		R_ = I_uint8; G_ = T_uint8; B_ = P_uint8;
-		break;
-	case 1:
-		R_ = Q_uint8; G_ = I_uint8; B_ = P_uint8;
-		break;
-	case 2:
-		R_ = P_uint8; G_ = I_uint8; B_ = T_uint8;
-		break;
-	case 3:
-		R_ = P_uint8; G_ = Q_uint8; B_ = I_uint8;
-		break;
-	case 4:
-		R_ = T_uint8; G_ = P_uint8; B_ = I_uint8;
-		break;
-	case 5:
-		R_ = I_uint8; G_ = P_uint8; B_ = Q_uint8;
-		break;
-	}
-	vector<std::uint8_t> color_vec;
-	color_vec.push_back(R_);
-	color_vec.push_back(G_);
-	color_vec.push_back(B_);
-	return color_vec;
 }
 
 template < typename T_PointType >
