@@ -6701,28 +6701,20 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 		cout << "j:" << j << " cloud_vec[j]->size():" << cloud_vec[j]->size() << endl;
 	cout << endl;
 
-	////remove outlier
-	//for (int j = 0; j < cloud_vec.size(); j++)
-	//{
-	//	vector<float> feature_vec_temp;
-	//	for (int i = 0; i < cloud_vec[j]->size(); i++)
-	//	{
-	//		if (!b_useVelodyneFeature)
-	//			feature_vec_temp.push_back((float)((int)cloud_vec[j]->points[i].r));
-	//		else
-	//			feature_vec_temp.push_back((float)((int)cloud_vec[j]->points[i].g));
-	//	}
-	//	vector<int> index_valid;
-	//	index_valid = CTimeString::getOuolierRemovedIndex(feature_vec_temp, 0.025);
-	//	pcl::PointCloud<T_PointType>::Ptr cloud(new pcl::PointCloud<T_PointType>());
-	//	for (int i = 0; i < index_valid.size(); i++)
-	//		cloud->push_back(cloud_vec[j]->points[index_valid[i]]);
-	//	pcl::copyPointCloud(*cloud, *cloud_vec[j]);
-	//}
-
+	//feature
+	vector<vector<float>> feature_vecvec;
 	for (int j = 0; j < cloud_vec.size(); j++)
-		cout << "j:" << j << " cloud_vec[j]->size():" << cloud_vec[j]->size() << endl;
-	cout << endl;
+	{
+		vector<float> feature_vec;
+		for (int i = 0; i < cloud_vec[j]->size(); i++)
+		{
+			if (!b_useVelodyneFeature)
+				feature_vec.push_back((float)((int)cloud_vec[j]->points[i].r));
+			else
+				feature_vec.push_back((float)((int)cloud_vec[j]->points[i].g));
+		}
+		feature_vecvec.push_back(feature_vec);
+	}
 
 	//calc
 	vector<vector<float>> featureDivergence_vecvec;
@@ -6733,18 +6725,8 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 		pcl::KdTreeFLANN<T_PointType>::Ptr kdtree_(new pcl::KdTreeFLANN<T_PointType>);
 		kdtree_->setInputCloud(cloud_vec[j]);
 
-		vector<float> feature_vec;
-		for (int i = 0; i < cloud_vec[j]->size(); i++)
-		{
-			if (!b_useVelodyneFeature)
-				feature_vec.push_back((float)((int)cloud_vec[j]->points[i].r));
-			else
-				feature_vec.push_back((float)((int)cloud_vec[j]->points[i].g));
-		}
-
 		vector<float> featureDivergence_vec;
-		//featureDivergence_vec = CKataokaPCL::getPointCloud_featureDivergence(cloud_vec[j], feature_vec, kdtree_, radius_differential);
-		featureDivergence_vec = CKataokaPCL::getPointCloud_featureDivergence(cloud_vec[j], feature_vec, kdtree_, radius_differential, sigma_weight, true);
+		featureDivergence_vec = CKataokaPCL::getPointCloud_featureDivergence(cloud_vec[j], feature_vecvec[j], kdtree_, radius_differential, sigma_weight, true);
 		featureDivergence_vecvec.push_back(featureDivergence_vec);
 		{
 			vector<float> feature_calcHistogram;
@@ -6810,6 +6792,7 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 	{
 		pcl::PointCloud<T_PointType>::Ptr cloud_colored(new pcl::PointCloud<T_PointType>());
 		pcl::copyPointCloud(*cloud_vec[j], *cloud_colored);
+		pcl::PointCloud<T_PointType>::Ptr cloud_ZValue(new pcl::PointCloud<T_PointType>());
 
 		for (int i = 0; i < cloud_vec[j]->size(); i++)
 		{
@@ -6861,16 +6844,27 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 					cloud_colored->points[j].g = 255;
 					cloud_colored->points[j].b = 0;
 				}
-
 			}
+		}
+
+		//give z by features
+		pcl::copyPointCloud(*cloud_colored, *cloud_ZValue);
+		*cloud_ZValue = *CKataokaPCL::getPointCloud_ZAaxisByFeature(cloud_ZValue, featureDivergence_vecvec[j], 10.);
+
+		{
+			Eigen::Affine3f trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
+				CKataokaPCL::calcHomogeneousMatrixFromVector6d(40., 0., 0., 0., 0., 0.));
+			pcl::transformPointCloud(*cloud_colored, *cloud_colored, trans_);
+			*cloud_vec[j] += *cloud_colored;
 
 		}
 
-		Eigen::Affine3f trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
-			CKataokaPCL::calcHomogeneousMatrixFromVector6d(40., 0., 0., 0., 0., 0.));
-		pcl::transformPointCloud(*cloud_colored, *cloud_colored, trans_);
-		*cloud_vec[j] += *cloud_colored;
-
+		{
+			Eigen::Affine3f trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
+				CKataokaPCL::calcHomogeneousMatrixFromVector6d(40., 0., 15., 0., 0., 0.));
+			pcl::transformPointCloud(*cloud_ZValue, *cloud_ZValue, trans_);
+			*cloud_vec[j] += *cloud_ZValue;
+		}
 	}
 
 	//showing
@@ -6953,83 +6947,27 @@ void CPointcloudFunction::DoDifferential_showFeatureValue(string dir_)
 
 	//feature
 	vector<vector<float>> feature_vecvec;
+	for (int j = 0; j < cloud_vec.size(); j++)
 	{
-		for (int j = 0; j < cloud_vec.size(); j++)
+		vector<float> feature_vec;
+		for (int i = 0; i < cloud_vec[j]->size(); i++)
 		{
-			vector<float> feature_vec;
-			for (int i = 0; i < cloud_vec[j]->size(); i++)
-			{
-				if (!b_useVelodyneFeature)
-					feature_vec.push_back((float)((int)cloud_vec[j]->points[i].r));
-				else
-					feature_vec.push_back((float)((int)cloud_vec[j]->points[i].g));
-			}
-			feature_vecvec.push_back(feature_vec);
+			if (!b_useVelodyneFeature)
+				feature_vec.push_back((float)((int)cloud_vec[j]->points[i].r));
+			else
+				feature_vec.push_back((float)((int)cloud_vec[j]->points[i].g));
 		}
-	}
-
-	//remove outlier
-	{
-		float th_low;
-		float th_high;
-		{
-			vector<float> feature_vec_all;
-			for (int j = 0; j < feature_vecvec.size(); j++)
-				feature_vec_all.insert(feature_vec_all.end(), feature_vecvec[j].begin(), feature_vecvec[j].end());
-			CTimeString::getOuolierRemovedIndex(feature_vec_all, 0.025, th_low, th_high);
-		}
-		//rewrite point cloud
-		for (int j = 0; j < feature_vecvec.size(); j++)
-		{
-			pcl::PointCloud<T_PointType>::Ptr cloud(new pcl::PointCloud<T_PointType>());
-			for (int i = 0; i < feature_vecvec[j].size(); i++)
-			{
-				if (feature_vecvec[j][i] < th_low) continue;
-				if (th_high < feature_vecvec[j][i]) continue;
-				cloud->push_back(cloud_vec[j]->points[i]);
-			}
-			pcl::copyPointCloud(*cloud, *cloud_vec[j]);
-		}
-		//recalc feature
-		feature_vecvec.clear();
-		for (int j = 0; j < cloud_vec.size(); j++)
-		{
-			vector<float> feature_vec;
-			for (int i = 0; i < cloud_vec[j]->size(); i++)
-			{
-				if (!b_useVelodyneFeature)
-					feature_vec.push_back((float)((int)cloud_vec[j]->points[i].r));
-				else
-					feature_vec.push_back((float)((int)cloud_vec[j]->points[i].g));
-			}
-			feature_vecvec.push_back(feature_vec);
-		}
+		feature_vecvec.push_back(feature_vec);
 	}
 	
 	//calc
-	//vector<vector<float>> featureDivergence_vecvec;
-	//vector<vector<float>> feature_vecvec;
 	for (int j = 0; j < cloud_vec.size(); j++)
 	{
 		cout << "j:" << j << endl;
-
-		//vector<float> feature_vec;
-		//for (int i = 0; i < cloud_vec[j]->size(); i++)
-		//{
-		//	if (!b_useVelodyneFeature)
-		//		feature_vec.push_back((float)((int)cloud_vec[j]->points[i].r));
-		//	else
-		//		feature_vec.push_back((float)((int)cloud_vec[j]->points[i].g));
-		//}
-
-		//feature_vecvec.push_back(feature_vec);
-
-		{
-			vector<float> feature_calcHistogram;
-			for (int i = 0; i < feature_vecvec[j].size(); i++)
-				feature_calcHistogram.push_back(feature_vecvec[j][i]);
-			vector<int> hist_vec = CTimeString::getHostogram(feature_calcHistogram, 80, true);
-		}
+		vector<float> feature_calcHistogram;
+		for (int i = 0; i < feature_vecvec[j].size(); i++)
+			feature_calcHistogram.push_back(feature_vecvec[j][i]);
+		vector<int> hist_vec = CTimeString::getHostogram(feature_calcHistogram, 80, true);
 	}
 
 	float feature_all_min = std::numeric_limits<float>::max();

@@ -626,4 +626,47 @@ public:
 		}
 		return cloud_output;
 	}
+
+	template <class T_PointType>
+	static void getPointCloud_removeFeatureOutlier(vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec, 
+		vector<vector<float>> &feature_vecvec, float th_rate_BigAndSmall)
+	{
+		for (int j = 0; j < cloud_vec.size(); j++)
+		{
+			if (cloud_vec[j]->size() != feature_vecvec[j].size())
+			{
+				cout << "ERROR: Point clous and features have a different size." << endl;
+				throw std::runtime_error("ERROR: Point clous and features have a different size.");
+			}
+		}
+
+		//calc th_low and th_high
+		float th_low;
+		float th_high;
+		{
+			vector<float> feature_vec_all;
+			for (int j = 0; j < feature_vecvec.size(); j++)
+				feature_vec_all.insert(feature_vec_all.end(), feature_vecvec[j].begin(), feature_vecvec[j].end());
+			CTimeString::getOuolierRemovedIndex(feature_vec_all, th_rate_BigAndSmall, th_low, th_high);
+			cout << "th_low:" << th_low << endl;
+			cout << "th_high:" << th_high << endl;
+		}
+
+		//fix pointcloud and feature
+		for (int j = 0; j < feature_vecvec.size(); j++)
+		{
+			pcl::PointCloud<T_PointType>::Ptr cloud(new pcl::PointCloud<T_PointType>());
+			vector<float> feature_vec;
+			for (int i = 0; i < feature_vecvec[j].size(); i++)
+			{
+				if (feature_vecvec[j][i] < th_low) continue;
+				if (th_high < feature_vecvec[j][i]) continue;
+				cloud->push_back(cloud_vec[j]->points[i]);
+				feature_vec.push_back(feature_vecvec[j][i]);
+
+			}
+			pcl::copyPointCloud(*cloud, *cloud_vec[j]);
+			feature_vecvec[j] = feature_vec;
+		}
+	}
 };
