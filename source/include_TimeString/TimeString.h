@@ -463,6 +463,39 @@ public:
 		return hist_vec;
 	}
 
+	template<typename T>
+	static vector<int> getOuolierRemovedIndex(const vector<T> value_vec_arg, float th_rate_BigAndSmall, 
+		float &output_edge_low, float &output_edge_high)
+	{
+		vector<vector<float>> value_vecvec;
+		for (int j = 0; j < value_vec_arg.size(); j++)
+		{
+			vector<float> value_vec;
+			value_vec.push_back((float)value_vec_arg[j]);
+			value_vec.push_back((float)j);
+			value_vecvec.push_back(value_vec);
+		}
+
+		sortVector2d(value_vecvec, 0);
+
+		vector<int> output_index_vec;
+
+		for (int j = 0; j < value_vecvec.size(); j++)
+		{
+			if ((float)j / (float)value_vecvec.size() <= th_rate_BigAndSmall) continue;
+			if ((float)j / (float)value_vecvec.size() >= 1. - th_rate_BigAndSmall) continue;
+			output_index_vec.push_back((int)(value_vecvec[j][1]));
+		}
+
+		output_edge_low = value_vec_arg[output_index_vec[0]];
+		output_edge_high = value_vec_arg[output_index_vec.back()];
+
+		sortVector(output_index_vec);
+
+		return output_index_vec;
+	}
+
+
 private:
 	static bool getDirectoryExistance(string foder_Path);
 	static bool getDirectoryExistance_detail(string foder_Path, bool b_first);

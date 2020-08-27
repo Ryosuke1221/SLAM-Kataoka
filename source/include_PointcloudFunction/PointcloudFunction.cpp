@@ -454,81 +454,73 @@ void CPointcloudFunction::getPCDFromCSV_naraha()
 
 void CPointcloudFunction::FreeSpace()
 {
-	//typedef typename pcl::FPFHSignature33 FeatureT;
-	//typedef typename pcl::PointXYZRGB T_PointType;
+	typedef typename pcl::FPFHSignature33 FeatureT;
+	typedef typename pcl::PointXYZRGB T_PointType;
 
-	//int num_nearest = 10;
-	//num_nearest = 1;
+	int num_nearest = 10;
+	num_nearest = 1;
 
-	//string dir_ = "../../data";
+	string dir_ = "../../data";
 
-	//string s_file_0 = "000XYZRGB_naraha.pcd";
-	//string s_file_1 = "001XYZRGB_naraha.pcd";
+	string s_file_0 = "000XYZRGB_naraha.pcd";
+	string s_file_1 = "001XYZRGB_naraha.pcd";
 
-	//float voxel_size;
-	//voxel_size = 0.1;
+	float voxel_size;
+	voxel_size = 0.1;
 
-	//float radius_normal_FPFH, radius_FPFH;
-	//radius_normal_FPFH = 0.5;
-	//radius_FPFH = 1.;
+	float radius_normal_FPFH, radius_FPFH;
+	radius_normal_FPFH = 0.5;
+	radius_FPFH = 1.;
 
 
-	//pcl::PointCloud<T_PointType>::Ptr cloud_tgt(new pcl::PointCloud<T_PointType>());
-	//pcl::PointCloud<T_PointType>::Ptr cloud_src(new pcl::PointCloud<T_PointType>());
-	//pcl::io::loadPCDFile(dir_ + "/" + s_file_0, *cloud_tgt);
-	//pcl::io::loadPCDFile(dir_ + "/" + s_file_1, *cloud_src);
-	//cloud_tgt->is_dense = true;
-	//cloud_src->is_dense = true;
+	pcl::PointCloud<T_PointType>::Ptr cloud_tgt(new pcl::PointCloud<T_PointType>());
+	pcl::PointCloud<T_PointType>::Ptr cloud_src(new pcl::PointCloud<T_PointType>());
+	pcl::io::loadPCDFile(dir_ + "/" + s_file_0, *cloud_tgt);
+	pcl::io::loadPCDFile(dir_ + "/" + s_file_1, *cloud_src);
+	cloud_tgt->is_dense = true;
+	cloud_src->is_dense = true;
 
-	////compute fpfh
-	//pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt(new pcl::PointCloud<pcl::FPFHSignature33>);
-	//pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src(new pcl::PointCloud<pcl::FPFHSignature33>);
-	//{
-	//	pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
-	//	const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
-	//	sor->setLeafSize(voxel_size, voxel_size, voxel_size);
-	//	sor->setInputCloud(cloud_tgt);
-	//	sor->filter(*cloud_VGF);
-	//	fpfh_tgt = CFPFH_PCL::computeFPFH<T_PointType>(cloud_VGF, cloud_tgt, radius_normal_FPFH, radius_FPFH);
-	//}
-	//{
-	//	pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
-	//	const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
-	//	sor->setLeafSize(voxel_size, voxel_size, voxel_size);
-	//	sor->setInputCloud(cloud_src);
-	//	sor->filter(*cloud_VGF);
-	//	fpfh_src = CFPFH_PCL::computeFPFH<T_PointType>(cloud_VGF, cloud_src, radius_normal_FPFH, radius_FPFH);
-	//}
+	//compute fpfh
+	pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt(new pcl::PointCloud<pcl::FPFHSignature33>);
+	pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src(new pcl::PointCloud<pcl::FPFHSignature33>);
+	{
+		pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
+		const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
+		sor->setLeafSize(voxel_size, voxel_size, voxel_size);
+		sor->setInputCloud(cloud_tgt);
+		sor->filter(*cloud_VGF);
+		fpfh_tgt = CFPFH_PCL::computeFPFH<T_PointType>(cloud_VGF, cloud_tgt, radius_normal_FPFH, radius_FPFH);
+	}
+	{
+		pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
+		const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
+		sor->setLeafSize(voxel_size, voxel_size, voxel_size);
+		sor->setInputCloud(cloud_src);
+		sor->filter(*cloud_VGF);
+		fpfh_src = CFPFH_PCL::computeFPFH<T_PointType>(cloud_VGF, cloud_src, radius_normal_FPFH, radius_FPFH);
+	}
 
-	//pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr feature_tree_(new pcl::KdTreeFLANN<pcl::FPFHSignature33>);
-	//feature_tree_->setInputCloud(fpfh_tgt);
+	pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr feature_tree_(new pcl::KdTreeFLANN<pcl::FPFHSignature33>);
+	feature_tree_->setInputCloud(fpfh_tgt);
 
-	//int num_index = 100;
+	int num_index = 100;
 
-	//vector<vector<int>> index_near_vecvec;
-	//vector<vector<float>> squaredDistance_near_vecvec;
-	//
-	//for (int j = 0; j < num_index; j++)
-	//{
-	//	vector<int> index_temp;
-	//	vector<float> squaredDistance_temp;
+	vector<vector<int>> index_near_vecvec;
+	vector<vector<float>> squaredDistance_near_vecvec;
+	
+	index_near_vecvec = CFPFH_PCL::getNearestOfFPFH(fpfh_src, num_nearest, feature_tree_, squaredDistance_near_vecvec);
 
-	//	int found_neighs = feature_tree_->nearestKSearch(*fpfh_src, j, num_nearest, index_temp, squaredDistance_temp);
-	//	index_near_vecvec.push_back(index_temp);
-	//	squaredDistance_near_vecvec.push_back(squaredDistance_temp);
-	//}
-
-	//for (int j = 0; j < index_near_vecvec.size(); j++)
-	//{
-	//	cout << "j:" << j << "  ";
-	//	for (int i = 0; i < num_nearest; i++)
-	//	{
-	//		cout << "i:" << i << " ";
-	//		cout << "index:" << index_near_vecvec[j][i] << " ";
-	//		cout << "distance:" << squaredDistance_near_vecvec[j][i];
-	//	}
-	//	cout << endl;
-	//}
+	for (int j = 0; j < index_near_vecvec.size(); j++)
+	{
+		cout << "j:" << j << "  ";
+		for (int i = 0; i < num_nearest; i++)
+		{
+			cout << "i:" << i << " ";
+			cout << "index:" << index_near_vecvec[j][i] << " ";
+			cout << "distance:" << squaredDistance_near_vecvec[j][i];
+		}
+		cout << endl;
+	}
 
 }
 
@@ -6417,17 +6409,22 @@ void CPointcloudFunction::DoDifferential()
 {
 	string dir_ = "../../data/process13_DoDifferential";
 
-	//int i_method;
-	//cout << "select method:  OnePointcloud:0   SomePointclouds:1" << endl;
-	//cout << "->";
-	//cin >> i_method;
+	int i_method;
+	cout << "select method:" << endl;
+	cout << "0: SomePointclouds" << endl;
+	cout << "1: DoDifferential_showFeatureValue" << endl;
+	cout << "->";
+	cin >> i_method;
 
 	//if (i_method == 0)
 	//	DoDifferential_1pointcloud(dir_);
 	//else if (i_method == 1)
 	//	DoDifferential_SomePointclouds(dir_);
 
-	DoDifferential_SomePointclouds(dir_);
+	if(i_method == 0)
+		DoDifferential_SomePointclouds(dir_);
+	else if (i_method == 1)
+		DoDifferential_showFeatureValue(dir_);
 
 }
 
@@ -6700,6 +6697,33 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 		sigma_weight = stof(s_temp_vecvec[6][3]);
 	}
 
+	for (int j = 0; j < cloud_vec.size(); j++)
+		cout << "j:" << j << " cloud_vec[j]->size():" << cloud_vec[j]->size() << endl;
+	cout << endl;
+
+	////remove outlier
+	//for (int j = 0; j < cloud_vec.size(); j++)
+	//{
+	//	vector<float> feature_vec_temp;
+	//	for (int i = 0; i < cloud_vec[j]->size(); i++)
+	//	{
+	//		if (!b_useVelodyneFeature)
+	//			feature_vec_temp.push_back((float)((int)cloud_vec[j]->points[i].r));
+	//		else
+	//			feature_vec_temp.push_back((float)((int)cloud_vec[j]->points[i].g));
+	//	}
+	//	vector<int> index_valid;
+	//	index_valid = CTimeString::getOuolierRemovedIndex(feature_vec_temp, 0.025);
+	//	pcl::PointCloud<T_PointType>::Ptr cloud(new pcl::PointCloud<T_PointType>());
+	//	for (int i = 0; i < index_valid.size(); i++)
+	//		cloud->push_back(cloud_vec[j]->points[index_valid[i]]);
+	//	pcl::copyPointCloud(*cloud, *cloud_vec[j]);
+	//}
+
+	for (int j = 0; j < cloud_vec.size(); j++)
+		cout << "j:" << j << " cloud_vec[j]->size():" << cloud_vec[j]->size() << endl;
+	cout << endl;
+
 	//calc
 	vector<vector<float>> featureDivergence_vecvec;
 	for (int j = 0; j < cloud_vec.size(); j++)
@@ -6870,5 +6894,222 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 		pv.updateViewer();
 	}
 	pv.closeViewer();
+
+}
+
+void CPointcloudFunction::DoDifferential_showFeatureValue(string dir_)
+{
+	typedef pcl::PointXYZRGB T_PointType;
+
+	string s_folder;
+	{
+		vector<string> filenames_folder;
+
+		CTimeString::getFileNames_folder(dir_, filenames_folder);
+		for (int i = 0; i < filenames_folder.size(); i++)
+		{
+			string s_i = to_string(i);
+			if (s_i.size() < 2) s_i = " " + s_i;
+			cout << "i:" << s_i << " " << filenames_folder[i] << endl;
+		}
+		cout << endl;
+		cout << "input folder you want to calc ->";
+		int i_folder;
+		cin >> i_folder;
+		s_folder = filenames_folder[i_folder];
+
+	}
+
+	cout << "select feature:  NIR:0   Velodyne:1" << endl;
+	bool b_useVelodyneFeature;
+	cin >> b_useVelodyneFeature;
+
+	//input pointcloud
+	vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec;
+	vector<string> filenames_cloud;
+	{
+		CTimeString::getFileNames_extension(dir_ + "/" + s_folder, filenames_cloud, ".pcd");
+		for (int i = 0; i < filenames_cloud.size(); i++)
+		{
+			pcl::PointCloud<T_PointType>::Ptr cloud(new pcl::PointCloud<T_PointType>());
+			pcl::io::loadPCDFile(dir_ + "/" + s_folder + "/" + filenames_cloud[i], *cloud);
+			cloud->is_dense = true;
+			cloud_vec.push_back(cloud);
+		}
+	}
+
+	//remove 255 in nir
+	if (!b_useVelodyneFeature)
+	{
+		for (int j = 0; j < cloud_vec.size(); j++)
+		{
+			for (int i = cloud_vec[j]->size() - 1; i >= 0 ; i--)
+			{
+				if (cloud_vec[j]->points[i].r == 255)
+					cloud_vec[j]->points.erase(cloud_vec[j]->points.begin() + i);
+			}
+		}
+	}
+
+	//feature
+	vector<vector<float>> feature_vecvec;
+	{
+		for (int j = 0; j < cloud_vec.size(); j++)
+		{
+			vector<float> feature_vec;
+			for (int i = 0; i < cloud_vec[j]->size(); i++)
+			{
+				if (!b_useVelodyneFeature)
+					feature_vec.push_back((float)((int)cloud_vec[j]->points[i].r));
+				else
+					feature_vec.push_back((float)((int)cloud_vec[j]->points[i].g));
+			}
+			feature_vecvec.push_back(feature_vec);
+		}
+	}
+
+	//remove outlier
+	{
+		float th_low;
+		float th_high;
+		{
+			vector<float> feature_vec_all;
+			for (int j = 0; j < feature_vecvec.size(); j++)
+				feature_vec_all.insert(feature_vec_all.end(), feature_vecvec[j].begin(), feature_vecvec[j].end());
+			CTimeString::getOuolierRemovedIndex(feature_vec_all, 0.025, th_low, th_high);
+		}
+		//rewrite point cloud
+		for (int j = 0; j < feature_vecvec.size(); j++)
+		{
+			pcl::PointCloud<T_PointType>::Ptr cloud(new pcl::PointCloud<T_PointType>());
+			for (int i = 0; i < feature_vecvec[j].size(); i++)
+			{
+				if (feature_vecvec[j][i] < th_low) continue;
+				if (th_high < feature_vecvec[j][i]) continue;
+				cloud->push_back(cloud_vec[j]->points[i]);
+			}
+			pcl::copyPointCloud(*cloud, *cloud_vec[j]);
+		}
+		//recalc feature
+		feature_vecvec.clear();
+		for (int j = 0; j < cloud_vec.size(); j++)
+		{
+			vector<float> feature_vec;
+			for (int i = 0; i < cloud_vec[j]->size(); i++)
+			{
+				if (!b_useVelodyneFeature)
+					feature_vec.push_back((float)((int)cloud_vec[j]->points[i].r));
+				else
+					feature_vec.push_back((float)((int)cloud_vec[j]->points[i].g));
+			}
+			feature_vecvec.push_back(feature_vec);
+		}
+	}
+	
+	//calc
+	//vector<vector<float>> featureDivergence_vecvec;
+	//vector<vector<float>> feature_vecvec;
+	for (int j = 0; j < cloud_vec.size(); j++)
+	{
+		cout << "j:" << j << endl;
+
+		//vector<float> feature_vec;
+		//for (int i = 0; i < cloud_vec[j]->size(); i++)
+		//{
+		//	if (!b_useVelodyneFeature)
+		//		feature_vec.push_back((float)((int)cloud_vec[j]->points[i].r));
+		//	else
+		//		feature_vec.push_back((float)((int)cloud_vec[j]->points[i].g));
+		//}
+
+		//feature_vecvec.push_back(feature_vec);
+
+		{
+			vector<float> feature_calcHistogram;
+			for (int i = 0; i < feature_vecvec[j].size(); i++)
+				feature_calcHistogram.push_back(feature_vecvec[j][i]);
+			vector<int> hist_vec = CTimeString::getHostogram(feature_calcHistogram, 80, true);
+		}
+	}
+
+	float feature_all_min = std::numeric_limits<float>::max();
+	float feature_all_max = -std::numeric_limits<float>::max();
+	{
+		cout << "show histogram of all features" << endl;
+		vector<float> features_all;
+		for (int j = 0; j < feature_vecvec.size(); j++)
+			features_all.insert(features_all.end(), feature_vecvec[j].begin(), feature_vecvec[j].end());
+		vector<float> feature_calcHistogram;
+
+		for (int j = 0; j < features_all.size(); j++)
+		{
+			feature_calcHistogram.push_back(features_all[j]);
+			if (feature_all_min > features_all[j]) feature_all_min = features_all[j];
+			if (feature_all_max < features_all[j]) feature_all_max = features_all[j];
+
+		}
+		vector<int> hist_vec = CTimeString::getHostogram(feature_calcHistogram, 80, true);
+	}
+
+	//give color (and z by features) to pointcloud
+	for (int j = 0; j < cloud_vec.size(); j++)
+	{
+		pcl::PointCloud<T_PointType>::Ptr cloud_colored(new pcl::PointCloud<T_PointType>());
+		pcl::copyPointCloud(*cloud_vec[j], *cloud_colored);
+
+		pcl::PointCloud<T_PointType>::Ptr cloud_ZValue(new pcl::PointCloud<T_PointType>());
+
+		for (int i = 0; i < cloud_vec[j]->size(); i++)
+		{
+			vector<std::uint8_t> color_vec;
+			color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(feature_vecvec[j][i], feature_all_max, feature_all_min);
+			cloud_colored->points[i].r = color_vec[0];
+			cloud_colored->points[i].g = color_vec[1];
+			cloud_colored->points[i].b = color_vec[2];
+		}
+
+		//give z by features
+		pcl::copyPointCloud(*cloud_colored, *cloud_ZValue);
+		*cloud_ZValue = *CKataokaPCL::getPointCloud_ZAaxisByFeature(cloud_ZValue, feature_vecvec[j], 3.);
+
+		{
+			Eigen::Affine3f trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
+				CKataokaPCL::calcHomogeneousMatrixFromVector6d(40., 0., 0., 0., 0., 0.));
+			pcl::transformPointCloud(*cloud_colored, *cloud_colored, trans_);
+			*cloud_vec[j] += *cloud_colored;
+
+		}
+
+		{
+			Eigen::Affine3f trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
+				CKataokaPCL::calcHomogeneousMatrixFromVector6d(40., 0., 15., 0., 0., 0.));
+			pcl::transformPointCloud(*cloud_ZValue, *cloud_ZValue, trans_);
+			*cloud_vec[j] += *cloud_ZValue;
+		}
+
+	}
+
+	//showing
+	CPointVisualization<T_PointType> pv;
+	pv.setWindowName("differential");
+
+	int index_cloud = 0;
+	while (1)
+	{
+
+		if (((GetAsyncKeyState(VK_SPACE) & 1) == 1) && (index_cloud != cloud_vec.size()))
+		{
+			pv.setPointCloud(cloud_vec[index_cloud], filenames_cloud[index_cloud]);
+			cout << "index:" << index_cloud << endl;
+			index_cloud++;
+
+		}
+
+		if ((GetAsyncKeyState(VK_ESCAPE) & 1) == 1) break;
+
+		pv.updateViewer();
+	}
+	pv.closeViewer();
+
 
 }

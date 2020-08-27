@@ -139,3 +139,19 @@ vector<float> CFPFH_PCL::getFPFHVariance(pcl::PointCloud<pcl::FPFHSignature33>::
 
 	return fpfh_hist_SquaredError;
 }
+
+vector<vector<int>> CFPFH_PCL::getNearestOfFPFH(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
+	int num_near, pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh, vector<vector<float>> &squaredDistance_vecvec)
+{
+	squaredDistance_vecvec.clear();
+	vector<vector<int>> index_vecvec;
+	for (int j = 0; j < fpfh_src->size(); j++)
+	{
+		vector<int> index_vec;
+		vector<float> squaredDistance_vec;
+		int found_neighs = kdtree_fpfh->nearestKSearch(*fpfh_src, j, num_near, index_vec, squaredDistance_vec);
+		index_vecvec.push_back(index_vec);
+		squaredDistance_vecvec.push_back(squaredDistance_vec);
+	}
+	return index_vecvec;
+}

@@ -210,6 +210,6 @@ public:
 	void DoDifferential();
 	void DoDifferential_1pointcloud(string dir_);
 	void DoDifferential_SomePointclouds(string dir_);
-
+	void DoDifferential_showFeatureValue(string dir_);
 
 };

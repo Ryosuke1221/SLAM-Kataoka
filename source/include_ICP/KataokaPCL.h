@@ -596,4 +596,34 @@ public:
 		return featureGaussianFilter_vec;
 	}
 
+	template <class T_PointType>
+	static boost::shared_ptr<pcl::PointCloud<T_PointType>> getPointCloud_ZAaxisByFeature(
+		const boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_, const vector<float> &feature_vec,
+		float range_z_exist)
+	{
+		if (cloud_->size() != feature_vec.size())
+		{
+			cout << "ERROR: Point clous and features have a different size." << endl;
+			throw std::runtime_error("ERROR: Point clous and features have a different size.");
+		}
+
+		float feature_min = std::numeric_limits<float>::max();
+		float feature_max = -std::numeric_limits<float>::max();
+		float feature_range;
+		for (int j = 0; j < feature_vec.size(); j++)
+		{
+			if (feature_min > feature_vec[j]) feature_min = feature_vec[j];
+			if (feature_max < feature_vec[j]) feature_max = feature_vec[j];
+		}
+		feature_range = feature_max - feature_min;
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_output(new pcl::PointCloud<T_PointType>);
+		for (int j = 0; j < feature_vec.size(); j++)
+		{
+			float pos_z = (feature_vec[j] - feature_min) / feature_range * range_z_exist;
+			T_PointType point_ = cloud_->points[j];
+			point_.z = pos_z;
+			cloud_output->push_back(point_);
+		}
+		return cloud_output;
+	}
 };
