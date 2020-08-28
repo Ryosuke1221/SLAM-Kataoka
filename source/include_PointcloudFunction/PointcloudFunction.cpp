@@ -6869,7 +6869,7 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 
 	//showing
 	CPointVisualization<T_PointType> pv;
-	pv.setWindowName("differential");
+	pv.setWindowName("Differential");
 
 	int index_cloud = 0;
 	while (1)
