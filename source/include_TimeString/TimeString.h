@@ -82,7 +82,7 @@ public:
 	static vector<vector<float>> inputParameters_2dimension(string filename_, int row_small, int col_small);
 
 	template<typename T>
-	static vector<vector<T>> calcVectorPairPattern(vector<vector<T>> vectorPair_vecvec)
+	static vector<vector<T>> calcVectorPairPattern(vector<vector<T>> vectorPair_vecvec, bool b_cout = false)
 	{
 		vector<vector<T>> pattern_vecvec;
 
@@ -113,27 +113,30 @@ public:
 		//removeSameParameter(vectorPair_vecvec);
 		removeSameValue_vecvec_VectorPairPattern(vectorPair_vecvec);
 
-		cout << "show pattern" << endl;
-		for (int j = 0; j < pattern_vecvec.size(); j++)
+		if (b_cout)
 		{
-			string s_j = to_string(j);
-			if (s_j.size() < 4) s_j = " " + s_j;
-			if (s_j.size() < 4) s_j = " " + s_j;
-			if (s_j.size() < 4) s_j = " " + s_j;
-			cout << s_j << ":";
-			for (int i = 0; i < pattern_vecvec[j].size(); i++)
+			cout << "show pattern" << endl;
+			for (int j = 0; j < pattern_vecvec.size(); j++)
 			{
-				string s_value;
-				s_value = to_string(pattern_vecvec[j][i]);
-				if (s_value.size() < 4) s_value = " " + s_value;
-				if (s_value.size() < 4) s_value = " " + s_value;
-				if (s_value.size() < 4) s_value = " " + s_value;
-				cout << "  " << s_value;
+				string s_j = to_string(j);
+				if (s_j.size() < 4) s_j = " " + s_j;
+				if (s_j.size() < 4) s_j = " " + s_j;
+				if (s_j.size() < 4) s_j = " " + s_j;
+				cout << s_j << ":";
+				for (int i = 0; i < pattern_vecvec[j].size(); i++)
+				{
+					string s_value;
+					s_value = to_string(pattern_vecvec[j][i]);
+					if (s_value.size() < 4) s_value = " " + s_value;
+					if (s_value.size() < 4) s_value = " " + s_value;
+					if (s_value.size() < 4) s_value = " " + s_value;
+					cout << "  " << s_value;
 
+				}
+				cout << endl;
 			}
 			cout << endl;
 		}
-		cout << endl;
 
 		return pattern_vecvec;
 	}
@@ -367,7 +370,7 @@ public:
 		string s_start, int i_pos_start_fromS, string s_finish, int i_pos_finish_fromS);
 
 	template<typename T>
-	static vector<int> getHostogram(const vector<T> value_vec, int num_bin, bool b_cout = false)
+	static vector<int> getHostogram(const vector<T> &value_vec, int num_bin, bool b_cout = false)
 	{
 		T value_max = -std::numeric_limits<T>::max();
 		T value_min = std::numeric_limits<T>::max();
@@ -383,6 +386,14 @@ public:
 
 		float range_ = (value_max - value_min) / (float)num_bin;
 
+		vector<int> hist_vec = getHostogram(value_vec, value_max, value_min, range_, num_bin, b_cout);
+		return hist_vec;
+	}
+
+	template<typename T>
+	static vector<int> getHostogram(const vector<T> &value_vec, T value_max, T value_min,
+		T range_, int num_bin, bool b_cout = false)
+	{
 		vector<int> hist_vec;
 		hist_vec.resize(num_bin);
 		fill(hist_vec.begin(), hist_vec.end(), 0);
@@ -464,7 +475,7 @@ public:
 	}
 
 	template<typename T>
-	static vector<int> getOuolierRemovedIndex(const vector<T> value_vec_arg, float th_rate_BigAndSmall, 
+	static vector<int> getOuolierRemovedIndex(const vector<T> &value_vec_arg, float th_rate_BigAndSmall, 
 		float &output_edge_low, float &output_edge_high)
 	{
 		vector<vector<float>> value_vecvec;
@@ -494,7 +505,6 @@ public:
 
 		return output_index_vec;
 	}
-
 
 private:
 	static bool getDirectoryExistance(string foder_Path);

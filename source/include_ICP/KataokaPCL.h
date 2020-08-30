@@ -39,6 +39,8 @@
 
 #include"KataokaCorrespondence.h"
 #include"KataokaConvergence.h"
+#include "TimeString.h"
+
 
 namespace Eigen {
 
@@ -669,4 +671,122 @@ public:
 			feature_vecvec[j] = feature_vec;
 		}
 	}
+
+	template <typename T>
+	static vector<pair<int,int>> determineCorrespondences_feature_histogram(const vector<T> &feature_vec_src, 
+		const vector<T> &feature_vec_tgt, int num_bin, T feature_max, T feature_min, T feature_range, bool b_cout = false)
+	{
+		vector<vector<int>> index_hist_vecvec_src;
+		index_hist_vecvec_src.resize(num_bin);
+		for (int j = 0; j < feature_vec_src.size(); j++)
+		{
+			int i_bin = (int)((feature_vec_src[j] - feature_min) / feature_range);
+			if (feature_vec_src[j] == feature_max) i_bin--;
+			index_hist_vecvec_src[i_bin].push_back(j);
+		}
+
+		vector<vector<int>> index_hist_vecvec_tgt;
+		index_hist_vecvec_tgt.resize(num_bin);
+		for (int j = 0; j < feature_vec_tgt.size(); j++)
+		{
+			int i_bin = (int)((feature_vec_tgt[j] - feature_min) / feature_range);
+			if (feature_vec_tgt[j] == feature_max) i_bin--;
+			index_hist_vecvec_tgt[i_bin].push_back(j);
+		}
+
+		//calc pairs
+		vector<pair<int, int>> corr_vec;	//src tgt
+		for (int j = 0; j < index_hist_vecvec_src.size(); j++)
+		{
+			vector<vector<int>> temp_vecvec;
+			temp_vecvec.push_back(index_hist_vecvec_src[j]);
+			temp_vecvec.push_back(index_hist_vecvec_tgt[j]);
+			vector<vector<int>> VectorPairPattern_temp_vecvec;
+			VectorPairPattern_temp_vecvec = CTimeString::calcVectorPairPattern(temp_vecvec);
+			for (int i = 0; i < VectorPairPattern_temp_vecvec.size(); i++)
+				corr_vec.push_back(make_pair(VectorPairPattern_temp_vecvec[i][0], VectorPairPattern_temp_vecvec[i][1]));
+
+			if (b_cout)
+			{
+				cout << "j:" << j << endl;
+				cout << "VectorPairPattern_temp_vecvec.size():" << VectorPairPattern_temp_vecvec.size() << endl;
+			}
+
+		}
+
+		return corr_vec;
+	}
+
+	//template <class T_PointType>
+	//static vector<float> getPointCloud_featureDivergence(
+	//	boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_, const vector<float> &feature_vec,
+	//	boost::shared_ptr<pcl::KdTreeFLANN<T_PointType>> kdtree_, const float th_distance, float variance_, bool b_useGaussianFilter = false)
+
+
+	template <class T_PointType>
+	static pcl::Correspondences determineCorrespondences_output_treeArg(
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src,
+		boost::shared_ptr<pcl::KdTreeFLANN<T_PointType>> kdtree_tgt,
+		int num_nearest)
+	{
+		pcl::Correspondences correspondences;
+		correspondences.resize(cloud_src->size());
+		std::vector<int> index(1);
+		std::vector<float> distance(1);
+		unsigned int nr_valid_correspondences = 0;
+		for (size_t i = 0; i < cloud_src->size(); ++i)
+		{
+			int found_neighs = kdtree_tgt->nearestKSearch(cloud_src->at(i), num_nearest, index, distance);
+			pcl::Correspondence corr;
+			corr.index_query = i;
+			corr.index_match = index[0];
+			corr.distance = distance[0];	//squared
+			correspondences[nr_valid_correspondences++] = corr;
+		}
+		correspondences.resize(nr_valid_correspondences);
+		return correspondences;
+	}
+
+	static pcl::Correspondences getCorrespondences_eachPairHaving(const pcl::Correspondences &corr_src_tgt, const pcl::Correspondences &corr_tgt_src);
+
+	template <class T_PointType>
+	static pcl::Correspondences determineCorrespondences_feature(
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_feature_src, boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_feature_tgt,
+		boost::shared_ptr<pcl::KdTreeFLANN<T_PointType>> kdtree_src, boost::shared_ptr<pcl::KdTreeFLANN<T_PointType>> kdtree_tgt,
+		int num_nearest)
+	{
+		pcl::Correspondences corr_src_tgt = determineCorrespondences_output_treeArg(cloud_feature_src, kdtree_tgt, num_nearest);
+		pcl::Correspondences corr_tgt_src = determineCorrespondences_output_treeArg(cloud_feature_tgt, kdtree_src, num_nearest);
+		pcl::Correspondences corr_new = getCorrespondences_eachPairHaving(corr_src_tgt, corr_tgt_src);
+		return corr_new;
+	}
+
+	template <typename T>
+	static pcl::Correspondences determineCorrespondences_feature(vector<T> features_src, vector<T> features_tgt, int num_nearest)
+	{
+		typedef pcl::PointXY T_PointType;
+		pcl::PointCloud<T_PointType>::Ptr cloud_feature_src(new pcl::PointCloud<T_PointType>());
+		pcl::PointCloud<T_PointType>::Ptr cloud_feature_tgt(new pcl::PointCloud<T_PointType>());
+		for (int j = 0; j < features_src.size(); j++)
+		{
+			T_PointType point_;
+			point_.x = features_src[j];
+			cloud_feature_src->push_back(point_);
+		}
+		cloud_feature_src->is_dense = true;
+		for (int j = 0; j < features_tgt.size(); j++)
+		{
+			T_PointType point_;
+			point_.x = features_tgt[j];
+			cloud_feature_tgt->push_back(point_);
+		}
+		cloud_feature_tgt->is_dense = true;
+		pcl::KdTreeFLANN<T_PointType>::Ptr kdtree_src(new pcl::KdTreeFLANN<T_PointType>);
+		pcl::KdTreeFLANN<T_PointType>::Ptr kdtree_tgt(new pcl::KdTreeFLANN<T_PointType>);
+		kdtree_src->setInputCloud(cloud_feature_src);
+		kdtree_tgt->setInputCloud(cloud_feature_tgt);
+		pcl::Correspondences corr_new = determineCorrespondences_feature(cloud_feature_src, cloud_feature_tgt, kdtree_src, kdtree_tgt, num_nearest);
+		return corr_new;
+	}
+
 };

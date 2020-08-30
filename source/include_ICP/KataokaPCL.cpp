@@ -2233,3 +2233,58 @@ vector<int> CKataokaPCL::ICP_Chara_GetCharaData(pcl::PointCloud<pcl::PointXYZRGB
 	}
 	return chara_vec;
 }
+
+pcl::Correspondences CKataokaPCL::getCorrespondences_eachPairHaving(const pcl::Correspondences &corr_src_tgt,
+	const pcl::Correspondences &corr_tgt_src)
+{
+	vector<vector<int>> index_corr_temp_vecvec;
+	for (int j = 0; j < corr_src_tgt.size(); j++)
+	{
+		vector<int> corr_vec;
+		corr_vec.push_back(corr_src_tgt[j].index_query);
+		corr_vec.push_back(corr_src_tgt[j].index_match);
+		index_corr_temp_vecvec.push_back(corr_vec);
+	}
+	for (int j = 0; j < corr_tgt_src.size(); j++)
+	{
+		vector<int> corr_vec;
+		corr_vec.push_back(corr_tgt_src[j].index_match);
+		corr_vec.push_back(corr_tgt_src[j].index_query);
+		index_corr_temp_vecvec.push_back(corr_vec);
+	}
+	CTimeString::sortVector2d_2dimension(index_corr_temp_vecvec, 0, 1);
+	vector<vector<int>> index_corr_vecvec;
+	int i_src_before;
+	int i_tgt_before;
+	for (int j = 0; j < index_corr_temp_vecvec.size(); j++)
+	{
+		if (j != 0)
+		{
+			if (index_corr_temp_vecvec[j][0] == i_src_before
+				&& index_corr_temp_vecvec[j][1] == i_tgt_before)
+			{
+				vector<int> corr_vec;
+				corr_vec.push_back(index_corr_temp_vecvec[j][0]);
+				corr_vec.push_back(index_corr_temp_vecvec[j][1]);
+				index_corr_vecvec.push_back(corr_vec);
+			}
+		}
+		i_src_before = index_corr_temp_vecvec[j][0];
+		i_tgt_before = index_corr_temp_vecvec[j][1];
+	}
+	pcl::Correspondences corr_new;
+	for (int j = 0; j < index_corr_vecvec.size(); j++)
+	{
+		int i_src = index_corr_vecvec[j][0];
+		int i_tgt = index_corr_vecvec[j][1];
+		for (int i = 0; i < corr_src_tgt.size(); i++)
+		{
+			if (!(corr_src_tgt[i].index_query == i_src
+				&& corr_src_tgt[i].index_match == i_tgt))
+				continue;
+			corr_new.push_back(corr_src_tgt[i]);
+		}
+	}
+	return corr_new;
+}
+

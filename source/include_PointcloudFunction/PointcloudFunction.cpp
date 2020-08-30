@@ -6685,6 +6685,10 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 	th_nir_max_color = 70.;
 
 	float sigma_weight;
+	int num_bin_hist = 80;
+
+	bool b_remove0value_nir = false;
+	//b_remove0value_nir = true;
 
 	{
 		vector<vector<string>> s_temp_vecvec;
@@ -6720,59 +6724,18 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 	vector<vector<float>> featureDivergence_vecvec;
 	for (int j = 0; j < cloud_vec.size(); j++)
 	{
-		cout << "j:" << j << endl;
-
+		//cout << "j:" << j << endl;
 		pcl::KdTreeFLANN<T_PointType>::Ptr kdtree_(new pcl::KdTreeFLANN<T_PointType>);
 		kdtree_->setInputCloud(cloud_vec[j]);
-
 		vector<float> featureDivergence_vec;
 		featureDivergence_vec = CKataokaPCL::getPointCloud_featureDivergence(cloud_vec[j], feature_vecvec[j], kdtree_, radius_differential, sigma_weight, true);
 		featureDivergence_vecvec.push_back(featureDivergence_vec);
-		{
-			vector<float> feature_calcHistogram;
-			for (int i = 0; i < featureDivergence_vec.size(); i++)
-			{
-				if (!b_useVelodyneFeature && featureDivergence_vec[i] == 0.) continue;
-				feature_calcHistogram.push_back(featureDivergence_vec[i]);
-			}
-			vector<int> hist_vec = CTimeString::getHostogram(feature_calcHistogram, 80, true);
-		}
-		float feature_min = std::numeric_limits<float>::max();
-		float feature_max = -std::numeric_limits<float>::max();
-		float feature_mean = 0.;
-		float feature_median;
-		float feature_first_quartile;
-		float feature_third_quartile;
-
-		for (int i = 0; i < featureDivergence_vec.size(); i++)
-		{
-			if (feature_min > featureDivergence_vec[i]) feature_min = featureDivergence_vec[i];
-			if (feature_max < featureDivergence_vec[i]) feature_max = featureDivergence_vec[i];
-		}
-		//calc median and quartile
-		{
-			vector<float> temp_vec = CTimeString::getMedian_Quartile(featureDivergence_vec);
-			feature_first_quartile = temp_vec[0];
-			feature_median = temp_vec[1];
-			feature_third_quartile = temp_vec[2];
-		}
-		//calc mean
-		{
-			for (int i = 0; i < featureDivergence_vec.size(); i++)
-				feature_mean += featureDivergence_vec[i];
-			if (featureDivergence_vec.size() != 0) feature_mean /= (float)featureDivergence_vec.size();
-			else feature_mean = 10000.;
-		}
-
-		cout << "feature_min:" << feature_min << endl;
-		cout << "feature_max:" << feature_max << endl;
-		cout << "feature_mean:" << feature_mean << endl;
-		cout << "feature_first_quartile:" << feature_first_quartile << endl;
-		cout << "feature_median:" << feature_median << endl;
-		cout << "feature_third_quartile:" << feature_third_quartile << endl;
-		cout << endl;
 	}
 
+
+	float value_max_hist;
+	float value_min_hist;
+	float range_hist;
 	{
 		cout << "show histogram of all features" << endl;
 		vector<float> features_all;
@@ -6781,10 +6744,130 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 		vector<float> feature_calcHistogram;
 		for (int j = 0; j < features_all.size(); j++)
 		{
-			if (!b_useVelodyneFeature && features_all[j] == 0.) continue;
+			if (b_remove0value_nir && !b_useVelodyneFeature && features_all[j] == 0.) continue;
 			feature_calcHistogram.push_back(features_all[j]);
 		}
-		vector<int> hist_vec = CTimeString::getHostogram(feature_calcHistogram, 80, true);
+
+		//histogram_all
+		value_max_hist = -std::numeric_limits<float>::max();
+		value_min_hist = std::numeric_limits<float>::max();
+
+		for (int j = 0; j < feature_calcHistogram.size(); j++)
+		{
+			if (value_max_hist < feature_calcHistogram[j]) value_max_hist = feature_calcHistogram[j];
+			if (value_min_hist > feature_calcHistogram[j]) value_min_hist = feature_calcHistogram[j];
+		}
+		cout << "value_max_hist:" << value_max_hist << endl;
+		cout << "value_min_hist:" << value_min_hist << endl;
+
+		range_hist = (value_max_hist - value_min_hist) / (float)num_bin_hist;
+
+		//vector<int> hist_vec = CTimeString::getHostogram(feature_calcHistogram, num_bin_hist, true);
+		vector<int> hist_vec = CTimeString::getHostogram(feature_calcHistogram, value_max_hist, value_min_hist,
+			range_hist, num_bin_hist, true);
+		cout << endl;
+
+		int index_bin_biggest;
+		int num_bin_biggest = 0;
+		for (int j = 0; j < hist_vec.size(); j++)
+		{
+			if (num_bin_biggest < hist_vec[j])
+			{
+				num_bin_biggest = hist_vec[j];
+				index_bin_biggest = j;
+			}
+		}
+
+		//index_bin_biggest
+		float value_biggestBin_min = (float)index_bin_biggest * range_hist + value_min_hist;
+		float value_biggestBin_max = value_biggestBin_min + range_hist;
+
+		vector<vector<int>> index_points_remove_vecvec;
+		for (int j = 0; j < featureDivergence_vecvec.size(); j++)
+		{
+			vector<int> index_points_remove_vec;
+			for (int i = 0; i < featureDivergence_vecvec[j].size(); i++)
+			{
+				if (value_biggestBin_min <= featureDivergence_vecvec[j][i] 
+					&& featureDivergence_vecvec[j][i] < value_biggestBin_max) index_points_remove_vec.push_back(i);
+			}
+			index_points_remove_vecvec.push_back(index_points_remove_vec);
+		}
+
+		for (int j = 0; j < index_points_remove_vecvec.size(); j++)
+		{
+			for (int i = index_points_remove_vecvec[j].size() - 1; i >= 0; i--)
+			{
+				cloud_vec[j]->points.erase(cloud_vec[j]->points.begin() + index_points_remove_vecvec[j][i]);
+				featureDivergence_vecvec[j].erase(featureDivergence_vecvec[j].begin() + index_points_remove_vecvec[j][i]);
+			}
+		}
+	}
+
+	//calc histogram
+	for (int j = 0; j < cloud_vec.size(); j++)
+	{
+		cout << "j:" << j << endl;
+
+		{
+			vector<float> feature_calcHistogram;
+			for (int i = 0; i < featureDivergence_vecvec[j].size(); i++)
+			{
+				if (b_remove0value_nir == !b_useVelodyneFeature && featureDivergence_vecvec[j][i] == 0.) continue;
+				feature_calcHistogram.push_back(featureDivergence_vecvec[j][i]);
+			}
+			vector<int> hist_vec = CTimeString::getHostogram(feature_calcHistogram, value_max_hist, value_min_hist,
+				range_hist, num_bin_hist, true);
+
+		}
+		float feature_min = std::numeric_limits<float>::max();
+		float feature_max = -std::numeric_limits<float>::max();
+		float feature_mean = 0.;
+		float feature_median;
+		float feature_first_quartile;
+		float feature_third_quartile;
+
+		for (int i = 0; i < featureDivergence_vecvec[j].size(); i++)
+		{
+			if (feature_min > featureDivergence_vecvec[j][i]) feature_min = featureDivergence_vecvec[j][i];
+			if (feature_max < featureDivergence_vecvec[j][i]) feature_max = featureDivergence_vecvec[j][i];
+		}
+		//calc median and quartile
+		{
+			vector<float> temp_vec = CTimeString::getMedian_Quartile(featureDivergence_vecvec[j]);
+			feature_first_quartile = temp_vec[0];
+			feature_median = temp_vec[1];
+			feature_third_quartile = temp_vec[2];
+		}
+		//calc mean
+		{
+			for (int i = 0; i < featureDivergence_vecvec[j].size(); i++)
+				feature_mean += featureDivergence_vecvec[j][i];
+			if (featureDivergence_vecvec[j].size() != 0) feature_mean /= (float)featureDivergence_vecvec[j].size();
+			else feature_mean = 10000.;
+		}
+
+		//cout << "feature_min:" << feature_min << endl;
+		//cout << "feature_max:" << feature_max << endl;
+		//cout << "feature_mean:" << feature_mean << endl;
+		//cout << "feature_first_quartile:" << feature_first_quartile << endl;
+		//cout << "feature_median:" << feature_median << endl;
+		//cout << "feature_third_quartile:" << feature_third_quartile << endl;
+		cout << endl;
+	}
+
+	//botsu?
+	vector<pair<int, int>> corr_vec = CKataokaPCL::determineCorrespondences_feature_histogram(featureDivergence_vecvec[1],
+		featureDivergence_vecvec[0], num_bin_hist, value_max_hist, value_min_hist, range_hist, true);
+	cout << "corr_vec.size():" << corr_vec.size() << endl;
+
+	{
+		int i_src = 1;
+		int i_tgt = 0;
+		int num_nearest = 10;
+		pcl::Correspondences corr_new;
+		corr_new = CKataokaPCL::determineCorrespondences_feature(featureDivergence_vecvec[i_src], featureDivergence_vecvec[i_tgt], 10);
+		cout << "corr_new.size():" << corr_new.size() << endl;
 	}
 
 	//give color to pointcloud
