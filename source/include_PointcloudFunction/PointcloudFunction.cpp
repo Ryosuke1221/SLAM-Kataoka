@@ -458,7 +458,7 @@ void CPointcloudFunction::FreeSpace()
 	typedef typename pcl::PointXYZRGB T_PointType;
 
 	int num_nearest = 10;
-	num_nearest = 1;
+	//num_nearest = 1;
 
 	string dir_ = "../../data";
 
@@ -502,24 +502,15 @@ void CPointcloudFunction::FreeSpace()
 
 	pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr feature_tree_(new pcl::KdTreeFLANN<pcl::FPFHSignature33>);
 	feature_tree_->setInputCloud(fpfh_tgt);
-
-	int num_index = 100;
-
-	vector<vector<int>> index_near_vecvec;
-	vector<vector<float>> squaredDistance_near_vecvec;
 	
-	index_near_vecvec = CFPFH_PCL::getNearestOfFPFH(fpfh_src, num_nearest, feature_tree_, squaredDistance_near_vecvec);
+	//index_near_vecvec = CFPFH_PCL::getNearestOfFPFH(fpfh_src, num_nearest, feature_tree_, squaredDistance_near_vecvec);
+	pcl::Correspondences corrs_;
+	corrs_ = CFPFH_PCL::getNearestOfFPFH(fpfh_src, num_nearest, feature_tree_);
 
-	for (int j = 0; j < index_near_vecvec.size(); j++)
+	for (int j = 0; j < corrs_.size(); j++)
 	{
-		cout << "j:" << j << "  ";
-		for (int i = 0; i < num_nearest; i++)
-		{
-			cout << "i:" << i << " ";
-			cout << "index:" << index_near_vecvec[j][i] << " ";
-			cout << "distance:" << squaredDistance_near_vecvec[j][i];
-		}
-		cout << endl;
+		if (j % 100 != 0) continue;
+		cout << "j:" << j << "  query:" << corrs_[j].index_query << " match:" << corrs_[j].index_match << " distance:" << corrs_[j].distance << endl;
 	}
 
 }
@@ -6413,6 +6404,7 @@ void CPointcloudFunction::DoDifferential()
 	cout << "select method:" << endl;
 	cout << "0: SomePointclouds" << endl;
 	cout << "1: DoDifferential_showFeatureValue" << endl;
+	cout << "2: FPFH_unique" << endl;
 	cout << "->";
 	cin >> i_method;
 
@@ -6421,10 +6413,12 @@ void CPointcloudFunction::DoDifferential()
 	//else if (i_method == 1)
 	//	DoDifferential_SomePointclouds(dir_);
 
-	if(i_method == 0)
+	if (i_method == 0)
 		DoDifferential_SomePointclouds(dir_);
 	else if (i_method == 1)
 		DoDifferential_showFeatureValue(dir_);
+	else if (i_method == 2)
+		FPFH_unique(dir_);
 
 }
 
@@ -7132,5 +7126,94 @@ void CPointcloudFunction::DoDifferential_showFeatureValue(string dir_)
 	}
 	pv.closeViewer();
 
+}
 
+void CPointcloudFunction::FPFH_unique(string dir_)
+{
+	typedef pcl::PointXYZRGB T_PointType;
+
+	string s_folder;
+	{
+		vector<string> filenames_folder;
+
+		CTimeString::getFileNames_folder(dir_, filenames_folder);
+		for (int i = 0; i < filenames_folder.size(); i++)
+		{
+			string s_i = to_string(i);
+			if (s_i.size() < 2) s_i = " " + s_i;
+			cout << "i:" << s_i << " " << filenames_folder[i] << endl;
+		}
+		cout << endl;
+		cout << "input folder you want to calc ->";
+		int i_folder;
+		cin >> i_folder;
+		s_folder = filenames_folder[i_folder];
+
+	}
+
+	//input pointcloud
+	vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec;
+	vector<string> filenames_cloud;
+	{
+		CTimeString::getFileNames_extension(dir_ + "/" + s_folder, filenames_cloud, ".pcd");
+		for (int i = 0; i < filenames_cloud.size(); i++)
+		{
+			pcl::PointCloud<T_PointType>::Ptr cloud(new pcl::PointCloud<T_PointType>());
+			pcl::io::loadPCDFile(dir_ + "/" + s_folder + "/" + filenames_cloud[i], *cloud);
+			cloud->is_dense = true;
+			cloud_vec.push_back(cloud);
+		}
+	}
+
+	//debug
+	//for (int j = cloud_vec.size() - 1; j >=1 ; j--)
+	//	cloud_vec.erase(cloud_vec.begin() + j);
+
+	for (int j = 0; j < cloud_vec.size(); j++)
+		cout << "j:" << j << " cloud_vec[j]->size():" << cloud_vec[j]->size() << endl;
+	cout << endl;
+
+	//calc normal
+	//0.5
+	//float voxel_size;
+	//voxel_size = 0.1;
+
+	float radius_normal_FPFH;
+	radius_normal_FPFH = 0.5;
+
+	const pcl::search::KdTree<T_PointType>::Ptr kdtree_(new pcl::search::KdTree<T_PointType>);
+	const auto view_point = T_PointType(0.0, 10.0, 10.0);
+	vector<pcl::PointCloud<pcl::Normal>::Ptr> normals_vec;
+	for (int j = 0; j < cloud_vec.size(); j++)
+	{
+		const pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
+		const pcl::NormalEstimation<T_PointType, pcl::Normal>::Ptr ne(new pcl::NormalEstimation<T_PointType, pcl::Normal>);
+		ne->setInputCloud(cloud_vec[j]);
+		ne->setRadiusSearch(radius_normal_FPFH);
+		ne->setSearchMethod(kdtree_);
+		ne->setViewPoint(view_point.x, view_point.y, view_point.z);
+		ne->compute(*normals);
+		normals_vec.push_back(normals);
+	}
+
+	vector<vector<int>> index_vecvec;
+	vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> fpfh_vec;
+	float radius_FPFH_center = 1.;
+	index_vecvec = CFPFH_PCL::getFPFH_unique_someRadius(cloud_vec, normals_vec, radius_FPFH_center, fpfh_vec, true);
+
+	pcl::Correspondences corrs_;
+	{
+		int i_tgt = 0;
+		int i_src = 1;
+		int num_near = 10;
+		corrs_ = CFPFH_PCL::getNearestOfFPFH_eachPairHaving_remove(fpfh_vec[i_src], fpfh_vec[i_tgt], num_near,
+			index_vecvec[i_src], index_vecvec[i_tgt]);
+
+		for (int j = 0; j < corrs_.size(); j++)
+		{
+			if (j % 100 != 0) continue;
+			cout << "j:" << j << "  query:" << corrs_[j].index_query << " match:" << corrs_[j].index_match << " distance:" << corrs_[j].distance << endl;
+		}
+
+	}
 }

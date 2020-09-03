@@ -36,7 +36,7 @@
 
 #include <pcl/filters/statistical_outlier_removal.h>
 
-//#include"TimeString.h"
+#include"TimeString.h"
 
 namespace Eigen {
 
@@ -51,92 +51,39 @@ using namespace std;
 class __declspec(dllexport) CFPFH_PCL
 {
 public:
+
 	template <class T_PointType>
 	static pcl::PointCloud<pcl::FPFHSignature33>::Ptr computeFPFH(
 		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_, boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_surface, float radius_normal, float radius_FPFH)
 	{
 		const auto view_point = T_PointType(0.0, 10.0, 10.0);
-
-		bool useBeforeVGF = false;
-		useBeforeVGF = true;
-
 		const pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
 		const pcl::NormalEstimation<T_PointType, pcl::Normal>::Ptr ne(new pcl::NormalEstimation<T_PointType, pcl::Normal>);
 		const pcl::search::KdTree<T_PointType>::Ptr kdtree(new pcl::search::KdTree<T_PointType>);
-		//ne->setInputCloud(cloud_.makeShared());
-		if (useBeforeVGF)
-			ne->setInputCloud(cloud_surface);
-		else
-			ne->setInputCloud(cloud_);
+		ne->setInputCloud(cloud_surface);
 		ne->setRadiusSearch(radius_normal);
 		ne->setSearchMethod(kdtree);
 		ne->setViewPoint(view_point.x, view_point.y, view_point.z);
 		ne->compute(*normals);
+		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh(new pcl::PointCloud<pcl::FPFHSignature33>);
+		fpfh = computeFPFH(cloud_, cloud_surface, normals, radius_FPFH);
+		return fpfh;
+	}
 
-		//const float radius_FPFH = voxel_size * 5.0;
+	template <class T_PointType>
+	static pcl::PointCloud<pcl::FPFHSignature33>::Ptr computeFPFH(
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_, boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_surface, 
+		boost::shared_ptr<pcl::PointCloud<pcl::Normal>> normals_, float radius_FPFH)
+	{
+		const pcl::search::KdTree<T_PointType>::Ptr kdtree_(new pcl::search::KdTree<T_PointType>);
 		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh(new pcl::PointCloud<pcl::FPFHSignature33>);
 		const pcl::FPFHEstimation<T_PointType, pcl::Normal, pcl::FPFHSignature33>::Ptr fpfhe(new pcl::FPFHEstimation<T_PointType, pcl::Normal, pcl::FPFHSignature33>);
 		fpfhe->setInputCloud(cloud_);
-		if (useBeforeVGF)
-			fpfhe->setSearchSurface(cloud_surface);
-		else
-		{
-		}
-		fpfhe->setInputNormals(normals);
-		fpfhe->setSearchMethod(kdtree);
-		//fpfhe->setKSearch(10);
+		fpfhe->setSearchSurface(cloud_surface);
+		fpfhe->setInputNormals(normals_);
+		fpfhe->setSearchMethod(kdtree_);
 		fpfhe->setRadiusSearch(radius_FPFH);
 		fpfhe->compute(*fpfh);
-		//cout << "fpfhe->getSearchParameter():" << fpfhe->getSearchParameter() << endl;
-
-		//{
-		//	pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh2(new pcl::PointCloud<pcl::FPFHSignature33>);
-		//	pcl::FPFHEstimation<T_PointType, pcl::Normal, pcl::FPFHSignature33> fpfhe2;
-		//	cout << "fpfhe2.getKSearch():" << fpfhe2.getKSearch() << endl;
-		//	cout << "fpfhe2.getSearchParameter():" << fpfhe2.getSearchParameter() << endl;
-		//	fpfhe2.setInputCloud(cloud_.makeShared());
-		//	if (useBeforeVGF)
-		//		fpfhe2.setSearchSurface(cloud_surface.makeShared());
-		//	else
-		//	{
-		//	}
-		//	fpfhe2.setInputNormals(normals);
-		//	fpfhe2.setSearchMethod(kdtree);
-		//	fpfhe2.setRadiusSearch(radius_FPFH);
-		//	fpfhe2.compute(*fpfh2);
-		//	cout << "fpfhe.getKSearch():" << fpfhe2.getKSearch() << endl;
-		//	cout << "fpfhe.getSearchParameter():" << fpfhe2.getSearchParameter() << endl;
-		//	//cout << "fpfhe2.hist_f1_.size():" << fpfhe2.hist_f1_.size() << endl;
-		//	//cout << "fpfhe2.hist_f2_.size():" << fpfhe2.hist_f2_.size() << endl;
-		//	//cout << "fpfhe2.hist_f3_.size():" << fpfhe2.hist_f3_.size() << endl;
-		//	cout << "fpfhe2.k_:" << fpfhe2.k_ << endl;
-		//	//cout << "fpfhe2.nr_bins_f1_:" << fpfhe2.nr_bins_f1_ << endl;
-		//	//cout << "fpfhe2.nr_bins_f2_:" << fpfhe2.nr_bins_f2_ << endl;
-		//	//cout << "fpfhe2.nr_bins_f3_:" << fpfhe2.nr_bins_f3_ << endl;
-		//	//fpfhe2.setKSearch(0.5);
-		//	//fpfhe2.setSearchParameter(0.5);
-
-		//}
-
-		//cout << "fpfh->size:" << fpfh->size() << endl;
-		//vector<vector<double>> hist_vecvec;
-		//for (int j = 0; j < fpfh->size(); j++)
-		//{
-		//	//if (j % 1000 != 0) continue;
-		//	//cout << "j:" << j << " fpfh->points[j].descriptorSize:" << (int)fpfh->points[j].descriptorSize << endl;
-		//	//cout << "j:" << j << " fpfh->points[j].descriptorSize:" << fpfh->points[j].descriptorSize << endl;
-
-		//	int size_array = sizeof(fpfh->points[j].histogram);
-		//	vector<double> hist_vec;
-		//	for (int i = 0; i < size_array; i++)
-		//	{
-		//		hist_vec.push_back(fpfh->points[j].histogram[i]);
-		//	}
-		//	hist_vecvec.push_back(hist_vec);
-		//}
-		//cout << "hist_vecvec[0].size()" << hist_vecvec[0].size() << endl;
-		//string filename = "../../data/" + CTimeString::getTimeString() + "hist.csv";
-
 		return fpfh;
 	}
 
@@ -600,7 +547,141 @@ public:
 		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src, pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt);
 	static vector<float> getFPFHVariance(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_);
 
-	static vector<vector<int>> getNearestOfFPFH(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
-		int num_near, pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh, vector<vector<float>> &squaredDistance_vecvec);
+	static pcl::Correspondences CFPFH_PCL::getNearestOfFPFH(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
+		int num_near, pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh);
+
+	template <class T_PointType>
+	static vector<vector<bool>> getFPFHMeanAndSigma(vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec,
+		vector<pcl::PointCloud<pcl::Normal>::Ptr> normals_vec, float radius_FPFH, vector<float> &mean_fpfh, vector<float> &sigma_fpfh)
+	{
+		vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> fpfh_vec;
+		for (int j = 0; j < cloud_vec.size(); j++)
+			fpfh_vec.push_back(CFPFH_PCL::computeFPFH(cloud_vec[j], cloud_vec[j], normals_vec[j], radius_FPFH));
+		vector<vector<bool>> b_invalid_vecvec;
+		b_invalid_vecvec = getFPFHMeanAndSigma(fpfh_vec, mean_fpfh, sigma_fpfh);
+	}
+
+	static vector<vector<bool>> getFPFHMeanAndSigma(vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> fpfh_vec,
+		vector<float> &mean_fpfh, vector<float> &sigma_fpfh);
+
+	static vector<bool> CFPFH_PCL::getFPFH_unique(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_feature,
+		vector<bool> b_invalidPoint_vec, vector<float> mean_fpfh_vec, vector<float> sigma_fpfh_vec, float beta_fpfh);
+
+	template <class T_PointType>
+	static vector<vector<int>> getFPFH_unique_someRadius(vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec,
+		vector<pcl::PointCloud<pcl::Normal>::Ptr> normals_vec, vector<float> radius_FPFH_vec, 
+		vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> &fpfh_vec_output, bool b_cout = false)
+	{
+		fpfh_vec_output.clear();
+
+		vector<vector<bool>> b_unique_vecvec;
+		for (int j = 0; j < cloud_vec.size(); j++)
+		{
+			vector<bool> b_unique_vec;
+			b_unique_vec.resize(cloud_vec[j]->size());
+			fill(b_unique_vec.begin(), b_unique_vec.end(), true);
+			b_unique_vecvec.push_back(b_unique_vec);
+		}
+
+		for (int j = 0; j < radius_FPFH_vec.size(); j++)
+		{
+			if(b_cout) cout << "calc:  radius_FPFH_vec[j]:" << radius_FPFH_vec[j] << endl;
+
+			vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> fpfh_vec;
+			for (int i = 0; i < cloud_vec.size(); i++)
+				fpfh_vec.push_back(computeFPFH(cloud_vec[i], cloud_vec[i], normals_vec[i], radius_FPFH_vec[j]));
+
+			if (j == 1)	//center radius
+			{
+				for(int i=0;i< fpfh_vec.size();i++)
+					fpfh_vec_output.push_back(fpfh_vec[i]);
+			}
+
+			vector<float> mean_fpfh;
+			vector<float> sigma_fpfh;
+
+			vector<vector<bool>> b_invalidPoint_vecvec;
+			b_invalidPoint_vecvec = getFPFHMeanAndSigma(fpfh_vec, mean_fpfh, sigma_fpfh);
+			for (int i = 0; i < mean_fpfh.size(); i++)
+				if (b_cout) cout << "i:" << i << "  mean:" << mean_fpfh[i] << " sigma:" << sigma_fpfh[i] << endl;
+
+			float beta_fpfh = 2.;
+			for (int i = 0; i < fpfh_vec.size(); i++)
+			{
+				vector<bool> b_unique_vec;
+				b_unique_vec = getFPFH_unique(fpfh_vec[i], b_invalidPoint_vecvec[i], mean_fpfh, sigma_fpfh, beta_fpfh);
+				int num_unique = 0;
+				for (int k = 0; k < b_unique_vec.size(); k++)
+					if (b_unique_vec[k]) num_unique++;
+				if (b_cout) cout << "i:" << i << " num_unique:" << num_unique << endl;
+
+				for (int k = 0; k < b_unique_vec.size(); k++)
+					b_unique_vecvec[i][k] = b_unique_vecvec[i][k] * b_unique_vec[k];
+			}
+			if (b_cout) cout << endl;
+		}
+
+		if (b_cout)
+		{
+			cout << "show result" << endl;
+			for (int j = 0; j < b_unique_vecvec.size(); j++)
+			{
+				int num_unique = 0;
+				for (int i = 0; i < b_unique_vecvec[j].size(); i++)
+					if (b_unique_vecvec[j][i]) num_unique++;
+				cout << "j:" << j << " num_unique:" << num_unique << endl;
+			}
+		}
+
+		vector<vector<int>> index_vecvec;
+		for (int j = 0; j < b_unique_vecvec.size(); j++)
+		{
+			vector<int> index_vec;
+			for (int i = 0; i < b_unique_vecvec[j].size(); i++)
+				if (b_unique_vecvec[j][i]) index_vec.push_back(i);
+			index_vecvec.push_back(index_vec);
+		}
+
+		//remain only unique points
+		for (int j = 0; j < fpfh_vec_output.size(); j++)
+		{
+			for (int i = fpfh_vec_output[j]->size() - 1; i >= 0; i--)
+				if (!b_unique_vecvec[j][i]) fpfh_vec_output[j]->points.erase(fpfh_vec_output[j]->points.begin() + i);
+		}
+
+		for (int j = 0; j < fpfh_vec_output.size(); j++)
+			if (b_cout) cout << "j:" << j <<"  fpfh_vec_output[j]->points.size():"<< fpfh_vec_output[j]->points.size() << endl;
+
+		return index_vecvec;
+	}
+
+	//template <typename T_PointType>
+	//static vector<vector<int>> CFPFH_PCL::getFPFH_unique_someRadius(vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec,
+	//	vector<pcl::PointCloud<pcl::Normal>::Ptr> normals_vec, float radius_FPFH_center,
+	//	vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> &fpfh_vec_output, bool b_cout = false);
+
+	template <class T_PointType>
+	static vector<vector<int>> getFPFH_unique_someRadius(vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec,
+		vector<pcl::PointCloud<pcl::Normal>::Ptr> normals_vec, float radius_FPFH_center, 
+		vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> &fpfh_vec_output, bool b_cout = false)
+	{
+		vector<float> radius_FPFH_vec;
+		radius_FPFH_vec.push_back(radius_FPFH_center * 0.75);
+		radius_FPFH_vec.push_back(radius_FPFH_center);
+		radius_FPFH_vec.push_back(radius_FPFH_center * 1.25);
+		vector<vector<int>> index_vecvec;
+		index_vecvec = getFPFH_unique_someRadius(cloud_vec, normals_vec, radius_FPFH_vec, fpfh_vec_output, b_cout);
+		return index_vecvec;
+	}
+
+	static pcl::Correspondences getCorrespondences_eachPairHaving(const pcl::Correspondences &corr_src_tgt,
+		const pcl::Correspondences &corr_tgt_src);
+
+	static pcl::Correspondences getNearestOfFPFH_eachPairHaving(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
+		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt, int num_near, pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh_src,
+		pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh_tgt);
+
+	static pcl::Correspondences getNearestOfFPFH_eachPairHaving_remove(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
+		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt, int num_near, vector<int> index_unique_vec_src, vector<int> index_unique_vec_tgt);
 
 };

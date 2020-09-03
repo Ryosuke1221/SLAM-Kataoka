@@ -724,7 +724,7 @@ public:
 
 
 	template <class T_PointType>
-	static pcl::Correspondences determineCorrespondences_output_treeArg(
+	static pcl::Correspondences determineCorrespondences_output_kdtreeArg(
 		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src,
 		boost::shared_ptr<pcl::KdTreeFLANN<T_PointType>> kdtree_tgt,
 		int num_nearest)
@@ -755,8 +755,8 @@ public:
 		boost::shared_ptr<pcl::KdTreeFLANN<T_PointType>> kdtree_src, boost::shared_ptr<pcl::KdTreeFLANN<T_PointType>> kdtree_tgt,
 		int num_nearest)
 	{
-		pcl::Correspondences corr_src_tgt = determineCorrespondences_output_treeArg(cloud_feature_src, kdtree_tgt, num_nearest);
-		pcl::Correspondences corr_tgt_src = determineCorrespondences_output_treeArg(cloud_feature_tgt, kdtree_src, num_nearest);
+		pcl::Correspondences corr_src_tgt = determineCorrespondences_output_kdtreeArg(cloud_feature_src, kdtree_tgt, num_nearest);
+		pcl::Correspondences corr_tgt_src = determineCorrespondences_output_kdtreeArg(cloud_feature_tgt, kdtree_src, num_nearest);
 		pcl::Correspondences corr_new = getCorrespondences_eachPairHaving(corr_src_tgt, corr_tgt_src);
 		return corr_new;
 	}
