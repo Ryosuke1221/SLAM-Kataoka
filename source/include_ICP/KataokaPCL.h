@@ -762,7 +762,7 @@ public:
 	}
 
 	template <typename T>
-	static pcl::Correspondences determineCorrespondences_feature(vector<T> features_src, vector<T> features_tgt, int num_nearest)
+	static pcl::Correspondences determineCorrespondences_feature(const vector<T> &features_src, const vector<T> &features_tgt, int num_nearest)
 	{
 		typedef pcl::PointXY T_PointType;
 		pcl::PointCloud<T_PointType>::Ptr cloud_feature_src(new pcl::PointCloud<T_PointType>());
@@ -787,6 +787,51 @@ public:
 		kdtree_tgt->setInputCloud(cloud_feature_tgt);
 		pcl::Correspondences corr_new = determineCorrespondences_feature(cloud_feature_src, cloud_feature_tgt, kdtree_src, kdtree_tgt, num_nearest);
 		return corr_new;
+	}
+
+	template <typename T>
+	static pcl::Correspondences determineCorrespondences_feature_remove(const vector<T> &features_src, const vector<T> &features_tgt, 
+		const vector<int> &index_unique_vec_src, const vector<int> &index_unique_vec_tgt, int num_nearest)
+	{
+		vector<T> features_src_removed;
+		vector<T> features_tgt_removed;
+		for (int j = 0; j < index_unique_vec_src.size(); j++)
+			features_src_removed.push_back(features_src[index_unique_vec_src[j]]);
+		for (int j = 0; j < index_unique_vec_src.size(); j++)
+			features_tgt_removed.push_back(features_tgt[index_unique_vec_src[j]]);
+		pcl::Correspondences corrs_ = determineCorrespondences_feature(features_src_removed, features_tgt_removed, num_nearest);
+		for (int j = 0; j < corrs_.size(); j++)
+		{
+			corrs_[j].index_query = index_unique_vec_src[corrs_[j].index_query];
+			corrs_[j].index_match = index_unique_vec_tgt[corrs_[j].index_match];
+		}
+		return corrs_;
+	}
+
+
+	template <typename T>
+	static vector<int> calcFeatureIndex_removingBiggestBin(const vector<T> &features_vec, const vector<int> &hist_vec_all,
+		T range_hist, T value_min_hist)
+	{
+		int index_bin_biggest;
+		int num_bin_biggest = 0;
+		for (int j = 0; j < hist_vec_all.size(); j++)
+		{
+			if (num_bin_biggest < hist_vec_all[j])
+			{
+				num_bin_biggest = hist_vec_all[j];
+				index_bin_biggest = j;
+			}
+		}
+		T value_biggestBin_min = (T)index_bin_biggest * range_hist + value_min_hist;
+		T value_biggestBin_max = value_biggestBin_min + range_hist;
+		vector<int> index_valid_vec;
+		for (int j = 0; j < features_vec.size(); j++)
+		{
+			if (!(value_biggestBin_min <= features_vec[j] && features_vec[j] < value_biggestBin_max))
+				index_valid_vec.push_back(j);
+		}
+		return index_valid_vec;
 	}
 
 };

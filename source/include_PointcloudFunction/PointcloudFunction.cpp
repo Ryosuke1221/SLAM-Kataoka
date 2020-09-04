@@ -6730,6 +6730,7 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 	float value_max_hist;
 	float value_min_hist;
 	float range_hist;
+	vector<int> hist_vec_all;
 	{
 		cout << "show histogram of all features" << endl;
 		vector<float> features_all;
@@ -6757,45 +6758,56 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 		range_hist = (value_max_hist - value_min_hist) / (float)num_bin_hist;
 
 		//vector<int> hist_vec = CTimeString::getHostogram(feature_calcHistogram, num_bin_hist, true);
-		vector<int> hist_vec = CTimeString::getHostogram(feature_calcHistogram, value_max_hist, value_min_hist,
+		hist_vec_all = CTimeString::getHostogram(feature_calcHistogram, value_max_hist, value_min_hist,
 			range_hist, num_bin_hist, true);
 		cout << endl;
+	}
 
-		int index_bin_biggest;
-		int num_bin_biggest = 0;
-		for (int j = 0; j < hist_vec.size(); j++)
-		{
-			if (num_bin_biggest < hist_vec[j])
-			{
-				num_bin_biggest = hist_vec[j];
-				index_bin_biggest = j;
-			}
-		}
+	//remove points in biggest bin
+	vector<vector<int>> index_valid_vecvec;
+	{
+		//int index_bin_biggest;
+		//int num_bin_biggest = 0;
+		//for (int j = 0; j < hist_vec_all.size(); j++)
+		//{
+		//	if (num_bin_biggest < hist_vec_all[j])
+		//	{
+		//		num_bin_biggest = hist_vec_all[j];
+		//		index_bin_biggest = j;
+		//	}
+		//}
 
-		//index_bin_biggest
-		float value_biggestBin_min = (float)index_bin_biggest * range_hist + value_min_hist;
-		float value_biggestBin_max = value_biggestBin_min + range_hist;
+		////index_bin_biggest
+		//float value_biggestBin_min = (float)index_bin_biggest * range_hist + value_min_hist;
+		//float value_biggestBin_max = value_biggestBin_min + range_hist;
 
-		vector<vector<int>> index_points_remove_vecvec;
+		//vector<vector<int>> index_points_remove_vecvec;
+		//for (int j = 0; j < featureDivergence_vecvec.size(); j++)
+		//{
+		//	vector<int> index_points_remove_vec;
+		//	for (int i = 0; i < featureDivergence_vecvec[j].size(); i++)
+		//	{
+		//		if (value_biggestBin_min <= featureDivergence_vecvec[j][i]
+		//			&& featureDivergence_vecvec[j][i] < value_biggestBin_max) index_points_remove_vec.push_back(i);
+		//	}
+		//	index_points_remove_vecvec.push_back(index_points_remove_vec);
+		//}
+
+		//for (int j = 0; j < index_points_remove_vecvec.size(); j++)
+		//{
+		//	for (int i = index_points_remove_vecvec[j].size() - 1; i >= 0; i--)
+		//	{
+		//		cloud_vec[j]->points.erase(cloud_vec[j]->points.begin() + index_points_remove_vecvec[j][i]);
+		//		featureDivergence_vecvec[j].erase(featureDivergence_vecvec[j].begin() + index_points_remove_vecvec[j][i]);
+		//	}
+		//}
+
 		for (int j = 0; j < featureDivergence_vecvec.size(); j++)
 		{
-			vector<int> index_points_remove_vec;
-			for (int i = 0; i < featureDivergence_vecvec[j].size(); i++)
-			{
-				if (value_biggestBin_min <= featureDivergence_vecvec[j][i] 
-					&& featureDivergence_vecvec[j][i] < value_biggestBin_max) index_points_remove_vec.push_back(i);
-			}
-			index_points_remove_vecvec.push_back(index_points_remove_vec);
+			index_valid_vecvec.push_back(CKataokaPCL::calcFeatureIndex_removingBiggestBin(featureDivergence_vecvec[j], 
+				hist_vec_all, range_hist, value_min_hist));
 		}
 
-		for (int j = 0; j < index_points_remove_vecvec.size(); j++)
-		{
-			for (int i = index_points_remove_vecvec[j].size() - 1; i >= 0; i--)
-			{
-				cloud_vec[j]->points.erase(cloud_vec[j]->points.begin() + index_points_remove_vecvec[j][i]);
-				featureDivergence_vecvec[j].erase(featureDivergence_vecvec[j].begin() + index_points_remove_vecvec[j][i]);
-			}
-		}
 	}
 
 	//calc histogram
@@ -6803,64 +6815,34 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 	{
 		cout << "j:" << j << endl;
 
-		{
-			vector<float> feature_calcHistogram;
-			for (int i = 0; i < featureDivergence_vecvec[j].size(); i++)
-			{
-				if (b_remove0value_nir == !b_useVelodyneFeature && featureDivergence_vecvec[j][i] == 0.) continue;
-				feature_calcHistogram.push_back(featureDivergence_vecvec[j][i]);
-			}
-			vector<int> hist_vec = CTimeString::getHostogram(feature_calcHistogram, value_max_hist, value_min_hist,
-				range_hist, num_bin_hist, true);
+		vector<float> feature_calcHistogram;
+		//for (int i = 0; i < featureDivergence_vecvec[j].size(); i++)
+		//{
+		//	if (b_remove0value_nir == !b_useVelodyneFeature && featureDivergence_vecvec[j][i] == 0.) continue;
+		//	feature_calcHistogram.push_back(featureDivergence_vecvec[j][i]);
+		//}
 
-		}
-		float feature_min = std::numeric_limits<float>::max();
-		float feature_max = -std::numeric_limits<float>::max();
-		float feature_mean = 0.;
-		float feature_median;
-		float feature_first_quartile;
-		float feature_third_quartile;
+		for (int i = 0; i < index_valid_vecvec[j].size(); i++)
+			feature_calcHistogram.push_back(featureDivergence_vecvec[j][index_valid_vecvec[j][i]]);
 
-		for (int i = 0; i < featureDivergence_vecvec[j].size(); i++)
-		{
-			if (feature_min > featureDivergence_vecvec[j][i]) feature_min = featureDivergence_vecvec[j][i];
-			if (feature_max < featureDivergence_vecvec[j][i]) feature_max = featureDivergence_vecvec[j][i];
-		}
-		//calc median and quartile
-		{
-			vector<float> temp_vec = CTimeString::getMedian_Quartile(featureDivergence_vecvec[j]);
-			feature_first_quartile = temp_vec[0];
-			feature_median = temp_vec[1];
-			feature_third_quartile = temp_vec[2];
-		}
-		//calc mean
-		{
-			for (int i = 0; i < featureDivergence_vecvec[j].size(); i++)
-				feature_mean += featureDivergence_vecvec[j][i];
-			if (featureDivergence_vecvec[j].size() != 0) feature_mean /= (float)featureDivergence_vecvec[j].size();
-			else feature_mean = 10000.;
-		}
-
-		//cout << "feature_min:" << feature_min << endl;
-		//cout << "feature_max:" << feature_max << endl;
-		//cout << "feature_mean:" << feature_mean << endl;
-		//cout << "feature_first_quartile:" << feature_first_quartile << endl;
-		//cout << "feature_median:" << feature_median << endl;
-		//cout << "feature_third_quartile:" << feature_third_quartile << endl;
+		vector<int> hist_vec = CTimeString::getHostogram(feature_calcHistogram, value_max_hist, value_min_hist,
+			range_hist, num_bin_hist, true);
 		cout << endl;
 	}
 
-	//botsu?
-	vector<pair<int, int>> corr_vec = CKataokaPCL::determineCorrespondences_feature_histogram(featureDivergence_vecvec[1],
-		featureDivergence_vecvec[0], num_bin_hist, value_max_hist, value_min_hist, range_hist, true);
-	cout << "corr_vec.size():" << corr_vec.size() << endl;
+	////botsu?
+	//vector<pair<int, int>> corr_vec = CKataokaPCL::determineCorrespondences_feature_histogram(featureDivergence_vecvec[1],
+	//	featureDivergence_vecvec[0], num_bin_hist, value_max_hist, value_min_hist, range_hist, true);
+	//cout << "corr_vec.size():" << corr_vec.size() << endl;
 
 	{
 		int i_src = 1;
 		int i_tgt = 0;
 		int num_nearest = 10;
 		pcl::Correspondences corr_new;
-		corr_new = CKataokaPCL::determineCorrespondences_feature(featureDivergence_vecvec[i_src], featureDivergence_vecvec[i_tgt], 10);
+		//corr_new = CKataokaPCL::determineCorrespondences_feature(featureDivergence_vecvec[i_src], featureDivergence_vecvec[i_tgt], num_nearest);
+		corr_new = CKataokaPCL::determineCorrespondences_feature_remove(featureDivergence_vecvec[i_src], featureDivergence_vecvec[i_tgt],
+			index_valid_vecvec[i_src], index_valid_vecvec[i_tgt], num_nearest);
 		cout << "corr_new.size():" << corr_new.size() << endl;
 	}
 
@@ -6868,65 +6850,127 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 	for (int j = 0; j < cloud_vec.size(); j++)
 	{
 		pcl::PointCloud<T_PointType>::Ptr cloud_colored(new pcl::PointCloud<T_PointType>());
-		pcl::copyPointCloud(*cloud_vec[j], *cloud_colored);
+		//pcl::copyPointCloud(*cloud_vec[j], *cloud_colored);
+		for (int i = 0; i < index_valid_vecvec[j].size(); i++)
+			cloud_colored->push_back(cloud_vec[j]->points[index_valid_vecvec[j][i]]);
 		pcl::PointCloud<T_PointType>::Ptr cloud_ZValue(new pcl::PointCloud<T_PointType>());
+		vector<float> feature_vec;
+		for (int i = 0; i < index_valid_vecvec[j].size(); i++)
+			feature_vec.push_back(featureDivergence_vecvec[j][index_valid_vecvec[j][i]]);
 
-		for (int i = 0; i < cloud_vec[j]->size(); i++)
+		for (int i = 0; i < index_valid_vecvec[j].size(); i++)
 		{
 			vector<std::uint8_t> color_vec;
 			//color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyHSV(featureDivergence_vec[i], feature_max, feature_min);
 
+			//if (b_useVelodyneFeature)
+			//	color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(feature_vec[i], th_velodyne_max_color, th_velodyne_min_color);
+			//else
+			//	color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(feature_vec[i], th_nir_max_color, th_nir_min_color);
 			if (b_useVelodyneFeature)
-				color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(featureDivergence_vecvec[j][i], th_velodyne_max_color, th_velodyne_min_color);
+				color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(feature_vec[i], value_max_hist, value_min_hist);
 			else
-				color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(featureDivergence_vecvec[j][i], th_nir_max_color, th_nir_min_color);
+				color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(feature_vec[i], value_max_hist, value_min_hist);
 
 			cloud_colored->points[i].r = color_vec[0];
 			cloud_colored->points[i].g = color_vec[1];
 			cloud_colored->points[i].b = color_vec[2];
 
-			if (fabs(featureDivergence_vecvec[j][i]) == 0.)
+			if (fabs(feature_vec[i]) == 0.)
 			{
 				cloud_colored->points[i].r = 255;
 				cloud_colored->points[i].g = 255;
 				cloud_colored->points[i].b = 255;
 			}
 
-			if (b_useVelodyneFeature)
-			{
-				if (th_velodyne_min_color > featureDivergence_vecvec[j][i])
-				{
-					cloud_colored->points[j].r = 100;
-					cloud_colored->points[j].g = 100;
-					cloud_colored->points[j].b = 100;
-				}
-				else if (th_velodyne_max_color < featureDivergence_vecvec[j][i])
-				{
-					cloud_colored->points[j].r = 255;
-					cloud_colored->points[j].g = 255;
-					cloud_colored->points[j].b = 0;
-				}
-			}
-			else
-			{
-				if (th_nir_min_color > featureDivergence_vecvec[j][i])
-				{
-					cloud_colored->points[j].r = 100;
-					cloud_colored->points[j].g = 100;
-					cloud_colored->points[j].b = 100;
-				}
-				else if (th_nir_max_color < featureDivergence_vecvec[j][i])
-				{
-					cloud_colored->points[j].r = 255;
-					cloud_colored->points[j].g = 255;
-					cloud_colored->points[j].b = 0;
-				}
-			}
+			//if (b_useVelodyneFeature)
+			//{
+			//	if (th_velodyne_min_color > feature_vec[i])
+			//	{
+			//		cloud_colored->points[i].r = 100;
+			//		cloud_colored->points[i].g = 100;
+			//		cloud_colored->points[i].b = 100;
+			//	}
+			//	else if (th_velodyne_max_color < feature_vec[i])
+			//	{
+			//		cloud_colored->points[i].r = 255;
+			//		cloud_colored->points[i].g = 255;
+			//		cloud_colored->points[i].b = 0;
+			//	}
+			//}
+			//else
+			//{
+			//	if (th_nir_min_color > feature_vec[i])
+			//	{
+			//		cloud_colored->points[i].r = 100;
+			//		cloud_colored->points[i].g = 100;
+			//		cloud_colored->points[i].b = 100;
+			//	}
+			//	else if (th_nir_max_color < feature_vec[i])
+			//	{
+			//		cloud_colored->points[i].r = 255;
+			//		cloud_colored->points[i].g = 255;
+			//		cloud_colored->points[i].b = 0;
+			//	}
+			//}
 		}
+
+		//for (int i = 0; i < cloud_vec[j]->size(); i++)
+		//{
+		//	vector<std::uint8_t> color_vec;
+		//	//color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyHSV(featureDivergence_vec[i], feature_max, feature_min);
+
+		//	if (b_useVelodyneFeature)
+		//		color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(featureDivergence_vecvec[j][i], th_velodyne_max_color, th_velodyne_min_color);
+		//	else
+		//		color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(featureDivergence_vecvec[j][i], th_nir_max_color, th_nir_min_color);
+
+		//	cloud_colored->points[i].r = color_vec[0];
+		//	cloud_colored->points[i].g = color_vec[1];
+		//	cloud_colored->points[i].b = color_vec[2];
+
+		//	if (fabs(featureDivergence_vecvec[j][i]) == 0.)
+		//	{
+		//		cloud_colored->points[i].r = 255;
+		//		cloud_colored->points[i].g = 255;
+		//		cloud_colored->points[i].b = 255;
+		//	}
+
+		//	if (b_useVelodyneFeature)
+		//	{
+		//		if (th_velodyne_min_color > featureDivergence_vecvec[j][i])
+		//		{
+		//			cloud_colored->points[j].r = 100;
+		//			cloud_colored->points[j].g = 100;
+		//			cloud_colored->points[j].b = 100;
+		//		}
+		//		else if (th_velodyne_max_color < featureDivergence_vecvec[j][i])
+		//		{
+		//			cloud_colored->points[j].r = 255;
+		//			cloud_colored->points[j].g = 255;
+		//			cloud_colored->points[j].b = 0;
+		//		}
+		//	}
+		//	else
+		//	{
+		//		if (th_nir_min_color > featureDivergence_vecvec[j][i])
+		//		{
+		//			cloud_colored->points[j].r = 100;
+		//			cloud_colored->points[j].g = 100;
+		//			cloud_colored->points[j].b = 100;
+		//		}
+		//		else if (th_nir_max_color < featureDivergence_vecvec[j][i])
+		//		{
+		//			cloud_colored->points[j].r = 255;
+		//			cloud_colored->points[j].g = 255;
+		//			cloud_colored->points[j].b = 0;
+		//		}
+		//	}
+		//}
 
 		//give z by features
 		pcl::copyPointCloud(*cloud_colored, *cloud_ZValue);
-		*cloud_ZValue = *CKataokaPCL::getPointCloud_ZAaxisByFeature(cloud_ZValue, featureDivergence_vecvec[j], 10.);
+		*cloud_ZValue = *CKataokaPCL::getPointCloud_ZAaxisByFeature(cloud_ZValue, feature_vec, 10.);
 
 		{
 			Eigen::Affine3f trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
@@ -7206,8 +7250,8 @@ void CPointcloudFunction::FPFH_unique(string dir_)
 		int i_tgt = 0;
 		int i_src = 1;
 		int num_near = 10;
-		corrs_ = CFPFH_PCL::getNearestOfFPFH_eachPairHaving_remove(fpfh_vec[i_src], fpfh_vec[i_tgt], num_near,
-			index_vecvec[i_src], index_vecvec[i_tgt]);
+		corrs_ = CFPFH_PCL::getNearestOfFPFH_eachPairHaving_remove(fpfh_vec[i_src], fpfh_vec[i_tgt],
+			index_vecvec[i_src], index_vecvec[i_tgt], num_near);
 
 		for (int j = 0; j < corrs_.size(); j++)
 		{

@@ -655,11 +655,6 @@ public:
 		return index_vecvec;
 	}
 
-	//template <typename T_PointType>
-	//static vector<vector<int>> CFPFH_PCL::getFPFH_unique_someRadius(vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec,
-	//	vector<pcl::PointCloud<pcl::Normal>::Ptr> normals_vec, float radius_FPFH_center,
-	//	vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> &fpfh_vec_output, bool b_cout = false);
-
 	template <class T_PointType>
 	static vector<vector<int>> getFPFH_unique_someRadius(vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec,
 		vector<pcl::PointCloud<pcl::Normal>::Ptr> normals_vec, float radius_FPFH_center, 
@@ -678,10 +673,10 @@ public:
 		const pcl::Correspondences &corr_tgt_src);
 
 	static pcl::Correspondences getNearestOfFPFH_eachPairHaving(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
-		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt, int num_near, pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh_src,
-		pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh_tgt);
+		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt, pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh_src,
+		pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh_tgt, int num_near);
 
 	static pcl::Correspondences getNearestOfFPFH_eachPairHaving_remove(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
-		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt, int num_near, vector<int> index_unique_vec_src, vector<int> index_unique_vec_tgt);
+		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt, const vector<int> &index_unique_vec_src, const vector<int> &index_unique_vec_tgt, int num_near);
 
 };
