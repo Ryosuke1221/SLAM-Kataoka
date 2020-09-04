@@ -6344,7 +6344,7 @@ void CPointcloudFunction::DoMappingFromTrajectory()
 	typedef typename CPointVisualization<T_PointType> CPV;
 	CPV pv;
 	pv.setWindowName("MAP");
-	if(b_useGrid) pv.addGrid(30., 30., -30., -30.);
+	if(b_useGrid) pv.drawGrid(30., 30., -30., -30.);
 
 	pcl::PointCloud<T_PointType>::Ptr cloud_map(new pcl::PointCloud<T_PointType>());
 
@@ -6835,16 +6835,51 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 	//	featureDivergence_vecvec[0], num_bin_hist, value_max_hist, value_min_hist, range_hist, true);
 	//cout << "corr_vec.size():" << corr_vec.size() << endl;
 
+	pcl::Correspondences corr_new;
 	{
 		int i_src = 1;
 		int i_tgt = 0;
 		int num_nearest = 10;
-		pcl::Correspondences corr_new;
 		//corr_new = CKataokaPCL::determineCorrespondences_feature(featureDivergence_vecvec[i_src], featureDivergence_vecvec[i_tgt], num_nearest);
 		corr_new = CKataokaPCL::determineCorrespondences_feature_remove(featureDivergence_vecvec[i_src], featureDivergence_vecvec[i_tgt],
 			index_valid_vecvec[i_src], index_valid_vecvec[i_tgt], num_nearest);
 		cout << "corr_new.size():" << corr_new.size() << endl;
 	}
+
+	////show corr
+	//{
+	//	//showing
+	//	CPointVisualization<T_PointType> pv;
+	//	pv.setWindowName("Pairs");
+	//	pcl::PointCloud<T_PointType>::Ptr cloud_show(new pcl::PointCloud<T_PointType>());
+	//	pcl::PointCloud<T_PointType>::Ptr cloud_src(new pcl::PointCloud<T_PointType>());
+	//	pcl::PointCloud<T_PointType>::Ptr cloud_tgt(new pcl::PointCloud<T_PointType>());
+	//	pcl::copyPointCloud(*cloud_vec[1], *cloud_src);
+	//	pcl::copyPointCloud(*cloud_vec[0], *cloud_tgt);
+	//	{
+	//		Eigen::Affine3f trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
+	//			CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 10., 0., 0., 0.));
+	//		pcl::transformPointCloud(*cloud_src, *cloud_src, trans_);
+	//	}
+	//	*cloud_show += *cloud_src;
+	//	*cloud_show += *cloud_tgt;
+	//	pv.setPointCloud(cloud_show);
+	//	vector<std::uint8_t> color_vec;
+	//	color_vec.push_back(100);
+	//	color_vec.push_back(100);
+	//	color_vec.push_back(100);
+	//	cout << "corr_new.size():" << corr_new.size() << endl;
+	//	for (int j = corr_new.size() - 1; j >= 0; j--)
+	//		if (j > 100) corr_new.erase(corr_new.begin() + j);
+	//	cout << "corr_new.size():" << corr_new.size() << endl;
+	//	pv.drawCorrespondance(cloud_src, cloud_tgt, corr_new, color_vec);
+	//	while (1)
+	//	{
+	//		if ((GetAsyncKeyState(VK_ESCAPE) & 1) == 1) break;
+	//		pv.updateViewer();
+	//	}
+	//	pv.closeViewer();
+	//}
 
 	//give color to pointcloud
 	for (int j = 0; j < cloud_vec.size(); j++)
@@ -6915,59 +6950,6 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 			//}
 		}
 
-		//for (int i = 0; i < cloud_vec[j]->size(); i++)
-		//{
-		//	vector<std::uint8_t> color_vec;
-		//	//color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyHSV(featureDivergence_vec[i], feature_max, feature_min);
-
-		//	if (b_useVelodyneFeature)
-		//		color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(featureDivergence_vecvec[j][i], th_velodyne_max_color, th_velodyne_min_color);
-		//	else
-		//		color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(featureDivergence_vecvec[j][i], th_nir_max_color, th_nir_min_color);
-
-		//	cloud_colored->points[i].r = color_vec[0];
-		//	cloud_colored->points[i].g = color_vec[1];
-		//	cloud_colored->points[i].b = color_vec[2];
-
-		//	if (fabs(featureDivergence_vecvec[j][i]) == 0.)
-		//	{
-		//		cloud_colored->points[i].r = 255;
-		//		cloud_colored->points[i].g = 255;
-		//		cloud_colored->points[i].b = 255;
-		//	}
-
-		//	if (b_useVelodyneFeature)
-		//	{
-		//		if (th_velodyne_min_color > featureDivergence_vecvec[j][i])
-		//		{
-		//			cloud_colored->points[j].r = 100;
-		//			cloud_colored->points[j].g = 100;
-		//			cloud_colored->points[j].b = 100;
-		//		}
-		//		else if (th_velodyne_max_color < featureDivergence_vecvec[j][i])
-		//		{
-		//			cloud_colored->points[j].r = 255;
-		//			cloud_colored->points[j].g = 255;
-		//			cloud_colored->points[j].b = 0;
-		//		}
-		//	}
-		//	else
-		//	{
-		//		if (th_nir_min_color > featureDivergence_vecvec[j][i])
-		//		{
-		//			cloud_colored->points[j].r = 100;
-		//			cloud_colored->points[j].g = 100;
-		//			cloud_colored->points[j].b = 100;
-		//		}
-		//		else if (th_nir_max_color < featureDivergence_vecvec[j][i])
-		//		{
-		//			cloud_colored->points[j].r = 255;
-		//			cloud_colored->points[j].g = 255;
-		//			cloud_colored->points[j].b = 0;
-		//		}
-		//	}
-		//}
-
 		//give z by features
 		pcl::copyPointCloud(*cloud_colored, *cloud_ZValue);
 		*cloud_ZValue = *CKataokaPCL::getPointCloud_ZAaxisByFeature(cloud_ZValue, feature_vec, 10.);
@@ -6977,7 +6959,6 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 				CKataokaPCL::calcHomogeneousMatrixFromVector6d(40., 0., 0., 0., 0., 0.));
 			pcl::transformPointCloud(*cloud_colored, *cloud_colored, trans_);
 			*cloud_vec[j] += *cloud_colored;
-
 		}
 
 		{
@@ -7001,7 +6982,6 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 			pv.setPointCloud(cloud_vec[index_cloud], filenames_cloud[index_cloud]);
 			cout << "index:" << index_cloud << endl;
 			index_cloud++;
-
 		}
 
 		if ((GetAsyncKeyState(VK_ESCAPE) & 1) == 1) break;

@@ -209,7 +209,7 @@ public:
 	void drawTrajectory(vector<Eigen::Vector6d> trajectory_vec_vec, int i_frame, bool b_showNumber, bool b_showArrow, string s_name = "");
 	void deleteTrajectory(string s_name = "");
 
-	void addGrid(float x_max_arg, float y_max_arg, float x_min_arg, float y_min_arg)
+	void drawGrid(float x_max_arg, float y_max_arg, float x_min_arg, float y_min_arg)
 	{
 		typedef pcl::PointXYZRGB T_PointType;
 		T_PointType point_color;
@@ -265,6 +265,34 @@ public:
 		//draw line
 		for (int j = 0; j < cloud_min->size(); j++)
 			drawLine(cloud_min->points[j], cloud_max->points[j], "grid_line" + to_string(j));
+	}
+
+	template < typename T_Point >
+	void drawCorrespondance(boost::shared_ptr<pcl::PointCloud<T_Point>> cloud_src,
+		boost::shared_ptr<pcl::PointCloud<T_Point>> cloud_tgt, pcl::Correspondences corr_, vector<std::uint8_t> color_vec)
+	{
+		string s_corr = "corr";
+		//remove old corr
+		for (int j = M_s_line_vec.size() - 1; j >= 0; j--)
+		{
+			vector<int> find_vec = CTimeString::find_all(M_s_line_vec[j], s_corr);
+			if (find_vec.size() != 0) M_s_line_vec.erase(M_s_line_vec.begin() + j);
+		}
+		//make new corr
+		for (int j = 0; j < corr_.size(); j++)
+		{
+			string s_j = to_string(j);
+			for (int i = 0; i < 6; i++)
+				if (s_j.size() < 6) s_j = " " + s_j;
+			string s_name = s_j + s_corr;
+			pcl::PointXYZRGB point_src = cloud_src->points[corr_[j].index_query];
+			pcl::PointXYZRGB point_tgt = cloud_tgt->points[corr_[j].index_match];
+			point_src.r = point_tgt.r = color_vec[0];
+			point_src.g = point_tgt.g = color_vec[1];
+			point_src.b = point_tgt.b = color_vec[2];
+			drawLine(point_src, point_tgt, s_name);
+			M_s_line_vec.push_back(s_name);
+		}
 	}
 };
 
