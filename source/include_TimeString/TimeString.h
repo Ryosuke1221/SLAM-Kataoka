@@ -370,7 +370,7 @@ public:
 		string s_start, int i_pos_start_fromS, string s_finish, int i_pos_finish_fromS);
 
 	template<typename T>
-	static vector<int> getHostogram(const vector<T> &value_vec, int num_bin, bool b_cout = false)
+	static vector<int> getHistogram(const vector<T> &value_vec, int num_bin, bool b_cout = false)
 	{
 		T value_max = -std::numeric_limits<T>::max();
 		T value_min = std::numeric_limits<T>::max();
@@ -383,24 +383,32 @@ public:
 
 		cout << "value_max:" << value_max << endl;
 		cout << "value_min:" << value_min << endl;
-
-		float range_ = (value_max - value_min) / (float)num_bin;
-
-		vector<int> hist_vec = getHostogram(value_vec, value_max, value_min, range_, num_bin, b_cout);
+		vector<int> hist_vec = getHistogram(value_vec, value_max, value_min, num_bin, b_cout);
 		return hist_vec;
 	}
 
 	template<typename T>
-	static vector<int> getHostogram(const vector<T> &value_vec, T value_max, T value_min,
-		T range_, int num_bin, bool b_cout = false)
+	static vector<int> getHistogram(const vector<T> &value_vec_arg, T value_max, T value_min,
+		int num_bin, bool b_cout = false)
 	{
 		vector<int> hist_vec;
 		hist_vec.resize(num_bin);
 		fill(hist_vec.begin(), hist_vec.end(), 0);
 
+		vector<T> value_vec;
+		value_vec.insert(value_vec.end(), value_vec_arg.begin(), value_vec_arg.end());
+
+		//value_min <= value <= value_max
+		for (int j = 0; j < value_vec.size(); j++)
+		{
+			if (value_vec[j] < value_min) value_vec[j] = value_min;
+			else if (value_max < value_vec[j]) value_vec[j] = value_max;
+		}
+
 		vector<float> mean_hist_vec;
 		mean_hist_vec.resize(num_bin);
 		fill(mean_hist_vec.begin(), mean_hist_vec.end(), 0.);
+		T range_ = (value_max - value_min) / (T)num_bin;
 		for (int j = 0; j < value_vec.size(); j++)
 		{
 			int i_bin = (int)((value_vec[j] - value_min) / range_);
@@ -472,6 +480,50 @@ public:
 		}
 
 		return hist_vec;
+	}
+
+	template<typename T>
+	static vector<vector<int>> getHistogram_IndexOfBin(const vector<T> &value_vec, int num_bin, vector<int> index_bin_vec, bool b_cout = false)
+	{
+		T value_max = -std::numeric_limits<T>::max();
+		T value_min = std::numeric_limits<T>::max();
+		for (int j = 0; j < value_vec.size(); j++)
+		{
+			if (value_max < value_vec[j]) value_max = value_vec[j];
+			if (value_min > value_vec[j]) value_min = value_vec[j];
+		}
+		vector<vector<int>> index_vecvec;
+		index_vecvec = getHistogram_IndexOfBin(value_vec, value_max, value_min, index_bin_vec, b_cout);
+		return index_vecvec;
+	}
+
+	template<typename T>
+	static vector<vector<int>> getHistogram_IndexOfBin(const vector<T> &value_vec, T value_max, T value_min, int num_bin, vector<int> index_bin_vec, bool b_cout = false)
+	{
+		for (int j = index_bin_vec.size() - 1; j >= 0; j--)
+			if (num_bin <= index_bin_vec[j]) index_bin_vec.erase(index_bin_vec.begin() + j);
+		vector<vector<int>> index_vecvec;
+		if (index_bin_vec.size() == 0) return index_vecvec;
+		T range_ = (value_max - value_min) / (T)num_bin;
+		vector<pair<T, T>> boundary_vec;
+		for (int j = 0; j < index_bin_vec.size(); j++)
+		{
+			T value_bin_min = (T)index_bin_vec[j] * range_ + value_min;
+			T value_bin_max = value_bin_min + range_;
+			boundary_vec.push_back(make_pair(value_bin_min, value_bin_max));
+		}
+		for (int j = 0; j < boundary_vec.size(); j++)
+		{
+			vector<int> index_vec;
+			for (int i = 0; i < value_vec.size(); i++)
+			{
+				if ((boundary_vec[j].first <= value_vec[i] && value_vec[i] < boundary_vec[j].second)
+					|| (boundary_vec[j].second == value_max && value_max == value_vec[i]))
+					index_vec.push_back(i);
+			}
+			index_vecvec.push_back(index_vec);
+		}
+		return index_vecvec;
 	}
 
 	template<typename T>

@@ -811,7 +811,7 @@ public:
 
 	template <typename T>
 	static vector<int> calcFeatureIndex_removingBiggestBin(const vector<T> &features_vec, const vector<int> &hist_vec_all,
-		T range_hist, T value_min_hist)
+		T value_max_hist, T value_min_hist)
 	{
 		int index_bin_biggest;
 		int num_bin_biggest = 0;
@@ -823,15 +823,37 @@ public:
 				index_bin_biggest = j;
 			}
 		}
-		T value_biggestBin_min = (T)index_bin_biggest * range_hist + value_min_hist;
-		T value_biggestBin_max = value_biggestBin_min + range_hist;
+
 		vector<int> index_valid_vec;
-		for (int j = 0; j < features_vec.size(); j++)
 		{
-			if (!(value_biggestBin_min <= features_vec[j] && features_vec[j] < value_biggestBin_max))
-				index_valid_vec.push_back(j);
+			vector<vector<int>> index_valid_vecvec_temp;
+			vector<int> index_bin_vec;
+			for (int j = 0; j < hist_vec_all.size(); j++)
+			{
+				if (index_bin_biggest == j) continue;
+				index_bin_vec.push_back(j);
+			}
+			index_valid_vecvec_temp = CTimeString::getHistogram_IndexOfBin(features_vec, value_max_hist, value_min_hist, hist_vec_all.size(), index_bin_vec);
+			for (int j = 0; j < index_valid_vecvec_temp.size(); j++)
+				for (int i = 0; i < index_valid_vecvec_temp[j].size(); i++)
+					index_valid_vec.push_back(index_valid_vecvec_temp[j][i]);
 		}
 		return index_valid_vec;
+	}
+
+	static vector<int> getCorrespondance_histogramOfDistance(const pcl::Correspondences &corr_input, int num_bin)
+	{
+		vector<float> distance_vec;
+		for (int j = 0; j < corr_input.size(); j++)
+		{
+			distance_vec.push_back(corr_input[j].distance);
+		}
+		//CTimeString::sortVector2d(distance_vecvec, 0);
+
+
+		vector<int> hist_vec = CTimeString::getHistogram(distance_vec, num_bin);
+		
+
 	}
 
 };

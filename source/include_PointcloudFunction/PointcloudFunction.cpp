@@ -6472,7 +6472,7 @@ void CPointcloudFunction::DoDifferential_1pointcloud(string dir_)
 
 	pcl::copyPointCloud(*cloud_, *cloud_colored);
 
-	vector<int> hist_vec = CTimeString::getHostogram(featureDivergence_vec, 10, true);
+	vector<int> hist_vec = CTimeString::getHistogram(featureDivergence_vec, 10, true);
 
 	float feature_min = std::numeric_limits<float>::max();
 	float feature_max = -std::numeric_limits<float>::max();
@@ -6757,55 +6757,19 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 
 		range_hist = (value_max_hist - value_min_hist) / (float)num_bin_hist;
 
-		//vector<int> hist_vec = CTimeString::getHostogram(feature_calcHistogram, num_bin_hist, true);
-		hist_vec_all = CTimeString::getHostogram(feature_calcHistogram, value_max_hist, value_min_hist,
-			range_hist, num_bin_hist, true);
+		//vector<int> hist_vec = CTimeString::getHistogram(feature_calcHistogram, num_bin_hist, true);
+		hist_vec_all = CTimeString::getHistogram(feature_calcHistogram, value_max_hist, value_min_hist,
+			num_bin_hist, true);
 		cout << endl;
 	}
 
 	//remove points in biggest bin
 	vector<vector<int>> index_valid_vecvec;
 	{
-		//int index_bin_biggest;
-		//int num_bin_biggest = 0;
-		//for (int j = 0; j < hist_vec_all.size(); j++)
-		//{
-		//	if (num_bin_biggest < hist_vec_all[j])
-		//	{
-		//		num_bin_biggest = hist_vec_all[j];
-		//		index_bin_biggest = j;
-		//	}
-		//}
-
-		////index_bin_biggest
-		//float value_biggestBin_min = (float)index_bin_biggest * range_hist + value_min_hist;
-		//float value_biggestBin_max = value_biggestBin_min + range_hist;
-
-		//vector<vector<int>> index_points_remove_vecvec;
-		//for (int j = 0; j < featureDivergence_vecvec.size(); j++)
-		//{
-		//	vector<int> index_points_remove_vec;
-		//	for (int i = 0; i < featureDivergence_vecvec[j].size(); i++)
-		//	{
-		//		if (value_biggestBin_min <= featureDivergence_vecvec[j][i]
-		//			&& featureDivergence_vecvec[j][i] < value_biggestBin_max) index_points_remove_vec.push_back(i);
-		//	}
-		//	index_points_remove_vecvec.push_back(index_points_remove_vec);
-		//}
-
-		//for (int j = 0; j < index_points_remove_vecvec.size(); j++)
-		//{
-		//	for (int i = index_points_remove_vecvec[j].size() - 1; i >= 0; i--)
-		//	{
-		//		cloud_vec[j]->points.erase(cloud_vec[j]->points.begin() + index_points_remove_vecvec[j][i]);
-		//		featureDivergence_vecvec[j].erase(featureDivergence_vecvec[j].begin() + index_points_remove_vecvec[j][i]);
-		//	}
-		//}
-
 		for (int j = 0; j < featureDivergence_vecvec.size(); j++)
 		{
-			index_valid_vecvec.push_back(CKataokaPCL::calcFeatureIndex_removingBiggestBin(featureDivergence_vecvec[j], 
-				hist_vec_all, range_hist, value_min_hist));
+			index_valid_vecvec.push_back(CKataokaPCL::calcFeatureIndex_removingBiggestBin(featureDivergence_vecvec[j],
+				hist_vec_all, value_max_hist, value_min_hist));
 		}
 
 	}
@@ -6825,8 +6789,8 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 		for (int i = 0; i < index_valid_vecvec[j].size(); i++)
 			feature_calcHistogram.push_back(featureDivergence_vecvec[j][index_valid_vecvec[j][i]]);
 
-		vector<int> hist_vec = CTimeString::getHostogram(feature_calcHistogram, value_max_hist, value_min_hist,
-			range_hist, num_bin_hist, true);
+		vector<int> hist_vec = CTimeString::getHistogram(feature_calcHistogram, value_max_hist, value_min_hist,
+			num_bin_hist, true);
 		cout << endl;
 	}
 
@@ -7068,7 +7032,7 @@ void CPointcloudFunction::DoDifferential_showFeatureValue(string dir_)
 		vector<float> feature_calcHistogram;
 		for (int i = 0; i < feature_vecvec[j].size(); i++)
 			feature_calcHistogram.push_back(feature_vecvec[j][i]);
-		vector<int> hist_vec = CTimeString::getHostogram(feature_calcHistogram, 80, true);
+		vector<int> hist_vec = CTimeString::getHistogram(feature_calcHistogram, 80, true);
 	}
 
 	float feature_all_min = std::numeric_limits<float>::max();
@@ -7087,7 +7051,7 @@ void CPointcloudFunction::DoDifferential_showFeatureValue(string dir_)
 			if (feature_all_max < features_all[j]) feature_all_max = features_all[j];
 
 		}
-		vector<int> hist_vec = CTimeString::getHostogram(feature_calcHistogram, 80, true);
+		vector<int> hist_vec = CTimeString::getHistogram(feature_calcHistogram, 80, true);
 	}
 
 	//give color (and z by features) to pointcloud
