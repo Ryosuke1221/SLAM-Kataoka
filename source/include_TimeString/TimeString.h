@@ -493,7 +493,7 @@ public:
 			if (value_min > value_vec[j]) value_min = value_vec[j];
 		}
 		vector<vector<int>> index_vecvec;
-		index_vecvec = getHistogram_IndexOfBin(value_vec, value_max, value_min, index_bin_vec, b_cout);
+		index_vecvec = getHistogram_IndexOfBin(value_vec, value_max, value_min, num_bin, index_bin_vec, b_cout);
 		return index_vecvec;
 	}
 

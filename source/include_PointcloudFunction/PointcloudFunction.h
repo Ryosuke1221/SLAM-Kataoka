@@ -175,7 +175,6 @@ public:
 		vector<Eigen::Vector6d> trajectory_vec, bool b_useRANSAC_EST, bool b_useOutputPointcloud);
 	vector<pair<int, int>> GR_FPFH_SAC_IA_get_frame_pair_vec(string dir_);
 	void GR_addToOutputString_OutputHeader_FPFH(vector<vector<string>> &s_output_vecvec);
-	void GR_FPFH_SelectPoint(string dir_, vector<float> parameter_vec);
 	void GR_FPFH_error(string dir_, vector<float> parameter_vec);
 	void GR_FPFH_error_AllFrames(string dir_, vector<float> parameter_vec, bool b_changeParameter = true);
 	void GR_FPFH_variance_AllFrames(string dir_, vector<float> parameter_vec, bool b_changeParameter = true);

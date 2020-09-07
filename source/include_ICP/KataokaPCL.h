@@ -717,12 +717,6 @@ public:
 		return corr_vec;
 	}
 
-	//template <class T_PointType>
-	//static vector<float> getPointCloud_featureDivergence(
-	//	boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_, const vector<float> &feature_vec,
-	//	boost::shared_ptr<pcl::KdTreeFLANN<T_PointType>> kdtree_, const float th_distance, float variance_, bool b_useGaussianFilter = false)
-
-
 	template <class T_PointType>
 	static pcl::Correspondences determineCorrespondences_output_kdtreeArg(
 		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src,
@@ -841,19 +835,43 @@ public:
 		return index_valid_vec;
 	}
 
-	static vector<int> getCorrespondance_histogramOfDistance(const pcl::Correspondences &corr_input, int num_bin)
-	{
-		vector<float> distance_vec;
-		for (int j = 0; j < corr_input.size(); j++)
-		{
-			distance_vec.push_back(corr_input[j].distance);
-		}
-		//CTimeString::sortVector2d(distance_vecvec, 0);
+	//template <class T_PointType>
+	//static vector<int> getCorrespondance_histogramOfEuclidDistance(boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src,
+	//	boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_tgt, const pcl::Correspondences &corr_, int num_bin)
+	//{
+	//	vector<float> distance_vec;
 
+	//	for (int j = 0; j < corr_.size(); j++)
+	//	{
+	//		T_PointType point_src = cloud_src->points[corr_[j].index_query];
+	//		T_PointType point_tgt = cloud_tgt->points[corr_[j].index_match];
+	//		float distance_ = sqrt(
+	//			pow(point_src.x - point_tgt.x, 2.)
+	//			+ pow(point_src.y - point_tgt.y, 2.)
+	//			+ pow(point_src.z - point_tgt.z, 2.));
+	//		distance_vec.push_back(distance_);
+	//	}
 
-		vector<int> hist_vec = CTimeString::getHistogram(distance_vec, num_bin);
-		
+	//	vector<int> hist_vec = CTimeString::getHistogram(distance_vec, num_bin);
+	//	int index_bin_biggest;
+	//	int num_bin_biggest = 0;
+	//	for (int j = 0; j < hist_vec.size(); j++)
+	//	{
+	//		if (num_bin_biggest < hist_vec[j])
+	//		{
+	//			num_bin_biggest = hist_vec[j];
+	//			index_bin_biggest = j;
+	//		}
+	//	}
 
-	}
+	//	vector<int> index_corr_vec;
+	//	{
+	//		vector<int> bin_vec;
+	//		bin_vec.push_back(index_bin_biggest);
+	//		vector<vector<int>> index_corr_vecvec_temp = CTimeString::getHistogram_IndexOfBin(distance_vec, num_bin, bin_vec);
+	//		index_corr_vec.insert(index_corr_vec.end(), index_corr_vecvec_temp[0].begin(), index_corr_vecvec_temp[0].end());
+	//	}
+	//	return index_corr_vec;
+	//}
 
 };

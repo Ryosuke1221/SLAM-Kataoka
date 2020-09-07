@@ -2270,12 +2270,11 @@ void CPointcloudFunction::GlobalRegistration_FPFH_SAC_IA()
 		cout << "1: registration of all frames and output files(.csv and .pcd)" << endl;
 		cout << "2: output fusion and matrix(of convergence) by .csv" << endl;
 		cout << "3: output ESTs of patterns by .csv" << endl;
-		cout << "4: watch points selected by FPFH with some radius" << endl;
-		cout << "5: output error of fpfh value (2 frames)" << endl;
-		cout << "6: output error of fpfh value (all frames)" << endl;
-		cout << "7: output show FPFH variance (all frames)" << endl;
-		cout << "8: vary parameter by some patterns (all frames)" << endl;
-		cout << "9: fix fusion (iterate FPFH in specific pair)" << endl;
+		cout << "4: output error of fpfh value (2 frames)" << endl;
+		cout << "5: output error of fpfh value (all frames)" << endl;
+		cout << "6: output show FPFH variance (all frames)" << endl;
+		cout << "7: vary parameter by some patterns (all frames)" << endl;
+		cout << "8: fix fusion (iterate FPFH in specific pair)" << endl;
 		cout << "select ->";
 		int i_method;
 		cin >> i_method;
@@ -2318,16 +2317,14 @@ void CPointcloudFunction::GlobalRegistration_FPFH_SAC_IA()
 		else if (i_method == 3)
 			GR_FPFH_getResultOfPatterns(dir_);
 		else if (i_method == 4)
-			GR_FPFH_SelectPoint(dir_, parameter_vec);
-		else if (i_method == 5)
 			GR_FPFH_error(dir_, parameter_vec);
-		else if (i_method == 6)
+		else if (i_method == 5)
 			GR_FPFH_error_AllFrames(dir_, parameter_vec);
-		else if (i_method == 7)
+		else if (i_method == 6)
 			GR_FPFH_variance_AllFrames(dir_, parameter_vec);
-		else if (i_method == 8)
+		else if (i_method == 7)
 			GR_FPFH_varyParameter(dir_, parameter_vec);
-		else if (i_method == 9)
+		else if (i_method == 8)
 		{
 			vector<string> filenames_folder;
 			{
@@ -3527,163 +3524,6 @@ void CPointcloudFunction::GR_addToOutputString_OutputHeader_FPFH(vector<vector<s
 	s_temp_vec.push_back("PITCH");
 	s_temp_vec.push_back("YAW");
 	s_output_vecvec.push_back(s_temp_vec);
-}
-
-
-void CPointcloudFunction::GR_FPFH_SelectPoint(string dir_, vector<float> parameter_vec)
-{
-	//typedef pcl::PointXYZ T_PointType;
-	typedef pcl::PointXYZRGB T_PointType;
-
-	vector<string> filenames_;
-	CTimeString::getFileNames_extension(dir_, filenames_, ".pcd");
-
-	int i_tgt, i_src;
-
-	pcl::PointCloud<T_PointType>::Ptr cloud_temp(new pcl::PointCloud<T_PointType>());
-
-	while (1)
-	{
-		cout << "select frame  (ESCAPE by typing same frame or -1 )" << endl;
-		cout << "i_tgt ->";
-		cin >> i_tgt;
-		if (i_tgt == -1 || i_tgt > filenames_.size() - 1) break;
-		cout << "i_src ->";
-		cin >> i_src;
-		if (i_src == -1 || i_src > filenames_.size() - 1) break;
-
-		if (i_tgt == i_src) break;
-
-		//parameter
-		float voxel_size;
-		voxel_size = parameter_vec[0];
-
-		float radius_normal_FPFH, radius_FPFH;
-		radius_normal_FPFH = parameter_vec[1];
-		radius_FPFH = parameter_vec[2];
-
-		vector<float> radius_normal_FPFH_vec;
-		//radius_normal_FPFH_vec.push_back(radius_normal_FPFH * 5.);
-		//radius_normal_FPFH_vec.push_back(radius_normal_FPFH * 0.5);
-
-		//radius_normal_FPFH_vec.push_back(radius_normal_FPFH * 1.5);
-		//radius_normal_FPFH_vec.push_back(radius_normal_FPFH * 0.2);
-
-		radius_normal_FPFH_vec.push_back(radius_normal_FPFH);
-		radius_normal_FPFH_vec.push_back(radius_normal_FPFH * 0.5);
-		radius_normal_FPFH_vec.push_back(radius_normal_FPFH * 1.5);
-		radius_normal_FPFH_vec.push_back(radius_normal_FPFH * 2.);
-
-		//show parameter
-		cout << "Parameter list" << endl;
-		cout << "0: voxel_size:                     " << voxel_size << endl;
-		//cout << "1: radius_normal_FPFH:             " << radius_normal_FPFH << endl;
-		cout << "1: radius_normal_FPFH:             ";
-		for (int i = 0; i < radius_normal_FPFH_vec.size(); i++)
-			cout << radius_normal_FPFH_vec[i] << " ";
-		cout << endl;
-
-		cout << "2: radius_FPFH:                    " << radius_FPFH << endl;
-
-		//input pointcloud
-		pcl::PointCloud<T_PointType>::Ptr cloud_tgt(new pcl::PointCloud<T_PointType>());
-		pcl::PointCloud<T_PointType>::Ptr cloud_src(new pcl::PointCloud<T_PointType>());
-		pcl::io::loadPCDFile(dir_ + "/" + filenames_[i_tgt], *cloud_tgt);
-		pcl::io::loadPCDFile(dir_ + "/" + filenames_[i_src], *cloud_src);
-		cloud_tgt->is_dense = true;
-		cloud_src->is_dense = true;
-		//compute fpfh
-		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt(new pcl::PointCloud<pcl::FPFHSignature33>);
-		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src(new pcl::PointCloud<pcl::FPFHSignature33>);
-
-		//radius_normal_FPFH_vec
-		vector<int> index_FPFH_tgt;
-		vector<int> index_FPFH_src;
-
-		{
-			pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
-			const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
-			sor->setLeafSize(voxel_size, voxel_size, voxel_size);
-			sor->setInputCloud(cloud_tgt);
-			sor->filter(*cloud_VGF);
-			fpfh_tgt = CFPFH_PCL::computeFPFH_radius<T_PointType>(index_FPFH_tgt,cloud_VGF, cloud_tgt, radius_normal_FPFH_vec, radius_FPFH);
-		}
-		{
-			pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
-			const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
-			sor->setLeafSize(voxel_size, voxel_size, voxel_size);
-			sor->setInputCloud(cloud_src);
-			sor->filter(*cloud_VGF);
-			fpfh_src = CFPFH_PCL::computeFPFH_radius<T_PointType>(index_FPFH_src, cloud_VGF, cloud_src, radius_normal_FPFH_vec, radius_FPFH);
-		}
-
-
-		//show pointcloud
-		//save pointcloud
-		pcl::PointCloud<T_PointType>::Ptr cloud_src_show(new pcl::PointCloud<T_PointType>());
-		pcl::PointCloud<T_PointType>::Ptr cloud_tgt_show(new pcl::PointCloud<T_PointType>());
-		//VGF
-		const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
-		sor->setLeafSize(voxel_size, voxel_size, voxel_size);
-		sor->setInputCloud(cloud_src);
-		sor->filter(*cloud_src_show);
-		sor->setInputCloud(cloud_tgt);
-		sor->filter(*cloud_tgt_show);
-
-		//color
-		for (int i = 0; i < cloud_tgt_show->size(); i++)
-		{
-			cloud_tgt_show->points[i].r = 255;
-			cloud_tgt_show->points[i].g = 0;
-			cloud_tgt_show->points[i].b = 0;
-		}
-		for (int i = 0; i < cloud_src_show->size(); i++)
-		{
-			cloud_src_show->points[i].r = 0;
-			cloud_src_show->points[i].g = 255;
-			cloud_src_show->points[i].b = 0;
-		}
-		//selected points
-		for (int i = 0; i < index_FPFH_tgt.size(); i++)
-		{
-			cloud_tgt_show->points[index_FPFH_tgt[i]].r = 255;
-			cloud_tgt_show->points[index_FPFH_tgt[i]].g = 255;
-			cloud_tgt_show->points[index_FPFH_tgt[i]].b = 255;
-		}
-		for (int i = 0; i < index_FPFH_src.size(); i++)
-		{
-			cloud_src_show->points[index_FPFH_src[i]].r = 255;
-			cloud_src_show->points[index_FPFH_src[i]].g = 255;
-			cloud_src_show->points[index_FPFH_src[i]].b = 255;
-		}
-
-		//add to init
-		CPointVisualization<T_PointType> pv_tgt;
-		pv_tgt.setWindowName("tgt");
-		CPointVisualization<T_PointType> pv_src;
-		pv_src.setWindowName("src");
-
-		pv_tgt.setPointCloud(cloud_tgt_show);
-		pv_src.setPointCloud(cloud_src_show);
-
-		cout << "Press ESC to next registration" << endl;
-		cout << endl;
-		//show
-		while (1)
-		{
-			pv_tgt.updateViewer();
-			pv_src.updateViewer();
-			if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
-		}
-		//remove viewer
-		pv_tgt.closeViewer();
-		pv_src.closeViewer();
-
-		cout << "one frame process finished" << endl;
-		cout << endl;
-	}
-
-	cout << "escaped" << endl;
 }
 
 void CPointcloudFunction::GR_FPFH_error(string dir_, vector<float> parameter_vec)
@@ -6808,6 +6648,16 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 		corr_new = CKataokaPCL::determineCorrespondences_feature_remove(featureDivergence_vecvec[i_src], featureDivergence_vecvec[i_tgt],
 			index_valid_vecvec[i_src], index_valid_vecvec[i_tgt], num_nearest);
 		cout << "corr_new.size():" << corr_new.size() << endl;
+
+		//vector<int> index_corr_biggestBin;
+		//int num_hist_corr = 10;
+		//index_corr_biggestBin = CKataokaPCL::getCorrespondance_histogramOfEuclidDistance(cloud_vec[i_src], cloud_vec[i_tgt], corr_new, num_hist_corr);
+		//pcl::Correspondences corr_temp;
+		//for (int j = 0; j < index_corr_biggestBin.size(); j++)
+		//	corr_temp.push_back(corr_new[index_corr_biggestBin[j]]);
+		//corr_new.clear();
+		//corr_new = corr_temp;
+		//cout << "corr_new.size():" << corr_new.size() << endl;
 	}
 
 	////show corr
