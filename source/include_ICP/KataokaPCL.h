@@ -209,6 +209,116 @@ public:
 			const pcl::Correspondences &correspondences,
 			Eigen::Matrix4f &transformation_matrix) const;
 
+	template <class T_PointType>
+	static void estimateRigidTransformation_static(
+			const boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src_arg,
+			const boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_tgt_arg,
+			const pcl::Correspondences &correspondences,
+			Eigen::Matrix4f &transformation_matrix)
+	{
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src_corr(new pcl::PointCloud<T_PointType>());
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_tgt_corr(new pcl::PointCloud<T_PointType>());
+
+		for (int i = 0; i < correspondences.size(); i++)
+		{
+			cloud_src_corr->push_back(cloud_src_arg->points[correspondences[i].index_query]);
+			cloud_tgt_corr->push_back(cloud_tgt_arg->points[correspondences[i].index_match]);
+		}
+		const int npts = static_cast <int> (correspondences.size());
+		typedef float Scalar;
+		Eigen::Matrix<Scalar, 3, Eigen::Dynamic> cloud_src(3, npts);
+		Eigen::Matrix<Scalar, 3, Eigen::Dynamic> cloud_tgt(3, npts);
+		{
+			auto itr_src = cloud_src_corr->begin();
+			auto itr_tgt = cloud_tgt_corr->begin();
+			for (int i = 0; i < npts; ++i)
+			{
+				if (itr_src == cloud_src_corr->end()) break;
+				if (itr_tgt == cloud_tgt_corr->end()) break;
+				cloud_src(0, i) = itr_src->x;
+				cloud_src(1, i) = itr_src->y;
+				cloud_src(2, i) = itr_src->z;
+				++itr_src;
+				cloud_tgt(0, i) = itr_tgt->x;
+				cloud_tgt(1, i) = itr_tgt->y;
+				cloud_tgt(2, i) = itr_tgt->z;
+				++itr_tgt;
+			}
+		}
+
+		// Call Umeyama directly from Eigen (PCL patched version until Eigen is released)
+		{
+			//typedef typename internal::umeyama_transform_matrix_type<Derived, OtherDerived>::type TransformationMatrixType;
+			typedef typename Eigen::Matrix4f TransformationMatrixType;
+			//typedef typename internal::traits<TransformationMatrixType>::Scalar Scalar;
+			typedef typename Eigen::NumTraits<Scalar>::Real RealScalar;
+
+			//EIGEN_STATIC_ASSERT(!NumTraits<Scalar>::IsComplex, NUMERIC_TYPE_MUST_BE_REAL)
+			//	EIGEN_STATIC_ASSERT((internal::is_same<Scalar, typename internal::traits<OtherDerived>::Scalar>::value),
+			//		YOU_MIXED_DIFFERENT_NUMERIC_TYPES__YOU_NEED_TO_USE_THE_CAST_METHOD_OF_MATRIXBASE_TO_CAST_NUMERIC_TYPES_EXPLICITLY)
+
+				//enum { Dimension = EIGEN_SIZE_MIN_PREFER_DYNAMIC(Derived::RowsAtCompileTime, OtherDerived::RowsAtCompileTime) };
+			enum { Dimension = 3 };
+
+			typedef Eigen::Matrix<Scalar, Dimension, 1> VectorType;
+			typedef Eigen::Matrix<Scalar, Dimension, Dimension> MatrixType;
+			//typedef typename internal::plain_matrix_type_row_major<Derived>::type RowMajorMatrixType;
+
+			typedef EIGEN_DEFAULT_DENSE_INDEX_TYPE Index;
+
+			const Index m = cloud_src.rows(); // dimension
+			const Index n = cloud_src.cols(); // number of measurements
+
+			// required for demeaning ...
+			const RealScalar one_over_n = RealScalar(1) / static_cast<RealScalar>(n);
+
+			// computation of mean
+			//óÒï˚å¸Ç…ë´ÇµéZÇµÇƒÇ¢ÇÈ
+			const VectorType src_mean = cloud_src.rowwise().sum() * one_over_n;
+			const VectorType tgt_mean = cloud_tgt.rowwise().sum() * one_over_n;
+
+			// demeaning of src and dst points
+			//óÒï˚å¸Ç…ã§í ÇÃóÒÉxÉNÉgÉãÇà¯Ç´éZÇµÇƒÇ¢ÇÈÅD
+			//const RowMajorMatrixType src_demean = src.colwise() - src_mean;
+			//const RowMajorMatrixType dst_demean = dst.colwise() - dst_mean;
+			Eigen::Matrix<Scalar, 3, Eigen::Dynamic> src_demean(3, npts);
+			Eigen::Matrix<Scalar, 3, Eigen::Dynamic> tgt_demean(3, npts);
+			src_demean = cloud_src.colwise() - src_mean;
+			tgt_demean = cloud_tgt.colwise() - tgt_mean;
+
+			// Eq. (36)-(37)
+			const Scalar src_var = src_demean.rowwise().squaredNorm().sum() * one_over_n;
+
+			// Eq. (38)
+			const MatrixType sigma = one_over_n * tgt_demean * src_demean.transpose();
+
+			Eigen::JacobiSVD<MatrixType> svd(sigma, Eigen::ComputeFullU | Eigen::ComputeFullV);
+
+			// Initialize the resulting transformation with an identity matrix...
+			Eigen::Matrix4f Rt = TransformationMatrixType::Identity(m + 1, m + 1);
+
+			// Eq. (39)
+			VectorType S = VectorType::Ones(m);
+
+			if (svd.matrixU().determinant() * svd.matrixV().determinant() < 0)
+				S(m - 1) = -1;
+
+			// Eq. (40) and (43)	
+			//âÒì]ê¨ï™ÇÃÇ›Ç…ë„ì¸
+			Rt.block(0, 0, m, m).noalias() = svd.matrixU() * S.asDiagonal() * svd.matrixV().transpose();
+
+			//ï¿êiê¨ï™ÇÃÇ›Ç…ë„ì¸
+			Rt.col(m).head(m) = tgt_mean;
+			//ï¿êiê¨ï™ÇÃÇ›Ç…ë„ì¸
+			//âÒì]ê¨ï™ÇÃÇ›åƒÇ—èoÇµ
+			Rt.col(m).head(m).noalias() -= Rt.topLeftCorner(m, m)*src_mean;
+
+			transformation_matrix = Rt;
+		}
+
+	}
+
+
 	template <typename Derived, typename OtherDerived>
 	Eigen::Matrix4f	umeyama(const Eigen::MatrixBase<Derived>& src, const Eigen::MatrixBase<OtherDerived>& dst, bool with_scaling = true);
 
@@ -791,8 +901,8 @@ public:
 		vector<T> features_tgt_removed;
 		for (int j = 0; j < index_unique_vec_src.size(); j++)
 			features_src_removed.push_back(features_src[index_unique_vec_src[j]]);
-		for (int j = 0; j < index_unique_vec_src.size(); j++)
-			features_tgt_removed.push_back(features_tgt[index_unique_vec_src[j]]);
+		for (int j = 0; j < index_unique_vec_tgt.size(); j++)
+			features_tgt_removed.push_back(features_tgt[index_unique_vec_tgt[j]]);
 		pcl::Correspondences corrs_ = determineCorrespondences_feature(features_src_removed, features_tgt_removed, num_nearest);
 		for (int j = 0; j < corrs_.size(); j++)
 		{
@@ -835,43 +945,113 @@ public:
 		return index_valid_vec;
 	}
 
-	//template <class T_PointType>
-	//static vector<int> getCorrespondance_histogramOfEuclidDistance(boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src,
-	//	boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_tgt, const pcl::Correspondences &corr_, int num_bin)
-	//{
-	//	vector<float> distance_vec;
+	static vector<vector<int>> calcValidIndex_feature(const vector<vector<float>> &feature_vecvec, int num_bin_hist, bool b_showHistogram = false);
 
-	//	for (int j = 0; j < corr_.size(); j++)
-	//	{
-	//		T_PointType point_src = cloud_src->points[corr_[j].index_query];
-	//		T_PointType point_tgt = cloud_tgt->points[corr_[j].index_match];
-	//		float distance_ = sqrt(
-	//			pow(point_src.x - point_tgt.x, 2.)
-	//			+ pow(point_src.y - point_tgt.y, 2.)
-	//			+ pow(point_src.z - point_tgt.z, 2.));
-	//		distance_vec.push_back(distance_);
-	//	}
+	template<typename Derived>
+	static void getCorrespondance_RatioOfDistanceOfSrcAndTgt_perfectlyConnected(
+		const Eigen::MatrixBase<Derived>& mat_fraction, const vector<int> cluster_input_vec,
+		int num_size_cluster_min, float th_fraction, vector<vector<int>> &cluster_vecvec, vector<int> &cluster_rest)
+	{
+		vector<int> cluster_vec_temp = cluster_input_vec;
+		vector<int> cluster_rest_temp;
+		for (int j = 0; j < cluster_vec_temp.size(); j++)
+		{
+			for (int i = cluster_vec_temp.size() - 1; i >= j + 1; i--)
+			{
+				int j_small, i_big;
+				if (cluster_vec_temp[j] < cluster_vec_temp[i])
+				{
+					i_big = cluster_vec_temp[i];
+					j_small = cluster_vec_temp[j];
+				}
+				else
+				{
+					i_big = cluster_vec_temp[j];
+					j_small = cluster_vec_temp[i];
+				}
 
-	//	vector<int> hist_vec = CTimeString::getHistogram(distance_vec, num_bin);
-	//	int index_bin_biggest;
-	//	int num_bin_biggest = 0;
-	//	for (int j = 0; j < hist_vec.size(); j++)
-	//	{
-	//		if (num_bin_biggest < hist_vec[j])
-	//		{
-	//			num_bin_biggest = hist_vec[j];
-	//			index_bin_biggest = j;
-	//		}
-	//	}
+				if (mat_fraction(j_small, i_big) < th_fraction)
+				{
+					cluster_rest_temp.push_back(cluster_vec_temp[i]);
+					cluster_vec_temp.erase(cluster_vec_temp.begin() + i);
+				}
+			}
+		}
 
-	//	vector<int> index_corr_vec;
-	//	{
-	//		vector<int> bin_vec;
-	//		bin_vec.push_back(index_bin_biggest);
-	//		vector<vector<int>> index_corr_vecvec_temp = CTimeString::getHistogram_IndexOfBin(distance_vec, num_bin, bin_vec);
-	//		index_corr_vec.insert(index_corr_vec.end(), index_corr_vecvec_temp[0].begin(), index_corr_vecvec_temp[0].end());
-	//	}
-	//	return index_corr_vec;
-	//}
+		if (cluster_vec_temp.size() < num_size_cluster_min)
+		{
+			cluster_rest.insert(cluster_rest.end(), cluster_vec_temp.begin(), cluster_vec_temp.end());
+			return;
+		}
+		cluster_vecvec.push_back(cluster_vec_temp);
+		if(cluster_vec_temp.size() >= num_size_cluster_min)
+		
+		{
+			getCorrespondance_RatioOfDistanceOfSrcAndTgt_perfectlyConnected(mat_fraction, cluster_rest_temp, num_size_cluster_min, th_fraction,
+				cluster_vecvec, cluster_rest);
+		}
+	}
+
+	template <class T_PointType>
+	static vector<pcl::Correspondences> getCorrespondance_RatioOfDistanceOfSrcAndTgt(boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src,
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_tgt, const pcl::Correspondences &corr_, float th_fraction)
+	{
+		int num_corr_init = corr_.size();
+		//calc ratio
+		Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> mat_fraction(num_corr_init, num_corr_init);
+		mat_fraction.setZero();
+		vector<vector<int>> corr_pair_vecvec;
+		for (int j = 0; j < num_corr_init; j++)
+		{
+			for (int i = j + 1; i < num_corr_init; i++)
+			{
+				T_PointType point_src_j = cloud_src->points[corr_[j].index_query];
+				T_PointType point_tgt_j = cloud_tgt->points[corr_[j].index_match];
+				T_PointType point_src_i = cloud_src->points[corr_[i].index_query];
+				T_PointType point_tgt_i = cloud_tgt->points[corr_[i].index_match];
+				float distance_src = sqrt(
+					pow(point_src_i.x - point_src_j.x, 2.)
+					+ pow(point_src_i.y - point_src_j.y, 2.)
+					+ pow(point_src_i.z - point_src_j.z, 2.));
+				float distance_tgt = sqrt(
+					pow(point_tgt_i.x - point_tgt_j.x, 2.)
+					+ pow(point_tgt_i.y - point_tgt_j.y, 2.)
+					+ pow(point_tgt_i.z - point_tgt_j.z, 2.));
+				if (distance_src == 0. || distance_tgt == 0.)
+					mat_fraction(j, i) = 0;
+				else if(distance_src >= distance_tgt)
+					mat_fraction(j, i) = distance_tgt/ distance_src;
+				else/* if (distance_src < distance_tgt)*/
+					mat_fraction(j, i) = distance_src / distance_tgt;
+				if (mat_fraction(j, i) >= th_fraction)
+				{
+					vector<int> corr_pair_vec;
+					corr_pair_vec.push_back(j);
+					corr_pair_vec.push_back(i);
+					corr_pair_vecvec.push_back(corr_pair_vec);
+				}
+			}
+		}
+		vector<vector<int>> corr_pair_cluster_vecvec;
+		corr_pair_cluster_vecvec = CTimeString::getIntCluster_SomeToSome(corr_pair_vecvec);
+		vector<vector<int>> corr_pair_cluster_vecvec_new;
+		for (int j = 0; j < corr_pair_cluster_vecvec.size(); j++)
+		{
+			vector<vector<int>> corr_new_temp;
+			vector<int> corr_rest_temp;	//not use
+			getCorrespondance_RatioOfDistanceOfSrcAndTgt_perfectlyConnected(mat_fraction, corr_pair_cluster_vecvec[j], 3, th_fraction,
+				corr_new_temp, corr_rest_temp);
+			corr_pair_cluster_vecvec_new.insert(corr_pair_cluster_vecvec_new.end(), corr_new_temp.begin(), corr_new_temp.end());
+		}
+		vector<pcl::Correspondences> corr_output_vec;
+		for (int j = 0; j < corr_pair_cluster_vecvec_new.size(); j++)
+		{
+			pcl::Correspondences corr_output;
+			for (int i = 0; i < corr_pair_cluster_vecvec_new[j].size(); i++)
+				corr_output.push_back(corr_[corr_pair_cluster_vecvec_new[j][i]]);
+			corr_output_vec.push_back(corr_output);
+		}
+		return corr_output_vec;
+	}
 
 };

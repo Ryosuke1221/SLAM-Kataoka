@@ -209,8 +209,9 @@ public:
 	void DoDifferential();
 	void DoDifferential_1pointcloud(string dir_);
 	void DoDifferential_SomePointclouds(string dir_);
-	void DoDifferential_showFeatureValue(string dir_);
-
 	void FPFH_unique(string dir_);
+	void DoDifferential_showFeatureValue(string dir_);
+	void DoDifferential_RigidTransformation_FPFH_Features(string dir_);
+
 
 };

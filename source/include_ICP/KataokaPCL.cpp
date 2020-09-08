@@ -1545,45 +1545,25 @@ CKataokaPCL::estimateRigidTransformation(
 	const pcl::Correspondences &correspondences,
 	Eigen::Matrix4f &transformation_matrix) const
 {
-	//ここらへんを自分で書く?
-	//ConstCloudIterator<PointSource> source_it(cloud_src_arg, correspondences, true);
-	//ConstCloudIterator<PointTarget> target_it(cloud_tgt_arg, correspondences, false);
-
 	pcl::PointCloud<PointSource>::Ptr cloud_src_corr(new pcl::PointCloud<PointSource>());
 	pcl::PointCloud<PointTarget>::Ptr cloud_tgt_corr(new pcl::PointCloud<PointTarget>());
 
-	for (int i = 0; i < correspondences.size(); i++) {
-
-		//イテレータの方がよさそう．
+	for (int i = 0; i < correspondences.size(); i++) 
+	{
 		cloud_src_corr->push_back(cloud_src_arg.points[correspondences[i].index_query]);
 		cloud_tgt_corr->push_back(cloud_tgt_arg.points[correspondences[i].index_match]);
-
 	}
-
-
 	const int npts = static_cast <int> (correspondences.size());
-	//cout << "npts = " << npts << endl;
 	typedef float Scalar;
 	Eigen::Matrix<Scalar, 3, Eigen::Dynamic> cloud_src(3, npts);
 	Eigen::Matrix<Scalar, 3, Eigen::Dynamic> cloud_tgt(3, npts);
 	{
 		auto itr_src = cloud_src_corr->begin();
 		auto itr_tgt = cloud_tgt_corr->begin();
-
 		for (int i = 0; i < npts; ++i)
 		{
 			if (itr_src == cloud_src_corr->end()) break;
 			if (itr_tgt == cloud_tgt_corr->end()) break;
-
-			//cout << "i:" << i << endl;
-			//cloud_src(0, i) = source_it->x;
-			//cloud_src(1, i) = source_it->y;
-			//cloud_src(2, i) = source_it->z;
-			//++source_it;
-			//cloud_tgt(0, i) = target_it->x;
-			//cloud_tgt(1, i) = target_it->y;
-			//cloud_tgt(2, i) = target_it->z;
-			//++target_it;
 			cloud_src(0, i) = itr_src->x;
 			cloud_src(1, i) = itr_src->y;
 			cloud_src(2, i) = itr_src->z;
@@ -1591,10 +1571,8 @@ CKataokaPCL::estimateRigidTransformation(
 			cloud_tgt(0, i) = itr_tgt->x;
 			cloud_tgt(1, i) = itr_tgt->y;
 			cloud_tgt(2, i) = itr_tgt->z;
-			//cout << "cloud_tgt(0, i) = " << cloud_tgt(0, i) << endl;
 			++itr_tgt;
 		}
-
 	}
 
 	// Call Umeyama directly from Eigen (PCL patched version until Eigen is released)
@@ -2288,3 +2266,59 @@ pcl::Correspondences CKataokaPCL::getCorrespondences_eachPairHaving(const pcl::C
 	return corr_new;
 }
 
+vector<vector<int>> CKataokaPCL::calcValidIndex_feature(const vector<vector<float>> &feature_vecvec, int num_bin_hist, bool b_showHistogram)
+{
+	float value_max_hist;
+	float value_min_hist;
+	vector<int> hist_vec_all;
+	{
+		cout << "show histogram of all features" << endl;
+		vector<float> features_all;
+		for (int j = 0; j < feature_vecvec.size(); j++)
+			features_all.insert(features_all.end(), feature_vecvec[j].begin(), feature_vecvec[j].end());
+		vector<float> feature_calcHistogram;
+		for (int j = 0; j < features_all.size(); j++)
+			feature_calcHistogram.push_back(features_all[j]);
+
+		//histogram_all
+		value_max_hist = -std::numeric_limits<float>::max();
+		value_min_hist = std::numeric_limits<float>::max();
+
+		for (int j = 0; j < feature_calcHistogram.size(); j++)
+		{
+			if (value_max_hist < feature_calcHistogram[j]) value_max_hist = feature_calcHistogram[j];
+			if (value_min_hist > feature_calcHistogram[j]) value_min_hist = feature_calcHistogram[j];
+		}
+		cout << "value_max_hist:" << value_max_hist << endl;
+		cout << "value_min_hist:" << value_min_hist << endl;
+		//float range_hist = (value_max_hist - value_min_hist) / (float)num_bin_hist;
+		hist_vec_all = CTimeString::getHistogram(feature_calcHistogram, value_max_hist, value_min_hist,
+			num_bin_hist, true);
+		cout << endl;
+	}
+	//remove points in biggest bin
+	vector<vector<int>> index_valid_vecvec;
+	for (int j = 0; j < feature_vecvec.size(); j++)
+	{
+		index_valid_vecvec.push_back(calcFeatureIndex_removingBiggestBin(feature_vecvec[j],
+			hist_vec_all, value_max_hist, value_min_hist));
+	}
+
+	if (b_showHistogram)
+	{
+		cout << "show Histogram" << endl;
+		for (int j = 0; j < feature_vecvec.size(); j++)
+		{
+			cout << "j:" << j << endl;
+			vector<float> feature_calcHistogram;
+			for (int i = 0; i < index_valid_vecvec[j].size(); i++)
+				feature_calcHistogram.push_back(feature_vecvec[j][index_valid_vecvec[j][i]]);
+
+			vector<int> hist_vec = CTimeString::getHistogram(feature_calcHistogram, value_max_hist, value_min_hist,
+				num_bin_hist, true);
+			cout << endl;
+		}
+	}
+
+	return index_valid_vecvec;
+}

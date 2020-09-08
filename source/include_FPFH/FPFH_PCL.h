@@ -498,16 +498,6 @@ public:
 			index_vecvec.push_back(index_vec);
 		}
 
-		//remain only unique points
-		for (int j = 0; j < fpfh_vec_output.size(); j++)
-		{
-			for (int i = fpfh_vec_output[j]->size() - 1; i >= 0; i--)
-				if (!b_unique_vecvec[j][i]) fpfh_vec_output[j]->points.erase(fpfh_vec_output[j]->points.begin() + i);
-		}
-
-		for (int j = 0; j < fpfh_vec_output.size(); j++)
-			if (b_cout) cout << "j:" << j <<"  fpfh_vec_output[j]->points.size():"<< fpfh_vec_output[j]->points.size() << endl;
-
 		return index_vecvec;
 	}
 

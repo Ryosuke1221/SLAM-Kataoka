@@ -1426,7 +1426,11 @@ public:
 		for (int j = M_s_line_vec.size() - 1; j >= 0; j--)
 		{
 			vector<int> find_vec = CTimeString::find_all(M_s_line_vec[j], s_corr);
-			if (find_vec.size() != 0) M_s_line_vec.erase(M_s_line_vec.begin() + j);
+			if (find_vec.size() != 0)
+			{
+				M_viewer->removeShape(M_s_line_vec[j]);
+				M_s_line_vec.erase(M_s_line_vec.begin() + j);
+			}
 		}
 		//make new corr
 		for (int j = 0; j < corr_.size(); j++)
