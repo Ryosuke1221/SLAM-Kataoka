@@ -164,7 +164,7 @@ pcl::Correspondences CFPFH_PCL::getNearestOfFPFH(pcl::PointCloud<pcl::FPFHSignat
 	return corr_vec;
 }
 
-vector<vector<bool>> CFPFH_PCL::getFPFHMeanAndSigma(vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> fpfh_vec,
+void CFPFH_PCL::getFPFHMeanAndSigma(vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> fpfh_vec,
 	vector<float> &mean_fpfh, vector<float> &sigma_fpfh)
 {
 	mean_fpfh.clear();
@@ -172,9 +172,9 @@ vector<vector<bool>> CFPFH_PCL::getFPFHMeanAndSigma(vector<pcl::PointCloud<pcl::
 	int num_hist;
 	{
 		//https://riptutorial.com/ja/cplusplus/example/2327/%E9%85%8D%E5%88%97%E3%82%92std----vector%E3%81%AB%E5%A4%89%E6%8F%9B%E3%81%99%E3%82%8B
-		vector<float> feature_vec_temp(std::begin(fpfh_vec.at(0)->points.at(0).histogram),
+		vector<float> feature_vec(std::begin(fpfh_vec.at(0)->points.at(0).histogram),
 			std::end(fpfh_vec.at(0)->points.at(0).histogram));
-		num_hist = feature_vec_temp.size();
+		num_hist = feature_vec.size();
 	}
 	mean_fpfh.resize(num_hist);
 	fill(mean_fpfh.begin(), mean_fpfh.end(), 0.);
@@ -185,46 +185,19 @@ vector<vector<bool>> CFPFH_PCL::getFPFHMeanAndSigma(vector<pcl::PointCloud<pcl::
 	for (int j = 0; j < fpfh_vec.size(); j++)
 		num_points += fpfh_vec[j]->size();
 
-	//ready for removing nan
-	vector<vector<bool>> b_invalid_vecvec;
-	int num_points_invalid = 0;
-	for (int j = 0; j < fpfh_vec.size(); j++)
-	{
-		vector<bool> b_invalid_vec;
-		b_invalid_vec.resize(fpfh_vec[j]->size());
-		fill(b_invalid_vec.begin(), b_invalid_vec.end(), false);
-		b_invalid_vecvec.push_back(b_invalid_vec);
-	}
-
 	//calc mean
 	for (int j = 0; j < fpfh_vec.size(); j++)
 	{
 		for (int i = 0; i < fpfh_vec[j]->points.size(); i++)
 		{
-			vector<float> feature_vec;
-			feature_vec.clear();
-			vector<float> feature_vec_temp(std::begin(fpfh_vec.at(j)->points.at(i).histogram),
+			vector<float> feature_vec(std::begin(fpfh_vec.at(j)->points.at(i).histogram),
 				std::end(fpfh_vec.at(j)->points.at(i).histogram));
-			bool b_invalid_point = false;
-			for (int k = 0; k < feature_vec_temp.size(); k++)
-			{
-				if (isnan(feature_vec_temp[k]) || feature_vec_temp[k] > 100. || feature_vec_temp[k] < 0.)
-				{
-					b_invalid_point = true;
-					b_invalid_vecvec[j][i] = true;
-					num_points_invalid++;
-					break;
-				}
-				else feature_vec.push_back(feature_vec_temp[k]);
-
-			}
-			if (b_invalid_point) continue;
 			for (int k = 0; k < feature_vec.size(); k++)
 				mean_fpfh[k] += feature_vec[k];
 		}
 	}
 	for (int j = 0; j < num_hist; j++)
-		mean_fpfh[j] /= (float)(num_points - num_points_invalid);
+		mean_fpfh[j] /= (float)num_points;
 
 	//cout << "num_points_invalid:" << num_points_invalid << endl;
 
@@ -233,35 +206,31 @@ vector<vector<bool>> CFPFH_PCL::getFPFHMeanAndSigma(vector<pcl::PointCloud<pcl::
 	{
 		for (int i = 0; i < fpfh_vec[j]->size(); i++)
 		{
-			if (b_invalid_vecvec[j][i]) continue;
-			vector<float> feature_vec_temp(std::begin(fpfh_vec.at(j)->points.at(i).histogram),
+			vector<float> feature_vec(std::begin(fpfh_vec.at(j)->points.at(i).histogram),
 				std::end(fpfh_vec.at(j)->points.at(i).histogram));
-			for (int k = 0; k < feature_vec_temp.size(); k++)
-				sigma_fpfh[k] += pow(feature_vec_temp[k] - mean_fpfh[k], 2.);
+			for (int k = 0; k < feature_vec.size(); k++)
+				sigma_fpfh[k] += pow(feature_vec[k] - mean_fpfh[k], 2.);
 		}
 	}
 	for (int j = 0; j < num_hist; j++)
-		sigma_fpfh[j] = sqrt(sigma_fpfh[j] / (float)(num_points - num_points_invalid));
-
-	return b_invalid_vecvec;
+		sigma_fpfh[j] = sqrt(sigma_fpfh[j] / (float)num_points);
 }
 
 vector<bool> CFPFH_PCL::getFPFH_unique(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_feature,
-	vector<bool> b_invalidPoint_vec, vector<float> mean_fpfh_vec, vector<float> sigma_fpfh_vec, float beta_fpfh)
+	vector<float> mean_fpfh_vec, vector<float> sigma_fpfh_vec, float beta_fpfh)
 {
 	vector<int> index_unique_vec;
 	for (int j = 0; j < fpfh_feature->size(); j++)
 	{
-		if (b_invalidPoint_vec[j]) continue;
-		vector<float> feature_vec_temp(std::begin(fpfh_feature->points.at(j).histogram),
+		vector<float> feature_vec(std::begin(fpfh_feature->points.at(j).histogram),
 			std::end(fpfh_feature->points.at(j).histogram));
 		bool b_unique = false;
-		for (int i = 0; i < feature_vec_temp.size(); i++)
+		for (int i = 0; i < feature_vec.size(); i++)
 		{
 			float th_small = mean_fpfh_vec[i] - sigma_fpfh_vec[i] * beta_fpfh;
 			float th_big = mean_fpfh_vec[i] + sigma_fpfh_vec[i] * beta_fpfh;
 
-			if (feature_vec_temp[i] <= th_small || th_big <= feature_vec_temp[i])
+			if (feature_vec[i] <= th_small || th_big <= feature_vec[i])
 			{
 				b_unique = true;
 				break;

@@ -7114,8 +7114,10 @@ void CPointcloudFunction::DoDifferential_RigidTransformation_FPFH_Features(strin
 			featureDivergence_vec = CKataokaPCL::getPointCloud_featureDivergence(cloud_vec[j], feature_vecvec_velodyne[j], kdtree_, radius_differential, sigma_weight, true);
 			featureDivergence_vecvec_velodyne.push_back(featureDivergence_vec);
 		}
-		index_valid_vecvec_nir = CKataokaPCL::calcValidIndex_feature(feature_vecvec_nir, num_bin_hist, false);
-		index_valid_vecvec_velodyne = CKataokaPCL::calcValidIndex_feature(feature_vecvec_velodyne, num_bin_hist, false);
+		bool b_showHistogram = false;
+		b_showHistogram = true;
+		index_valid_vecvec_nir = CKataokaPCL::calcValidIndex_feature(featureDivergence_vecvec_nir, num_bin_hist, b_showHistogram);
+		index_valid_vecvec_velodyne = CKataokaPCL::calcValidIndex_feature(featureDivergence_vecvec_velodyne, num_bin_hist, b_showHistogram);
 	}
 
 
@@ -7163,8 +7165,8 @@ void CPointcloudFunction::DoDifferential_RigidTransformation_FPFH_Features(strin
 	vector<pcl::Correspondences> corrs_vec;
 	{
 		pcl::Correspondences corrs_temp;
-		corrs_temp.insert(corrs_temp.end(), corrs_nir.begin(), corrs_nir.end());
-		corrs_temp.insert(corrs_temp.end(), corrs_velodyne.begin(), corrs_velodyne.end());
+		//corrs_temp.insert(corrs_temp.end(), corrs_nir.begin(), corrs_nir.end());
+		//corrs_temp.insert(corrs_temp.end(), corrs_velodyne.begin(), corrs_velodyne.end());
 		corrs_temp.insert(corrs_temp.end(), corrs_fpfh.begin(), corrs_fpfh.end());
 		corrs_vec = CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, 0.9);
 		for (int j = 0; j < corrs_vec.size(); j++)
@@ -7237,12 +7239,12 @@ void CPointcloudFunction::DoDifferential_RigidTransformation_FPFH_Features(strin
 		pv.closeViewer();
 	}
 
-	//transformation
-	for (int j = 0; j < corrs_vec.size(); j++)
-	{
-		Eigen::Matrix4f transformation_matrix = Eigen::Matrix4f::Identity();
-		CKataokaPCL::estimateRigidTransformation_static(cloud_vec[i_src], cloud_vec[i_tgt], corrs_vec[j], transformation_matrix);
+	////transformation
+	//for (int j = 0; j < corrs_vec.size(); j++)
+	//{
+	//	Eigen::Matrix4f transformation_matrix = Eigen::Matrix4f::Identity();
+	//	CKataokaPCL::estimateRigidTransformation_static(cloud_vec[i_src], cloud_vec[i_tgt], corrs_vec[j], transformation_matrix);
 
-	}
+	//}
 
 }

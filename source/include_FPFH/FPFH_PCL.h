@@ -407,21 +407,20 @@ public:
 		int num_near, pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh);
 
 	template <class T_PointType>
-	static vector<vector<bool>> getFPFHMeanAndSigma(vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec,
+	static void getFPFHMeanAndSigma(vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec,
 		vector<pcl::PointCloud<pcl::Normal>::Ptr> normals_vec, float radius_FPFH, vector<float> &mean_fpfh, vector<float> &sigma_fpfh)
 	{
 		vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> fpfh_vec;
 		for (int j = 0; j < cloud_vec.size(); j++)
 			fpfh_vec.push_back(CFPFH_PCL::computeFPFH(cloud_vec[j], cloud_vec[j], normals_vec[j], radius_FPFH));
-		vector<vector<bool>> b_invalid_vecvec;
-		b_invalid_vecvec = getFPFHMeanAndSigma(fpfh_vec, mean_fpfh, sigma_fpfh);
+		getFPFHMeanAndSigma(fpfh_vec, mean_fpfh, sigma_fpfh);
 	}
 
-	static vector<vector<bool>> getFPFHMeanAndSigma(vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> fpfh_vec,
+	static void getFPFHMeanAndSigma(vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> fpfh_vec,
 		vector<float> &mean_fpfh, vector<float> &sigma_fpfh);
 
 	static vector<bool> CFPFH_PCL::getFPFH_unique(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_feature,
-		vector<bool> b_invalidPoint_vec, vector<float> mean_fpfh_vec, vector<float> sigma_fpfh_vec, float beta_fpfh);
+		vector<float> mean_fpfh_vec, vector<float> sigma_fpfh_vec, float beta_fpfh);
 
 	template <class T_PointType>
 	static vector<vector<int>> getFPFH_unique_someRadius(vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec,
@@ -449,15 +448,13 @@ public:
 
 			if (j == 1)	//center radius
 			{
-				for(int i=0;i< fpfh_vec.size();i++)
+				for (int i = 0; i < fpfh_vec.size(); i++)
 					fpfh_vec_output.push_back(fpfh_vec[i]);
 			}
 
 			vector<float> mean_fpfh;
 			vector<float> sigma_fpfh;
-
-			vector<vector<bool>> b_invalidPoint_vecvec;
-			b_invalidPoint_vecvec = getFPFHMeanAndSigma(fpfh_vec, mean_fpfh, sigma_fpfh);
+			getFPFHMeanAndSigma(fpfh_vec, mean_fpfh, sigma_fpfh);
 			for (int i = 0; i < mean_fpfh.size(); i++)
 				if (b_cout) cout << "i:" << i << "  mean:" << mean_fpfh[i] << " sigma:" << sigma_fpfh[i] << endl;
 
@@ -465,7 +462,7 @@ public:
 			for (int i = 0; i < fpfh_vec.size(); i++)
 			{
 				vector<bool> b_unique_vec;
-				b_unique_vec = getFPFH_unique(fpfh_vec[i], b_invalidPoint_vecvec[i], mean_fpfh, sigma_fpfh, beta_fpfh);
+				b_unique_vec = getFPFH_unique(fpfh_vec[i], mean_fpfh, sigma_fpfh, beta_fpfh);
 				int num_unique = 0;
 				for (int k = 0; k < b_unique_vec.size(); k++)
 					if (b_unique_vec[k]) num_unique++;

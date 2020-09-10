@@ -885,11 +885,13 @@ public:
 			cloud_feature_tgt->push_back(point_);
 		}
 		cloud_feature_tgt->is_dense = true;
+		pcl::Correspondences corr_new;
+		if (cloud_feature_src->size() == 0 || cloud_feature_tgt->size() == 0) return corr_new;
 		pcl::KdTreeFLANN<T_PointType>::Ptr kdtree_src(new pcl::KdTreeFLANN<T_PointType>);
 		pcl::KdTreeFLANN<T_PointType>::Ptr kdtree_tgt(new pcl::KdTreeFLANN<T_PointType>);
 		kdtree_src->setInputCloud(cloud_feature_src);
 		kdtree_tgt->setInputCloud(cloud_feature_tgt);
-		pcl::Correspondences corr_new = determineCorrespondences_feature(cloud_feature_src, cloud_feature_tgt, kdtree_src, kdtree_tgt, num_nearest);
+		corr_new = determineCorrespondences_feature(cloud_feature_src, cloud_feature_tgt, kdtree_src, kdtree_tgt, num_nearest);
 		return corr_new;
 	}
 
