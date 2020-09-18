@@ -914,7 +914,6 @@ public:
 		return corrs_;
 	}
 
-
 	template <typename T>
 	static vector<int> calcFeatureIndex_removingBiggestBin(const vector<T> &features_vec, const vector<int> &hist_vec_all,
 		T value_max_hist, T value_min_hist)
@@ -1054,6 +1053,90 @@ public:
 			corr_output_vec.push_back(corr_output);
 		}
 		return corr_output_vec;
+	}
+
+	template <class T_PointType>
+	static pcl::Correspondences determineCorrespondences_output_kdtreeArg_value(
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src,
+		boost::shared_ptr<pcl::KdTreeFLANN<T_PointType>> kdtree_tgt,float th_value)
+	{
+		pcl::Correspondences correspondences;
+		correspondences.resize(cloud_src->size());
+		std::vector<int> index(1);
+		std::vector<float> distance(1);
+		unsigned int nr_valid_correspondences = 0;
+		for (size_t i = 0; i < cloud_src->size(); ++i)
+		{
+			//int found_neighs = kdtree_tgt->nearestKSearch(cloud_src->at(i), num_nearest, index, distance);
+			int found_neighs = kdtree_tgt->radiusSearch(cloud_src->at(i), th_value, index, distance);
+			pcl::Correspondence corr;
+			corr.index_query = i;
+			corr.index_match = index[0];
+			corr.distance = distance[0];	//squared
+			correspondences[nr_valid_correspondences++] = corr;
+		}
+		correspondences.resize(nr_valid_correspondences);
+		return correspondences;
+	}
+
+	template <class T_PointType>
+	static pcl::Correspondences determineCorrespondences_feature_value(
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_feature_src, boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_feature_tgt,
+		boost::shared_ptr<pcl::KdTreeFLANN<T_PointType>> kdtree_src, boost::shared_ptr<pcl::KdTreeFLANN<T_PointType>> kdtree_tgt, float th_value)
+	{
+		pcl::Correspondences corr_src_tgt = determineCorrespondences_output_kdtreeArg_value(cloud_feature_src, kdtree_tgt, th_value);
+		pcl::Correspondences corr_tgt_src = determineCorrespondences_output_kdtreeArg_value(cloud_feature_tgt, kdtree_src, th_value);
+		pcl::Correspondences corr_new = getCorrespondences_eachPairHaving(corr_src_tgt, corr_tgt_src);
+		return corr_new;
+	}
+
+	template <typename T>
+	static pcl::Correspondences determineCorrespondences_feature_value(const vector<T> &features_src, const vector<T> &features_tgt,  float th_value)
+	{
+		typedef pcl::PointXY T_PointType;
+		pcl::PointCloud<T_PointType>::Ptr cloud_feature_src(new pcl::PointCloud<T_PointType>());
+		pcl::PointCloud<T_PointType>::Ptr cloud_feature_tgt(new pcl::PointCloud<T_PointType>());
+		for (int j = 0; j < features_src.size(); j++)
+		{
+			T_PointType point_;
+			point_.x = features_src[j];
+			cloud_feature_src->push_back(point_);
+		}
+		cloud_feature_src->is_dense = true;
+		for (int j = 0; j < features_tgt.size(); j++)
+		{
+			T_PointType point_;
+			point_.x = features_tgt[j];
+			cloud_feature_tgt->push_back(point_);
+		}
+		cloud_feature_tgt->is_dense = true;
+		pcl::Correspondences corr_new;
+		if (cloud_feature_src->size() == 0 || cloud_feature_tgt->size() == 0) return corr_new;
+		pcl::KdTreeFLANN<T_PointType>::Ptr kdtree_src(new pcl::KdTreeFLANN<T_PointType>);
+		pcl::KdTreeFLANN<T_PointType>::Ptr kdtree_tgt(new pcl::KdTreeFLANN<T_PointType>);
+		kdtree_src->setInputCloud(cloud_feature_src);
+		kdtree_tgt->setInputCloud(cloud_feature_tgt);
+		corr_new = determineCorrespondences_feature_value(cloud_feature_src, cloud_feature_tgt, kdtree_src, kdtree_tgt, th_value);
+		return corr_new;
+	}
+
+	template <typename T>
+	static pcl::Correspondences determineCorrespondences_feature_remove_value(const vector<T> &features_src, const vector<T> &features_tgt,
+		const vector<int> &index_unique_vec_src, const vector<int> &index_unique_vec_tgt, float th_value)
+	{
+		vector<T> features_src_removed;
+		vector<T> features_tgt_removed;
+		for (int j = 0; j < index_unique_vec_src.size(); j++)
+			features_src_removed.push_back(features_src[index_unique_vec_src[j]]);
+		for (int j = 0; j < index_unique_vec_tgt.size(); j++)
+			features_tgt_removed.push_back(features_tgt[index_unique_vec_tgt[j]]);
+		pcl::Correspondences corrs_ = determineCorrespondences_feature_value(features_src_removed, features_tgt_removed, th_value);
+		for (int j = 0; j < corrs_.size(); j++)
+		{
+			corrs_[j].index_query = index_unique_vec_src[corrs_[j].index_query];
+			corrs_[j].index_match = index_unique_vec_tgt[corrs_[j].index_match];
+		}
+		return corrs_;
 	}
 
 };

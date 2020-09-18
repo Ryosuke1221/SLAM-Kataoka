@@ -2297,13 +2297,13 @@ vector<vector<int>> CKataokaPCL::calcValidIndex_feature(const vector<vector<floa
 		cout << endl;
 	}
 
-	//output histogram
-	{
-		string dir_ = "../../data/process13_DoDifferential";
-		vector <vector<int>> hist_output_vecvec;
-		hist_output_vecvec.push_back(hist_vec_all);
-		CTimeString::getCSVFromVecVec(CTimeString::getTranspositionOfVecVec(hist_output_vecvec), dir_ + "/" + CTimeString::getTimeString() + "_histogram.csv");
-	}
+	////output histogram
+	//{
+	//	string dir_ = "../../data/process13_DoDifferential";
+	//	vector <vector<int>> hist_output_vecvec;
+	//	hist_output_vecvec.push_back(hist_vec_all);
+	//	CTimeString::getCSVFromVecVec(CTimeString::getTranspositionOfVecVec(hist_output_vecvec), dir_ + "/" + CTimeString::getTimeString() + "_histogram.csv");
+	//}
 
 	//remove points in biggest bin
 	vector<vector<int>> index_valid_vecvec;

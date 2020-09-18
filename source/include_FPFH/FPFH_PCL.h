@@ -424,11 +424,8 @@ public:
 
 	template <class T_PointType>
 	static vector<vector<int>> getFPFH_unique_someRadius(vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec,
-		vector<pcl::PointCloud<pcl::Normal>::Ptr> normals_vec, vector<float> radius_FPFH_vec, 
-		vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> &fpfh_vec_output, bool b_cout = false)
+		vector<pcl::PointCloud<pcl::Normal>::Ptr> normals_vec, vector<float> radius_FPFH_vec, bool b_cout = false)
 	{
-		fpfh_vec_output.clear();
-
 		vector<vector<bool>> b_unique_vecvec;
 		for (int j = 0; j < cloud_vec.size(); j++)
 		{
@@ -445,12 +442,6 @@ public:
 			vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> fpfh_vec;
 			for (int i = 0; i < cloud_vec.size(); i++)
 				fpfh_vec.push_back(computeFPFH(cloud_vec[i], cloud_vec[i], normals_vec[i], radius_FPFH_vec[j]));
-
-			if (j == 1)	//center radius
-			{
-				for (int i = 0; i < fpfh_vec.size(); i++)
-					fpfh_vec_output.push_back(fpfh_vec[i]);
-			}
 
 			vector<float> mean_fpfh;
 			vector<float> sigma_fpfh;
@@ -500,17 +491,57 @@ public:
 
 	template <class T_PointType>
 	static vector<vector<int>> getFPFH_unique_someRadius(vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec,
-		vector<pcl::PointCloud<pcl::Normal>::Ptr> normals_vec, float radius_FPFH_center, 
-		vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> &fpfh_vec_output, bool b_cout = false)
+		vector<pcl::PointCloud<pcl::Normal>::Ptr> normals_vec, float radius_FPFH_center, bool b_cout = false)
 	{
 		vector<float> radius_FPFH_vec;
 		radius_FPFH_vec.push_back(radius_FPFH_center * 0.75);
 		radius_FPFH_vec.push_back(radius_FPFH_center);
 		radius_FPFH_vec.push_back(radius_FPFH_center * 1.25);
 		vector<vector<int>> index_vecvec;
-		index_vecvec = getFPFH_unique_someRadius(cloud_vec, normals_vec, radius_FPFH_vec, fpfh_vec_output, b_cout);
+		index_vecvec = getFPFH_unique_someRadius(cloud_vec, normals_vec, radius_FPFH_vec, b_cout);
 		return index_vecvec;
 	}
+
+	template <class T_PointType>
+	static vector<vector<int>> getFPFH_unique_someRadius_outputFile(vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec,
+		vector<pcl::PointCloud<pcl::Normal>::Ptr> normals_vec, float radius_FPFH_center, 
+		string dir_, vector<string> filenames_vec, bool b_cout = false)
+	{
+		vector<float> radius_FPFH_vec;
+		radius_FPFH_vec.push_back(radius_FPFH_center * 0.75);
+		radius_FPFH_vec.push_back(radius_FPFH_center);
+		radius_FPFH_vec.push_back(radius_FPFH_center * 1.25);
+		vector<vector<int>> index_vecvec;
+		index_vecvec = getFPFH_unique_someRadius(cloud_vec, normals_vec, radius_FPFH_vec, b_cout);
+
+		//output
+		vector<vector<string>> s_output_vecvec;
+		//header
+		{
+			vector<string> s_temp;
+			s_temp.push_back("file_name");
+			s_temp.push_back("index_valid");
+			s_output_vecvec.push_back(s_temp);
+		}
+		string s_radius;
+		for (int i = 0; i < radius_FPFH_vec.size(); i++)
+			s_radius += CTimeString::to_string_remove0(radius_FPFH_vec[i]) + " ";
+		string s_filename = "validPoint_FPFH_" + s_radius + ".csv";
+		for (int j = 0; j < cloud_vec.size(); j++)
+		{
+			vector<string> s_temp;
+			s_temp.push_back(filenames_vec[j]);
+			for (int i = 0; i < index_vecvec[j].size(); i++)
+				s_temp.push_back(to_string(index_vecvec[j][i]));
+			s_output_vecvec.push_back(s_temp);
+		}
+
+		CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + s_filename);
+
+		return index_vecvec;
+	}
+
+	static vector<vector<int>> getFPFH_unique_someRadius_inputFile(string dir_, vector<string> filenames_cloud_vec, bool b_cout = false);
 
 	static pcl::Correspondences getCorrespondences_eachPairHaving(const pcl::Correspondences &corr_src_tgt,
 		const pcl::Correspondences &corr_tgt_src);
@@ -521,5 +552,17 @@ public:
 
 	static pcl::Correspondences getNearestOfFPFH_eachPairHaving_remove(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
 		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt, const vector<int> &index_unique_vec_src, const vector<int> &index_unique_vec_tgt, int num_near);
+
+	static pcl::Correspondences getNearestOfFPFH_value(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
+		int num_near_max, pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh, float th_value);
+
+	static pcl::Correspondences getNearestOfFPFH_eachPairHaving_value(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
+		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt, pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh_src,
+		pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh_tgt, int num_near_max, float th_value);
+
+	static pcl::Correspondences getNearestOfFPFH_eachPairHaving_remove_value(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
+		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt, const vector<int> &index_unique_vec_src,
+		const vector<int> &index_unique_vec_tgt, int num_near_max, float th_value);
+
 
 };

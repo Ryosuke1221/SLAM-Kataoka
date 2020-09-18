@@ -246,6 +246,38 @@ vector<bool> CFPFH_PCL::getFPFH_unique(pcl::PointCloud<pcl::FPFHSignature33>::Pt
 	return b_unique_vec;
 }
 
+vector<vector<int>> CFPFH_PCL::getFPFH_unique_someRadius_inputFile(string dir_, vector<string> filenames_cloud_vec, bool b_cout)
+{
+	vector<vector<int>> index_vecvec;
+	string filename_input;
+	{
+		vector<string> filenames_temp;
+		CTimeString::getFileNames_extension(dir_, filenames_temp, "validPoint_FPFH");
+		if (filenames_temp.size() != 1)
+		{
+			cout << "ERROR: some validPoint_FPFH found." << endl;
+			throw std::runtime_error("ERROR: some validPoint_FPFH found.");
+		}
+		filename_input = filenames_temp[0];
+	}
+	vector<vector<string>> s_input_vecvec;
+	s_input_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + filename_input);
+	int index_cloud = 0;
+	for (int j = 1; j < s_input_vecvec.size(); j++)
+	{
+		if (filenames_cloud_vec.size() == index_cloud) break;
+		if (s_input_vecvec[j][0] == filenames_cloud_vec[index_cloud])
+		{
+			vector<int> index_vec;
+			for (int i = 1; i < s_input_vecvec[j].size(); i++)
+				index_vec.push_back(stoi(s_input_vecvec[j][i]));
+			index_vecvec.push_back(index_vec);
+			index_cloud++;
+		}
+	}
+	return index_vecvec;
+}
+
 pcl::Correspondences CFPFH_PCL::getCorrespondences_eachPairHaving(const pcl::Correspondences &corr_src_tgt,
 	const pcl::Correspondences &corr_tgt_src)
 {
@@ -348,3 +380,79 @@ pcl::Correspondences CFPFH_PCL::getNearestOfFPFH_eachPairHaving_remove(pcl::Poin
 	}
 	return corrs_;
 }
+
+pcl::Correspondences CFPFH_PCL::getNearestOfFPFH_value(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
+	int num_near_max, pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh, float th_value)
+{
+	pcl::Correspondences corr_vec;
+	vector<vector<float>> squaredDistance_vecvec;
+	squaredDistance_vecvec.clear();
+	vector<vector<int>> index_vecvec;
+	for (int j = 0; j < fpfh_src->size(); j++)
+	{
+		vector<int> index_vec;
+		vector<float> squaredDistance_vec;
+		int found_neighs = kdtree_fpfh->nearestKSearch(*fpfh_src, j, num_near_max, index_vec, squaredDistance_vec);
+		for (int i = 0; i < index_vec.size(); i++)
+		{
+			if (th_value < squaredDistance_vec[i]) continue;
+			pcl::Correspondence corr_;
+			corr_.index_query = j;
+			corr_.index_match = index_vec[i];
+			corr_.distance = squaredDistance_vec[i];
+			corr_vec.push_back(corr_);
+		}
+	}
+	return corr_vec;
+}
+
+pcl::Correspondences CFPFH_PCL::getNearestOfFPFH_eachPairHaving_value(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
+	pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt, pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh_src,
+	pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh_tgt, int num_near_max, float th_value)
+{
+	pcl::Correspondences corr_src_tgt = getNearestOfFPFH_value(fpfh_src, num_near_max, kdtree_fpfh_tgt, th_value);
+	pcl::Correspondences corr_tgt_src = getNearestOfFPFH_value(fpfh_tgt, num_near_max, kdtree_fpfh_src, th_value);
+	pcl::Correspondences corr_new = getCorrespondences_eachPairHaving(corr_src_tgt, corr_tgt_src);
+	return corr_new;
+}
+
+pcl::Correspondences CFPFH_PCL::getNearestOfFPFH_eachPairHaving_remove_value(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
+	pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt, const vector<int> &index_unique_vec_src, const vector<int> &index_unique_vec_tgt, 
+	int num_near_max, float th_value)
+{
+	pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src_removed(new pcl::PointCloud<pcl::FPFHSignature33>);
+	pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt_removed(new pcl::PointCloud<pcl::FPFHSignature33>);
+	{
+		pcl::copyPointCloud(*fpfh_src, *fpfh_src_removed);
+		vector<bool> b_unique_vec;
+		b_unique_vec.resize(fpfh_src->size());
+		fill(b_unique_vec.begin(), b_unique_vec.end(), false);
+		for (int j = 0; j < index_unique_vec_src.size(); j++)
+			b_unique_vec[index_unique_vec_src[j]] = true;
+		for (int j = fpfh_src_removed->size() - 1; j >= 0; j--)
+			if (!b_unique_vec[j]) fpfh_src_removed->erase(fpfh_src_removed->begin() + j);
+	}
+	{
+		pcl::copyPointCloud(*fpfh_tgt, *fpfh_tgt_removed);
+		vector<bool> b_unique_vec;
+		b_unique_vec.resize(fpfh_tgt->size());
+		fill(b_unique_vec.begin(), b_unique_vec.end(), false);
+		for (int j = 0; j < index_unique_vec_tgt.size(); j++)
+			b_unique_vec[index_unique_vec_tgt[j]] = true;
+		for (int j = fpfh_tgt_removed->size() - 1; j >= 0; j--)
+			if (!b_unique_vec[j]) fpfh_tgt_removed->erase(fpfh_tgt_removed->begin() + j);
+	}
+	pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh_src(new pcl::KdTreeFLANN<pcl::FPFHSignature33>);
+	pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh_tgt(new pcl::KdTreeFLANN<pcl::FPFHSignature33>);
+	kdtree_fpfh_src->setInputCloud(fpfh_src_removed);
+	kdtree_fpfh_tgt->setInputCloud(fpfh_tgt_removed);
+	pcl::Correspondences corrs_;
+	corrs_ = getNearestOfFPFH_eachPairHaving_value(fpfh_src_removed, fpfh_tgt_removed, kdtree_fpfh_src, kdtree_fpfh_tgt, num_near_max, th_value);
+	for (int j = 0; j < corrs_.size(); j++)
+	{
+		corrs_[j].index_query = index_unique_vec_src[corrs_[j].index_query];
+		corrs_[j].index_match = index_unique_vec_tgt[corrs_[j].index_match];
+	}
+	return corrs_;
+}
+

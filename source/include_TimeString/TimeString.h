@@ -205,9 +205,7 @@ public:
 		}
 		vector<vector<T>> value_input_vecvec_new;
 		for (int j = 0; j < frame_pair_vec.size(); j++)
-		{
 			value_input_vecvec_new.push_back(value_vecvec[frame_pair_vec[j].second]);
-		}
 		value_vecvec.clear();
 		value_vecvec = value_input_vecvec_new;
 	}
@@ -229,7 +227,6 @@ public:
 					index_sameFirstValue_vecvec.push_back(index_sameFirstValue_vec);
 					index_sameFirstValue_vec.clear();
 					value_pickup = value_vecvec[j][index_first];
-
 				}
 				index_sameFirstValue_vec.push_back(j);
 				if (j == value_vecvec.size() - 1)
@@ -556,6 +553,31 @@ public:
 		sortVector(output_index_vec);
 
 		return output_index_vec;
+	}
+
+	template<typename T>
+	static string to_string_remove0(T value_)
+	{
+		string s_value = to_string(value_);
+
+		vector<int> find_vec_dot = find_all(s_value, ".");
+		// 10 -> 10
+		if (find_vec_dot.size() == 0) return s_value;
+		//10.0 -> 10
+		if (value_ - (int)value_ == 0.)
+		{
+			for (int j = s_value.size() - 1; j >= find_vec_dot[0]; j--)
+				s_value.erase(s_value.begin() + j);
+			return s_value;
+		}
+		//10.0100 -> 10.01
+		for (int j = s_value.size() - 1; j > find_vec_dot[0]; j--)
+		{
+			string s_char = s_value.substr(j, 1);
+			if (s_char == "0") s_value.erase(s_value.begin() + j);
+			else return s_value;
+		}
+		return s_value;
 	}
 
 private:
