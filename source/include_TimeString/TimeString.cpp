@@ -381,7 +381,35 @@ void CTimeString::makenewfolder(string dir, string newfoldername)
 
 void CTimeString::movefile(string path_before, string path_after)
 {
-	sys_ns::rename(path_before, path_after);
+	//double check
+	string s_file_input;
+	s_file_input = getFilename_removingFolder(path_before);
+	string dir_output;
+	dir_output = path_after.substr(0, path_after.size() - 1 - s_file_input.size());
+	string s_extention = getFilename_onlyExtension(s_file_input);
+	string filename_noExtention = s_file_input.substr(0, s_file_input.size() - 1 - s_extention.size());
+	vector<string> s_vec;
+	getFileNames_extension(dir_output, s_vec, filename_noExtention);
+	if(s_vec.size() == 0)
+		sys_ns::rename(path_before, path_after);
+	else
+	{
+		int index_biggest;
+		int num_biggest = 0;
+		for (int j = 0; j < s_vec.size(); j++)
+		{
+			if (num_biggest < s_vec[j].size())
+			{
+				num_biggest = s_vec[j].size();
+				index_biggest = j;
+			}
+		}
+		string path_after_new;
+		path_after_new = s_vec[index_biggest].substr(
+			0, s_vec[index_biggest].size() - 1 - s_extention.size()) + " (2)." + s_extention;
+		path_after_new = dir_output + "/" + path_after_new;
+		sys_ns::rename(path_before, path_after_new);
+	}
 }
 
 bool CTimeString::getFileNames_folder(std::string folderPath, std::vector<std::string> &file_names)
@@ -992,3 +1020,27 @@ vector<vector<string>> CTimeString::getMatrixData_fromFormatOfFPFH(vector<vector
 	return s_output_vecvec;
 }
 
+string CTimeString::getFilename_onlyExtension(string s_filename)
+{
+	vector<int> pos_period;
+	pos_period = find_all(s_filename, ".");
+	if (pos_period.size() == 0)
+	{
+		cout << "ERROR: period not found" << endl;
+		throw std::runtime_error("ERROR: period not found");
+	}
+	string s_extenstion = s_filename.substr(pos_period.back() + 1, s_filename.size() - pos_period.back());
+	return s_extenstion;
+}
+
+string CTimeString::getFilename_removingFolder(string s_input)
+{
+	vector<int> find_vec = find_all(s_input, "/");
+	if (find_vec.size() == 0)
+	{
+		cout << "ERROR: / not found" << endl;
+		throw std::runtime_error("ERROR: / not found");
+	}
+	string s_output = s_input.substr(find_vec.back() + 1, s_input.size() - find_vec.back());
+	return s_output;
+}

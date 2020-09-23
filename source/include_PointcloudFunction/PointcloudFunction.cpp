@@ -1729,6 +1729,7 @@ void CPointcloudFunction::FileProcess()
 	//	cout << "files_temp.size():"<< files_temp.size() << endl;
 	//}
 
+
 	while (1)
 	{
 		//show get folder name

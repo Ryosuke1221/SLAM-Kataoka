@@ -580,6 +580,9 @@ public:
 		return s_value;
 	}
 
+	static string getFilename_onlyExtension(string s_filename);
+	static string getFilename_removingFolder(string s_input);
+
 private:
 	static bool getDirectoryExistance(string foder_Path);
 	static bool getDirectoryExistance_detail(string foder_Path, bool b_first);
