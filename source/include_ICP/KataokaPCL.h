@@ -398,25 +398,67 @@ public:
 	static int ICP_Chara_getCharaOfPoint_NarahaWinter(pcl::PointXYZRGB point_arg, vector<double> th_vec);
 	static vector<int> ICP_Chara_GetCharaData(pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_PointCloud_arg);
 
+	//template <class T_PointType>
+	//static Eigen::Vector3d getWeightPoint(boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_)
+	//{
+	//	Eigen::Vector3d sum_vec = Eigen::Vector3d::Zero();
+	//	Eigen::Vector3d weight_vec = Eigen::Vector3d::Zero();
+	//	if (cloud_->size() == 0)
+	//	{
+	//		cout << "ERROR: no point found" << endl;
+	//		return weight_vec;
+	//	}
+	//	for (size_t i = 0; i < cloud_->size(); i++)
+	//	{
+	//		sum_vec(0, 0) = sum_vec(0, 0) + cloud_->points[i].x;
+	//		sum_vec(1, 0) = sum_vec(1, 0) + cloud_->points[i].y;
+	//		sum_vec(2, 0) = sum_vec(2, 0) + cloud_->points[i].z;
+	//	}
+	//	weight_vec(0, 0) = sum_vec(0, 0) / cloud_->size();
+	//	weight_vec(1, 0) = sum_vec(1, 0) / cloud_->size();
+	//	weight_vec(2, 0) = sum_vec(2, 0) / cloud_->size();
+	//	return weight_vec;
+	//}
+
 	template <class T_PointType>
-	static Eigen::Vector3d getWeightPoint(pcl::PointCloud<T_PointType> cloud_)
+	static Eigen::Vector3d getWeightPoint_3D(boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_)
 	{
 		Eigen::Vector3d sum_vec = Eigen::Vector3d::Zero();
 		Eigen::Vector3d weight_vec = Eigen::Vector3d::Zero();
-		if (cloud_.size() == 0)
+		if (cloud_->size() == 0)
 		{
 			cout << "ERROR: no point found" << endl;
 			return weight_vec;
 		}
-		for (size_t i = 0; i < cloud_.size(); i++)
+		for (size_t i = 0; i < cloud_->size(); i++)
 		{
-			sum_vec(0, 0) = sum_vec(0, 0) + cloud_.points[i].x;
-			sum_vec(1, 0) = sum_vec(1, 0) + cloud_.points[i].y;
-			sum_vec(2, 0) = sum_vec(2, 0) + cloud_.points[i].z;
+			sum_vec(0, 0) = sum_vec(0, 0) + cloud_->points[i].x;
+			sum_vec(1, 0) = sum_vec(1, 0) + cloud_->points[i].y;
+			sum_vec(2, 0) = sum_vec(2, 0) + cloud_->points[i].z;
 		}
-		weight_vec(0, 0) = sum_vec(0, 0) / cloud_.size();
-		weight_vec(1, 0) = sum_vec(1, 0) / cloud_.size();
-		weight_vec(2, 0) = sum_vec(2, 0) / cloud_.size();
+		weight_vec(0, 0) = sum_vec(0, 0) / cloud_->size();
+		weight_vec(1, 0) = sum_vec(1, 0) / cloud_->size();
+		weight_vec(2, 0) = sum_vec(2, 0) / cloud_->size();
+		return weight_vec;
+	}
+
+	template <class T_PointType>
+	static Eigen::Vector2d getWeightPoint_2D(boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_)
+	{
+		Eigen::Vector2d sum_vec = Eigen::Vector2d::Zero();
+		Eigen::Vector2d weight_vec = Eigen::Vector2d::Zero();
+		if (cloud_->size() == 0)
+		{
+			cout << "ERROR: no point found" << endl;
+			return weight_vec;
+		}
+		for (size_t i = 0; i < cloud_->size(); i++)
+		{
+			sum_vec(0, 0) = sum_vec(0, 0) + cloud_->points[i].x;
+			sum_vec(1, 0) = sum_vec(1, 0) + cloud_->points[i].y;
+		}
+		weight_vec(0, 0) = sum_vec(0, 0) / cloud_->size();
+		weight_vec(1, 0) = sum_vec(1, 0) / cloud_->size();
 		return weight_vec;
 	}
 
@@ -1058,22 +1100,34 @@ public:
 	template <class T_PointType>
 	static pcl::Correspondences determineCorrespondences_output_kdtreeArg_value(
 		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src,
-		boost::shared_ptr<pcl::KdTreeFLANN<T_PointType>> kdtree_tgt,float th_value)
+		boost::shared_ptr<pcl::KdTreeFLANN<T_PointType>> kdtree_tgt,float th_value, bool b_multipleNear = false)
 	{
 		pcl::Correspondences correspondences;
 		correspondences.resize(cloud_src->size());
 		std::vector<int> index(1);
 		std::vector<float> distance(1);
 		unsigned int nr_valid_correspondences = 0;
-		for (size_t i = 0; i < cloud_src->size(); ++i)
+		for (size_t j = 0; j < cloud_src->size(); ++j)
 		{
 			//int found_neighs = kdtree_tgt->nearestKSearch(cloud_src->at(i), num_nearest, index, distance);
-			int found_neighs = kdtree_tgt->radiusSearch(cloud_src->at(i), th_value, index, distance);
+			int found_neighs = kdtree_tgt->radiusSearch(cloud_src->at(j), th_value, index, distance);
 			pcl::Correspondence corr;
-			corr.index_query = i;
-			corr.index_match = index[0];
-			corr.distance = distance[0];	//squared
-			correspondences[nr_valid_correspondences++] = corr;
+			corr.index_query = j;
+			if (!b_multipleNear)
+			{
+				corr.index_match = index[0];
+				corr.distance = distance[0];	//squared
+				correspondences[nr_valid_correspondences++] = corr;
+			}
+			else
+			{
+				for (int i = 0; i < index.size(); i++)
+				{
+					corr.index_match = index[i];
+					corr.distance = distance[i];	//squared
+					correspondences[nr_valid_correspondences++] = corr;
+				}
+			}
 		}
 		correspondences.resize(nr_valid_correspondences);
 		return correspondences;
@@ -1088,6 +1142,37 @@ public:
 		pcl::Correspondences corr_tgt_src = determineCorrespondences_output_kdtreeArg_value(cloud_feature_tgt, kdtree_src, th_value);
 		pcl::Correspondences corr_new = getCorrespondences_eachPairHaving(corr_src_tgt, corr_tgt_src);
 		return corr_new;
+	}
+
+	template <class T_PointType>
+	static pcl::Correspondences determineCorrespondences_output_kdtreeArg_value_singleQuery(
+		T_PointType point_query, boost::shared_ptr<pcl::KdTreeFLANN<T_PointType>> kdtree_tgt, float th_value, bool b_multipleNear = false)
+	{
+		pcl::Correspondences correspondences;
+		std::vector<int> index(1);
+		std::vector<float> distance(1);
+		int found_neighs = kdtree_tgt->radiusSearch(point_query, th_value, index, distance);
+		pcl::Correspondence corr;
+		corr.index_query = 0;
+		if (!b_multipleNear)
+		{
+			corr.index_match = index[0];
+			corr.distance = distance[0];	//squared
+			correspondences.push_back(corr);
+		}
+		else
+		{
+			for (int i = 0; i < index.size(); i++)
+			{
+				corr.index_match = index[i];
+				corr.distance = distance[i];	//squared
+				correspondences.push_back(corr);
+			}
+		}
+
+		if (correspondences.size() == 0) cout << "ERROR: no corr found" << endl;
+
+		return correspondences;
 	}
 
 	template <typename T>
@@ -1137,6 +1222,150 @@ public:
 			corrs_[j].index_match = index_unique_vec_tgt[corrs_[j].index_match];
 		}
 		return corrs_;
+	}
+
+	template <class T_PointType>
+	static Eigen::Matrix<float, 3, Eigen::Dynamic> calcEigenMatrixFromPointCloud(boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_)
+	{
+		int npts = cloud_->size();
+		if (npts == 0)
+		{
+			cout << "ERROR(CKataokaPCL::calcEigenMatrixFromPointCloud): No point contained." << endl;
+			throw std::runtime_error("ERROR(CKataokaPCL::calcEigenMatrixFromPointCloud): No point contained.");
+		}
+		Eigen::Matrix<float, 3, Eigen::Dynamic> mat_(3, npts);
+		{
+			auto itr_points = cloud_->begin();
+			for (int i = 0; i < npts; i++)
+			{
+				if (itr_points == cloud_->end()) break;
+				mat_(0, i) = itr_points->x;
+				mat_(1, i) = itr_points->y;
+				mat_(2, i) = itr_points->z;
+				++itr_points;
+			}
+		}
+		return mat_;
+	}
+
+	template<typename Derived>
+	static Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> calcCovarianceMatrix(const Eigen::MatrixBase<Derived>& mat_)
+	{
+		//argument example: 3 * Dynamic 
+		int npts = mat_.cols();
+		if (npts == 0)
+		{
+			cout << "ERROR(CKataokaPCL::calcCovarianceMatrix): No point contained." << endl;
+			throw std::runtime_error("ERROR(CKataokaPCL::calcCovarianceMatrix): No point contained.");
+		}
+		const float one_over_n = 1. / static_cast<float>(npts);
+		Eigen::Matrix<float, Eigen::Dynamic, 1> mat_mean(mat_.rows(), 1);
+		mat_mean = mat_.rowwise().sum() * one_over_n;
+		Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> mat_demean(mat_.rows(), npts);
+		mat_demean = mat_.colwise() - mat_mean;
+		Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> mat_cov(mat_.rows(), mat_.rows());
+		mat_cov = mat_demean * mat_demean.transpose() * one_over_n;
+		return mat_cov;
+	}
+
+
+	template <typename T, class T_PointType>
+	static vector<pair<float, float>> calcCompareValueOfFeature_scalar(const pcl::Correspondences &corr_,
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src, boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_tgt,
+		const vector<T> &features_src, const vector<T> &features_tgt,
+		const vector<int> &index_unique_vec_src, const vector<int> &index_unique_vec_tgt, float th_value)
+	{
+		pcl::PointCloud<T_PointType>::Ptr cloud_src_removed(new pcl::PointCloud<T_PointType>());
+		pcl::PointCloud<T_PointType>::Ptr cloud_tgt_removed(new pcl::PointCloud<T_PointType>());
+		for (int j = 0; j < index_unique_vec_src.size(); j++)
+			cloud_src_removed->push_back(cloud_src->points[index_unique_vec_src[j]]);
+		for (int j = 0; j < index_unique_vec_tgt.size(); j++)
+			cloud_tgt_removed->push_back(cloud_tgt->points[index_unique_vec_tgt[j]]);
+		vector<T> features_src_removed;
+		vector<T> features_tgt_removed;
+		for (int j = 0; j < index_unique_vec_src.size(); j++)
+			features_src_removed.push_back(features_src[index_unique_vec_src[j]]);
+		for (int j = 0; j < index_unique_vec_tgt.size(); j++)
+			features_tgt_removed.push_back(features_tgt[index_unique_vec_tgt[j]]);
+		typedef pcl::PointXY T_PointType_feature;
+		pcl::PointCloud<T_PointType_feature>::Ptr cloud_feature_src(new pcl::PointCloud<T_PointType_feature>());
+		pcl::PointCloud<T_PointType_feature>::Ptr cloud_feature_tgt(new pcl::PointCloud<T_PointType_feature>());
+		for (int j = 0; j < features_src_removed.size(); j++)
+		{
+			T_PointType_feature point_;
+			point_.x = features_src_removed[j];
+			point_.y = 0.;
+			cloud_feature_src->push_back(point_);
+		}
+		cloud_feature_src->is_dense = true;
+		for (int j = 0; j < features_tgt_removed.size(); j++)
+		{
+			T_PointType_feature point_;
+			point_.x = features_tgt_removed[j];
+			point_.y = 0.;
+			cloud_feature_tgt->push_back(point_);
+		}
+		cloud_feature_tgt->is_dense = true;
+		pcl::KdTreeFLANN<T_PointType_feature>::Ptr kdtree_feature_src(new pcl::KdTreeFLANN<T_PointType_feature>);
+		pcl::KdTreeFLANN<T_PointType_feature>::Ptr kdtree_feature_tgt(new pcl::KdTreeFLANN<T_PointType_feature>);
+		kdtree_feature_src->setInputCloud(cloud_feature_src);
+		kdtree_feature_tgt->setInputCloud(cloud_feature_tgt);
+		Eigen::Matrix<float, 2, 1> mat_weight_src = getWeightPoint_2D(cloud_feature_src).cast<float>();
+		Eigen::Matrix<float, 2, 1> mat_weight_tgt = getWeightPoint_2D(cloud_feature_tgt).cast<float>();
+		vector<pair<float, float>> compare_srctgt_vec;
+		for (int j = 0; j < corr_.size(); j++)
+		{
+			float compare_src;
+			{
+				pcl::Correspondences corr_near;
+				T_PointType_feature point_feature;
+				point_feature.x = features_src[corr_[j].index_query];
+				point_feature.y = 0.;
+				corr_near = determineCorrespondences_output_kdtreeArg_value_singleQuery(point_feature, kdtree_feature_src, th_value, true);
+				pcl::PointCloud<T_PointType>::Ptr cloud_near(new pcl::PointCloud<T_PointType>());
+				for (int i = 0; i < corr_near.size(); i++)
+					cloud_near->push_back(cloud_src_removed->points[corr_near[i].index_match]);
+				if (corr_near.size() == 0)
+					compare_src = 10000.;
+				else
+				{
+					compare_src = calcCovarianceMatrix(calcEigenMatrixFromPointCloud(cloud_near)).trace();
+					if (compare_src > 10000.)
+					{
+						cout << "so big!!" << endl;
+						cout << "j:" << j << endl;
+					}
+					else if (compare_src < 0.00001) compare_src = 0.;
+				}
+
+			}
+			float compare_tgt;
+			{
+				pcl::Correspondences corr_near;
+				T_PointType_feature point_feature;
+				point_feature.x = features_tgt[corr_[j].index_match];
+				point_feature.y = 0.;
+				corr_near = determineCorrespondences_output_kdtreeArg_value_singleQuery(point_feature, kdtree_feature_tgt, th_value, true);
+				pcl::PointCloud<T_PointType>::Ptr cloud_near(new pcl::PointCloud<T_PointType>());
+				for (int i = 0; i < corr_near.size(); i++)
+					cloud_near->push_back(cloud_tgt_removed->points[corr_near[i].index_match]);
+				if (corr_near.size() == 0)
+					compare_tgt = 10000.;
+				else
+				{
+					compare_tgt = calcCovarianceMatrix(calcEigenMatrixFromPointCloud(cloud_near)).trace();
+					if (compare_tgt > 10000.)
+					{
+						cout << "so big!!" << endl;
+						cout << "j:" << j << endl;
+					}
+					else if (compare_tgt < 0.00001) compare_tgt = 0.;
+				}
+			}
+			compare_srctgt_vec.push_back(make_pair(compare_src, compare_tgt));
+		}
+
+		return compare_srctgt_vec;
 	}
 
 };

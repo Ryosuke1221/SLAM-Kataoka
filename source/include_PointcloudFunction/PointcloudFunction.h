@@ -212,6 +212,8 @@ public:
 	void FPFH_unique(string dir_);
 	void DoDifferential_showFeatureValue(string dir_);
 	void DoDifferential_RigidTransformation_FPFH_Features(string dir_);
+	void DoDifferential_RigidTransformation_FPFH_Features_new(string dir_);
 	void DoDifferential_RigidTransformation_FPFH_Features_allFrames(string dir_);
+	void DoDifferential_PairEvaluation(string dir_);
 
 };
