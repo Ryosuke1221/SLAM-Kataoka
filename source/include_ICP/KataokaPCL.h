@@ -1268,7 +1268,6 @@ public:
 		return mat_cov;
 	}
 
-
 	template <typename T, class T_PointType>
 	static vector<pair<float, float>> calcCompareValueOfFeature_scalar(const pcl::Correspondences &corr_,
 		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src, boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_tgt,
@@ -1366,6 +1365,36 @@ public:
 		}
 
 		return compare_srctgt_vec;
+	}
+
+	static void calcRanking_query_match_ValueOfFeature(const vector<vector<pair<float, float>>> &compare_vecvec,
+		vector<int> &frame_vec, vector<int> &corr_index_vec, vector<bool> &b_queryOrNot_vec, vector<float> &evaluation_vec, bool b_cout = false);
+
+	static vector<vector<int>> calcRanking_ValueOfFeature_argCompare(const vector<vector<pair<float, float>>> &compare_vecvec, bool b_cout = false);
+
+	template <class T_PointType, typename T>
+	static vector<vector<int>> calcRanking_ValueOfFeature_scalar(const vector<pair<int, int>> &index_pair_vec, const vector<pcl::Correspondences> &corrs_vec,
+		vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec, const vector<vector<T>> &feature_vecvec, vector<vector<int>> &index_valid_vecvec, float th_nearest, bool b_cout = false)
+	{
+		vector<vector<pair<float, float>>> compare_vecvec;
+		for (int j = 0; j < index_pair_vec.size(); j++)
+		{
+			int i_tgt = index_pair_vec[j].first;
+			int i_src = index_pair_vec[j].second;
+			vector<pair<float, float>> compare_vec;
+			compare_vec = calcCompareValueOfFeature_scalar(corrs_vec[j],
+				cloud_vec[i_src], cloud_vec[i_tgt], feature_vecvec[i_src], feature_vecvec[i_tgt],
+				index_valid_vecvec[i_src], index_valid_vecvec[i_tgt], th_nearest);
+			if (b_cout)
+			{
+				for (int j = 0; j < compare_vec.size(); j++)
+					cout << "j:" << j << "  query:" << compare_vec[j].first << " match:" << compare_vec[j].second << endl;
+			}
+			compare_vecvec.push_back(compare_vec);
+		}
+		vector<vector<int>> rank_output_vecvec;
+		rank_output_vecvec = calcRanking_ValueOfFeature_argCompare(compare_vecvec, b_cout);
+		return rank_output_vecvec;
 	}
 
 };

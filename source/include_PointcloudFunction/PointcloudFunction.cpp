@@ -7912,6 +7912,8 @@ void CPointcloudFunction::DoDifferential_PairEvaluation(string dir_)
 {
 	typedef pcl::PointXYZRGB T_PointType;
 
+	//bool b_useHistogramRemover;
+
 	string s_folder;
 	{
 		vector<string> filenames_folder;
@@ -8064,18 +8066,16 @@ void CPointcloudFunction::DoDifferential_PairEvaluation(string dir_)
 	vector<pcl::Correspondences> corrs_velodyne_vec;
 	vector<pcl::Correspondences> corrs_fpfh_vec;
 
-	vector<vector<pair<float, float>>> compare_nir_vecvec;
-	vector<vector<pair<float, float>>> compare_velodyne_vecvec;
-	vector<vector<pair<float, float>>> compare_fpfh_vecvec;
+	float th_nearest_nir = 0.5;
+	float th_nearest_velodyne = 0.05;
+	float th_nearest_fpfh = 1800.;
 
 	{
-		int i_tgt = 0;
+		//int i_tgt = 0;
+		int i_tgt = 5;
 		int i_src = i_tgt + 1;
 
 		int num_nearest = 10;
-		float th_nearest_nir = 0.5;
-		float th_nearest_velodyne = 0.05;
-		float th_nearest_fpfh = 1800.;
 		index_pair_vec.push_back(make_pair(i_tgt, i_src));
 		cout << "i_tgt:" << i_tgt << endl;
 		cout << "i_src:" << i_src << endl;
@@ -8102,137 +8102,56 @@ void CPointcloudFunction::DoDifferential_PairEvaluation(string dir_)
 		corrs_nir_vec.push_back(corrs_nir);
 		corrs_velodyne_vec.push_back(corrs_velodyne);
 		corrs_fpfh_vec.push_back(corrs_fpfh);
+	}
 
-		vector<pair<float, float>> compare_nir_vec;
-		vector<pair<float, float>> compare_velodyne_vec;
-		vector<pair<float, float>> compare_fpfh_vec;
-
-		compare_nir_vec = CKataokaPCL::calcCompareValueOfFeature_scalar(corrs_nir,
-			cloud_vec[i_src], cloud_vec[i_tgt], featureDivergence_vecvec_nir[i_src], featureDivergence_vecvec_nir[i_tgt],
-			index_valid_vecvec_nir[i_src], index_valid_vecvec_nir[i_tgt], th_nearest_nir);
-		for (int j = 0; j < compare_nir_vec.size(); j++)
-			cout << "j:" << j << "  query:" << compare_nir_vec[j].first << " match:" << compare_nir_vec[j].second << endl;
-
-		compare_velodyne_vec = CKataokaPCL::calcCompareValueOfFeature_scalar(corrs_velodyne, 
-			cloud_vec[i_src], cloud_vec[i_tgt], featureDivergence_vecvec_velodyne[i_src], featureDivergence_vecvec_velodyne[i_tgt],
-			index_valid_vecvec_velodyne[i_src], index_valid_vecvec_velodyne[i_tgt], th_nearest_velodyne);
-		for (int j = 0; j < compare_velodyne_vec.size(); j++)
-			cout << "j:" << j << "  query:" << compare_velodyne_vec[j].first << " match:" << compare_velodyne_vec[j].second << endl;
+	cout << "nir" << endl;
+	{
+		vector<vector<int>> rank_nir_vecvec;
+		rank_nir_vecvec = CKataokaPCL::calcRanking_ValueOfFeature_scalar(index_pair_vec, corrs_nir_vec, cloud_vec, featureDivergence_vecvec_nir, index_valid_vecvec_nir, th_nearest_nir, true);
+		vector<pcl::Correspondences> corrs_vec_temp;
+		for (int j = 0; j < rank_nir_vecvec.size(); j++)
+		{
+			pcl::Correspondences corrs_temp;
+			for (int i = 0; i < rank_nir_vecvec[j].size(); i++)
+			{
+				if (rank_nir_vecvec[j][i] == 0) corrs_temp.push_back(corrs_nir_vec[j][i]);
+				corrs_vec_temp.push_back(corrs_temp);
+			}
+		}
+		corrs_nir_vec.clear();
+		corrs_nir_vec = corrs_vec_temp;
+		cout << "corrs_nir_vec.back().size():" << corrs_nir_vec.back().size() << endl;
+	}
 	
-		compare_nir_vecvec.push_back(compare_nir_vec);
-		compare_velodyne_vecvec.push_back(compare_velodyne_vec);
-	}
-
-	//vector<pcl::Correspondences> corrs_nir_vec;
-	//vector<pcl::Correspondences> corrs_velodyne_vec;
-	//vector<pcl::Correspondences> corrs_fpfh_vec;
-
-	//vector<vector<pair<float, float>>> compare_nir_vecvec;
-	//vector<vector<pair<float, float>>> compare_velodyne_vecvec;
-	//vector<vector<pair<float, float>>> compare_fpfh_vecvec;
-
-	//ranking
+	cout << "velodyne" << endl;
 	{
-		vector<vector<float>> ranking_vecvec;
-		for (int j = 0; j < corrs_nir_vec.size(); j++)
+		vector<vector<int>> rank_velodyne_vecvec;
+		rank_velodyne_vecvec = CKataokaPCL::calcRanking_ValueOfFeature_scalar(index_pair_vec, corrs_velodyne_vec, cloud_vec, featureDivergence_vecvec_velodyne, index_valid_vecvec_velodyne, th_nearest_velodyne, true);
+		vector<pcl::Correspondences> corrs_vec_temp;
+		for (int j = 0; j < rank_velodyne_vecvec.size(); j++)
 		{
-			for (int i = 0; i < corrs_nir_vec[j].size(); i++)
+			pcl::Correspondences corrs_temp;
+			for (int i = 0; i < rank_velodyne_vecvec[j].size(); i++)
 			{
-				vector<float> ranking_vec_query;
-				ranking_vec_query.push_back((float)(j));						//frame
-				ranking_vec_query.push_back((float)(i * 2 + 0));				//0:query, 1:match
-				ranking_vec_query.push_back(compare_nir_vecvec[j][i].first);	//evaluation
-				ranking_vecvec.push_back(ranking_vec_query);
-				vector<float> ranking_vec_match;
-				ranking_vec_match.push_back((float)(j));						//frame
-				ranking_vec_match.push_back((float)(i * 2 + 1));				//0:query, 1:match
-				ranking_vec_match.push_back(compare_nir_vecvec[j][i].second);	//evaluation
-				ranking_vecvec.push_back(ranking_vec_match);
+				if (rank_velodyne_vecvec[j][i] == 0) corrs_temp.push_back(corrs_velodyne_vec[j][i]);
+				corrs_vec_temp.push_back(corrs_temp);
 			}
 		}
-		CTimeString::sortVector2d(ranking_vecvec, 2);
-		for (int j = 0; j < ranking_vecvec.size(); j++)
-		{
-			//if (j % 100 == 0)
-			{
-				cout << "j:" << j;
-				cout << " frame:" << ranking_vecvec[j][0];
-				cout << " corr_index:" << ((int)ranking_vecvec[j][1]) / 2;
-				cout<<" query or match:"<< ((int)ranking_vecvec[j][1]) % 2;
-				cout << " evaluation:" << ranking_vecvec[j][2] << endl;
-			}
-		}
-		cout << endl;
-	}
-	//ranking
-	{
-		vector<vector<float>> ranking_vecvec;
-		for (int j = 0; j < corrs_velodyne_vec.size(); j++)
-		{
-			for (int i = 0; i < corrs_velodyne_vec[j].size(); i++)
-			{
-				vector<float> ranking_vec_query;
-				ranking_vec_query.push_back((float)(j));						//frame
-				ranking_vec_query.push_back((float)(i * 2 + 0));					//0:query, 1:match
-				ranking_vec_query.push_back(compare_velodyne_vecvec[j][i].first);	//evaluation
-				ranking_vecvec.push_back(ranking_vec_query);
-				vector<float> ranking_vec_match;
-				ranking_vec_match.push_back((float)(j));						//frame
-				ranking_vec_match.push_back((float)(i * 2 + 1));					//0:query, 1:match
-				ranking_vec_match.push_back(compare_velodyne_vecvec[j][i].second);	//evaluation
-				ranking_vecvec.push_back(ranking_vec_match);
-			}
-		}
-		CTimeString::sortVector2d(ranking_vecvec, 2);
-		for (int j = 0; j < ranking_vecvec.size(); j++)
-		{
-			//if (j % 100 == 0)
-			{
-				cout << "j:" << j;
-				cout << " frame:" << ranking_vecvec[j][0];
-				cout << " corr_index:" << ((int)ranking_vecvec[j][1]) / 2;
-				cout << " query or match:" << ((int)ranking_vecvec[j][1]) % 2;
-				cout << " evaluation:" << ranking_vecvec[j][2] << endl;
-			}
-		}
+		corrs_velodyne_vec.clear();
+		corrs_velodyne_vec = corrs_vec_temp;
+		cout << "corrs_velodyne_vec.back().size():"<< corrs_velodyne_vec.back().size() << endl;
 	}
 
-	//for (int i_tgt = 0; i_tgt < cloud_vec.size(); i_tgt++)
+	//for (int j = 0; j < index_pair_vec.size(); j++)
 	//{
-	//	for (int i_src = i_tgt + 1; i_src < cloud_vec.size(); i_src++)
-	//	{
-	//		int num_nearest = 10;
-	//		float th_nearest_nir = 0.5;
-	//		float th_nearest_velodyne = 0.05;
-	//		float th_nearest_fpfh = 1800.;
-	//		index_pair_vec.push_back(make_pair(i_tgt, i_src));
-	//		cout << "i_tgt:" << i_tgt << endl;
-	//		cout << "i_src:" << i_src << endl;
+	//	int i_tgt = index_pair_vec[j].first;
+	//	int i_src = index_pair_vec[j].second;
 
-	//		pcl::Correspondences corrs_nir;
-	//		pcl::Correspondences corrs_velodyne;
-	//		pcl::Correspondences corrs_fpfh;
+	//	int num_nearest = 10;
+	//	cout << "i_tgt:" << i_tgt << endl;
+	//	cout << "i_src:" << i_src << endl;
 
-	//		//corrs_nir = CKataokaPCL::determineCorrespondences_feature_remove(featureDivergence_vecvec_nir[i_src], featureDivergence_vecvec_nir[i_tgt],
-	//		//	index_valid_vecvec_nir[i_src], index_valid_vecvec_nir[i_tgt], num_nearest);
-	//		//corrs_nir = CKataokaPCL::determineCorrespondences_feature_remove_value(featureDivergence_vecvec_nir[i_src], featureDivergence_vecvec_nir[i_tgt],
-	//		//	index_valid_vecvec_nir[i_src], index_valid_vecvec_nir[i_tgt], th_nearest_nir);
 
-	//		//corrs_velodyne = CKataokaPCL::determineCorrespondences_feature_remove(featureDivergence_vecvec_velodyne[i_src], featureDivergence_vecvec_velodyne[i_tgt],
-	//		//	index_valid_vecvec_velodyne[i_src], index_valid_vecvec_velodyne[i_tgt], num_nearest);
-	//		corrs_velodyne = CKataokaPCL::determineCorrespondences_feature_remove_value(featureDivergence_vecvec_velodyne[i_src], featureDivergence_vecvec_velodyne[i_tgt],
-	//			index_valid_vecvec_velodyne[i_src], index_valid_vecvec_velodyne[i_tgt], th_nearest_velodyne);
-
-	//		//corrs_fpfh = CFPFH_PCL::getNearestOfFPFH_eachPairHaving_remove(fpfh_vec[i_src], fpfh_vec[i_tgt],
-	//		//	index_valid_vecvec_FPFH[i_src], index_valid_vecvec_FPFH[i_tgt], num_nearest);
-	//		//corrs_fpfh = CFPFH_PCL::getNearestOfFPFH_eachPairHaving_remove_value(fpfh_vec[i_src], fpfh_vec[i_tgt],
-	//		//	index_valid_vecvec_FPFH[i_src], index_valid_vecvec_FPFH[i_tgt], num_nearest, th_nearest_fpfh);
-
-	//		vector<pair<float, float>> compare_nir_vec;
-	//		vector<pair<float, float>> compare_velodyne_vec;
-	//		vector<pair<float, float>> compare_fpfh_vec;
-
-	//	}
 	//}
 
 	//for (int i_tgt = 0; i_tgt < cloud_vec.size(); i_tgt++)
@@ -8257,28 +8176,6 @@ void CPointcloudFunction::DoDifferential_PairEvaluation(string dir_)
 	//		//		if (i_max < index_valid_vecvec_FPFH[i_tgt][j]) i_max = index_valid_vecvec_FPFH[i_tgt][j];
 	//		//	cout << "i_tgt max:" << i_max << endl;
 	//		//}
-
-	//		pcl::Correspondences corrs_nir;
-	//		pcl::Correspondences corrs_velodyne;
-	//		pcl::Correspondences corrs_fpfh;
-
-	//		//corrs_nir = CKataokaPCL::determineCorrespondences_feature_remove(featureDivergence_vecvec_nir[i_src], featureDivergence_vecvec_nir[i_tgt],
-	//		//	index_valid_vecvec_nir[i_src], index_valid_vecvec_nir[i_tgt], num_nearest);
-	//		//corrs_velodyne = CKataokaPCL::determineCorrespondences_feature_remove(featureDivergence_vecvec_velodyne[i_src], featureDivergence_vecvec_velodyne[i_tgt],
-	//		//	index_valid_vecvec_velodyne[i_src], index_valid_vecvec_velodyne[i_tgt], num_nearest);
-	//		corrs_fpfh = CFPFH_PCL::getNearestOfFPFH_eachPairHaving_remove(fpfh_vec[i_src], fpfh_vec[i_tgt],
-	//			index_valid_vecvec_FPFH[i_src], index_valid_vecvec_FPFH[i_tgt], num_nearest);
-
-	//		vector<pcl::Correspondences> corrs_vec;
-	//		{
-	//			pcl::Correspondences corrs_temp;
-	//			//corrs_temp.insert(corrs_temp.end(), corrs_nir.begin(), corrs_nir.end());
-	//			//corrs_temp.insert(corrs_temp.end(), corrs_velodyne.begin(), corrs_velodyne.end());
-	//			corrs_temp.insert(corrs_temp.end(), corrs_fpfh.begin(), corrs_fpfh.end());
-	//			corrs_vec = CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, 0.9);
-	//			//for (int j = 0; j < corrs_vec.size(); j++)
-	//			//	cout << "j:" << j << " corrs_vec[j].size():" << corrs_vec[j].size() << endl;
-	//		}
 
 	//		//select biggest 10 corr
 	//		{

@@ -2331,3 +2331,138 @@ vector<vector<int>> CKataokaPCL::calcValidIndex_feature(const vector<vector<floa
 
 	return index_valid_vecvec;
 }
+
+void CKataokaPCL::calcRanking_query_match_ValueOfFeature(const vector<vector<pair<float, float>>> &compare_vecvec,
+	vector<int> &frame_vec, vector<int> &corr_index_vec, vector<bool> &b_queryOrNot_vec, vector<float> &evaluation_vec, bool b_cout)
+{
+	vector<vector<float>> ranking_vecvec;
+	for (int j = 0; j < compare_vecvec.size(); j++)
+	{
+		for (int i = 0; i < compare_vecvec[j].size(); i++)
+		{
+			vector<float> ranking_vec_query;
+			ranking_vec_query.push_back((float)(j));						//frame
+			ranking_vec_query.push_back((float)(i * 2 + 0));				//0:query, 1:match
+			ranking_vec_query.push_back(compare_vecvec[j][i].first);	//evaluation
+			ranking_vecvec.push_back(ranking_vec_query);
+			vector<float> ranking_vec_match;
+			ranking_vec_match.push_back((float)(j));						//frame
+			ranking_vec_match.push_back((float)(i * 2 + 1));				//0:query, 1:match
+			ranking_vec_match.push_back(compare_vecvec[j][i].second);	//evaluation
+			ranking_vecvec.push_back(ranking_vec_match);
+		}
+	}
+	CTimeString::sortVector2d(ranking_vecvec, 2);
+
+	for (int j = 0; j < ranking_vecvec.size(); j++)
+	{
+		frame_vec.push_back(ranking_vecvec[j][0]);
+		corr_index_vec.push_back((int)(ranking_vecvec[j][1] / 2));
+		if (((int)ranking_vecvec[j][1]) % 2 == 0) b_queryOrNot_vec.push_back(true);
+		else b_queryOrNot_vec.push_back(false);
+		evaluation_vec.push_back(ranking_vecvec[j][2]);
+	}
+
+	if (!b_cout) return;
+
+	for (int j = 0; j < ranking_vecvec.size(); j++)
+	{
+		if (j % 10 == 0)
+		{
+			cout << "j:" << j;
+			cout << " frame:" << ranking_vecvec[j][0];
+			cout << " corr_index:" << ((int)ranking_vecvec[j][1]) / 2;
+			cout << " query or match:" << ((int)ranking_vecvec[j][1]) % 2;
+			cout << " evaluation:" << ranking_vecvec[j][2] << endl;
+		}
+	}
+	cout << endl;
+}
+
+vector<vector<int>> CKataokaPCL::calcRanking_ValueOfFeature_argCompare(const vector<vector<pair<float, float>>> &compare_vecvec, bool b_cout)
+{
+	vector<int> frame_vec;
+	vector<int>corr_index_vec;
+	vector<bool> b_queryOrNot_vec;
+	vector<float> evaluation_vec;
+	calcRanking_query_match_ValueOfFeature(compare_vecvec, frame_vec, corr_index_vec, b_queryOrNot_vec, evaluation_vec, b_cout);
+
+	vector<vector<pair<int, int>>> rank_query_match_vecvec;
+	for (int j = 0; j < compare_vecvec.size(); j++)
+	{
+		vector<pair<int, int>> rank_vec;
+		for (int i = 0; i < compare_vecvec[j].size(); i++)
+			rank_vec.push_back(make_pair(-1, -1));
+		rank_query_match_vecvec.push_back(rank_vec);
+	}
+
+	{
+		float value_before = 0.;
+		float value_now = 0.;
+		int rank_last;
+		for (int j = 0; j < frame_vec.size(); j++)
+		{
+			value_now = evaluation_vec[j];
+			if (j == 0 || value_now != value_before)
+				rank_last = j;
+			if (b_queryOrNot_vec[j]) rank_query_match_vecvec[frame_vec[j]][corr_index_vec[j]].first = rank_last;
+			else rank_query_match_vecvec[frame_vec[j]][corr_index_vec[j]].second = rank_last;
+			value_before = value_now;
+		}
+	}
+
+	//sort
+	vector<vector<int>> rank_value_multiple_vecvec_forSort;
+	{
+		for (int j = 0; j < rank_query_match_vecvec.size(); j++)
+		{
+			for (int i = 0; i < rank_query_match_vecvec[j].size(); i++)
+			{
+				vector<int> rank_value_multiple_vec;
+				rank_value_multiple_vec.push_back(j);															//frame
+				rank_value_multiple_vec.push_back(i);															//index
+				rank_value_multiple_vec.push_back(
+					(rank_query_match_vecvec[j][i].first + 1) * (rank_query_match_vecvec[j][i].second + 1));	//multiple
+				rank_value_multiple_vecvec_forSort.push_back(rank_value_multiple_vec);
+			}
+		}
+
+	}
+	CTimeString::sortVector2d(rank_value_multiple_vecvec_forSort, 2);
+
+	vector<vector<int>> rank_output_vecvec;
+	for (int j = 0; j < compare_vecvec.size(); j++)
+	{
+		vector<int> rank_output_vec;
+		for (int i = 0; i < compare_vecvec[j].size(); i++)
+			rank_output_vec.push_back(-1);
+		rank_output_vecvec.push_back(rank_output_vec);
+	}
+
+	{
+		float value_before = 0.;
+		float value_now = 0.;
+		int rank_last;
+		for (int j = 0; j < rank_value_multiple_vecvec_forSort.size(); j++)
+		{
+			value_now = rank_value_multiple_vecvec_forSort[j][2];
+			if (j == 0 || value_now != value_before)
+				rank_last = j;
+			rank_output_vecvec[rank_value_multiple_vecvec_forSort[j][0]][rank_value_multiple_vecvec_forSort[j][1]] = rank_last;
+			value_before = value_now;
+		}
+
+	}
+
+	if (!b_cout) return rank_output_vecvec;
+
+	//show
+	for (int j = 0; j < rank_output_vecvec.size(); j++)
+	{
+		for (int i = 0; i < rank_output_vecvec[j].size(); i++)
+			cout << "frame:" << j << " index:" << i << "  rank:" << rank_output_vecvec[j][i] << endl;
+	}
+
+	return rank_output_vecvec;
+}
+
