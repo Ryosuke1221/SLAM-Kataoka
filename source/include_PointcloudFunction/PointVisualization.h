@@ -969,7 +969,7 @@ public:
 		return color_vec;
 	}
 
-	static vector<std::uint8_t>getRGBwithValuebyPseudoColor(float value_, float value_max, float value_min)
+	static vector<std::uint8_t>getRGBwithValuebyPseudoColor(float value_, float value_max, float value_min, bool b_largeIsRed = true)
 	{
 		//digital gazou shori(2020/2/26), pp. 93-94.
 		//R is replaced to B
@@ -979,28 +979,44 @@ public:
 
 		float grad_ = 1. / 0.25;
 		float range_ = value_max - value_min;
-		float value_norlized = (value_ - value_min) / range_;	//0~1
+		float value_normalized = (value_ - value_min) / range_;	//0~1
 
 		std::uint8_t R_, G_, B_;
 		float f_R, f_G, f_B;
 
-		//R
-		if (value_norlized < 0.25) f_R = 1.;
-		else if (value_norlized < 0.5) f_R = 1. - (value_norlized - 0.25) * grad_;
-		else f_R = 0.;
-		R_ = (std::uint8_t)(int)(f_R * 255.);
+		if (b_largeIsRed)
+		{
+			//R
+			if (value_normalized < 0.5) f_R = 0.;
+			else if (value_normalized < 0.75) f_R = (value_normalized - 0.5) * grad_;
+			else f_R = 1.;
+			R_ = (std::uint8_t)(int)(f_R * 255.);
+			
+			//B
+			if (value_normalized < 0.25) f_B = 1.;
+			else if (value_normalized < 0.5) f_B = 1. - (value_normalized - 0.25) * grad_;
+			else f_B = 0.;
+			B_ = (std::uint8_t)(int)(f_B * 255.);
+		}
+		else
+		{
+			//R
+			if (value_normalized < 0.25) f_R = 1.;
+			else if (value_normalized < 0.5) f_R = 1. - (value_normalized - 0.25) * grad_;
+			else f_R = 0.;
+			R_ = (std::uint8_t)(int)(f_R * 255.);
+			//B
+			if (value_normalized < 0.5) f_B = 0.;
+			else if (value_normalized < 0.75) f_B = (value_normalized - 0.5) * grad_;
+			else f_B = 1.;
+			B_ = (std::uint8_t)(int)(f_B * 255.);
+		}
 
 		//G
-		if (value_norlized < 0.25) f_G = value_norlized * grad_;
-		else if (value_norlized < 0.75) f_G = 1.;
-		else f_G = 1. - (value_norlized - 0.75) * grad_;
+		if (value_normalized < 0.25) f_G = value_normalized * grad_;
+		else if (value_normalized < 0.75) f_G = 1.;
+		else f_G = 1. - (value_normalized - 0.75) * grad_;
 		G_ = (std::uint8_t)(int)(f_G * 255.);
-
-		//B
-		if (value_norlized < 0.5) f_B = 0.;
-		else if (value_norlized < 0.75) f_B = (value_norlized - 0.5) * grad_;
-		else f_B = 1.;
-		B_ = (std::uint8_t)(int)(f_B * 255.);
 
 		if (R_ < 0) R_ = 0;
 		else if (255 < R_) R_ = 255;

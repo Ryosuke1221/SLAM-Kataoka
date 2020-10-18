@@ -141,6 +141,143 @@ void CPointcloudFunction::all_process()
 
 }
 
+void CPointcloudFunction::FreeSpace()
+{
+	int i_method;
+	//i_method = 0;
+	i_method = 1;
+	i_method = 2;
+
+	if (i_method == 0)	//calc nearest neighbor of FPFH
+	{
+		typedef typename pcl::FPFHSignature33 FeatureT;
+		typedef typename pcl::PointXYZRGB T_PointType;
+
+		int num_nearest = 10;
+		//num_nearest = 1;
+
+		string dir_ = "../../data";
+
+		string s_file_0 = "000XYZRGB_naraha.pcd";
+		string s_file_1 = "001XYZRGB_naraha.pcd";
+
+		float voxel_size;
+		voxel_size = 0.1;
+
+		float radius_normal_FPFH, radius_FPFH;
+		radius_normal_FPFH = 0.5;
+		radius_FPFH = 1.;
+
+
+		pcl::PointCloud<T_PointType>::Ptr cloud_tgt(new pcl::PointCloud<T_PointType>());
+		pcl::PointCloud<T_PointType>::Ptr cloud_src(new pcl::PointCloud<T_PointType>());
+		pcl::io::loadPCDFile(dir_ + "/" + s_file_0, *cloud_tgt);
+		pcl::io::loadPCDFile(dir_ + "/" + s_file_1, *cloud_src);
+		cloud_tgt->is_dense = true;
+		cloud_src->is_dense = true;
+
+		//compute fpfh
+		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt(new pcl::PointCloud<pcl::FPFHSignature33>);
+		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src(new pcl::PointCloud<pcl::FPFHSignature33>);
+		{
+			pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
+			const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
+			sor->setLeafSize(voxel_size, voxel_size, voxel_size);
+			sor->setInputCloud(cloud_tgt);
+			sor->filter(*cloud_VGF);
+			fpfh_tgt = CFPFH_PCL::computeFPFH<T_PointType>(cloud_VGF, cloud_tgt, radius_normal_FPFH, radius_FPFH);
+		}
+		{
+			pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
+			const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
+			sor->setLeafSize(voxel_size, voxel_size, voxel_size);
+			sor->setInputCloud(cloud_src);
+			sor->filter(*cloud_VGF);
+			fpfh_src = CFPFH_PCL::computeFPFH<T_PointType>(cloud_VGF, cloud_src, radius_normal_FPFH, radius_FPFH);
+		}
+
+		pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr feature_tree_(new pcl::KdTreeFLANN<pcl::FPFHSignature33>);
+		feature_tree_->setInputCloud(fpfh_tgt);
+
+		//index_near_vecvec = CFPFH_PCL::getNearestOfFPFH(fpfh_src, num_nearest, feature_tree_, squaredDistance_near_vecvec);
+		pcl::Correspondences corrs_;
+		corrs_ = CFPFH_PCL::getNearestOfFPFH(fpfh_src, num_nearest, feature_tree_);
+
+		for (int j = 0; j < corrs_.size(); j++)
+		{
+			if (j % 100 != 0) continue;
+			cout << "j:" << j << "  query:" << corrs_[j].index_query << " match:" << corrs_[j].index_match << " distance:" << corrs_[j].distance << endl;
+		}
+
+	}
+
+	else if (i_method == 1)	//calc covariance of matrix of pointcloud
+	{
+		typedef typename pcl::PointXYZRGB T_PointType;
+
+		string dir_ = "../../data";
+
+		string s_file_0 = "000XYZRGB_naraha.pcd";
+		string s_file_1 = "001XYZRGB_naraha.pcd";
+
+		float voxel_size;
+		voxel_size = 0.1;
+
+		pcl::PointCloud<T_PointType>::Ptr cloud_tgt(new pcl::PointCloud<T_PointType>());
+		pcl::PointCloud<T_PointType>::Ptr cloud_src(new pcl::PointCloud<T_PointType>());
+		pcl::io::loadPCDFile(dir_ + "/" + s_file_0, *cloud_tgt);
+		pcl::io::loadPCDFile(dir_ + "/" + s_file_1, *cloud_src);
+		cloud_tgt->is_dense = true;
+		cloud_src->is_dense = true;
+
+		Eigen::Matrix<float, 3, Eigen::Dynamic> mat_(3, cloud_tgt->size());
+		mat_ = CKataokaPCL::calcEigenMatrixFromPointCloud(cloud_tgt);
+		Eigen::Matrix<float, 3, 3> mat_cov = CKataokaPCL::calcCovarianceMatrix(mat_);
+		cout << "show mat_cov" << endl;
+		cout << mat_cov << endl;
+
+	}
+	else if (i_method == 2)//get RGB colored point cloud of NIR
+	{
+		typedef typename pcl::PointXYZI T_PointType;
+		typedef typename pcl::PointXYZRGB T_PointType2;
+
+		string dir_ = "../../data";
+		string s_file_0 = "005nir_filtered_nir.pcd";
+		pcl::PointCloud<T_PointType>::Ptr cloud_(new pcl::PointCloud<T_PointType>());
+		pcl::PointCloud<T_PointType2>::Ptr cloud_XYZRGB(new pcl::PointCloud<T_PointType2>());
+		pcl::io::loadPCDFile(dir_ + "/" + s_file_0, *cloud_);
+		cloud_->is_dense = true;
+
+		float value_max = -std::numeric_limits<float>::max();
+		float value_min = std::numeric_limits<float>::max();
+		for (int i = 0; i < cloud_->size(); i++)
+		{
+			if (value_max < cloud_->points[i].intensity) value_max = cloud_->points[i].intensity;
+			if (value_min > cloud_->points[i].intensity) value_min = cloud_->points[i].intensity;
+		}
+
+		for (int i = 0; i < cloud_->size(); i++)
+		{
+			vector<std::uint8_t> color_vec;
+			color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(cloud_->points[i].intensity, value_max, value_min, false);
+			T_PointType2 point_;
+			point_.x = cloud_->points[i].x;
+			point_.y = cloud_->points[i].y;
+			point_.z = cloud_->points[i].z;
+			point_.r = color_vec[0];
+			point_.g = color_vec[1];
+			point_.b = color_vec[2];
+			cloud_XYZRGB->push_back(point_);
+		}
+		cloud_XYZRGB->is_dense = true;
+
+		string s_file_0_save = s_file_0.substr(0, s_file_0.size() - 4) + "_RGB.pcd";
+		pcl::io::savePCDFile<T_PointType2>(dir_ + "/" + s_file_0_save, *cloud_XYZRGB);
+	}
+
+}
+
 void CPointcloudFunction::show_sequent()
 {
 	string dir_;
@@ -450,104 +587,6 @@ void CPointcloudFunction::getPCDFromCSV_naraha()
 		//0~255
 		break;
 	}
-}
-
-void CPointcloudFunction::FreeSpace()
-{
-	int i_method;
-	//i_method = 0;
-	i_method = 1;
-
-	if (i_method == 0)
-	{
-		typedef typename pcl::FPFHSignature33 FeatureT;
-		typedef typename pcl::PointXYZRGB T_PointType;
-
-		int num_nearest = 10;
-		//num_nearest = 1;
-
-		string dir_ = "../../data";
-
-		string s_file_0 = "000XYZRGB_naraha.pcd";
-		string s_file_1 = "001XYZRGB_naraha.pcd";
-
-		float voxel_size;
-		voxel_size = 0.1;
-
-		float radius_normal_FPFH, radius_FPFH;
-		radius_normal_FPFH = 0.5;
-		radius_FPFH = 1.;
-
-
-		pcl::PointCloud<T_PointType>::Ptr cloud_tgt(new pcl::PointCloud<T_PointType>());
-		pcl::PointCloud<T_PointType>::Ptr cloud_src(new pcl::PointCloud<T_PointType>());
-		pcl::io::loadPCDFile(dir_ + "/" + s_file_0, *cloud_tgt);
-		pcl::io::loadPCDFile(dir_ + "/" + s_file_1, *cloud_src);
-		cloud_tgt->is_dense = true;
-		cloud_src->is_dense = true;
-
-		//compute fpfh
-		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt(new pcl::PointCloud<pcl::FPFHSignature33>);
-		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src(new pcl::PointCloud<pcl::FPFHSignature33>);
-		{
-			pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
-			const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
-			sor->setLeafSize(voxel_size, voxel_size, voxel_size);
-			sor->setInputCloud(cloud_tgt);
-			sor->filter(*cloud_VGF);
-			fpfh_tgt = CFPFH_PCL::computeFPFH<T_PointType>(cloud_VGF, cloud_tgt, radius_normal_FPFH, radius_FPFH);
-		}
-		{
-			pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
-			const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
-			sor->setLeafSize(voxel_size, voxel_size, voxel_size);
-			sor->setInputCloud(cloud_src);
-			sor->filter(*cloud_VGF);
-			fpfh_src = CFPFH_PCL::computeFPFH<T_PointType>(cloud_VGF, cloud_src, radius_normal_FPFH, radius_FPFH);
-		}
-
-		pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr feature_tree_(new pcl::KdTreeFLANN<pcl::FPFHSignature33>);
-		feature_tree_->setInputCloud(fpfh_tgt);
-
-		//index_near_vecvec = CFPFH_PCL::getNearestOfFPFH(fpfh_src, num_nearest, feature_tree_, squaredDistance_near_vecvec);
-		pcl::Correspondences corrs_;
-		corrs_ = CFPFH_PCL::getNearestOfFPFH(fpfh_src, num_nearest, feature_tree_);
-
-		for (int j = 0; j < corrs_.size(); j++)
-		{
-			if (j % 100 != 0) continue;
-			cout << "j:" << j << "  query:" << corrs_[j].index_query << " match:" << corrs_[j].index_match << " distance:" << corrs_[j].distance << endl;
-		}
-
-	}
-
-	else if (i_method == 1)
-	{
-		typedef typename pcl::PointXYZRGB T_PointType;
-
-		string dir_ = "../../data";
-
-		string s_file_0 = "000XYZRGB_naraha.pcd";
-		string s_file_1 = "001XYZRGB_naraha.pcd";
-
-		float voxel_size;
-		voxel_size = 0.1;
-
-		pcl::PointCloud<T_PointType>::Ptr cloud_tgt(new pcl::PointCloud<T_PointType>());
-		pcl::PointCloud<T_PointType>::Ptr cloud_src(new pcl::PointCloud<T_PointType>());
-		pcl::io::loadPCDFile(dir_ + "/" + s_file_0, *cloud_tgt);
-		pcl::io::loadPCDFile(dir_ + "/" + s_file_1, *cloud_src);
-		cloud_tgt->is_dense = true;
-		cloud_src->is_dense = true;
-
-		Eigen::Matrix<float, 3, Eigen::Dynamic> mat_(3, cloud_tgt->size());
-		mat_ = CKataokaPCL::calcEigenMatrixFromPointCloud(cloud_tgt);
-		Eigen::Matrix<float, 3, 3> mat_cov = CKataokaPCL::calcCovarianceMatrix(mat_);
-		cout << "show mat_cov" << endl;
-		cout << mat_cov << endl;
-
-	}
-
 }
 
 void CPointcloudFunction::filterNIRPointCloud_naraha()
