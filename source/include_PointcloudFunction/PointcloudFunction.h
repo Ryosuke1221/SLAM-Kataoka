@@ -215,5 +215,6 @@ public:
 	void DoDifferential_RigidTransformation_FPFH_Features_new(string dir_);
 	void DoDifferential_RigidTransformation_FPFH_Features_allFrames(string dir_);
 	void DoDifferential_PairEvaluation(string dir_);
+	void DoDifferential_PairEvaluation2(string dir_);
 
 };

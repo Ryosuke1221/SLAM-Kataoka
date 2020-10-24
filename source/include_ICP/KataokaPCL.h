@@ -1037,13 +1037,19 @@ public:
 
 	template <class T_PointType>
 	static vector<pcl::Correspondences> getCorrespondance_RatioOfDistanceOfSrcAndTgt(boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src,
-		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_tgt, const pcl::Correspondences &corr_, float th_fraction)
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_tgt, const pcl::Correspondences &corr_, float th_fraction, bool b_cout = false)
 	{
 		int num_corr_init = corr_.size();
+		if (num_corr_init < 2)
+		{
+			cout << "ERROR(CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt): Few correspondednces inputed." << endl;
+			throw std::runtime_error("ERROR(CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt): Few correspondednces inputed.");
+		}
 		//calc ratio
 		Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> mat_fraction(num_corr_init, num_corr_init);
 		mat_fraction.setZero();
 		vector<vector<int>> corr_pair_vecvec;
+		
 		for (int j = 0; j < num_corr_init; j++)
 		{
 			for (int i = j + 1; i < num_corr_init; i++)
@@ -1075,8 +1081,16 @@ public:
 				}
 			}
 		}
+
+		if (corr_pair_vecvec.size() < 1)
+		{
+			cout << "ERROR(CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt): Few correspondednces exist simultaneously." << endl;
+			throw std::runtime_error("ERROR(CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt): Few correspondednces exist simultaneously.");
+		}
+
 		vector<vector<int>> corr_pair_cluster_vecvec;
 		corr_pair_cluster_vecvec = CTimeString::getIntCluster_SomeToSome(corr_pair_vecvec);
+
 		vector<vector<int>> corr_pair_cluster_vecvec_new;
 		for (int j = 0; j < corr_pair_cluster_vecvec.size(); j++)
 		{
@@ -1086,15 +1100,44 @@ public:
 				corr_new_temp, corr_rest_temp);
 			corr_pair_cluster_vecvec_new.insert(corr_pair_cluster_vecvec_new.end(), corr_new_temp.begin(), corr_new_temp.end());
 		}
-		vector<pcl::Correspondences> corr_output_vec;
+
+		vector<pcl::Correspondences> corrs_output_vec;
 		for (int j = 0; j < corr_pair_cluster_vecvec_new.size(); j++)
 		{
 			pcl::Correspondences corr_output;
 			for (int i = 0; i < corr_pair_cluster_vecvec_new[j].size(); i++)
 				corr_output.push_back(corr_[corr_pair_cluster_vecvec_new[j][i]]);
-			corr_output_vec.push_back(corr_output);
+			corrs_output_vec.push_back(corr_output);
 		}
-		return corr_output_vec;
+
+		//sort by size
+		{
+			vector<vector<int>> size_vecvec;
+			for (int j = 0; j < corrs_output_vec.size(); j++)
+			{
+				vector<int> size_vec;
+				size_vec.push_back(j);
+				size_vec.push_back(corrs_output_vec[j].size());
+				size_vecvec.push_back(size_vec);
+			}
+			CTimeString::sortVector2d(size_vecvec, 1);
+
+			vector<pcl::Correspondences> corrs_vec_temp;
+			for (int j = 0; j < size_vecvec.size(); j++)
+				corrs_vec_temp.push_back(corrs_output_vec[size_vecvec[j][0]]);
+			corrs_output_vec = corrs_vec_temp;
+		}
+
+		if (b_cout)
+		{
+			cout << "corrs_output_vec.size():" << corrs_output_vec.size() << endl;
+			for (int j = 0; j < corrs_output_vec.size(); j++)
+			{
+				cout << "j:" << j << " corrs_output_vec[j].size():" << corrs_output_vec[j].size() << endl;
+			}
+		}
+
+		return corrs_output_vec;
 	}
 
 	template <class T_PointType>
@@ -1206,7 +1249,7 @@ public:
 	}
 
 	template <typename T>
-	static pcl::Correspondences determineCorrespondences_feature_remove_value(const vector<T> &features_src, const vector<T> &features_tgt,
+	static pcl::Correspondences determineCorrespondences_feature_value_remove(const vector<T> &features_src, const vector<T> &features_tgt,
 		const vector<int> &index_unique_vec_src, const vector<int> &index_unique_vec_tgt, float th_value)
 	{
 		vector<T> features_src_removed;
@@ -1376,7 +1419,7 @@ public:
 	static vector<vector<int>> calcRanking_ValueOfFeature_scalar(const vector<pair<int, int>> &index_pair_vec, const vector<pcl::Correspondences> &corrs_vec,
 		vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec, const vector<vector<T>> &feature_vecvec, vector<vector<int>> &index_valid_vecvec, float th_nearest, bool b_cout = false)
 	{
-		vector<vector<pair<float, float>>> compare_vecvec;
+		vector<vector<pair<float, float>>> compare_vecvec;//[index_frame_pair][index_pair] :variance
 		for (int j = 0; j < index_pair_vec.size(); j++)
 		{
 			int i_tgt = index_pair_vec[j].first;
@@ -1388,13 +1431,156 @@ public:
 			if (b_cout)
 			{
 				for (int j = 0; j < compare_vec.size(); j++)
-					cout << "j:" << j << "  query:" << compare_vec[j].first << " match:" << compare_vec[j].second << endl;
+					if (j % 10 == 0) cout << "j:" << j << "  query:" << compare_vec[j].first << " match:" << compare_vec[j].second << endl;
 			}
 			compare_vecvec.push_back(compare_vec);
 		}
-		vector<vector<int>> rank_output_vecvec;
+		vector<vector<int>> rank_output_vecvec;//[index_frame_pair][index_pair]
 		rank_output_vecvec = calcRanking_ValueOfFeature_argCompare(compare_vecvec, b_cout);
 		return rank_output_vecvec;
+	}
+
+	template <class T_PointType, typename T>
+	static void determineCorrespondences_allFrames_feature_scalar_remove(const vector<vector<T>> &feature_vecvec, vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec,
+		const vector<pair<int, int>> &index_pair_vec, float th_nearest, float th_rank_rate, vector<vector<int>> index_valid_vecvec, vector<pcl::Correspondences> &corrs_vec, bool b_cout = false)
+	{
+		if (feature_vecvec.size() != cloud_vec.size())
+		{
+			cout << "ERROR: number of feature and one of pointcloud have different size." << endl;
+			return;
+		}
+
+		corrs_vec.clear();//[index_frame_pair][index_pair]
+		for (int j = 0; j < index_pair_vec.size(); j++)
+		{
+			int i_tgt = index_pair_vec[j].first;
+			int i_src = index_pair_vec[j].second;
+			pcl::Correspondences corrs_;
+			//corrs_ = determineCorrespondences_feature_value(feature_vecvec[i_src], feature_vecvec[i_tgt], th_nearest);
+			corrs_ = determineCorrespondences_feature_value_remove(feature_vecvec[i_src], feature_vecvec[i_tgt],
+				index_valid_vecvec[i_src], index_valid_vecvec[i_tgt], th_nearest);
+
+			corrs_vec.push_back(corrs_);
+		}
+
+		{
+			vector<vector<int>> rank_vecvec;//[index_frame_pair][index_pair]
+			rank_vecvec = CKataokaPCL::calcRanking_ValueOfFeature_scalar(index_pair_vec, corrs_vec, cloud_vec, feature_vecvec, index_valid_vecvec, th_nearest, b_cout);
+			vector<pcl::Correspondences> corrs_vec_temp;
+			for (int j = 0; j < index_pair_vec.size(); j++)
+			{
+				pcl::Correspondences temp;
+				corrs_vec_temp.push_back(temp);
+			}
+
+			//if(b_cout) cout << "rank_vecvec.size():" << rank_vecvec.size() << endl;
+			//for (int j = 0; j < rank_vecvec.size(); j++)
+			//{
+			//	if(b_cout) cout << "rank_vecvec[j].size():" << rank_vecvec[j].size() << endl;
+			//	pcl::Correspondences corrs_temp;
+			//	for (int i = 0; i < rank_vecvec[j].size(); i++)
+			//	{
+			//		if ((float)rank_vecvec[j][i] <= th_rank) corrs_temp.push_back(corrs_vec[j][i]);
+			//	}
+			//	corrs_vec_temp.push_back(corrs_temp);
+			//}
+
+			//sort
+			vector<vector<int>> sort_vecvec;
+			for (int j = 0; j < rank_vecvec.size(); j++)
+			{
+				for (int i = 0; i < rank_vecvec[j].size(); i++)
+				{
+					vector<int> sort_vec;
+					sort_vec.push_back(j);
+					sort_vec.push_back(i);
+					sort_vec.push_back(rank_vecvec[j][i]);
+					sort_vecvec.push_back(sort_vec);
+				}
+			}
+			CTimeString::sortVector2d(sort_vecvec, 2);
+
+			for (int j = 0; j < (int)(sort_vecvec.size() * th_rank_rate); j++)
+			{
+				int index_frame_pair = sort_vecvec[j][0];
+				int index_pair = sort_vecvec[j][1];
+				corrs_vec_temp[index_frame_pair].push_back(corrs_vec[index_frame_pair][index_pair]);
+			}
+			corrs_vec = corrs_vec_temp;
+		}
+
+		if (b_cout)
+		{
+			cout << "show corr" << endl;
+			cout << "corrs_vec.size():" << corrs_vec.size() << endl;
+			for (int j = 0; j < corrs_vec.size(); j++)
+			{
+				cout << "j(index_frame_pair):" << j << " ";
+				cout << "corrs_vec[j].size():" << corrs_vec[j].size() << endl;
+			}
+		}
+	}
+
+	template <class T_PointType, typename T>
+	static void determineCorrespondences_allFrames_feature_scalar(const vector<vector<T>> &feature_vecvec, vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec,
+		const vector<pair<int, int>> &index_pair_vec, float th_nearest, float th_rank_rate, vector<pcl::Correspondences> &corrs_vec, bool b_cout = false)
+	{
+		if (feature_vecvec.size() != cloud_vec.size())
+		{
+			cout << "ERROR: number of feature and one of pointcloud have different size." << endl;
+			return;
+		}
+
+		vector<vector<int>> index_valid_vecvec;//[index_frame][index]
+		for (int j = 0; j < cloud_vec.size(); j++)
+		{
+			vector<int> index_valid_vec;
+			for (int i = 0; i < cloud_vec[j]->size(); i++)
+				index_valid_vec.push_back(i);
+			index_valid_vecvec.push_back(index_valid_vec);
+		}
+		determineCorrespondences_allFrames_feature_scalar_remove(feature_vecvec, cloud_vec, index_pair_vec, th_nearest, th_rank_rate, index_valid_vecvec, corrs_vec, b_cout);
+	}
+
+	template <class T_PointType>
+	static pcl::Correspondences determineCorrespondences_geometricConstraint(boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src, boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_tgt,
+		const vector<pcl::Correspondences> &corrs_vec, bool b_cout = false)
+	{
+		vector<float> evaluation_vec;
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src_moving(new pcl::PointCloud<T_PointType>);
+
+		for (int j = 0; j < corrs_vec.size(); j++)
+		{
+			Eigen::Matrix4f transformation_matrix = Eigen::Matrix4f::Identity();
+			estimateRigidTransformation(cloud_src, cloud_tgt, corrs_vec[j], transformation_matrix);
+			pcl::transformPointCloud(*cloud_src, *cloud_src_moving, CKataokaPCL::calcAffine3fFromHomogeneousMatrix(transformation_matrix));
+			float distance_sum = 0.;
+			for (int i = 0; i < corrs_vec[j].size(); i++)
+			{
+				T_PointType point_src = cloud_src_moving->points[corrs_vec[j][i].index_query];
+				T_PointType point_tgt = cloud_tgt->points[corrs_vec[j][i].index_match];
+				distance_sum += sqrt(
+					pow(point_src.x - point_tgt.x)
+					+ pow(point_src.y - point_tgt.y)
+					+ pow(point_src.z - point_tgt.z)
+				);
+			}
+			distance_sum /= (float)corrs_vec[j].size();
+			evaluation_vec.push_back(distance_sum);
+		}
+		
+		//sort
+		vector<vector<float>> evaluation_vecvec;
+		for (int j = 0; j < evaluation_vec.size(); j++)
+		{
+			vector<float> temp_vec;
+			temp_vec.push_back((float)j);
+			temp_vec.push_back(evaluation_vec[j]);
+			evaluation_vecvec.push_back(temp_vec);
+		}
+		CTimeString::sortVector2d(evaluation_vecvec, 1);
+
+		return corrs_vec[evaluation_vecvec[0][0]];
 	}
 
 };

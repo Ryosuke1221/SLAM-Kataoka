@@ -2451,7 +2451,6 @@ vector<vector<int>> CKataokaPCL::calcRanking_ValueOfFeature_argCompare(const vec
 			rank_output_vecvec[rank_value_multiple_vecvec_forSort[j][0]][rank_value_multiple_vecvec_forSort[j][1]] = rank_last;
 			value_before = value_now;
 		}
-
 	}
 
 	if (!b_cout) return rank_output_vecvec;
@@ -2460,7 +2459,7 @@ vector<vector<int>> CKataokaPCL::calcRanking_ValueOfFeature_argCompare(const vec
 	for (int j = 0; j < rank_output_vecvec.size(); j++)
 	{
 		for (int i = 0; i < rank_output_vecvec[j].size(); i++)
-			cout << "frame:" << j << " index:" << i << "  rank:" << rank_output_vecvec[j][i] << endl;
+			if (i % 10 == 0)cout << "frame:" << j << " index:" << i << "  rank:" << rank_output_vecvec[j][i] << endl;
 	}
 
 	return rank_output_vecvec;
