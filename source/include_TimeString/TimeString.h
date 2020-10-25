@@ -766,60 +766,6 @@ public:
 
 		}
 
-
-		vector<vector<int>> cluster_vecvec;
-		for (int j = 0; j < cluster_vec.size(); j++)
-		{
-			//cout << "j:" << j << endl;
-			vector<vector<int>> cluster_vecvec_temp;
-			vector<int> cluster_vec_atLeastJ;
-			//at least j included
-			for (int i = j + 1; i < cluster_vec.size(); i++)
-				if (b_matrix[cluster_vec[j]][cluster_vec[i]]) cluster_vec_atLeastJ.push_back(cluster_vec[i]);
-			//cout << "cluster_vec_atLeastJ.size():" << cluster_vec_atLeastJ.size() << endl;
-			if (cluster_vec_atLeastJ.size() == 0) continue;
-			vector<int> header_vec;
-			header_vec = header_vec_arg;
-			header_vec.push_back(cluster_vec[j]);
-
-			//for (int i = 0; i < cluster_vec_atLeastJ.size(); i++)
-			//	cout << cluster_vec_atLeastJ[i] << " ";
-			//cout << endl;
-
-			if (cluster_vec_atLeastJ.size() == 1
-				|| header_vec_arg.size() + cluster_vec_atLeastJ.size() + 1 <= min_clusterSize)
-			{
-				cluster_vec_atLeastJ.insert(cluster_vec_atLeastJ.begin(), header_vec.back());	//add header 1
-				cluster_vecvec_temp.push_back(cluster_vec_atLeastJ);
-			}
-			else
-			{
-				vector<vector<int>> cluster_result_vecvec =
-					getIntCluster_boolMatrix_fromOneCluster_withHeader(b_matrix, header_vec, cluster_vec_atLeastJ, min_clusterSize);
-				for (int i = 0; i < cluster_result_vecvec.size(); i++)
-					cluster_result_vecvec[i].insert(cluster_result_vecvec[i].begin(), header_vec.back());	//add header 1
-				cluster_vecvec_temp.insert(cluster_vecvec_temp.end(), cluster_result_vecvec.begin(), cluster_result_vecvec.end());
-			}
-			for (int i = cluster_vecvec_temp.size() - 1; i >= 0; i--)
-				if (cluster_vecvec_temp[i].size() == 0) cluster_vecvec_temp.erase(cluster_vecvec_temp.begin() + i);
-			for (int i = cluster_vecvec_temp.size() - 1; i >= 0; i--)
-				if (header_vec_arg.size() + cluster_vecvec_temp[i].size() < min_clusterSize) cluster_vecvec_temp.erase(cluster_vecvec_temp.begin() + i);	//remove small cluster
-			removeContainedCluster(cluster_vecvec_temp); //remove contained cluster
-			cluster_vecvec.insert(cluster_vecvec.end(), cluster_vecvec_temp.begin(), cluster_vecvec_temp.end());
-
-			//cout << endl;
-		}
-
-		//cout << "cluster_vecvec.size()" << cluster_vecvec.size() << endl;
-
-		//for (int j = 0; j < cluster_vecvec.size(); j++)
-		//{
-		//	for (int i = 0; i < cluster_vecvec[j].size(); i++)
-		//		cout << cluster_vecvec[j][i] << " ";
-		//	cout << endl;
-		//}
-		//cout << endl;
-
 		cout << endl;
 		return cluster_vecvec;
 	}
