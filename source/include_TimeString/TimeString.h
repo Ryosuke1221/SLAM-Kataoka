@@ -879,8 +879,8 @@ public:
 		{
 			//clustering
 			vector<int> header_vec;
-			//vector<vector<int>> cluster_result_vecvec = getIntCluster_boolMatrix_fromOneCluster_withHeader(b_matrix, header_vec, cluster_init_vecvec[j], min_clusterSize);
-			vector<vector<int>> cluster_result_vecvec = getIntCluster_boolMatrix_fromOneCluster_withHeader2(b_matrix, header_vec, cluster_init_vecvec[j], min_clusterSize);
+			vector<vector<int>> cluster_result_vecvec = getIntCluster_boolMatrix_fromOneCluster_withHeader(b_matrix, header_vec, cluster_init_vecvec[j], min_clusterSize);
+			//vector<vector<int>> cluster_result_vecvec = getIntCluster_boolMatrix_fromOneCluster_withHeader2(b_matrix, header_vec, cluster_init_vecvec[j], min_clusterSize);
 			cluster_vecvec.insert(cluster_vecvec.end(), cluster_result_vecvec.begin(), cluster_result_vecvec.end());
 		}
 
