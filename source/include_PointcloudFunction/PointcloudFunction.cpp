@@ -6676,7 +6676,7 @@ void CPointcloudFunction::DoDifferential_SomePointclouds(string dir_)
 		corr_new = CKataokaPCL::determineCorrespondences_feature_remove(featureDivergence_vecvec[i_src], featureDivergence_vecvec[i_tgt],
 			index_valid_vecvec[i_src], index_valid_vecvec[i_tgt], num_nearest);
 		cout << "corr_new.size():" << corr_new.size() << endl;
-		corr_new_vec = CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt(cloud_vec[i_src], cloud_vec[i_tgt], corr_new, 0.9);
+		corr_new_vec = CKataokaPCL::determineCorrespondences_geometricConstraint(cloud_vec[i_src], cloud_vec[i_tgt], corr_new, 0.9);
 		for (int j = 0; j < corr_new_vec.size(); j++)
 			cout << "j:" << j << " corr_new_vec[j].size():" << corr_new_vec[j].size() << endl;
 	}
@@ -7281,7 +7281,7 @@ void CPointcloudFunction::DoDifferential_RigidTransformation_FPFH_Features(strin
 		corrs_temp.insert(corrs_temp.end(), corrs_nir.begin(), corrs_nir.end());
 		corrs_temp.insert(corrs_temp.end(), corrs_velodyne.begin(), corrs_velodyne.end());
 		corrs_temp.insert(corrs_temp.end(), corrs_fpfh.begin(), corrs_fpfh.end());
-		corrs_vec = CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, 0.9);
+		corrs_vec = CKataokaPCL::determineCorrespondences_geometricConstraint(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, 0.9);
 		//for (int j = 0; j < corrs_vec.size(); j++)
 		//	cout << "j:" << j << " corrs_vec[j].size():" << corrs_vec[j].size() << endl;
 	}
@@ -7570,7 +7570,7 @@ void CPointcloudFunction::DoDifferential_RigidTransformation_FPFH_Features_new(s
 			//corrs_temp.insert(corrs_temp.end(), corrs_nir.begin(), corrs_nir.end());
 			//corrs_temp.insert(corrs_temp.end(), corrs_velodyne.begin(), corrs_velodyne.end());
 			corrs_temp.insert(corrs_temp.end(), corrs_fpfh.begin(), corrs_fpfh.end());
-			corrs_vec = CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, 0.9);
+			corrs_vec = CKataokaPCL::determineCorrespondences_geometricConstraint(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, 0.9);
 			//for (int j = 0; j < corrs_vec.size(); j++)
 			//	cout << "j:" << j << " corrs_vec[j].size():" << corrs_vec[j].size() << endl;
 		}
@@ -7855,7 +7855,7 @@ void CPointcloudFunction::DoDifferential_RigidTransformation_FPFH_Features_allFr
 				//corrs_temp.insert(corrs_temp.end(), corrs_nir.begin(), corrs_nir.end());
 				//corrs_temp.insert(corrs_temp.end(), corrs_velodyne.begin(), corrs_velodyne.end());
 				corrs_temp.insert(corrs_temp.end(), corrs_fpfh.begin(), corrs_fpfh.end());
-				corrs_vec = CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, 0.9);
+				corrs_vec = CKataokaPCL::determineCorrespondences_geometricConstraint(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, 0.9);
 				//for (int j = 0; j < corrs_vec.size(); j++)
 				//	cout << "j:" << j << " corrs_vec[j].size():" << corrs_vec[j].size() << endl;
 			}
@@ -8259,7 +8259,7 @@ void CPointcloudFunction::DoDifferential_PairEvaluation(string dir_)
 		if (b_useGeometricConstraints)
 		{
 			cout << "calc GeometricConstraints" << endl;
-			corrs_all_vecvec.push_back(CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, 0.9));
+			corrs_all_vecvec.push_back(CKataokaPCL::determineCorrespondences_geometricConstraint(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, 0.9));
 		}
 		else
 		{
@@ -8779,14 +8779,6 @@ void CPointcloudFunction::DoDifferential_PairEvaluation2(string dir_)
 		////CKataokaPCL::determineCorrespondences_allFrames_feature_scalar_remove(featureDivergence_vecvec_velodyne, cloud_vec, th_nearest_velodyne, index_valid_vecvec_velodyne, index_pair_vec, corrs_velodyne_vec, true);
 		//CKataokaPCL::determineCorrespondences_allFrames_feature_fpfh_remove(fpfh_vec, cloud_vec, num_nearest, th_nearest_fpfh, index_valid_vecvec_FPFH, index_pair_vec, corrs_velodyne_vec, true);
 
-		//for (int j = 0; j < index_pair_vec.size(); j++)
-		//{
-		//	pcl::Correspondences corrs_temp;
-		//	for (int i = 0; i < (int)(corrs_fpfh_vec[j].size() * 0.1); i++)
-		//		corrs_temp.push_back(corrs_fpfh_vec[j][i]);
-		//	corrs_fpfh_vec[j] = corrs_temp;
-		//}
-
 		//sum all features
 		vector<vector<pcl::Correspondences>> corrs_all_vecvec;
 		for (int j = 0; j < index_pair_vec.size(); j++)
@@ -8803,7 +8795,7 @@ void CPointcloudFunction::DoDifferential_PairEvaluation2(string dir_)
 				cout << "calc GeometricConstraints" << endl;
 				cout << "i_tgt:" << i_tgt << endl;
 				cout << "i_src:" << i_src << endl;
-				corrs_all_vecvec.push_back(CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, th_geometricConstraint, true));
+				corrs_all_vecvec.push_back(CKataokaPCL::determineCorrespondences_geometricConstraint(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, th_geometricConstraint, true));
 			}
 			else
 			{

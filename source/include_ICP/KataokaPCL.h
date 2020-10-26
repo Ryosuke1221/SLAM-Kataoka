@@ -1036,9 +1036,9 @@ public:
 	}
 
 	template <class T_PointType>
-	static vector<pcl::Correspondences> getCorrespondance_RatioOfDistanceOfSrcAndTgt(boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src,
+	static vector<pcl::Correspondences> determineCorrespondences_geometricConstraint(boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src,
 		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_tgt, const pcl::Correspondences &corr_, float th_fraction, bool b_cout = false)
-	{
+	{ 
 		//RatioOfDistanceOfSrcAndTgt
 		int num_corr_init = corr_.size();
 		if (num_corr_init < 2)
@@ -1046,11 +1046,16 @@ public:
 			cout << "ERROR(CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt): Few correspondednces inputed." << endl;
 			throw std::runtime_error("ERROR(CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt): Few correspondednces inputed.");
 		}
-		//calc ratio
-		Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> mat_fraction(num_corr_init, num_corr_init);
-		mat_fraction.setZero();
-		vector<vector<int>> corr_pair_vecvec;
-		
+		//calc ratio		
+		vector<vector<bool>> b_matrix;
+		for (int j = 0; j < num_corr_init; j++)
+		{
+			vector<bool> b_temp_vec;
+			b_temp_vec.resize(num_corr_init);
+			fill(b_temp_vec.begin(), b_temp_vec.begin(), false);
+			b_matrix.push_back(b_temp_vec);
+		}
+		int num_valid = 0;
 		for (int j = 0; j < num_corr_init; j++)
 		{
 			for (int i = j + 1; i < num_corr_init; i++)
@@ -1076,128 +1081,24 @@ public:
 					value_ = distance_src / distance_tgt;
 				if (value_ >= th_fraction)
 				{
-					vector<int> corr_pair_vec;
-					corr_pair_vec.push_back(j);
-					corr_pair_vec.push_back(i);
-					corr_pair_vecvec.push_back(corr_pair_vec);
-					mat_fraction(j, i) = value_;
+					b_matrix[j][i] = true;
+					num_valid++;
 				}
 			}
 		}
 
-		//if (b_cout)
-		//{
-		//	//debug
-		//	cout << "mat_fraction:" << endl;
-		//	cout << mat_fraction << endl;
-		//}
-
-		if (corr_pair_vecvec.size() < 1)
+		if (num_valid < 3)
 		{
 			cout << "ERROR(CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt): Few correspondednces exist simultaneously." << endl;
 			throw std::runtime_error("ERROR(CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt): Few correspondednces exist simultaneously.");
 		}
 
-		//if (b_cout)
-		//{
-		//	//debug
-		//	for (int j = 0; j < corr_pair_vecvec.size(); j++)
-		//	{
-		//		for (int i = 0; i < corr_pair_vecvec[j].size(); i++)
-		//			cout << corr_pair_vecvec[j][i] << " ";
-		//		cout << endl;
-		//	}
-		//	cout << endl;
-		//}
-
 		vector<vector<int>> corr_pair_cluster_vecvec_new;
-		//{
-		//	vector<vector<int>> corr_pair_cluster_vecvec;	//temp cluster
-		//	corr_pair_cluster_vecvec = CTimeString::getIntCluster_SomeToSome(corr_pair_vecvec);
-
-		//	if (b_cout)
-		//	{
-		//		//debug
-		//		for (int j = 0; j < corr_pair_cluster_vecvec.size(); j++)
-		//		{
-		//			for (int i = 0; i < corr_pair_cluster_vecvec[j].size(); i++)
-		//				cout << corr_pair_cluster_vecvec[j][i] << " ";
-		//			cout << endl;
-		//		}
-		//		cout << endl;
-		//	}
-
-		//	for (int j = 0; j < corr_pair_cluster_vecvec.size(); j++)
-		//	{
-		//		vector<vector<int>> corr_new_temp;
-		//		vector<int> corr_rest_temp;	//not use
-		//		getCorrespondance_RatioOfDistanceOfSrcAndTgt_perfectlyConnected(mat_fraction, corr_pair_cluster_vecvec[j], 3, th_fraction,
-		//			corr_new_temp, corr_rest_temp);
-		//		corr_pair_cluster_vecvec_new.insert(corr_pair_cluster_vecvec_new.end(), corr_new_temp.begin(), corr_new_temp.end());
-		//	}
-
-		//	//sort by size
-		//	{
-		//		vector<vector<int>> size_vecvec;
-		//		for (int j = 0; j < corr_pair_cluster_vecvec_new.size(); j++)
-		//		{
-		//			vector<int> size_vec;
-		//			size_vec.push_back(j);
-		//			size_vec.push_back(corr_pair_cluster_vecvec_new[j].size());
-		//			size_vecvec.push_back(size_vec);
-		//		}
-		//		CTimeString::sortVector2d(size_vecvec, 1, false);
-
-		//		vector<vector<int>> corr_pair_cluster_vecvec_new_temp;
-		//		for (int j = 0; j < size_vecvec.size(); j++)
-		//			corr_pair_cluster_vecvec_new_temp.push_back(corr_pair_cluster_vecvec_new[size_vecvec[j][0]]);
-		//		corr_pair_cluster_vecvec_new = corr_pair_cluster_vecvec_new_temp;
-		//	}
-		//}
-
 		{
-			vector<vector<bool>> b_matrix;
-			for (int j = 0; j < mat_fraction.rows(); j++)
-			{
-				vector<bool> b_temp_vec;
-				for (int i = 0; i < mat_fraction.cols(); i++)
-				{
-					if (mat_fraction(j, i) != 0.) b_temp_vec.push_back(true);
-					else b_temp_vec.push_back(false);
-				}
-				b_matrix.push_back(b_temp_vec);
-			}
 			cout << "b_matrix.size():" << b_matrix.size() << endl;
-			cout << "b_matrix[0].size():" << b_matrix[0].size() << endl;
-
-			//if (b_cout)
-			//{
-			//	for (int j = 0; j < b_matrix.size(); j++)
-			//	{
-			//		for (int i = 0; i < b_matrix[j].size(); i++)
-			//		{
-			//			cout << b_matrix[j][i] << " ";
-			//		}
-			//		cout << endl;
-			//	}
-			//	cout << endl;
-			//}
-			
+			cout << "b_matrix[0].size():" << b_matrix[0].size() << endl;			
 			corr_pair_cluster_vecvec_new = CTimeString::getIntCluster_boolMatrix(b_matrix, 6, 5, 2);
-
 		}
-
-		//if (b_cout)
-		//{
-		//	//debug
-		//	for (int j = 0; j < corr_pair_cluster_vecvec_new.size(); j++)
-		//	{
-		//		for (int i = 0; i < corr_pair_cluster_vecvec_new[j].size(); i++)
-		//			cout << corr_pair_cluster_vecvec_new[j][i] << " ";
-		//		cout << endl;
-		//	}
-		//	cout << endl;
-		//}
 
 		vector<pcl::Correspondences> corrs_output_vec;
 		for (int j = 0; j < corr_pair_cluster_vecvec_new.size(); j++)
@@ -1639,7 +1540,7 @@ public:
 	}
 
 	template <class T_PointType>
-	static pcl::Correspondences determineCorrespondences_geometricConstraint(boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src, boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_tgt,
+	static pcl::Correspondences determineCorrespondences_geometricConstraint_evaluateCluster(boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src, boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_tgt,
 		const vector<pcl::Correspondences> &corrs_vec, bool b_cout = false)
 	{
 		vector<float> evaluation_vec;
