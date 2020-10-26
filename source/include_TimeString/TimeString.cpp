@@ -1044,3 +1044,216 @@ string CTimeString::getFilename_removingFolder(string s_input)
 	string s_output = s_input.substr(find_vec.back() + 1, s_input.size() - find_vec.back());
 	return s_output;
 }
+
+bool CTimeString::isClusterContainedAnother(const vector<int> &cluster_big, const vector<int> &cluster_small, int num_priority)
+{
+	if (cluster_big.size() < cluster_small.size())
+	{
+		cout << "ERROR:  CTimeString::isClusterContainedAnother  invalid size" << endl;
+		throw std::runtime_error("ERROR:  CTimeString::isClusterContainedAnother  invalid size");
+	}
+	int num_smallOnlyHas = 0;
+	for (int j = 0; j < cluster_small.size(); j++)
+	{
+		bool b_hasSameValue = false;
+		for (int i = 0; i < cluster_big.size(); i++)
+			if (cluster_small[j] == cluster_big[i]) b_hasSameValue = true;
+		if (!b_hasSameValue)
+		{
+			num_smallOnlyHas++;
+			if (num_priority < num_smallOnlyHas) return false;
+		}
+	}
+	return true;
+}
+
+void CTimeString::removeContainedCluster(vector<vector<int>> &cluster_vecvec, int num_priority)
+{
+	//remove 0
+	for (int j = cluster_vecvec.size() - 1; j >= 0; j--)
+		if (cluster_vecvec[j].size() == 0) cluster_vecvec.erase(cluster_vecvec.begin() + j);
+	if (cluster_vecvec.size() <= 1) return;
+	//sort by size
+	{
+		vector<vector<int>> sort_vecvec;
+		for (int j = 0; j < cluster_vecvec.size(); j++)
+		{
+			vector<int> sort_vec;
+			sort_vec.push_back(j);
+			sort_vec.push_back(cluster_vecvec[j].size());
+			sort_vecvec.push_back(sort_vec);
+		}
+		sortVector2d(sort_vecvec, 1, false);
+		vector<vector<int>> cluster_vecvec_temp;
+		for (int j = 0; j < sort_vecvec.size(); j++)
+			cluster_vecvec_temp.push_back(cluster_vecvec[sort_vecvec[j][0]]);
+		cluster_vecvec = cluster_vecvec_temp;
+	}
+	//remove
+	for (int j = 0; j < cluster_vecvec.size() - 1; j++)
+	{
+		for (int i = cluster_vecvec.size() - 1; i > j; i--)
+			if (isClusterContainedAnother(cluster_vecvec[j], cluster_vecvec[i], num_priority)) cluster_vecvec.erase(cluster_vecvec.begin() + i);
+	}
+}
+
+vector<vector<int>> CTimeString::getIntCluster_boolMatrix_fromOneCluster_withHeader(const vector<vector<bool>> &b_matrix,
+	const vector<int> &header_vec_arg, const vector<int> &cluster_vec, int min_clusterSize, int num_contained_priority, bool &b_recursive_reference)
+{
+	//if (header_vec_arg.size() == 1)
+	//{
+	//	for (int j = 0; j < header_vec_arg.size(); j++)
+	//		cout << header_vec_arg[j] << " ";
+	//	cout << endl;
+	//}
+
+	int size_cluster_vec_atLeastJ_max = 0;
+
+	vector<vector<int>> cluster_vecvec;
+	for (int j = 0; j < cluster_vec.size(); j++)
+	{
+		vector<vector<int>> cluster_vecvec_temp;
+		vector<int> cluster_vec_atLeastJ;
+		//at least j included
+		for (int i = j + 1; i < cluster_vec.size(); i++)
+			if (b_matrix[cluster_vec[j]][cluster_vec[i]]) cluster_vec_atLeastJ.push_back(cluster_vec[i]);
+		if (cluster_vec_atLeastJ.size() == 0) continue;
+		if (header_vec_arg.size() >= min_clusterSize)
+		{
+			if (size_cluster_vec_atLeastJ_max < cluster_vec_atLeastJ.size())
+				size_cluster_vec_atLeastJ_max = cluster_vec_atLeastJ.size();
+			else
+				continue;
+		}
+		vector<int> header_vec;
+		header_vec = header_vec_arg;
+		header_vec.push_back(cluster_vec[j]);
+		if (cluster_vec_atLeastJ.size() == 1
+			|| header_vec_arg.size() + cluster_vec_atLeastJ.size() + 1 <= min_clusterSize
+			|| !b_recursive_reference)
+		{
+			cluster_vec_atLeastJ.insert(cluster_vec_atLeastJ.begin(), header_vec.back());	//add header 1
+			cluster_vecvec_temp.push_back(cluster_vec_atLeastJ);
+		}
+		else
+		{
+			vector<vector<int>> cluster_result_vecvec =
+				getIntCluster_boolMatrix_fromOneCluster_withHeader(b_matrix, header_vec, cluster_vec_atLeastJ, min_clusterSize, num_contained_priority, b_recursive_reference);
+			for (int i = 0; i < cluster_result_vecvec.size(); i++)
+				cluster_result_vecvec[i].insert(cluster_result_vecvec[i].begin(), header_vec.back());	//add header 1
+			cluster_vecvec_temp.insert(cluster_vecvec_temp.end(), cluster_result_vecvec.begin(), cluster_result_vecvec.end());
+		}
+		for (int i = cluster_vecvec_temp.size() - 1; i >= 0; i--)
+			if (cluster_vecvec_temp[i].size() == 0) cluster_vecvec_temp.erase(cluster_vecvec_temp.begin() + i);
+		for (int i = cluster_vecvec_temp.size() - 1; i >= 0; i--)
+			if (header_vec_arg.size() + cluster_vecvec_temp[i].size() < min_clusterSize) cluster_vecvec_temp.erase(cluster_vecvec_temp.begin() + i);	//remove small cluster
+		removeContainedCluster(cluster_vecvec_temp, num_contained_priority); //remove contained cluster
+		cluster_vecvec.insert(cluster_vecvec.end(), cluster_vecvec_temp.begin(), cluster_vecvec_temp.end());
+	}
+	if (header_vec_arg.size() > 2) b_recursive_reference = false;
+	else b_recursive_reference = true;
+	if (header_vec_arg.size() == 0)
+	{
+		for (int j = cluster_vecvec.size() - 1; j >= 0; j--)
+			if (cluster_vecvec[j].size() < min_clusterSize) cluster_vecvec.erase(cluster_vecvec.begin() + j);	//remove small cluster
+		removeContainedCluster(cluster_vecvec, num_contained_priority); //remove contained cluster
+	}
+	return cluster_vecvec;
+}
+
+vector<vector<int>> CTimeString::getIntCluster_boolMatrix(const vector<vector<bool>> &b_matrix, int min_clusterSize, int num_contained_priority, bool b_cout)
+{
+	vector<vector<int>> sort_vecvec;
+	for (int j = 0; j < b_matrix.size(); j++)
+	{
+		int num_valid = 0;
+		for (int i = 0; i < b_matrix.size(); i++)
+			if (b_matrix[j][i]) num_valid++;
+		vector<int> sort_vec;
+		sort_vec.push_back(j);
+		sort_vec.push_back(num_valid);
+		sort_vecvec.push_back(sort_vec);
+	}
+	sortVector2d(sort_vecvec, 1);
+
+	vector<vector<bool>> b_matrix_sort;
+	for (int j = 0; j < sort_vecvec.size(); j++)
+	{
+		vector<bool> b_temp_vec;
+		for (int i = 0; i < sort_vecvec.size(); i++)
+		{
+			//j -> sort_vecvec[j][0]
+			//i -> sort_vecvec[i][0]
+			b_temp_vec.push_back(b_matrix[sort_vecvec[j][0]][sort_vecvec[i][0]]);
+		}
+		b_matrix_sort.push_back(b_temp_vec);
+	}
+
+	vector<vector<int>> cluster_vecvec;
+	{
+		vector<vector<int>> cluster_init_vecvec;
+		for (int j = 0; j < b_matrix_sort.size(); j++)
+		{
+			for (int i = j + 1; i < b_matrix_sort[j].size(); i++)
+			{
+				if (!b_matrix_sort[j][i]) continue;
+				vector<int> temp_vec;
+				temp_vec.push_back(j);
+				temp_vec.push_back(i);
+				cluster_init_vecvec.push_back(temp_vec);
+			}
+		}
+		vector<vector<int>> cluster_init_vecvec_temp = CTimeString::getIntCluster_SomeToSome(cluster_init_vecvec);
+		cluster_init_vecvec = cluster_init_vecvec_temp;
+		for (int j = 0; j < cluster_init_vecvec.size(); j++)
+		{
+			//clustering
+			vector<int> header_vec;
+			bool b_recursive_reference = true;
+			//vector<vector<int>> cluster_result_vecvec = getIntCluster_boolMatrix_fromOneCluster_withHeader(b_matrix_sort, header_vec, cluster_init_vecvec[j], min_clusterSize);
+			vector<vector<int>> cluster_result_vecvec = getIntCluster_boolMatrix_fromOneCluster_withHeader(b_matrix_sort, header_vec, cluster_init_vecvec[j], min_clusterSize, num_contained_priority, b_recursive_reference);
+			cluster_vecvec.insert(cluster_vecvec.end(), cluster_result_vecvec.begin(), cluster_result_vecvec.end());
+		}
+		//sort -> normal
+		{
+			vector<vector<int>> cluster_vecvec_temp;
+			for (int j = 0; j < cluster_vecvec.size(); j++)
+			{
+				vector<int> cluster_vec_temp;
+				for (int i = 0; i < cluster_vecvec[j].size(); i++)
+				{
+					//index_sort: cluster_vecvec[j][i]
+					//index_normal: sort_vecvec[index_sort][0]
+					cluster_vec_temp.push_back(sort_vecvec[cluster_vecvec[j][i]][0]);
+				}
+				cluster_vecvec_temp.push_back(cluster_vec_temp);
+			}
+			cluster_vecvec = cluster_vecvec_temp;
+		}
+		//sort by size
+		{
+			vector<vector<int>> size_vecvec;
+			for (int j = 0; j < cluster_vecvec.size(); j++)
+			{
+				vector<int> size_vec;
+				size_vec.push_back(j);
+				size_vec.push_back(cluster_vecvec[j].size());
+				size_vecvec.push_back(size_vec);
+			}
+			CTimeString::sortVector2d(size_vecvec, 1, false);
+			vector<vector<int>> cluster_vecvec_temp;
+			for (int j = 0; j < size_vecvec.size(); j++)
+				cluster_vecvec_temp.push_back(cluster_vecvec[size_vecvec[j][0]]);
+			cluster_vecvec = cluster_vecvec_temp;
+		}
+
+	}
+	if (b_cout)
+	{
+		cout << "show size" << endl;
+		for (int j = 0; j < cluster_vecvec.size(); j++)
+			cout << "j:" << j << " size:" << cluster_vecvec[j].size() << endl;
+		cout << endl;
+	}
+	return cluster_vecvec;
+}

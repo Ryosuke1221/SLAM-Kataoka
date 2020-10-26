@@ -8723,6 +8723,8 @@ void CPointcloudFunction::DoDifferential_PairEvaluation2(string dir_)
 		corrs_fpfh_vec.push_back(corrs_fpfh);
 	}
 
+	bool b_first = true;
+
 	while (1)
 	{
 		if (b_useDivergence)
@@ -8744,11 +8746,13 @@ void CPointcloudFunction::DoDifferential_PairEvaluation2(string dir_)
 
 		if (b_useParameterAdjustment)
 		{
+			if(!b_first)
 			{
 				int aa;
 				cout << "input txt:";
 				cin >> aa;
 			}
+			b_first = false;
 			vector<vector<string>> s_temp_vecvec;
 			s_temp_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/parameter2.csv");
 			th_nearest_nir = stof(s_temp_vecvec[1][3]);
@@ -8775,6 +8779,14 @@ void CPointcloudFunction::DoDifferential_PairEvaluation2(string dir_)
 		////CKataokaPCL::determineCorrespondences_allFrames_feature_scalar_remove(featureDivergence_vecvec_velodyne, cloud_vec, th_nearest_velodyne, index_valid_vecvec_velodyne, index_pair_vec, corrs_velodyne_vec, true);
 		//CKataokaPCL::determineCorrespondences_allFrames_feature_fpfh_remove(fpfh_vec, cloud_vec, num_nearest, th_nearest_fpfh, index_valid_vecvec_FPFH, index_pair_vec, corrs_velodyne_vec, true);
 
+		//for (int j = 0; j < index_pair_vec.size(); j++)
+		//{
+		//	pcl::Correspondences corrs_temp;
+		//	for (int i = 0; i < (int)(corrs_fpfh_vec[j].size() * 0.1); i++)
+		//		corrs_temp.push_back(corrs_fpfh_vec[j][i]);
+		//	corrs_fpfh_vec[j] = corrs_temp;
+		//}
+
 		//sum all features
 		vector<vector<pcl::Correspondences>> corrs_all_vecvec;
 		for (int j = 0; j < index_pair_vec.size(); j++)
@@ -8783,8 +8795,8 @@ void CPointcloudFunction::DoDifferential_PairEvaluation2(string dir_)
 			int i_src = index_pair_vec[j].second;
 			pcl::Correspondences corrs_temp;
 			corrs_temp.insert(corrs_temp.end(), corrs_nir_vec[j].begin(), corrs_nir_vec[j].end());
-			corrs_temp.insert(corrs_temp.end(), corrs_velodyne_vec[j].begin(), corrs_velodyne_vec[j].end());
-			corrs_temp.insert(corrs_temp.end(), corrs_fpfh_vec[j].begin(), corrs_fpfh_vec[j].end());
+			//corrs_temp.insert(corrs_temp.end(), corrs_velodyne_vec[j].begin(), corrs_velodyne_vec[j].end());
+			//corrs_temp.insert(corrs_temp.end(), corrs_fpfh_vec[j].begin(), corrs_fpfh_vec[j].end());
 
 			if (b_useGeometricConstraints)
 			{

@@ -1183,21 +1183,21 @@ public:
 			//	cout << endl;
 			//}
 			
-			corr_pair_cluster_vecvec_new = CTimeString::getIntCluster_boolMatrix(b_matrix, 3);
+			corr_pair_cluster_vecvec_new = CTimeString::getIntCluster_boolMatrix(b_matrix, 6, 5);
 
 		}
 
-		if (b_cout)
-		{
-			//debug
-			for (int j = 0; j < corr_pair_cluster_vecvec_new.size(); j++)
-			{
-				for (int i = 0; i < corr_pair_cluster_vecvec_new[j].size(); i++)
-					cout << corr_pair_cluster_vecvec_new[j][i] << " ";
-				cout << endl;
-			}
-			cout << endl;
-		}
+		//if (b_cout)
+		//{
+		//	//debug
+		//	for (int j = 0; j < corr_pair_cluster_vecvec_new.size(); j++)
+		//	{
+		//		for (int i = 0; i < corr_pair_cluster_vecvec_new[j].size(); i++)
+		//			cout << corr_pair_cluster_vecvec_new[j][i] << " ";
+		//		cout << endl;
+		//	}
+		//	cout << endl;
+		//}
 
 		vector<pcl::Correspondences> corrs_output_vec;
 		for (int j = 0; j < corr_pair_cluster_vecvec_new.size(); j++)
