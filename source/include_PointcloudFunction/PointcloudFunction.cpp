@@ -8795,8 +8795,8 @@ void CPointcloudFunction::DoDifferential_PairEvaluation2(string dir_)
 			int i_src = index_pair_vec[j].second;
 			pcl::Correspondences corrs_temp;
 			corrs_temp.insert(corrs_temp.end(), corrs_nir_vec[j].begin(), corrs_nir_vec[j].end());
-			//corrs_temp.insert(corrs_temp.end(), corrs_velodyne_vec[j].begin(), corrs_velodyne_vec[j].end());
-			//corrs_temp.insert(corrs_temp.end(), corrs_fpfh_vec[j].begin(), corrs_fpfh_vec[j].end());
+			corrs_temp.insert(corrs_temp.end(), corrs_velodyne_vec[j].begin(), corrs_velodyne_vec[j].end());
+			corrs_temp.insert(corrs_temp.end(), corrs_fpfh_vec[j].begin(), corrs_fpfh_vec[j].end());
 
 			if (b_useGeometricConstraints)
 			{

@@ -1183,7 +1183,7 @@ public:
 			//	cout << endl;
 			//}
 			
-			corr_pair_cluster_vecvec_new = CTimeString::getIntCluster_boolMatrix(b_matrix, 6, 5);
+			corr_pair_cluster_vecvec_new = CTimeString::getIntCluster_boolMatrix(b_matrix, 6, 5, 2);
 
 		}
 

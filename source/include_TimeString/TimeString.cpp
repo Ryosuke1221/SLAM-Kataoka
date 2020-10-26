@@ -1097,8 +1097,9 @@ void CTimeString::removeContainedCluster(vector<vector<int>> &cluster_vecvec, in
 	}
 }
 
-vector<vector<int>> CTimeString::getIntCluster_boolMatrix_fromOneCluster_withHeader(const vector<vector<bool>> &b_matrix,
-	const vector<int> &header_vec_arg, const vector<int> &cluster_vec, int min_clusterSize, int num_contained_priority, bool &b_recursive_reference)
+vector<vector<int>> CTimeString::getIntCluster_boolMatrix_divide(const vector<vector<bool>> &b_matrix,
+	const vector<int> &header_vec_arg, const vector<int> &cluster_vec, int min_clusterSize,
+	int th_contained_priority, int th_headerDepth_recursive, bool &b_recursive_reference)
 {
 	//if (header_vec_arg.size() == 1)
 	//{
@@ -1138,7 +1139,7 @@ vector<vector<int>> CTimeString::getIntCluster_boolMatrix_fromOneCluster_withHea
 		else
 		{
 			vector<vector<int>> cluster_result_vecvec =
-				getIntCluster_boolMatrix_fromOneCluster_withHeader(b_matrix, header_vec, cluster_vec_atLeastJ, min_clusterSize, num_contained_priority, b_recursive_reference);
+				getIntCluster_boolMatrix_divide(b_matrix, header_vec, cluster_vec_atLeastJ, min_clusterSize, th_contained_priority, th_headerDepth_recursive, b_recursive_reference);
 			for (int i = 0; i < cluster_result_vecvec.size(); i++)
 				cluster_result_vecvec[i].insert(cluster_result_vecvec[i].begin(), header_vec.back());	//add header 1
 			cluster_vecvec_temp.insert(cluster_vecvec_temp.end(), cluster_result_vecvec.begin(), cluster_result_vecvec.end());
@@ -1147,21 +1148,22 @@ vector<vector<int>> CTimeString::getIntCluster_boolMatrix_fromOneCluster_withHea
 			if (cluster_vecvec_temp[i].size() == 0) cluster_vecvec_temp.erase(cluster_vecvec_temp.begin() + i);
 		for (int i = cluster_vecvec_temp.size() - 1; i >= 0; i--)
 			if (header_vec_arg.size() + cluster_vecvec_temp[i].size() < min_clusterSize) cluster_vecvec_temp.erase(cluster_vecvec_temp.begin() + i);	//remove small cluster
-		removeContainedCluster(cluster_vecvec_temp, num_contained_priority); //remove contained cluster
+		removeContainedCluster(cluster_vecvec_temp, th_contained_priority); //remove contained cluster
 		cluster_vecvec.insert(cluster_vecvec.end(), cluster_vecvec_temp.begin(), cluster_vecvec_temp.end());
 	}
-	if (header_vec_arg.size() > 2) b_recursive_reference = false;
+	if (header_vec_arg.size() > th_headerDepth_recursive) b_recursive_reference = false;
 	else b_recursive_reference = true;
 	if (header_vec_arg.size() == 0)
 	{
 		for (int j = cluster_vecvec.size() - 1; j >= 0; j--)
 			if (cluster_vecvec[j].size() < min_clusterSize) cluster_vecvec.erase(cluster_vecvec.begin() + j);	//remove small cluster
-		removeContainedCluster(cluster_vecvec, num_contained_priority); //remove contained cluster
+		removeContainedCluster(cluster_vecvec, th_contained_priority); //remove contained cluster
 	}
 	return cluster_vecvec;
 }
 
-vector<vector<int>> CTimeString::getIntCluster_boolMatrix(const vector<vector<bool>> &b_matrix, int min_clusterSize, int num_contained_priority, bool b_cout)
+vector<vector<int>> CTimeString::getIntCluster_boolMatrix(const vector<vector<bool>> &b_matrix, 
+	int min_clusterSize, int th_contained_priority, int th_headerDepth_recursive, bool b_cout)
 {
 	vector<vector<int>> sort_vecvec;
 	for (int j = 0; j < b_matrix.size(); j++)
@@ -1203,6 +1205,7 @@ vector<vector<int>> CTimeString::getIntCluster_boolMatrix(const vector<vector<bo
 				cluster_init_vecvec.push_back(temp_vec);
 			}
 		}
+		cout << "getIntCluster_boolMatrix start" << endl;
 		vector<vector<int>> cluster_init_vecvec_temp = CTimeString::getIntCluster_SomeToSome(cluster_init_vecvec);
 		cluster_init_vecvec = cluster_init_vecvec_temp;
 		for (int j = 0; j < cluster_init_vecvec.size(); j++)
@@ -1211,7 +1214,7 @@ vector<vector<int>> CTimeString::getIntCluster_boolMatrix(const vector<vector<bo
 			vector<int> header_vec;
 			bool b_recursive_reference = true;
 			//vector<vector<int>> cluster_result_vecvec = getIntCluster_boolMatrix_fromOneCluster_withHeader(b_matrix_sort, header_vec, cluster_init_vecvec[j], min_clusterSize);
-			vector<vector<int>> cluster_result_vecvec = getIntCluster_boolMatrix_fromOneCluster_withHeader(b_matrix_sort, header_vec, cluster_init_vecvec[j], min_clusterSize, num_contained_priority, b_recursive_reference);
+			vector<vector<int>> cluster_result_vecvec = getIntCluster_boolMatrix_divide(b_matrix_sort, header_vec, cluster_init_vecvec[j], min_clusterSize, th_contained_priority, th_headerDepth_recursive, b_recursive_reference);
 			cluster_vecvec.insert(cluster_vecvec.end(), cluster_result_vecvec.begin(), cluster_result_vecvec.end());
 		}
 		//sort -> normal

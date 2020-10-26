@@ -585,9 +585,11 @@ public:
 
 	static bool isClusterContainedAnother(const vector<int> &cluster_big, const vector<int> &cluster_small, int num_priority = 0);
 	static void removeContainedCluster(vector<vector<int>> &cluster_vecvec, int num_priority);
-	static vector<vector<int>> getIntCluster_boolMatrix_fromOneCluster_withHeader(const vector<vector<bool>> &b_matrix,
-		const vector<int> &header_vec_arg, const vector<int> &cluster_vec, int min_clusterSize, int num_contained_priority, bool &b_recursive_reference);
-	static vector<vector<int>> getIntCluster_boolMatrix(const vector<vector<bool>> &b_matrix, int min_clusterSize, int num_contained_priority, bool b_cout = false);
+	static vector<vector<int>> getIntCluster_boolMatrix_divide(const vector<vector<bool>> &b_matrix,
+		const vector<int> &header_vec_arg, const vector<int> &cluster_vec, int min_clusterSize,
+		int th_contained_priority, int th_headerDepth_recursive, bool &b_recursive_reference);
+	static vector<vector<int>> getIntCluster_boolMatrix(const vector<vector<bool>> &b_matrix, 
+		int min_clusterSize, int th_contained_priority, int th_headerDepth_recursive, bool b_cout = false);
 
 private:
 	static bool getDirectoryExistance(string foder_Path);
