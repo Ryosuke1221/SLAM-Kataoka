@@ -2332,7 +2332,7 @@ vector<vector<int>> CKataokaPCL::calcValidIndex_feature(const vector<vector<floa
 	return index_valid_vecvec;
 }
 
-void CKataokaPCL::calcRanking_query_match_ValueOfFeature(const vector<vector<pair<float, float>>> &compare_vecvec,
+void CKataokaPCL::calcRanking_compareArg_eachValue(const vector<vector<pair<float, float>>> &compare_vecvec,
 	vector<int> &frame_vec, vector<int> &corr_index_vec, vector<bool> &b_queryOrNot_vec, vector<float> &evaluation_vec, bool b_cout)
 {
 	vector<vector<float>> ranking_vecvec;
@@ -2379,13 +2379,13 @@ void CKataokaPCL::calcRanking_query_match_ValueOfFeature(const vector<vector<pai
 	cout << endl;
 }
 
-vector<vector<int>> CKataokaPCL::calcRanking_ValueOfFeature_argCompare(const vector<vector<pair<float, float>>> &compare_vecvec, bool b_cout)
+vector<vector<int>> CKataokaPCL::calcRanking_compareArg(const vector<vector<pair<float, float>>> &compare_vecvec, bool b_cout)
 {
 	vector<int> frame_vec;
 	vector<int>corr_index_vec;
 	vector<bool> b_queryOrNot_vec;
 	vector<float> evaluation_vec;
-	calcRanking_query_match_ValueOfFeature(compare_vecvec, frame_vec, corr_index_vec, b_queryOrNot_vec, evaluation_vec, b_cout);
+	calcRanking_compareArg_eachValue(compare_vecvec, frame_vec, corr_index_vec, b_queryOrNot_vec, evaluation_vec, b_cout);
 
 	vector<vector<pair<int, int>>> rank_query_match_vecvec;
 	for (int j = 0; j < compare_vecvec.size(); j++)

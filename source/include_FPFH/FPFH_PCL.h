@@ -546,23 +546,196 @@ public:
 	static pcl::Correspondences getCorrespondences_eachPairHaving(const pcl::Correspondences &corr_src_tgt,
 		const pcl::Correspondences &corr_tgt_src);
 
-	static pcl::Correspondences getNearestOfFPFH_eachPairHaving(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
+	static pcl::Correspondences determineCorrespondences_featureFpfh_eachPairHaving_num(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
 		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt, pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh_src,
 		pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh_tgt, int num_near);
 
-	static pcl::Correspondences getNearestOfFPFH_eachPairHaving_remove(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
+	static pcl::Correspondences determineCorrespondences_featureFpfh_eachPairHaving_num_remove(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
 		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt, const vector<int> &index_unique_vec_src, const vector<int> &index_unique_vec_tgt, int num_near);
 
-	static pcl::Correspondences getNearestOfFPFH_value(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
+	static pcl::Correspondences determineCorrespondences_featureFpfh(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
 		int num_near_max, pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh, float th_value);
 
-	static pcl::Correspondences getNearestOfFPFH_eachPairHaving_value(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
+	static pcl::Correspondences determineCorrespondences_featureFpfh_eachPairHaving(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
 		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt, pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh_src,
 		pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh_tgt, int num_near_max, float th_value);
 
-	static pcl::Correspondences getNearestOfFPFH_eachPairHaving_remove_value(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
+	static pcl::Correspondences determineCorrespondences_featureFpfh_eachPairHaving_remove(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
 		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt, const vector<int> &index_unique_vec_src,
 		const vector<int> &index_unique_vec_tgt, int num_near_max, float th_value);
 
+	static pcl::Correspondences determineCorrespondences_featureFpfh_kdtreeArg_singleQuery(pcl::FPFHSignature33 point_query,
+		const boost::shared_ptr<pcl::KdTreeFLANN<pcl::FPFHSignature33>> kdtree_tgt, float th_nearest_fpfh, int th_nearest_num, bool b_multipleNear = false);
+
+	template <class T_PointType>
+	static vector<pair<float, float>> calcRanking_compare_featureFPFH(const pcl::Correspondences &corr_,
+		const boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src, const boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_tgt,
+		const pcl::PointCloud<pcl::FPFHSignature33>::Ptr &fpfh_src, const pcl::PointCloud<pcl::FPFHSignature33>::Ptr &fpfh_tgt,
+		const vector<int> &index_unique_vec_src, const vector<int> &index_unique_vec_tgt, float th_nearest_fpfh, int th_nearest_num)
+	{
+		pcl::PointCloud<T_PointType>::Ptr cloud_src_removed(new pcl::PointCloud<T_PointType>());
+		pcl::PointCloud<T_PointType>::Ptr cloud_tgt_removed(new pcl::PointCloud<T_PointType>());
+		for (int j = 0; j < index_unique_vec_src.size(); j++)
+			cloud_src_removed->push_back(cloud_src->points[index_unique_vec_src[j]]);
+		for (int j = 0; j < index_unique_vec_tgt.size(); j++)
+			cloud_tgt_removed->push_back(cloud_tgt->points[index_unique_vec_tgt[j]]);
+		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src_removed(new pcl::PointCloud<pcl::FPFHSignature33>);
+		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt_removed(new pcl::PointCloud<pcl::FPFHSignature33>);
+		for (int j = 0; j < index_unique_vec_src.size(); j++)
+			fpfh_src_removed->push_back(fpfh_src->points[index_unique_vec_src[j]]);
+		for (int j = 0; j < index_unique_vec_tgt.size(); j++)
+			fpfh_tgt_removed->push_back(fpfh_tgt->points[index_unique_vec_tgt[j]]);
+		pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh_src(new pcl::KdTreeFLANN<pcl::FPFHSignature33>);
+		pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh_tgt(new pcl::KdTreeFLANN<pcl::FPFHSignature33>);
+		kdtree_fpfh_src->setInputCloud(fpfh_src_removed);
+		kdtree_fpfh_tgt->setInputCloud(fpfh_tgt_removed);
+		vector<pair<float, float>> compare_srctgt_vec;
+		for (int j = 0; j < corr_.size(); j++)
+		{
+			float compare_src;
+			{
+				pcl::Correspondences corr_near;
+				pcl::FPFHSignature33 point_fpfh;
+				point_fpfh = fpfh_src->points[corr_[j].index_query];
+				corr_near = determineCorrespondences_featureFpfh_kdtreeArg_singleQuery(point_fpfh, kdtree_fpfh_src, th_nearest_fpfh, th_nearest_num, true);
+				pcl::PointCloud<T_PointType>::Ptr cloud_near(new pcl::PointCloud<T_PointType>());
+				for (int i = 0; i < corr_near.size(); i++)
+					cloud_near->push_back(cloud_src_removed->points[corr_near[i].index_match]);
+				if (corr_near.size() == 0)
+					compare_src = 10000.;
+				else
+				{
+					compare_src = CKataokaPCL::calcCovarianceMatrix(CKataokaPCL::calcEigenMatrixFromPointCloud(cloud_near)).trace();
+					if (compare_src > 10000.)
+					{
+						cout << "so big!!" << endl;
+						cout << "j:" << j << endl;
+					}
+					else if (compare_src < 0.00001) compare_src = 0.;
+				}
+
+			}
+			float compare_tgt;
+			{
+				pcl::Correspondences corr_near;
+				pcl::FPFHSignature33 point_fpfh;
+				point_fpfh = fpfh_tgt->points[corr_[j].index_query];
+				corr_near = determineCorrespondences_featureFpfh_kdtreeArg_singleQuery(point_fpfh, kdtree_fpfh_tgt, th_nearest_fpfh, th_nearest_num, true);
+				pcl::PointCloud<T_PointType>::Ptr cloud_near(new pcl::PointCloud<T_PointType>());
+				for (int i = 0; i < corr_near.size(); i++)
+					cloud_near->push_back(cloud_tgt_removed->points[corr_near[i].index_match]);
+				if (corr_near.size() == 0)
+					compare_tgt = 10000.;
+				else
+				{
+					compare_tgt = CKataokaPCL::calcCovarianceMatrix(CKataokaPCL::calcEigenMatrixFromPointCloud(cloud_near)).trace();
+					if (compare_tgt > 10000.)
+					{
+						cout << "so big!!" << endl;
+						cout << "j:" << j << endl;
+					}
+					else if (compare_tgt < 0.00001) compare_tgt = 0.;
+				}
+
+			}
+			compare_srctgt_vec.push_back(make_pair(compare_src, compare_tgt));
+		}
+		return compare_srctgt_vec;
+	}
+
+	template <class T_PointType>
+	static vector<vector<int>> calcRanking_featureFPFH(const vector<pair<int, int>> &index_pair_vec, const vector<pcl::Correspondences> &corrs_vec,
+		const vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec, const vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> &fpfh_vec, 
+		const vector<vector<int>> &index_valid_vecvec, float th_nearest_fpfh, int th_nearest_num, bool b_cout = false)
+	{
+		vector<vector<pair<float, float>>> compare_vecvec;//[index_frame_pair][index_pair] :variance
+		for (int j = 0; j < index_pair_vec.size(); j++)
+		{
+			int i_tgt = index_pair_vec[j].first;
+			int i_src = index_pair_vec[j].second;
+			vector<pair<float, float>> compare_vec;
+			compare_vec = calcRanking_compare_featureFPFH(corrs_vec[j], cloud_vec[i_src], cloud_vec[i_tgt],
+				fpfh_vec[i_src], fpfh_vec[i_tgt], index_valid_vecvec[i_src], index_valid_vecvec[i_tgt], 
+				th_nearest_fpfh, th_nearest_num);
+			if (b_cout)
+			{
+				for (int j = 0; j < compare_vec.size(); j++)
+					if (j % 10 == 0) cout << "j:" << j << "  query:" << compare_vec[j].first << " match:" << compare_vec[j].second << endl;
+			}
+			compare_vecvec.push_back(compare_vec);
+		}
+		vector<vector<int>> rank_output_vecvec;//[index_frame_pair][index_pair]
+		rank_output_vecvec = CKataokaPCL::calcRanking_compareArg(compare_vecvec, b_cout);
+		return rank_output_vecvec;
+	}
+
+	template <class T_PointType>
+	static void determineCorrespondences_allFramesRanking_featureFpfh_remove(const vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> &fpfh_vec,
+		const vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec, const vector<pair<int, int>> &index_pair_vec, 
+		float th_nearest_fpfh, int th_nearest_num, float th_rank_rate, const vector<vector<int>> index_valid_vecvec, vector<pcl::Correspondences> &corrs_vec_arg, bool b_cout = false)
+	{
+		if (fpfh_vec.size() != cloud_vec.size())
+		{
+			cout << "ERROR: number of feature and one of pointcloud have different size." << endl;
+			return;
+		}
+
+		corrs_vec_arg.clear();//[index_frame_pair][index_pair]
+		for (int j = 0; j < index_pair_vec.size(); j++)
+		{
+			int i_tgt = index_pair_vec[j].first;
+			int i_src = index_pair_vec[j].second;
+			pcl::Correspondences corrs_;
+			corrs_ = determineCorrespondences_featureFpfh_eachPairHaving_remove(fpfh_vec[i_src], fpfh_vec[i_tgt],
+				index_valid_vecvec[i_src], index_valid_vecvec[i_tgt], th_nearest_num, th_nearest_fpfh);
+			corrs_vec_arg.push_back(corrs_);
+		}
+
+		{
+			vector<vector<int>> rank_vecvec;//[index_frame_pair][index_pair]
+			rank_vecvec = calcRanking_featureFPFH(index_pair_vec, corrs_vec_arg, cloud_vec, fpfh_vec, index_valid_vecvec, th_nearest_fpfh, th_nearest_num, b_cout);
+
+			vector<pcl::Correspondences> corrs_vec_temp;
+			for (int j = 0; j < index_pair_vec.size(); j++)
+			{
+				pcl::Correspondences temp;
+				corrs_vec_temp.push_back(temp);
+			}
+
+			//sort
+			vector<vector<int>> sort_vecvec;
+			for (int j = 0; j < rank_vecvec.size(); j++)
+			{
+				for (int i = 0; i < rank_vecvec[j].size(); i++)
+				{
+					vector<int> sort_vec;
+					sort_vec.push_back(j);
+					sort_vec.push_back(i);
+					sort_vec.push_back(rank_vecvec[j][i]);
+					sort_vecvec.push_back(sort_vec);
+				}
+			}
+			CTimeString::sortVector2d(sort_vecvec, 2);
+
+			for (int j = 0; j < (int)(sort_vecvec.size() * th_rank_rate); j++)
+			{
+				int index_frame_pair = sort_vecvec[j][0];
+				int index_pair = sort_vecvec[j][1];
+				corrs_vec_temp[index_frame_pair].push_back(corrs_vec_arg[index_frame_pair][index_pair]);
+			}
+			corrs_vec_arg = corrs_vec_temp;
+		}
+
+		if (b_cout)
+		{
+			cout << "show corr" << endl;
+			cout << "corrs_vec.size():" << corrs_vec_arg.size() << endl;
+			for (int j = 0; j < corrs_vec_arg.size(); j++)
+			{
+				cout << "j(index_frame_pair):" << j << " ";
+				cout << "corrs_vec[j].size():" << corrs_vec_arg[j].size() << endl;
+			}
+		}
+	}
 
 };

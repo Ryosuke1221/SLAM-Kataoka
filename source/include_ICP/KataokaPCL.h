@@ -825,7 +825,7 @@ public:
 	}
 
 	template <typename T>
-	static vector<pair<int,int>> determineCorrespondences_feature_histogram(const vector<T> &feature_vec_src, 
+	static vector<pair<int,int>> determineCorrespondences_featureScalar_histogram(const vector<T> &feature_vec_src,
 		const vector<T> &feature_vec_tgt, int num_bin, T feature_max, T feature_min, T feature_range, bool b_cout = false)
 	{
 		vector<vector<int>> index_hist_vecvec_src;
@@ -863,14 +863,12 @@ public:
 				cout << "j:" << j << endl;
 				cout << "VectorPairPattern_temp_vecvec.size():" << VectorPairPattern_temp_vecvec.size() << endl;
 			}
-
 		}
-
 		return corr_vec;
 	}
 
 	template <class T_PointType>
-	static pcl::Correspondences determineCorrespondences_output_kdtreeArg(
+	static pcl::Correspondences determineCorrespondences_kdtreeArg_num(
 		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src,
 		boost::shared_ptr<pcl::KdTreeFLANN<T_PointType>> kdtree_tgt,
 		int num_nearest)
@@ -896,19 +894,19 @@ public:
 	static pcl::Correspondences getCorrespondences_eachPairHaving(const pcl::Correspondences &corr_src_tgt, const pcl::Correspondences &corr_tgt_src);
 
 	template <class T_PointType>
-	static pcl::Correspondences determineCorrespondences_feature(
+	static pcl::Correspondences determineCorrespondences_kdtreeArg_eachPairHaving_num(
 		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_feature_src, boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_feature_tgt,
 		boost::shared_ptr<pcl::KdTreeFLANN<T_PointType>> kdtree_src, boost::shared_ptr<pcl::KdTreeFLANN<T_PointType>> kdtree_tgt,
 		int num_nearest)
 	{
-		pcl::Correspondences corr_src_tgt = determineCorrespondences_output_kdtreeArg(cloud_feature_src, kdtree_tgt, num_nearest);
-		pcl::Correspondences corr_tgt_src = determineCorrespondences_output_kdtreeArg(cloud_feature_tgt, kdtree_src, num_nearest);
+		pcl::Correspondences corr_src_tgt = determineCorrespondences_kdtreeArg_num(cloud_feature_src, kdtree_tgt, num_nearest);
+		pcl::Correspondences corr_tgt_src = determineCorrespondences_kdtreeArg_num(cloud_feature_tgt, kdtree_src, num_nearest);
 		pcl::Correspondences corr_new = getCorrespondences_eachPairHaving(corr_src_tgt, corr_tgt_src);
 		return corr_new;
 	}
 
 	template <typename T>
-	static pcl::Correspondences determineCorrespondences_feature(const vector<T> &features_src, const vector<T> &features_tgt, int num_nearest)
+	static pcl::Correspondences determineCorrespondences_featureScalar_num(const vector<T> &features_src, const vector<T> &features_tgt, int num_nearest)
 	{
 		typedef pcl::PointXY T_PointType;
 		pcl::PointCloud<T_PointType>::Ptr cloud_feature_src(new pcl::PointCloud<T_PointType>());
@@ -933,12 +931,12 @@ public:
 		pcl::KdTreeFLANN<T_PointType>::Ptr kdtree_tgt(new pcl::KdTreeFLANN<T_PointType>);
 		kdtree_src->setInputCloud(cloud_feature_src);
 		kdtree_tgt->setInputCloud(cloud_feature_tgt);
-		corr_new = determineCorrespondences_feature(cloud_feature_src, cloud_feature_tgt, kdtree_src, kdtree_tgt, num_nearest);
+		corr_new = determineCorrespondences_kdtreeArg_eachPairHaving_num(cloud_feature_src, cloud_feature_tgt, kdtree_src, kdtree_tgt, num_nearest);
 		return corr_new;
 	}
 
 	template <typename T>
-	static pcl::Correspondences determineCorrespondences_feature_remove(const vector<T> &features_src, const vector<T> &features_tgt, 
+	static pcl::Correspondences determineCorrespondences_featureScalar_num_remove(const vector<T> &features_src, const vector<T> &features_tgt,
 		const vector<int> &index_unique_vec_src, const vector<int> &index_unique_vec_tgt, int num_nearest)
 	{
 		vector<T> features_src_removed;
@@ -947,7 +945,7 @@ public:
 			features_src_removed.push_back(features_src[index_unique_vec_src[j]]);
 		for (int j = 0; j < index_unique_vec_tgt.size(); j++)
 			features_tgt_removed.push_back(features_tgt[index_unique_vec_tgt[j]]);
-		pcl::Correspondences corrs_ = determineCorrespondences_feature(features_src_removed, features_tgt_removed, num_nearest);
+		pcl::Correspondences corrs_ = determineCorrespondences_featureScalar_num(features_src_removed, features_tgt_removed, num_nearest);
 		for (int j = 0; j < corrs_.size(); j++)
 		{
 			corrs_[j].index_query = index_unique_vec_src[corrs_[j].index_query];
@@ -990,155 +988,8 @@ public:
 
 	static vector<vector<int>> calcValidIndex_feature(const vector<vector<float>> &feature_vecvec, int num_bin_hist, bool b_showHistogram = false);
 
-	template<typename Derived>
-	static void getCorrespondance_RatioOfDistanceOfSrcAndTgt_perfectlyConnected(
-		const Eigen::MatrixBase<Derived>& mat_fraction, const vector<int> cluster_input_vec,
-		int num_size_cluster_min, float th_fraction, vector<vector<int>> &cluster_vecvec, vector<int> &cluster_rest)
-	{
-		vector<int> cluster_vec_temp = cluster_input_vec;
-		vector<int> cluster_rest_temp;
-		for (int j = 0; j < cluster_vec_temp.size(); j++)
-		{
-			for (int i = cluster_vec_temp.size() - 1; i >= j + 1; i--)
-			{
-				int j_small, i_big;
-				if (cluster_vec_temp[j] < cluster_vec_temp[i])
-				{
-					i_big = cluster_vec_temp[i];
-					j_small = cluster_vec_temp[j];
-				}
-				else
-				{
-					i_big = cluster_vec_temp[j];
-					j_small = cluster_vec_temp[i];
-				}
-
-				if (mat_fraction(j_small, i_big) < th_fraction)
-				{
-					cluster_rest_temp.push_back(cluster_vec_temp[i]);
-					cluster_vec_temp.erase(cluster_vec_temp.begin() + i);
-				}
-			}
-		}
-
-		if (cluster_vec_temp.size() < num_size_cluster_min)
-		{
-			cluster_rest.insert(cluster_rest.end(), cluster_vec_temp.begin(), cluster_vec_temp.end());
-			return;
-		}
-		cluster_vecvec.push_back(cluster_vec_temp);
-		if(cluster_vec_temp.size() >= num_size_cluster_min)
-		
-		{
-			getCorrespondance_RatioOfDistanceOfSrcAndTgt_perfectlyConnected(mat_fraction, cluster_rest_temp, num_size_cluster_min, th_fraction,
-				cluster_vecvec, cluster_rest);
-		}
-	}
-
 	template <class T_PointType>
-	static vector<pcl::Correspondences> determineCorrespondences_geometricConstraint(boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src,
-		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_tgt, const pcl::Correspondences &corr_, float th_fraction, bool b_cout = false)
-	{ 
-		//RatioOfDistanceOfSrcAndTgt
-		int num_corr_init = corr_.size();
-		if (num_corr_init < 2)
-		{
-			cout << "ERROR(CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt): Few correspondednces inputed." << endl;
-			throw std::runtime_error("ERROR(CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt): Few correspondednces inputed.");
-		}
-		//calc ratio		
-		vector<vector<bool>> b_matrix;
-		for (int j = 0; j < num_corr_init; j++)
-		{
-			vector<bool> b_temp_vec;
-			b_temp_vec.resize(num_corr_init);
-			fill(b_temp_vec.begin(), b_temp_vec.begin(), false);
-			b_matrix.push_back(b_temp_vec);
-		}
-		int num_valid = 0;
-		for (int j = 0; j < num_corr_init; j++)
-		{
-			for (int i = j + 1; i < num_corr_init; i++)
-			{
-				T_PointType point_src_j = cloud_src->points[corr_[j].index_query];
-				T_PointType point_tgt_j = cloud_tgt->points[corr_[j].index_match];
-				T_PointType point_src_i = cloud_src->points[corr_[i].index_query];
-				T_PointType point_tgt_i = cloud_tgt->points[corr_[i].index_match];
-				float distance_src = sqrt(
-					pow(point_src_i.x - point_src_j.x, 2.)
-					+ pow(point_src_i.y - point_src_j.y, 2.)
-					+ pow(point_src_i.z - point_src_j.z, 2.));
-				float distance_tgt = sqrt(
-					pow(point_tgt_i.x - point_tgt_j.x, 2.)
-					+ pow(point_tgt_i.y - point_tgt_j.y, 2.)
-					+ pow(point_tgt_i.z - point_tgt_j.z, 2.));
-				float value_;
-				if (distance_src == 0. || distance_tgt == 0.)
-					value_ = 0.;
-				else if(distance_src >= distance_tgt)
-					value_ = distance_tgt/ distance_src;
-				else/* if (distance_src < distance_tgt)*/
-					value_ = distance_src / distance_tgt;
-				if (value_ >= th_fraction)
-				{
-					b_matrix[j][i] = true;
-					num_valid++;
-				}
-			}
-		}
-
-		if (num_valid < 3)
-		{
-			cout << "ERROR(CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt): Few correspondednces exist simultaneously." << endl;
-			throw std::runtime_error("ERROR(CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt): Few correspondednces exist simultaneously.");
-		}
-
-		vector<vector<int>> corr_pair_cluster_vecvec_new;
-		{
-			cout << "b_matrix.size():" << b_matrix.size() << endl;
-			cout << "b_matrix[0].size():" << b_matrix[0].size() << endl;			
-			corr_pair_cluster_vecvec_new = CTimeString::getIntCluster_boolMatrix(b_matrix, 6, 5, 2);
-		}
-
-		vector<pcl::Correspondences> corrs_output_vec;
-		for (int j = 0; j < corr_pair_cluster_vecvec_new.size(); j++)
-		{
-			pcl::Correspondences corr_output;
-			for (int i = 0; i < corr_pair_cluster_vecvec_new[j].size(); i++)
-				corr_output.push_back(corr_[corr_pair_cluster_vecvec_new[j][i]]);
-			corrs_output_vec.push_back(corr_output);
-		}
-
-		//sort by size
-		{
-			vector<vector<int>> size_vecvec;
-			for (int j = 0; j < corrs_output_vec.size(); j++)
-			{
-				vector<int> size_vec;
-				size_vec.push_back(j);
-				size_vec.push_back(corrs_output_vec[j].size());
-				size_vecvec.push_back(size_vec);
-			}
-			CTimeString::sortVector2d(size_vecvec, 1, false);
-
-			vector<pcl::Correspondences> corrs_vec_temp;
-			for (int j = 0; j < size_vecvec.size(); j++)
-				corrs_vec_temp.push_back(corrs_output_vec[size_vecvec[j][0]]);
-			corrs_output_vec = corrs_vec_temp;
-		}
-
-		if (b_cout)
-		{
-			cout << "corrs_output_vec.size():" << corrs_output_vec.size() << endl;
-			for (int j = 0; j < corrs_output_vec.size(); j++)
-				cout << "j:" << j << " corrs_output_vec[j].size():" << corrs_output_vec[j].size() << endl;
-		}
-
-		return corrs_output_vec;
-	}
-
-	template <class T_PointType>
-	static pcl::Correspondences determineCorrespondences_output_kdtreeArg_value(
+	static pcl::Correspondences determineCorrespondences_kdtreeArg(
 		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src,
 		boost::shared_ptr<pcl::KdTreeFLANN<T_PointType>> kdtree_tgt,float th_value, bool b_multipleNear = false)
 	{
@@ -1174,18 +1025,18 @@ public:
 	}
 
 	template <class T_PointType>
-	static pcl::Correspondences determineCorrespondences_feature_value(
+	static pcl::Correspondences determineCorrespondences_kdtreeArg_eachPairHaving(
 		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_feature_src, boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_feature_tgt,
 		boost::shared_ptr<pcl::KdTreeFLANN<T_PointType>> kdtree_src, boost::shared_ptr<pcl::KdTreeFLANN<T_PointType>> kdtree_tgt, float th_value)
 	{
-		pcl::Correspondences corr_src_tgt = determineCorrespondences_output_kdtreeArg_value(cloud_feature_src, kdtree_tgt, th_value);
-		pcl::Correspondences corr_tgt_src = determineCorrespondences_output_kdtreeArg_value(cloud_feature_tgt, kdtree_src, th_value);
+		pcl::Correspondences corr_src_tgt = determineCorrespondences_kdtreeArg(cloud_feature_src, kdtree_tgt, th_value);
+		pcl::Correspondences corr_tgt_src = determineCorrespondences_kdtreeArg(cloud_feature_tgt, kdtree_src, th_value);
 		pcl::Correspondences corr_new = getCorrespondences_eachPairHaving(corr_src_tgt, corr_tgt_src);
 		return corr_new;
 	}
 
 	template <class T_PointType>
-	static pcl::Correspondences determineCorrespondences_output_kdtreeArg_value_singleQuery(
+	static pcl::Correspondences determineCorrespondences_featureScalar_kdtreeArg_singleQuery(
 		T_PointType point_query, boost::shared_ptr<pcl::KdTreeFLANN<T_PointType>> kdtree_tgt, float th_value, bool b_multipleNear = false)
 	{
 		pcl::Correspondences correspondences;
@@ -1216,7 +1067,7 @@ public:
 	}
 
 	template <typename T>
-	static pcl::Correspondences determineCorrespondences_feature_value(const vector<T> &features_src, const vector<T> &features_tgt,  float th_value)
+	static pcl::Correspondences determineCorrespondences_featureScalar(const vector<T> &features_src, const vector<T> &features_tgt,  float th_value)
 	{
 		typedef pcl::PointXY T_PointType;
 		pcl::PointCloud<T_PointType>::Ptr cloud_feature_src(new pcl::PointCloud<T_PointType>());
@@ -1241,12 +1092,12 @@ public:
 		pcl::KdTreeFLANN<T_PointType>::Ptr kdtree_tgt(new pcl::KdTreeFLANN<T_PointType>);
 		kdtree_src->setInputCloud(cloud_feature_src);
 		kdtree_tgt->setInputCloud(cloud_feature_tgt);
-		corr_new = determineCorrespondences_feature_value(cloud_feature_src, cloud_feature_tgt, kdtree_src, kdtree_tgt, th_value);
+		corr_new = determineCorrespondences_kdtreeArg_eachPairHaving(cloud_feature_src, cloud_feature_tgt, kdtree_src, kdtree_tgt, th_value);
 		return corr_new;
 	}
 
 	template <typename T>
-	static pcl::Correspondences determineCorrespondences_feature_value_remove(const vector<T> &features_src, const vector<T> &features_tgt,
+	static pcl::Correspondences determineCorrespondences_featureScalar_remove(const vector<T> &features_src, const vector<T> &features_tgt,
 		const vector<int> &index_unique_vec_src, const vector<int> &index_unique_vec_tgt, float th_value)
 	{
 		vector<T> features_src_removed;
@@ -1255,7 +1106,7 @@ public:
 			features_src_removed.push_back(features_src[index_unique_vec_src[j]]);
 		for (int j = 0; j < index_unique_vec_tgt.size(); j++)
 			features_tgt_removed.push_back(features_tgt[index_unique_vec_tgt[j]]);
-		pcl::Correspondences corrs_ = determineCorrespondences_feature_value(features_src_removed, features_tgt_removed, th_value);
+		pcl::Correspondences corrs_ = determineCorrespondences_featureScalar(features_src_removed, features_tgt_removed, th_value);
 		for (int j = 0; j < corrs_.size(); j++)
 		{
 			corrs_[j].index_query = index_unique_vec_src[corrs_[j].index_query];
@@ -1309,7 +1160,7 @@ public:
 	}
 
 	template <typename T, class T_PointType>
-	static vector<pair<float, float>> calcCompareValueOfFeature_scalar(const pcl::Correspondences &corr_,
+	static vector<pair<float, float>> calcRanking_compare_featureScalar(const pcl::Correspondences &corr_,
 		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src, boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_tgt,
 		const vector<T> &features_src, const vector<T> &features_tgt,
 		const vector<int> &index_unique_vec_src, const vector<int> &index_unique_vec_tgt, float th_value)
@@ -1349,8 +1200,6 @@ public:
 		pcl::KdTreeFLANN<T_PointType_feature>::Ptr kdtree_feature_tgt(new pcl::KdTreeFLANN<T_PointType_feature>);
 		kdtree_feature_src->setInputCloud(cloud_feature_src);
 		kdtree_feature_tgt->setInputCloud(cloud_feature_tgt);
-		Eigen::Matrix<float, 2, 1> mat_weight_src = getWeightPoint_2D(cloud_feature_src).cast<float>();
-		Eigen::Matrix<float, 2, 1> mat_weight_tgt = getWeightPoint_2D(cloud_feature_tgt).cast<float>();
 		vector<pair<float, float>> compare_srctgt_vec;
 		for (int j = 0; j < corr_.size(); j++)
 		{
@@ -1360,7 +1209,7 @@ public:
 				T_PointType_feature point_feature;
 				point_feature.x = features_src[corr_[j].index_query];
 				point_feature.y = 0.;
-				corr_near = determineCorrespondences_output_kdtreeArg_value_singleQuery(point_feature, kdtree_feature_src, th_value, true);
+				corr_near = determineCorrespondences_featureScalar_kdtreeArg_singleQuery(point_feature, kdtree_feature_src, th_value, true);
 				pcl::PointCloud<T_PointType>::Ptr cloud_near(new pcl::PointCloud<T_PointType>());
 				for (int i = 0; i < corr_near.size(); i++)
 					cloud_near->push_back(cloud_src_removed->points[corr_near[i].index_match]);
@@ -1384,7 +1233,7 @@ public:
 				T_PointType_feature point_feature;
 				point_feature.x = features_tgt[corr_[j].index_match];
 				point_feature.y = 0.;
-				corr_near = determineCorrespondences_output_kdtreeArg_value_singleQuery(point_feature, kdtree_feature_tgt, th_value, true);
+				corr_near = determineCorrespondences_featureScalar_kdtreeArg_singleQuery(point_feature, kdtree_feature_tgt, th_value, true);
 				pcl::PointCloud<T_PointType>::Ptr cloud_near(new pcl::PointCloud<T_PointType>());
 				for (int i = 0; i < corr_near.size(); i++)
 					cloud_near->push_back(cloud_tgt_removed->points[corr_near[i].index_match]);
@@ -1407,13 +1256,13 @@ public:
 		return compare_srctgt_vec;
 	}
 
-	static void calcRanking_query_match_ValueOfFeature(const vector<vector<pair<float, float>>> &compare_vecvec,
+	static void calcRanking_compareArg_eachValue(const vector<vector<pair<float, float>>> &compare_vecvec,
 		vector<int> &frame_vec, vector<int> &corr_index_vec, vector<bool> &b_queryOrNot_vec, vector<float> &evaluation_vec, bool b_cout = false);
 
-	static vector<vector<int>> calcRanking_ValueOfFeature_argCompare(const vector<vector<pair<float, float>>> &compare_vecvec, bool b_cout = false);
+	static vector<vector<int>> calcRanking_compareArg(const vector<vector<pair<float, float>>> &compare_vecvec, bool b_cout = false);
 
 	template <class T_PointType, typename T>
-	static vector<vector<int>> calcRanking_ValueOfFeature_scalar(const vector<pair<int, int>> &index_pair_vec, const vector<pcl::Correspondences> &corrs_vec,
+	static vector<vector<int>> calcRanking_featureScalar(const vector<pair<int, int>> &index_pair_vec, const vector<pcl::Correspondences> &corrs_vec,
 		vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec, const vector<vector<T>> &feature_vecvec, vector<vector<int>> &index_valid_vecvec, float th_nearest, bool b_cout = false)
 	{
 		vector<vector<pair<float, float>>> compare_vecvec;//[index_frame_pair][index_pair] :variance
@@ -1422,7 +1271,7 @@ public:
 			int i_tgt = index_pair_vec[j].first;
 			int i_src = index_pair_vec[j].second;
 			vector<pair<float, float>> compare_vec;
-			compare_vec = calcCompareValueOfFeature_scalar(corrs_vec[j],
+			compare_vec = calcRanking_compare_featureScalar(corrs_vec[j],
 				cloud_vec[i_src], cloud_vec[i_tgt], feature_vecvec[i_src], feature_vecvec[i_tgt],
 				index_valid_vecvec[i_src], index_valid_vecvec[i_tgt], th_nearest);
 			if (b_cout)
@@ -1433,12 +1282,12 @@ public:
 			compare_vecvec.push_back(compare_vec);
 		}
 		vector<vector<int>> rank_output_vecvec;//[index_frame_pair][index_pair]
-		rank_output_vecvec = calcRanking_ValueOfFeature_argCompare(compare_vecvec, b_cout);
+		rank_output_vecvec = calcRanking_compareArg(compare_vecvec, b_cout);
 		return rank_output_vecvec;
 	}
 
 	template <class T_PointType, typename T>
-	static void determineCorrespondences_allFrames_feature_scalar_remove(const vector<vector<T>> &feature_vecvec, vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec,
+	static void determineCorrespondences_allFramesRanking_featureScalar_remove(const vector<vector<T>> &feature_vecvec, vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec,
 		const vector<pair<int, int>> &index_pair_vec, float th_nearest, float th_rank_rate, vector<vector<int>> index_valid_vecvec, vector<pcl::Correspondences> &corrs_vec, bool b_cout = false)
 	{
 		if (feature_vecvec.size() != cloud_vec.size())
@@ -1453,8 +1302,7 @@ public:
 			int i_tgt = index_pair_vec[j].first;
 			int i_src = index_pair_vec[j].second;
 			pcl::Correspondences corrs_;
-			//corrs_ = determineCorrespondences_feature_value(feature_vecvec[i_src], feature_vecvec[i_tgt], th_nearest);
-			corrs_ = determineCorrespondences_feature_value_remove(feature_vecvec[i_src], feature_vecvec[i_tgt],
+			corrs_ = determineCorrespondences_featureScalar_remove(feature_vecvec[i_src], feature_vecvec[i_tgt],
 				index_valid_vecvec[i_src], index_valid_vecvec[i_tgt], th_nearest);
 
 			corrs_vec.push_back(corrs_);
@@ -1462,26 +1310,13 @@ public:
 
 		{
 			vector<vector<int>> rank_vecvec;//[index_frame_pair][index_pair]
-			rank_vecvec = CKataokaPCL::calcRanking_ValueOfFeature_scalar(index_pair_vec, corrs_vec, cloud_vec, feature_vecvec, index_valid_vecvec, th_nearest, b_cout);
+			rank_vecvec = calcRanking_featureScalar(index_pair_vec, corrs_vec, cloud_vec, feature_vecvec, index_valid_vecvec, th_nearest, b_cout);
 			vector<pcl::Correspondences> corrs_vec_temp;
 			for (int j = 0; j < index_pair_vec.size(); j++)
 			{
 				pcl::Correspondences temp;
 				corrs_vec_temp.push_back(temp);
 			}
-
-			//if(b_cout) cout << "rank_vecvec.size():" << rank_vecvec.size() << endl;
-			//for (int j = 0; j < rank_vecvec.size(); j++)
-			//{
-			//	if(b_cout) cout << "rank_vecvec[j].size():" << rank_vecvec[j].size() << endl;
-			//	pcl::Correspondences corrs_temp;
-			//	for (int i = 0; i < rank_vecvec[j].size(); i++)
-			//	{
-			//		if ((float)rank_vecvec[j][i] <= th_rank) corrs_temp.push_back(corrs_vec[j][i]);
-			//	}
-			//	corrs_vec_temp.push_back(corrs_temp);
-			//}
-
 			//sort
 			vector<vector<int>> sort_vecvec;
 			for (int j = 0; j < rank_vecvec.size(); j++)
@@ -1519,7 +1354,7 @@ public:
 	}
 
 	template <class T_PointType, typename T>
-	static void determineCorrespondences_allFrames_feature_scalar(const vector<vector<T>> &feature_vecvec, vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec,
+	static void determineCorrespondences_allFramesRanking_featureScalar(const vector<vector<T>> &feature_vecvec, vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec,
 		const vector<pair<int, int>> &index_pair_vec, float th_nearest, float th_rank_rate, vector<pcl::Correspondences> &corrs_vec, bool b_cout = false)
 	{
 		if (feature_vecvec.size() != cloud_vec.size())
@@ -1536,7 +1371,109 @@ public:
 				index_valid_vec.push_back(i);
 			index_valid_vecvec.push_back(index_valid_vec);
 		}
-		determineCorrespondences_allFrames_feature_scalar_remove(feature_vecvec, cloud_vec, index_pair_vec, th_nearest, th_rank_rate, index_valid_vecvec, corrs_vec, b_cout);
+		determineCorrespondences_allFramesRanking_featureScalar_remove(feature_vecvec, cloud_vec, index_pair_vec, th_nearest, th_rank_rate, index_valid_vecvec, corrs_vec, b_cout);
+	}
+
+	template <class T_PointType>
+	static vector<pcl::Correspondences> determineCorrespondences_geometricConstraint(boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src,
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_tgt, const pcl::Correspondences &corr_, float th_fraction, bool b_cout = false)
+	{
+		//RatioOfDistanceOfSrcAndTgt
+		int num_corr_init = corr_.size();
+		if (num_corr_init < 2)
+		{
+			cout << "ERROR(CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt): Few correspondednces inputed." << endl;
+			throw std::runtime_error("ERROR(CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt): Few correspondednces inputed.");
+		}
+		//calc ratio		
+		vector<vector<bool>> b_matrix;
+		for (int j = 0; j < num_corr_init; j++)
+		{
+			vector<bool> b_temp_vec;
+			b_temp_vec.resize(num_corr_init);
+			fill(b_temp_vec.begin(), b_temp_vec.begin(), false);
+			b_matrix.push_back(b_temp_vec);
+		}
+		int num_valid = 0;
+		for (int j = 0; j < num_corr_init; j++)
+		{
+			for (int i = j + 1; i < num_corr_init; i++)
+			{
+				T_PointType point_src_j = cloud_src->points[corr_[j].index_query];
+				T_PointType point_tgt_j = cloud_tgt->points[corr_[j].index_match];
+				T_PointType point_src_i = cloud_src->points[corr_[i].index_query];
+				T_PointType point_tgt_i = cloud_tgt->points[corr_[i].index_match];
+				float distance_src = sqrt(
+					pow(point_src_i.x - point_src_j.x, 2.)
+					+ pow(point_src_i.y - point_src_j.y, 2.)
+					+ pow(point_src_i.z - point_src_j.z, 2.));
+				float distance_tgt = sqrt(
+					pow(point_tgt_i.x - point_tgt_j.x, 2.)
+					+ pow(point_tgt_i.y - point_tgt_j.y, 2.)
+					+ pow(point_tgt_i.z - point_tgt_j.z, 2.));
+				float value_;
+				if (distance_src == 0. || distance_tgt == 0.)
+					value_ = 0.;
+				else if (distance_src >= distance_tgt)
+					value_ = distance_tgt / distance_src;
+				else/* if (distance_src < distance_tgt)*/
+					value_ = distance_src / distance_tgt;
+				if (value_ >= th_fraction)
+				{
+					b_matrix[j][i] = true;
+					num_valid++;
+				}
+			}
+		}
+
+		if (num_valid < 3)
+		{
+			cout << "ERROR(CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt): Few correspondednces exist simultaneously." << endl;
+			throw std::runtime_error("ERROR(CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt): Few correspondednces exist simultaneously.");
+		}
+
+		vector<vector<int>> corr_pair_cluster_vecvec_new;
+		{
+			cout << "b_matrix.size():" << b_matrix.size() << endl;
+			cout << "b_matrix[0].size():" << b_matrix[0].size() << endl;
+			corr_pair_cluster_vecvec_new = CTimeString::getIntCluster_boolMatrix(b_matrix, 6, 5, 2);
+		}
+
+		vector<pcl::Correspondences> corrs_output_vec;
+		for (int j = 0; j < corr_pair_cluster_vecvec_new.size(); j++)
+		{
+			pcl::Correspondences corr_output;
+			for (int i = 0; i < corr_pair_cluster_vecvec_new[j].size(); i++)
+				corr_output.push_back(corr_[corr_pair_cluster_vecvec_new[j][i]]);
+			corrs_output_vec.push_back(corr_output);
+		}
+
+		//sort by size
+		{
+			vector<vector<int>> size_vecvec;
+			for (int j = 0; j < corrs_output_vec.size(); j++)
+			{
+				vector<int> size_vec;
+				size_vec.push_back(j);
+				size_vec.push_back(corrs_output_vec[j].size());
+				size_vecvec.push_back(size_vec);
+			}
+			CTimeString::sortVector2d(size_vecvec, 1, false);
+
+			vector<pcl::Correspondences> corrs_vec_temp;
+			for (int j = 0; j < size_vecvec.size(); j++)
+				corrs_vec_temp.push_back(corrs_output_vec[size_vecvec[j][0]]);
+			corrs_output_vec = corrs_vec_temp;
+		}
+
+		if (b_cout)
+		{
+			cout << "corrs_output_vec.size():" << corrs_output_vec.size() << endl;
+			for (int j = 0; j < corrs_output_vec.size(); j++)
+				cout << "j:" << j << " corrs_output_vec[j].size():" << corrs_output_vec[j].size() << endl;
+		}
+
+		return corrs_output_vec;
 	}
 
 	template <class T_PointType>

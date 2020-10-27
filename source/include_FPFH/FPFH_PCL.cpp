@@ -332,7 +332,7 @@ pcl::Correspondences CFPFH_PCL::getCorrespondences_eachPairHaving(const pcl::Cor
 	return corr_new;
 }
 
-pcl::Correspondences CFPFH_PCL::getNearestOfFPFH_eachPairHaving(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
+pcl::Correspondences CFPFH_PCL::determineCorrespondences_featureFpfh_eachPairHaving_num(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
 	pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt, pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh_src,
 	pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh_tgt, int num_near)
 {
@@ -342,7 +342,7 @@ pcl::Correspondences CFPFH_PCL::getNearestOfFPFH_eachPairHaving(pcl::PointCloud<
 	return corr_new;
 }
 
-pcl::Correspondences CFPFH_PCL::getNearestOfFPFH_eachPairHaving_remove(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
+pcl::Correspondences CFPFH_PCL::determineCorrespondences_featureFpfh_eachPairHaving_num_remove(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
 	pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt, const vector<int> &index_unique_vec_src, const vector<int> &index_unique_vec_tgt, int num_near)
 {
 	pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src_removed(new pcl::PointCloud<pcl::FPFHSignature33>);
@@ -372,7 +372,7 @@ pcl::Correspondences CFPFH_PCL::getNearestOfFPFH_eachPairHaving_remove(pcl::Poin
 	kdtree_fpfh_src->setInputCloud(fpfh_src_removed);
 	kdtree_fpfh_tgt->setInputCloud(fpfh_tgt_removed);
 	pcl::Correspondences corrs_;
-	corrs_ = getNearestOfFPFH_eachPairHaving(fpfh_src_removed, fpfh_tgt_removed, kdtree_fpfh_src, kdtree_fpfh_tgt, num_near);
+	corrs_ = determineCorrespondences_featureFpfh_eachPairHaving_num(fpfh_src_removed, fpfh_tgt_removed, kdtree_fpfh_src, kdtree_fpfh_tgt, num_near);
 	for (int j = 0; j < corrs_.size(); j++)
 	{
 		corrs_[j].index_query = index_unique_vec_src[corrs_[j].index_query];
@@ -381,7 +381,7 @@ pcl::Correspondences CFPFH_PCL::getNearestOfFPFH_eachPairHaving_remove(pcl::Poin
 	return corrs_;
 }
 
-pcl::Correspondences CFPFH_PCL::getNearestOfFPFH_value(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
+pcl::Correspondences CFPFH_PCL::determineCorrespondences_featureFpfh(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
 	int num_near_max, pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh, float th_value)
 {
 	pcl::Correspondences corr_vec;
@@ -406,17 +406,17 @@ pcl::Correspondences CFPFH_PCL::getNearestOfFPFH_value(pcl::PointCloud<pcl::FPFH
 	return corr_vec;
 }
 
-pcl::Correspondences CFPFH_PCL::getNearestOfFPFH_eachPairHaving_value(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
+pcl::Correspondences CFPFH_PCL::determineCorrespondences_featureFpfh_eachPairHaving(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
 	pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt, pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh_src,
 	pcl::KdTreeFLANN<pcl::FPFHSignature33>::Ptr kdtree_fpfh_tgt, int num_near_max, float th_value)
 {
-	pcl::Correspondences corr_src_tgt = getNearestOfFPFH_value(fpfh_src, num_near_max, kdtree_fpfh_tgt, th_value);
-	pcl::Correspondences corr_tgt_src = getNearestOfFPFH_value(fpfh_tgt, num_near_max, kdtree_fpfh_src, th_value);
+	pcl::Correspondences corr_src_tgt = determineCorrespondences_featureFpfh(fpfh_src, num_near_max, kdtree_fpfh_tgt, th_value);
+	pcl::Correspondences corr_tgt_src = determineCorrespondences_featureFpfh(fpfh_tgt, num_near_max, kdtree_fpfh_src, th_value);
 	pcl::Correspondences corr_new = getCorrespondences_eachPairHaving(corr_src_tgt, corr_tgt_src);
 	return corr_new;
 }
 
-pcl::Correspondences CFPFH_PCL::getNearestOfFPFH_eachPairHaving_remove_value(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
+pcl::Correspondences CFPFH_PCL::determineCorrespondences_featureFpfh_eachPairHaving_remove(pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src,
 	pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt, const vector<int> &index_unique_vec_src, const vector<int> &index_unique_vec_tgt, 
 	int num_near_max, float th_value)
 {
@@ -447,12 +447,44 @@ pcl::Correspondences CFPFH_PCL::getNearestOfFPFH_eachPairHaving_remove_value(pcl
 	kdtree_fpfh_src->setInputCloud(fpfh_src_removed);
 	kdtree_fpfh_tgt->setInputCloud(fpfh_tgt_removed);
 	pcl::Correspondences corrs_;
-	corrs_ = getNearestOfFPFH_eachPairHaving_value(fpfh_src_removed, fpfh_tgt_removed, kdtree_fpfh_src, kdtree_fpfh_tgt, num_near_max, th_value);
+	corrs_ = determineCorrespondences_featureFpfh_eachPairHaving(fpfh_src_removed, fpfh_tgt_removed, kdtree_fpfh_src, kdtree_fpfh_tgt, num_near_max, th_value);
 	for (int j = 0; j < corrs_.size(); j++)
 	{
 		corrs_[j].index_query = index_unique_vec_src[corrs_[j].index_query];
 		corrs_[j].index_match = index_unique_vec_tgt[corrs_[j].index_match];
 	}
 	return corrs_;
+}
+
+pcl::Correspondences CFPFH_PCL::determineCorrespondences_featureFpfh_kdtreeArg_singleQuery(pcl::FPFHSignature33 point_query,
+	const boost::shared_ptr<pcl::KdTreeFLANN<pcl::FPFHSignature33>> kdtree_tgt, float th_nearest_fpfh, int th_nearest_num, bool b_multipleNear)
+{
+	pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src(new pcl::PointCloud<pcl::FPFHSignature33>);
+	fpfh_src->push_back(point_query);
+	pcl::Correspondences correspondences;
+	std::vector<int> index(1);
+	std::vector<float> distance(1);
+	int found_neighs = kdtree_tgt->nearestKSearch(*fpfh_src, 0, th_nearest_num, index, distance);
+	pcl::Correspondence corr;
+	corr.index_query = 0;
+	if (!b_multipleNear)
+	{
+		corr.index_match = index[0];
+		corr.distance = distance[0];	//squared
+		correspondences.push_back(corr);
+	}
+	else
+	{
+		for (int i = 0; i < index.size(); i++)
+		{
+			corr.index_match = index[i];
+			corr.distance = distance[i];	//squared
+			correspondences.push_back(corr);
+		}
+	}
+	for (int i = correspondences.size() - 1; i >= 0; i--)
+		if (th_nearest_fpfh < distance[i]) correspondences.erase(correspondences.begin() + i);
+	if (correspondences.size() == 0) cout << "ERROR: no corr found" << endl;
+	return correspondences;
 }
 
