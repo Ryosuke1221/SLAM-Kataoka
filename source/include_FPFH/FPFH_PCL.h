@@ -672,7 +672,7 @@ public:
 	template <class T_PointType>
 	static void determineCorrespondences_allFramesRanking_featureFpfh_remove(const vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> &fpfh_vec,
 		const vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec, const vector<pair<int, int>> &index_pair_vec, 
-		float th_nearest_fpfh, int th_nearest_num, float th_rank_rate, const vector<vector<int>> index_valid_vecvec, vector<pcl::Correspondences> &corrs_vec_arg, bool b_cout = false)
+		float th_nearest_fpfh, int th_nearest_num, float th_rank_rate, const vector<vector<int>> index_valid_vecvec, vector<pcl::Correspondences> &corrs_vec_arg, vector<vector<float>> &evaluation_vecvec, bool b_cout = false)
 	{
 		if (fpfh_vec.size() != cloud_vec.size())
 		{
@@ -694,7 +694,6 @@ public:
 		{
 			vector<vector<int>> rank_vecvec;//[index_frame_pair][index_pair]
 			rank_vecvec = calcRanking_featureFPFH(index_pair_vec, corrs_vec_arg, cloud_vec, fpfh_vec, index_valid_vecvec, th_nearest_fpfh, th_nearest_num, b_cout);
-
 			vector<pcl::Correspondences> corrs_vec_temp;
 			for (int j = 0; j < index_pair_vec.size(); j++)
 			{
@@ -716,12 +715,18 @@ public:
 				}
 			}
 			CTimeString::sortVector2d(sort_vecvec, 2);
-
+			//evaluation_vecvec
+			for (int j = 0; j < index_pair_vec.size(); j++)
+			{
+				vector<float> temp_vec;
+				evaluation_vecvec.push_back(temp_vec);
+			}
 			for (int j = 0; j < (int)(sort_vecvec.size() * th_rank_rate); j++)
 			{
 				int index_frame_pair = sort_vecvec[j][0];
 				int index_pair = sort_vecvec[j][1];
 				corrs_vec_temp[index_frame_pair].push_back(corrs_vec_arg[index_frame_pair][index_pair]);
+				evaluation_vecvec[index_frame_pair].push_back((float)sort_vecvec[j][2]);
 			}
 			corrs_vec_arg = corrs_vec_temp;
 		}
@@ -736,6 +741,15 @@ public:
 				cout << "corrs_vec[j].size():" << corrs_vec_arg[j].size() << endl;
 			}
 		}
+	}
+
+	template <class T_PointType>
+	static void determineCorrespondences_allFramesRanking_featureFpfh_remove(const vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> &fpfh_vec,
+		const vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec, const vector<pair<int, int>> &index_pair_vec,
+		float th_nearest_fpfh, int th_nearest_num, float th_rank_rate, const vector<vector<int>> index_valid_vecvec, vector<pcl::Correspondences> &corrs_vec_arg, bool b_cout = false)
+	{
+		vector<vector<float>> evaluation_vecvec;
+		determineCorrespondences_allFramesRanking_featureFpfh_remove(fpfh_vec, cloud_vec, index_pair_vec, th_nearest_fpfh, th_nearest_num, th_rank_rate, index_valid_vecvec, corrs_vec_arg, evaluation_vecvec, b_cout);
 	}
 
 };
