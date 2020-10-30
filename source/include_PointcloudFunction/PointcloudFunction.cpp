@@ -8895,13 +8895,22 @@ void CPointcloudFunction::DoDifferential_PairEvaluation3(string dir_)
 	bool b_useVelodyne = false;
 	bool b_useFPFH = false;
 
+	bool b_useColorfullCorr = false;
+
+	bool b_changeColor_nir = false;
+	bool b_changeColor_velodyne = false;
+
 	b_useParameterAdjustment = true;
 	b_useShow_AllFrame_AllPairs = true;
-	//b_useGeometricConstraints = true;
+	b_useGeometricConstraints = true;
 
 	b_useNir = true;
-	//b_useVelodyne = true;
-	//b_useFPFH = true;
+	b_useVelodyne = true;
+	b_useFPFH = true;
+
+	//b_useColorfullCorr = true;
+
+	b_changeColor_nir = true;
 
 	string s_folder;
 	{
@@ -8961,6 +8970,33 @@ void CPointcloudFunction::DoDifferential_PairEvaluation3(string dir_)
 			feature_vecvec_velodyne.push_back(feature_vec);
 		}
 
+	if (b_changeColor_nir)
+	{
+		float value_max = -std::numeric_limits<float>::max();
+		float value_min = std::numeric_limits<float>::max();
+		for (int j = 0; j < feature_vecvec_nir.size(); j++)
+		{
+			for (int i = 0; i < feature_vecvec_nir[j].size(); i++)
+			{
+				if (value_max < feature_vecvec_nir[j][i]) value_max = feature_vecvec_nir[j][i];
+				if (value_min > feature_vecvec_nir[j][i]) value_min = feature_vecvec_nir[j][i];
+			}
+		}
+		for (int j = 0; j < feature_vecvec_nir.size(); j++)
+		{
+			for (int i = 0; i < feature_vecvec_nir[j].size(); i++)
+			{
+				vector<std::uint8_t> color_vec;
+				color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(feature_vecvec_nir[j][i], value_max, value_min);
+				T_PointType point_ = cloud_vec[j]->points[i];
+				point_.r = color_vec[0];
+				point_.g = color_vec[1];
+				point_.b = color_vec[2];
+				cloud_vec[j]->points[i] = point_;
+			}
+		}
+	}
+
 	//calc valid point of FPFH
 	vector<vector<int>> index_valid_vecvec_FPFH;
 	vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> fpfh_vec;
@@ -8995,45 +9031,46 @@ void CPointcloudFunction::DoDifferential_PairEvaluation3(string dir_)
 	}
 
 	vector<pair<int, int>> index_pair_vec;
-	//{
-	//	int i_tgt = 5;
-	//	int i_src = 6;
-	//	index_pair_vec.push_back(make_pair(i_tgt, i_src));
-	//}
-	//{
-	//	int i_tgt = 5;
-	//	int i_src = 7;
-	//	index_pair_vec.push_back(make_pair(i_tgt, i_src));
-	//}
-	for (int j = 0; j < cloud_vec.size() - 1; j++)
-	{
-		for (int i = j + 1; i < cloud_vec.size(); i++)
-		{
-			int i_tgt = j;
-			int i_src = i;
-			if (b_useNir)
-			{
-				if (!(j == 5
-					|| j == 6
-					|| j == 7
-					|| j == 8
-					|| j == 11
-					|| j == 12
-					|| j == 16
-					)) continue;
-				if (!(i == 5
-					|| i == 6
-					|| i == 7
-					|| i == 8
-					|| i == 11
-					|| i == 12
-					|| i == 16
-					)) continue;
-			}
 
-			index_pair_vec.push_back(make_pair(i_tgt, i_src));
-		}
+	{
+		int i_tgt = 5;
+		int i_src = 6;
+		index_pair_vec.push_back(make_pair(i_tgt, i_src));
 	}
+	{
+		int i_tgt = 5;
+		int i_src = 7;
+		index_pair_vec.push_back(make_pair(i_tgt, i_src));
+	}
+	//for (int j = 0; j < cloud_vec.size() - 1; j++)
+	//{
+	//	for (int i = j + 1; i < cloud_vec.size(); i++)
+	//	{
+	//		int i_tgt = j;
+	//		int i_src = i;
+	//		if (b_useNir)
+	//		{
+	//			if (!(j == 5
+	//				|| j == 6
+	//				|| j == 7
+	//				|| j == 8
+	//				|| j == 11
+	//				|| j == 12
+	//				|| j == 16
+	//				)) continue;
+	//			if (!(i == 5
+	//				|| i == 6
+	//				|| i == 7
+	//				|| i == 8
+	//				|| i == 11
+	//				|| i == 12
+	//				|| i == 16
+	//				)) continue;
+	//		}
+
+	//		index_pair_vec.push_back(make_pair(i_tgt, i_src));
+	//	}
+	//}
 
 	float th_nearest_nir;
 	float th_rank_rate_nir;
@@ -9052,14 +9089,18 @@ void CPointcloudFunction::DoDifferential_PairEvaluation3(string dir_)
 	while (1)
 	{
 		th_nearest_nir = 10.;
-		th_rank_rate_nir = 0.5;
+		//th_rank_rate_nir = 0.5;
+		//th_rank_rate_nir = 1.;
+		th_rank_rate_nir = 0.2;
 		//cout << "input th_nearest_nir:";
 		//cin >> th_nearest_nir;
 		th_nearest_velodyne = 10.;
-		th_rank_rate_velodyne = 0.5;
+		//th_rank_rate_velodyne = 0.5;
+		th_rank_rate_velodyne = 1.;
 
 		th_nearest_fpfh = 1800.;
 		num_nearest_fpfh = 10;
+		//th_rank_rate_fpfh = 0.5;
 		th_rank_rate_fpfh = 0.5;
 
 		if (b_useParameterAdjustment)
@@ -9077,7 +9118,8 @@ void CPointcloudFunction::DoDifferential_PairEvaluation3(string dir_)
 			th_rank_rate_nir = stof(s_temp_vecvec[2][3]);
 			th_nearest_velodyne = stof(s_temp_vecvec[3][3]);
 			th_rank_rate_velodyne = stof(s_temp_vecvec[4][3]);
-			th_geometricConstraint = stof(s_temp_vecvec[5][3]);
+			th_rank_rate_fpfh = stof(s_temp_vecvec[5][3]);
+			th_geometricConstraint = stof(s_temp_vecvec[6][3]);
 		}
 
 		cout << "calc pairs" << endl;
@@ -9173,6 +9215,7 @@ void CPointcloudFunction::DoDifferential_PairEvaluation3(string dir_)
 			color_corr_vec.push_back(100);
 			color_corr_vec.push_back(100);
 			color_corr_vec.push_back(100);
+			vector<vector<std::uint8_t>> color_corr_vecvec;
 
 			cout << "Press SPACE" << endl;
 			while (1)
@@ -9180,7 +9223,7 @@ void CPointcloudFunction::DoDifferential_PairEvaluation3(string dir_)
 				bool b_next_pair = false;
 				bool b_next_frame_pair = false;
 				b_next_pair = (GetAsyncKeyState(VK_SPACE) & 1) == 1;
-				b_next_frame_pair = (GetAsyncKeyState(VK_LCONTROL) & 1) == 1;
+				b_next_frame_pair = (GetAsyncKeyState(VK_LSHIFT) & 1) == 1;
 
 				if (b_next_pair)
 				{
@@ -9232,8 +9275,10 @@ void CPointcloudFunction::DoDifferential_PairEvaluation3(string dir_)
 					pcl::copyPointCloud(*cloud_vec[i_tgt_vis], *cloud_tgt);
 					//showing
 					{
+						//Eigen::Affine3f trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
+						//	CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 20., 0., 0., 0.));
 						Eigen::Affine3f trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
-							CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 20., 0., 0., 0.));
+							CKataokaPCL::calcHomogeneousMatrixFromVector6d(10., 0., 20., 0., 0., 0.));
 						pcl::transformPointCloud(*cloud_src, *cloud_src, trans_);
 					}
 					cloud_show->clear();
@@ -9245,10 +9290,40 @@ void CPointcloudFunction::DoDifferential_PairEvaluation3(string dir_)
 
 				if (b_updatePair || b_first_vis)
 				{
-					pcl::Correspondences corr_show;
+					//pcl::Correspondences corr_show;
+					if (!b_useGeometricConstraints)
+					{
+						color_corr_vecvec.clear();
+						if(b_useNir)
+							for (int j = 0; j < evaluation_corr_vecvec_nir[index_frame_pair].size(); j++)
+							{
+
+								color_corr_vecvec.push_back(CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(
+									evaluation_corr_vecvec_nir[index_frame_pair][j], evaluation_corr_vecvec_nir[index_frame_pair].back(),
+									evaluation_corr_vecvec_nir[index_frame_pair][0]));
+							}
+						if(b_useVelodyne)
+							for (int j = 0; j < evaluation_corr_vecvec_velodyne[index_frame_pair].size(); j++)
+							{
+
+								color_corr_vecvec.push_back(CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(
+									evaluation_corr_vecvec_velodyne[index_frame_pair][j], evaluation_corr_vecvec_velodyne[index_frame_pair].back(),
+									evaluation_corr_vecvec_velodyne[index_frame_pair][0]));
+							}
+						if(b_useFPFH)
+							for (int j = 0; j < evaluation_corr_vecvec_fpfh[index_frame_pair].size(); j++)
+							{
+
+								color_corr_vecvec.push_back(CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(
+									evaluation_corr_vecvec_fpfh[index_frame_pair][j], evaluation_corr_vecvec_fpfh[index_frame_pair].back(),
+									evaluation_corr_vecvec_fpfh[index_frame_pair][0]));
+							}
+					}
+
 					if (corrs_all_vecvec[index_frame_pair].size() != 0)
 					{
-						pv.drawCorrespondance(cloud_src, cloud_tgt, corrs_all_vecvec[index_frame_pair][index_pair], color_corr_vec);
+						if(b_useGeometricConstraints || !b_useColorfullCorr) pv.drawCorrespondance(cloud_src, cloud_tgt, corrs_all_vecvec[index_frame_pair][index_pair], color_corr_vec);
+						else pv.drawCorrespondance(cloud_src, cloud_tgt, corrs_all_vecvec[index_frame_pair][index_pair], color_corr_vecvec);
 						cout << "showing " << corrs_all_vecvec[index_frame_pair][index_pair].size() << " pairs" << endl;
 					}
 					b_updatePair = false;

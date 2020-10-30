@@ -1435,7 +1435,7 @@ public:
 
 	template < typename T_Point >
 	void drawCorrespondance(boost::shared_ptr<pcl::PointCloud<T_Point>> cloud_src,
-		boost::shared_ptr<pcl::PointCloud<T_Point>> cloud_tgt, pcl::Correspondences corr_, vector<std::uint8_t> color_vec)
+		boost::shared_ptr<pcl::PointCloud<T_Point>> cloud_tgt, pcl::Correspondences corr_, vector<vector<std::uint8_t>> color_vecvec)
 	{
 		string s_corr = "corr";
 		//remove old corr
@@ -1457,11 +1457,53 @@ public:
 			string s_name = s_j + s_corr;
 			pcl::PointXYZRGB point_src = cloud_src->points[corr_[j].index_query];
 			pcl::PointXYZRGB point_tgt = cloud_tgt->points[corr_[j].index_match];
-			point_src.r = point_tgt.r = color_vec[0];
-			point_src.g = point_tgt.g = color_vec[1];
-			point_src.b = point_tgt.b = color_vec[2];
+			point_src.r = point_tgt.r = color_vecvec[j][0];
+			point_src.g = point_tgt.g = color_vecvec[j][1];
+			point_src.b = point_tgt.b = color_vecvec[j][2];
 			drawLine(point_src, point_tgt, s_name);
 			M_s_line_vec.push_back(s_name);
 		}
 	}
+
+	template < typename T_Point >
+	void drawCorrespondance(boost::shared_ptr<pcl::PointCloud<T_Point>> cloud_src,
+		boost::shared_ptr<pcl::PointCloud<T_Point>> cloud_tgt, pcl::Correspondences corr_, vector<std::uint8_t> color_vec)
+	{
+		vector<vector<std::uint8_t>> color_vecvec;
+		for (int j = 0; j < corr_.size(); j++)
+			color_vecvec.push_back(color_vec);
+		drawCorrespondance(cloud_src, cloud_tgt, corr_, color_vecvec);
+	}
+
+	//template < typename T_Point >
+	//void drawCorrespondance(boost::shared_ptr<pcl::PointCloud<T_Point>> cloud_src,
+	//	boost::shared_ptr<pcl::PointCloud<T_Point>> cloud_tgt, pcl::Correspondences corr_, vector<std::uint8_t> color_vec)
+	//{
+	//	string s_corr = "corr";
+	//	//remove old corr
+	//	for (int j = M_s_line_vec.size() - 1; j >= 0; j--)
+	//	{
+	//		vector<int> find_vec = CTimeString::find_all(M_s_line_vec[j], s_corr);
+	//		if (find_vec.size() != 0)
+	//		{
+	//			M_viewer->removeShape(M_s_line_vec[j]);
+	//			M_s_line_vec.erase(M_s_line_vec.begin() + j);
+	//		}
+	//	}
+	//	//make new corr
+	//	for (int j = 0; j < corr_.size(); j++)
+	//	{
+	//		string s_j = to_string(j);
+	//		for (int i = 0; i < 6; i++)
+	//			if (s_j.size() < 6) s_j = " " + s_j;
+	//		string s_name = s_j + s_corr;
+	//		pcl::PointXYZRGB point_src = cloud_src->points[corr_[j].index_query];
+	//		pcl::PointXYZRGB point_tgt = cloud_tgt->points[corr_[j].index_match];
+	//		point_src.r = point_tgt.r = color_vec[0];
+	//		point_src.g = point_tgt.g = color_vec[1];
+	//		point_src.b = point_tgt.b = color_vec[2];
+	//		drawLine(point_src, point_tgt, s_name);
+	//		M_s_line_vec.push_back(s_name);
+	//	}
+	//}
 };
