@@ -225,6 +225,12 @@ public:
 			cloud_tgt_corr->push_back(cloud_tgt_arg->points[correspondences[i].index_match]);
 		}
 		const int npts = static_cast <int> (correspondences.size());
+		if (npts == 0)
+		{
+			cout << "input has no corrs in CKataokaPCL::estimateRigidTransformation_static" << endl;
+			transformation_matrix = Eigen::Matrix4f::Identity();
+			return;
+		}
 		typedef float Scalar;
 		Eigen::Matrix<Scalar, 3, Eigen::Dynamic> cloud_src(3, npts);
 		Eigen::Matrix<Scalar, 3, Eigen::Dynamic> cloud_tgt(3, npts);
@@ -1223,7 +1229,6 @@ public:
 						cout << "so big!!" << endl;
 						cout << "j:" << j << endl;
 					}
-					else if (compare_src < 0.00001) compare_src = 0.;
 				}
 
 			}
@@ -1247,7 +1252,6 @@ public:
 						cout << "so big!!" << endl;
 						cout << "j:" << j << endl;
 					}
-					else if (compare_tgt < 0.00001) compare_tgt = 0.;
 				}
 			}
 			compare_srctgt_vec.push_back(make_pair(compare_src, compare_tgt));
@@ -1503,29 +1507,68 @@ public:
 
 	template <class T_PointType>
 	static pcl::Correspondences determineCorrespondences_geometricConstraint_evaluateCluster(boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src, boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_tgt,
-		const vector<pcl::Correspondences> &corrs_vec, bool b_cout = false)
+		const vector<pcl::Correspondences> &corrs_vec, int i_method, bool b_cout = false)
 	{
+		if (corrs_vec.size() == 0)
+		{
+			cout << "input has no corrs in CKataokaPCL::determineCorrespondences_geometricConstraint_evaluateCluster" << endl;
+			pcl::Correspondences temp;
+			return temp;
+		}
+		//i_method:0, evaluation by the mean distance of correspondences after transformation
+		//i_method:1, evaluation by the median distance of correspondences after transformation
+		//i_method:2, evaluation by the mean distance of nearest neighbors after transformation
+		//i_method:3, evaluation by the median distance of nearest neighbors after transformation
+
 		vector<float> evaluation_vec;
 		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src_moving(new pcl::PointCloud<T_PointType>);
 
+		vector<Eigen::Matrix4d> transformation_vec;
 		for (int j = 0; j < corrs_vec.size(); j++)
 		{
 			Eigen::Matrix4f transformation_matrix = Eigen::Matrix4f::Identity();
-			estimateRigidTransformation(cloud_src, cloud_tgt, corrs_vec[j], transformation_matrix);
-			pcl::transformPointCloud(*cloud_src, *cloud_src_moving, CKataokaPCL::calcAffine3fFromHomogeneousMatrix(transformation_matrix));
-			float distance_sum = 0.;
-			for (int i = 0; i < corrs_vec[j].size(); i++)
+			estimateRigidTransformation_static(cloud_src, cloud_tgt, corrs_vec[j], transformation_matrix);
+			transformation_vec.push_back(transformation_matrix.cast<double>());
+		}
+
+		for (int j = 0; j < transformation_vec.size(); j++)
+		{
+			pcl::transformPointCloud(*cloud_src, *cloud_src_moving, CKataokaPCL::calcAffine3fFromHomogeneousMatrix(transformation_vec[j]));
+			vector<float> distance_vec;
+
+			//distances of correspondences 
+			if (i_method == 0 || i_method == 1)
 			{
-				T_PointType point_src = cloud_src_moving->points[corrs_vec[j][i].index_query];
-				T_PointType point_tgt = cloud_tgt->points[corrs_vec[j][i].index_match];
-				distance_sum += sqrt(
-					pow(point_src.x - point_tgt.x)
-					+ pow(point_src.y - point_tgt.y)
-					+ pow(point_src.z - point_tgt.z)
-				);
+				for (int i = 0; i < corrs_vec[j].size(); i++)
+				{
+					T_PointType point_src = cloud_src_moving->points[corrs_vec[j][i].index_query];
+					T_PointType point_tgt = cloud_tgt->points[corrs_vec[j][i].index_match];
+					distance_vec.push_back(sqrt(
+						pow(point_src.x - point_tgt.x, 2.)
+						+ pow(point_src.y - point_tgt.y, 2.)
+						+ pow(point_src.z - point_tgt.z, 2.)));
+				}
 			}
-			distance_sum /= (float)corrs_vec[j].size();
-			evaluation_vec.push_back(distance_sum);
+			//distances of nearest neighbors
+			else if (i_method == 2 || i_method == 3)
+			{
+				pcl::Correspondences corrs = determineCorrespondences_output(cloud_src_moving, cloud_tgt);
+				for (int i = 0; i < corrs.size(); i++)
+					distance_vec.push_back(corrs[i].distance);
+			}
+
+			if (i_method == 0 || i_method == 2)
+			{
+				float distance_sum = 0.;
+				for (int i = 0; i < distance_vec.size(); i++)
+					distance_sum += distance_vec[i];
+				distance_sum /= (float)distance_vec.size();
+				evaluation_vec.push_back(distance_sum);
+			}
+			else if (i_method == 1 || i_method == 3)
+			{
+				evaluation_vec.push_back(CTimeString::getMedian(distance_vec));
+			}
 		}
 		
 		//sort
@@ -1538,6 +1581,8 @@ public:
 			evaluation_vecvec.push_back(temp_vec);
 		}
 		CTimeString::sortVector2d(evaluation_vecvec, 1);
+
+		cout << "evaluation_vecvec[0][0]:" << evaluation_vecvec[0][0] << endl;
 
 		return corrs_vec[evaluation_vecvec[0][0]];
 	}

@@ -823,6 +823,13 @@ vector<vector<float>> CTimeString::inputParameters_2dimension(string filename_, 
 
 vector<vector<int>> CTimeString::getIntCluster_SomeToSome(vector<vector<int>> value_vecvec, bool b_recursive)
 {
+	vector<vector<int>> value_cluster_vecvec_new;
+	if (value_vecvec.size() == 0)
+	{
+		cout << "cluster has no candidate in CTimeString::getIntCluster_SomeToSome" << endl;
+		return value_cluster_vecvec_new;
+	}
+
 	//calc max and min
 	int max_value = 0;
 	int min_value = 100000;
@@ -908,7 +915,6 @@ vector<vector<int>> CTimeString::getIntCluster_SomeToSome(vector<vector<int>> va
 		matrix_RClu_CVal_vecvec[cluster_belong_vec[i]][i] = true;
 	}
 	//merge
-	vector<vector<int>> value_cluster_vecvec_new;
 	vector<vector<int>> cluster_SameRelation_vecvec_new;
 	{
 		//check it refering value
@@ -1177,7 +1183,6 @@ vector<vector<int>> CTimeString::getIntCluster_boolMatrix(const vector<vector<bo
 		sort_vecvec.push_back(sort_vec);
 	}
 	sortVector2d(sort_vecvec, 1);
-
 	vector<vector<bool>> b_matrix_sort;
 	for (int j = 0; j < sort_vecvec.size(); j++)
 	{
@@ -1190,7 +1195,6 @@ vector<vector<int>> CTimeString::getIntCluster_boolMatrix(const vector<vector<bo
 		}
 		b_matrix_sort.push_back(b_temp_vec);
 	}
-
 	vector<vector<int>> cluster_vecvec;
 	{
 		vector<vector<int>> cluster_init_vecvec;
@@ -1249,7 +1253,6 @@ vector<vector<int>> CTimeString::getIntCluster_boolMatrix(const vector<vector<bo
 				cluster_vecvec_temp.push_back(cluster_vecvec[size_vecvec[j][0]]);
 			cluster_vecvec = cluster_vecvec_temp;
 		}
-
 	}
 	if (b_cout)
 	{

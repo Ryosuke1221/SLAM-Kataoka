@@ -7613,7 +7613,6 @@ void CPointcloudFunction::DoDifferential_RigidTransformation_FPFH_Features_new(s
 	cout << "show" << endl;
 
 	//vector<pcl::Correspondences> corr_biggest_vec;
-	//vector<pair<int, int>> index_pair_vec;
 	CPointVisualization<T_PointType> pv;
 	pv.setWindowName("Pairs");
 	pcl::PointCloud<T_PointType>::Ptr cloud_show(new pcl::PointCloud<T_PointType>());
@@ -8890,6 +8889,7 @@ void CPointcloudFunction::DoDifferential_PairEvaluation3(string dir_)
 	bool b_useParameterAdjustment = false;
 	bool b_useShow_AllFrame_AllPairs = false;
 	bool b_useGeometricConstraints = false;
+	bool b_useRigidTransformation = false;
 
 	bool b_useNir = false;
 	bool b_useVelodyne = false;
@@ -8905,12 +8905,16 @@ void CPointcloudFunction::DoDifferential_PairEvaluation3(string dir_)
 	b_useGeometricConstraints = true;
 
 	b_useNir = true;
-	b_useVelodyne = true;
-	b_useFPFH = true;
+	//b_useVelodyne = true;
+	//b_useFPFH = true;
 
 	//b_useColorfullCorr = true;
 
 	b_changeColor_nir = true;
+
+	b_useRigidTransformation = true;
+
+	if (!b_useNir)  b_changeColor_nir = false;
 
 	string s_folder;
 	{
@@ -9032,45 +9036,42 @@ void CPointcloudFunction::DoDifferential_PairEvaluation3(string dir_)
 
 	vector<pair<int, int>> index_pair_vec;
 
-	{
-		int i_tgt = 5;
-		int i_src = 6;
-		index_pair_vec.push_back(make_pair(i_tgt, i_src));
-	}
-	{
-		int i_tgt = 5;
-		int i_src = 7;
-		index_pair_vec.push_back(make_pair(i_tgt, i_src));
-	}
-	//for (int j = 0; j < cloud_vec.size() - 1; j++)
 	//{
-	//	for (int i = j + 1; i < cloud_vec.size(); i++)
-	//	{
-	//		int i_tgt = j;
-	//		int i_src = i;
-	//		if (b_useNir)
-	//		{
-	//			if (!(j == 5
-	//				|| j == 6
-	//				|| j == 7
-	//				|| j == 8
-	//				|| j == 11
-	//				|| j == 12
-	//				|| j == 16
-	//				)) continue;
-	//			if (!(i == 5
-	//				|| i == 6
-	//				|| i == 7
-	//				|| i == 8
-	//				|| i == 11
-	//				|| i == 12
-	//				|| i == 16
-	//				)) continue;
-	//		}
-
-	//		index_pair_vec.push_back(make_pair(i_tgt, i_src));
-	//	}
+	//	int i_tgt = 5;
+	//	int i_src = 6;
+	//	index_pair_vec.push_back(make_pair(i_tgt, i_src));
 	//}
+	//{
+	//	int i_tgt = 5;
+	//	int i_src = 7;
+	//	index_pair_vec.push_back(make_pair(i_tgt, i_src));
+	//}
+	for (int j = 0; j < cloud_vec.size() - 1; j++)
+	{
+		for (int i = j + 1; i < cloud_vec.size(); i++)
+		{
+			int i_tgt = j;
+			int i_src = i;
+			if (!(j == 5
+				|| j == 6
+				|| j == 7
+				|| j == 8
+				|| j == 11
+				|| j == 12
+				|| j == 16
+				)) continue;
+			if (!(i == 5
+				|| i == 6
+				|| i == 7
+				|| i == 8
+				|| i == 11
+				|| i == 12
+				|| i == 16
+				)) continue;
+
+			index_pair_vec.push_back(make_pair(i_tgt, i_src));
+		}
+	}
 
 	float th_nearest_nir;
 	float th_rank_rate_nir;
@@ -9083,6 +9084,8 @@ void CPointcloudFunction::DoDifferential_PairEvaluation3(string dir_)
 	float th_rank_rate_fpfh;
 
 	float th_geometricConstraint = 0.8;
+
+	int i_method_rigidTransformation;
 
 	bool b_first = true;
 
@@ -9120,6 +9123,8 @@ void CPointcloudFunction::DoDifferential_PairEvaluation3(string dir_)
 			th_rank_rate_velodyne = stof(s_temp_vecvec[4][3]);
 			th_rank_rate_fpfh = stof(s_temp_vecvec[5][3]);
 			th_geometricConstraint = stof(s_temp_vecvec[6][3]);
+			i_method_rigidTransformation = stoi(s_temp_vecvec[7][3]);
+			b_useRigidTransformation = (bool)stoi(s_temp_vecvec[8][3]);
 		}
 
 		cout << "calc pairs" << endl;
@@ -9175,22 +9180,7 @@ void CPointcloudFunction::DoDifferential_PairEvaluation3(string dir_)
 			}
 		}
 
-		//int num_select = 10;
-		//cout << "biggest corrs  num_select:" << num_select << endl;
-		//for (int j = 0; j < corrs_all_vecvec.size(); j++)
-		//{
-		//	cout << "frame:" << j << endl;
-		//	vector<pcl::Correspondences> corrs_vec_new;
-
-		//	if (corrs_all_vecvec[j].size() > num_select)
-		//	{
-		//		for (int i = 0; i < num_select; i++)
-		//			corrs_vec_new.push_back(corrs_all_vecvec[j][i]);
-		//		corrs_all_vecvec[j] = corrs_vec_new;
-		//	}
-		//}
-
-		if (b_useShow_AllFrame_AllPairs)
+		if (b_useShow_AllFrame_AllPairs && !b_useRigidTransformation)
 		{
 			CPointVisualization<T_PointType> pv;
 			pv.setWindowName("Pairs");
@@ -9322,6 +9312,7 @@ void CPointcloudFunction::DoDifferential_PairEvaluation3(string dir_)
 
 					if (corrs_all_vecvec[index_frame_pair].size() != 0)
 					{
+						cout << "index_pair:" << index_pair << endl;
 						if(b_useGeometricConstraints || !b_useColorfullCorr) pv.drawCorrespondance(cloud_src, cloud_tgt, corrs_all_vecvec[index_frame_pair][index_pair], color_corr_vec);
 						else pv.drawCorrespondance(cloud_src, cloud_tgt, corrs_all_vecvec[index_frame_pair][index_pair], color_corr_vecvec);
 						cout << "showing " << corrs_all_vecvec[index_frame_pair][index_pair].size() << " pairs" << endl;
@@ -9336,6 +9327,89 @@ void CPointcloudFunction::DoDifferential_PairEvaluation3(string dir_)
 			}
 
 			pv.closeViewer();
+		}
+		
+		//b_useRigidTransformation
+		else
+		{	
+			vector<vector<float>> evaluation_corrsCluster_vecvec;			
+			vector<pcl::Correspondences> corrs_output_vec;
+
+			for (int j = 0; j < index_pair_vec.size(); j++)
+			{
+				int i_tgt = index_pair_vec[j].first;
+				int i_src = index_pair_vec[j].second;
+				corrs_output_vec.push_back(CKataokaPCL::determineCorrespondences_geometricConstraint_evaluateCluster(
+					cloud_vec[i_src], cloud_vec[i_tgt], corrs_all_vecvec[j], i_method_rigidTransformation));
+			}
+			vector<Eigen::Matrix4d> transformation_vec;
+			for (int j = 0; j < index_pair_vec.size(); j++)
+			{
+				int i_tgt = index_pair_vec[j].first;
+				int i_src = index_pair_vec[j].second;
+				Eigen::Matrix4f transformation_matrix = Eigen::Matrix4f::Identity();
+				CKataokaPCL::estimateRigidTransformation_static(cloud_vec[i_src], cloud_vec[i_tgt], corrs_output_vec[j], transformation_matrix);
+				transformation_vec.push_back(transformation_matrix.cast<double>());
+			}
+			CPointVisualization<T_PointType> pv;
+			pv.setWindowName("Transformation");
+			bool b_first_vis = true;
+			bool b_updateFramePair = false;
+
+			int index_frame_pair = 0;
+
+			pcl::PointCloud<T_PointType>::Ptr cloud_show(new pcl::PointCloud<T_PointType>());
+			pcl::PointCloud<T_PointType>::Ptr cloud_src(new pcl::PointCloud<T_PointType>());
+			pcl::PointCloud<T_PointType>::Ptr cloud_tgt(new pcl::PointCloud<T_PointType>());
+
+			cout << "show transformation result" << endl;
+			while (1)
+			{
+				bool b_next_frame_pair = false;
+				b_next_frame_pair = (GetAsyncKeyState(VK_SPACE) & 1) == 1;
+
+				if ((b_next_frame_pair && index_frame_pair + 1 < index_pair_vec.size()) && !b_first_vis)
+				{
+					b_updateFramePair = true;
+					index_frame_pair++;
+				}
+
+				if (b_updateFramePair || b_first_vis)
+				{
+					int i_tgt = index_pair_vec[index_frame_pair].first;
+					int i_src = index_pair_vec[index_frame_pair].second;
+					cout << "showing:  i_tgt:" << i_tgt << "  i_src:" << i_src << endl;
+					pcl::copyPointCloud(*cloud_vec[i_tgt], *cloud_tgt);
+					pcl::copyPointCloud(*cloud_vec[i_src], *cloud_src);
+					//color
+					for (int j = 0; j < cloud_tgt->size(); j++)
+					{
+						cloud_tgt->points[j].r = 255;
+						cloud_tgt->points[j].g = 0;
+						cloud_tgt->points[j].b = 0;
+					}
+					for (int j = 0; j < cloud_src->size(); j++)
+					{
+						cloud_src->points[j].r = 0;
+						cloud_src->points[j].g = 255;
+						cloud_src->points[j].b = 0;
+					}
+					pcl::transformPointCloud(*cloud_src, *cloud_src, transformation_vec[index_frame_pair]);
+					cloud_show->clear();
+					*cloud_show += *cloud_tgt;
+					*cloud_show += *cloud_src;
+					pv.setPointCloud(cloud_show);
+					b_updateFramePair = false;
+				}
+
+				b_first_vis = false;
+
+				if ((GetAsyncKeyState(VK_ESCAPE) & 1) == 1) break;
+				pv.updateViewer();
+
+			}
+			pv.closeViewer();
+
 		}
 
 		if (!b_useParameterAdjustment) break;
