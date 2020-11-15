@@ -591,6 +591,53 @@ public:
 	static vector<vector<int>> getIntCluster_boolMatrix(const vector<vector<bool>> &b_matrix, 
 		int min_clusterSize, int th_contained_priority, int th_headerDepth_recursive, bool b_cout = false);
 
+	static bool sortStringVector_compare2strings(const string s_1, const string s_2)
+	{
+		//TRUE:  s_1 is former
+		//FALSE: s_2 is later
+
+		if (s_1.size() == 0) return true;
+		else if (s_2.size() == 0) return false;
+
+		int i_init_s_1 = (int)(s_1[0]);
+		int i_init_s_2 = (int)(s_2[0]);
+		if(i_init_s_1 == i_init_s_2)
+		{
+			if(s_1.size() == 1)  return true;
+			else if (s_2.size() == 1) return false;
+
+			string s_1_exceptInit;
+			s_1_exceptInit = s_1.substr(1, s_1.size() - 1);
+			string s_2_exceptInit;
+			s_2_exceptInit = s_2.substr(1, s_2.size() - 1);
+			return sortStringVector_compare2strings(s_1_exceptInit, s_2_exceptInit);
+		}
+		else if (i_init_s_1 < i_init_s_2)
+		{
+			return true;
+		}
+		else 			
+			return false;
+	}
+
+	static vector<string> sortStringVector(const vector<string> &s_vec, bool b_ascending = true)
+	{
+		vector<string> s_vec_temp = s_vec;
+		for (int i = 0; i < s_vec_temp.size(); i++)
+		{
+			for (int j = s_vec_temp.size() - 1; j > i; j--)
+			{
+				bool b_swap = false;
+				if (b_ascending && !(sortStringVector_compare2strings(s_vec_temp[j - 1], s_vec_temp[j])))
+					b_swap = true;
+				else if (!b_ascending && (sortStringVector_compare2strings(s_vec_temp[j - 1], s_vec_temp[j])))
+					b_swap = true;
+				if (b_swap) swap(s_vec_temp[j], s_vec_temp[j - 1]);
+			}
+		}
+		return s_vec_temp;
+	}
+
 private:
 	static bool getDirectoryExistance(string foder_Path);
 	static bool getDirectoryExistance_detail(string foder_Path, bool b_first);
