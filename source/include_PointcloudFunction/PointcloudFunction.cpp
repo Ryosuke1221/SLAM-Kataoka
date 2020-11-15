@@ -147,6 +147,7 @@ void CPointcloudFunction::FreeSpace()
 	//i_method = 0;
 	i_method = 1;
 	i_method = 2;
+	i_method = 3;
 
 	if (i_method == 0)	//calc nearest neighbor of FPFH
 	{
@@ -275,6 +276,62 @@ void CPointcloudFunction::FreeSpace()
 		string s_file_0_save = s_file_0.substr(0, s_file_0.size() - 4) + "_RGB.pcd";
 		pcl::io::savePCDFile<T_PointType2>(dir_ + "/" + s_file_0_save, *cloud_XYZRGB);
 	}
+	else if (i_method == 3)//simple ICP
+	{
+
+		//#include <pcl/registration/icp.h>
+
+		//getting ready of point cloud
+		string dir_ = "../../data";
+		string s_file_0 = "000XYZRGB_naraha.pcd";
+		string s_file_1 = "001XYZRGB_naraha.pcd";
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_tgt(new pcl::PointCloud<pcl::PointXYZRGB>());
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_src(new pcl::PointCloud<pcl::PointXYZRGB>());
+		pcl::io::loadPCDFile(dir_ + "/" + s_file_0, *cloud_tgt);
+		cloud_tgt->is_dense = true;
+		pcl::io::loadPCDFile(dir_ + "/" + s_file_1, *cloud_src);
+		cloud_src->is_dense = true;
+
+		//setting point cloud to initial position
+		//move cloud_tgt to "T(i-1)"
+		//move cloud_src to "T(i-1) + odometory(i)"
+
+		//calclating alignment
+		pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> align_ICP;
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_notUse(new pcl::PointCloud<pcl::PointXYZRGB>());
+		align_ICP.setInputSource(cloud_src);
+		align_ICP.setInputTarget(cloud_tgt);
+		align_ICP.setMaximumIterations(10000);	//times, you should adjust it
+		align_ICP.setMaxCorrespondenceDistance(0.1);	//[m], you should adjust it
+		align_ICP.setEuclideanFitnessEpsilon(1e-5);
+		align_ICP.setTransformationEpsilon(1e-6);
+		align_ICP.align(*cloud_notUse);
+
+		//getting result
+		Eigen::Matrix4d trans_result = Eigen::Matrix4d::Identity();
+		trans_result = align_ICP.getFinalTransformation().cast<double>();
+		double d_X = trans_result(0, 3);						//[m]
+		double d_Y = trans_result(1, 3);						//[m]
+		double d_Z = trans_result(2, 3);						//[m]
+		double d_Pitch = asin(-trans_result(2, 0));				//[rad]
+		double d_Roll = asin(trans_result(2, 1) / cos(d_Pitch));//[rad]
+		double d_Yaw = asin(trans_result(0, 1) / cos(d_Pitch));	//[rad]
+
+		//Transformation to src
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_src_after(new pcl::PointCloud<pcl::PointXYZRGB>());
+		{
+			Eigen::Affine3f trans_result_affine = Eigen::Affine3f::Identity();
+			trans_result_affine.translation() << d_X, d_Y, d_Z;
+			trans_result_affine.rotate(Eigen::AngleAxisf(d_Yaw, Eigen::Vector3f::UnitZ()));
+			trans_result_affine.rotate(Eigen::AngleAxisf(d_Roll, Eigen::Vector3f::UnitY()));
+			trans_result_affine.rotate(Eigen::AngleAxisf(d_Pitch, Eigen::Vector3f::UnitX()));
+			pcl::transformPointCloud(*cloud_src, *cloud_src_after, trans_result_affine);
+			//posotion of cloud_src: "0" -> "T(i-1) + odometory(i)" -> "T(i-1) + odometory(i) + T_ICP" = "T(i)" 
+		}
+
+
+	}
+
 
 }
 
