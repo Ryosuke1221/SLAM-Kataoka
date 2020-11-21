@@ -148,6 +148,7 @@ void CPointcloudFunction::FreeSpace()
 	i_method = 1;
 	i_method = 2;
 	i_method = 3;
+	//i_method = 4;
 
 	if (i_method == 0)	//calc nearest neighbor of FPFH
 	{
@@ -240,43 +241,159 @@ void CPointcloudFunction::FreeSpace()
 	}
 	else if (i_method == 2)//get RGB colored point cloud of NIR
 	{
-		typedef typename pcl::PointXYZI T_PointType;
-		typedef typename pcl::PointXYZRGB T_PointType2;
+		//typedef typename pcl::PointXYZI T_PointType;
+		//typedef typename pcl::PointXYZRGB T_PointType2;
+		typedef typename pcl::PointXYZRGB T_PointType;
 
-		string dir_ = "../../data";
-		string s_file_0 = "005nir_filtered_nir.pcd";
-		pcl::PointCloud<T_PointType>::Ptr cloud_(new pcl::PointCloud<T_PointType>());
-		pcl::PointCloud<T_PointType2>::Ptr cloud_XYZRGB(new pcl::PointCloud<T_PointType2>());
-		pcl::io::loadPCDFile(dir_ + "/" + s_file_0, *cloud_);
-		cloud_->is_dense = true;
+		string dir_ = "../../data/process13_DoDifferential/00_nir";
+		vector<string> filenames_;
+		CTimeString::getFileNames_extension(dir_, filenames_, ".pcd");
+
+		vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec;
+		for (int j = 0; j < filenames_.size(); j++)
+		{
+			pcl::PointCloud<T_PointType>::Ptr cloud_(new pcl::PointCloud<T_PointType>());
+			pcl::io::loadPCDFile(dir_ + "/" + filenames_[j], *cloud_);
+			cloud_->is_dense = true;
+			cloud_vec.push_back(cloud_);
+		}
+
+		vector<vector<float>> features_vec;
 
 		float value_max = -std::numeric_limits<float>::max();
 		float value_min = std::numeric_limits<float>::max();
-		for (int i = 0; i < cloud_->size(); i++)
+		for (int j = 0; j < cloud_vec.size(); j++)
 		{
-			if (value_max < cloud_->points[i].intensity) value_max = cloud_->points[i].intensity;
-			if (value_min > cloud_->points[i].intensity) value_min = cloud_->points[i].intensity;
+			vector<float> features_;
+			for (int i = 0; i < cloud_vec[j]->size(); i++)
+			{
+				float value_ = (float)((int)cloud_vec[j]->points[i].r);
+				if (value_max < value_) value_max = value_;
+				if (value_min > value_) value_min = value_;
+				features_.push_back(value_);
+			}
+			features_vec.push_back(features_);
 		}
 
-		for (int i = 0; i < cloud_->size(); i++)
-		{
-			vector<std::uint8_t> color_vec;
-			color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(cloud_->points[i].intensity, value_max, value_min, false);
-			T_PointType2 point_;
-			point_.x = cloud_->points[i].x;
-			point_.y = cloud_->points[i].y;
-			point_.z = cloud_->points[i].z;
-			point_.r = color_vec[0];
-			point_.g = color_vec[1];
-			point_.b = color_vec[2];
-			cloud_XYZRGB->push_back(point_);
-		}
-		cloud_XYZRGB->is_dense = true;
+		cout << "value_max:" << value_max << endl;
+		cout << "value_min:" << value_min << endl;
 
-		string s_file_0_save = s_file_0.substr(0, s_file_0.size() - 4) + "_RGB.pcd";
-		pcl::io::savePCDFile<T_PointType2>(dir_ + "/" + s_file_0_save, *cloud_XYZRGB);
+		for (int j = 0; j < features_vec.size(); j++)
+		{
+			cout << "j:" << j;
+			vector<float> Quartile_vec = CTimeString::getMedian_Quartile(features_vec[j]);
+			cout << " first_quartile:" << Quartile_vec[0];
+			cout << " median_:" << Quartile_vec[1];
+			cout << " third_quartile:" << Quartile_vec[1];
+			cout << endl;
+		}
+
+		float th_max, th_min;
+
+		for (int j = 0; j < cloud_vec.size(); j++)
+		{
+			for (int i = 0; i < cloud_vec[j]->size(); i++)
+			{
+				float value_ = (float)((int)cloud_vec[j]->points[i].r);
+				vector<std::uint8_t> color_vec;
+				color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(value_, value_max, value_min);
+				cloud_vec[j]->points[i].r = color_vec[0];
+				cloud_vec[j]->points[i].g = color_vec[1];
+				cloud_vec[j]->points[i].b = color_vec[2];
+			}
+		}
+
+		//for (int j = 0; j < cloud_vec.size(); j++)
+		//{
+		//	string s_file_save = filenames_[j].substr(0, filenames_[j].size() - 4) + "_ColorNIR.pcd";
+		//	pcl::io::savePCDFile<T_PointType>(dir_ + "/" + s_file_save, *cloud_vec[j]);
+		//}
+
 	}
-	else if (i_method == 3)//simple ICP
+
+	else if (i_method == 3)//get RGB colored point cloud of NIR
+	{
+		int aa;
+		typedef typename pcl::PointXYZI T_PointType;
+		typedef typename pcl::PointXYZRGB T_PointType2;
+		//typedef typename pcl::PointXYZRGB T_PointType;
+
+		string dir_ = "../../data/temp2";
+		vector<string> filenames_;
+		CTimeString::getFileNames_extension(dir_, filenames_, ".pcd");
+
+		vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec;
+		for (int j = 0; j < filenames_.size(); j++)
+		{
+			pcl::PointCloud<T_PointType>::Ptr cloud_(new pcl::PointCloud<T_PointType>());
+			pcl::io::loadPCDFile(dir_ + "/" + filenames_[j], *cloud_);
+			cloud_->is_dense = true;
+			cloud_vec.push_back(cloud_);
+		}
+
+		vector<vector<float>> features_vec;
+
+		float value_max = -std::numeric_limits<float>::max();
+		float value_min = std::numeric_limits<float>::max();
+		for (int j = 0; j < cloud_vec.size(); j++)
+		{
+			vector<float> features_;
+			for (int i = 0; i < cloud_vec[j]->size(); i++)
+			{
+				float value_ = cloud_vec[j]->points[i].intensity;
+				if (value_max < value_) value_max = value_;
+				if (value_min > value_) value_min = value_;
+				features_.push_back(value_);
+			}
+			features_vec.push_back(features_);
+		}
+
+		cout << "value_max:" << value_max << endl;
+		cout << "value_min:" << value_min << endl;
+
+		for (int j = 0; j < features_vec.size(); j++)
+		{
+			cout << "j:" << j;
+			vector<float> Quartile_vec = CTimeString::getMedian_Quartile(features_vec[j]);
+			cout << " first_quartile:" << Quartile_vec[0];
+			cout << " median_:" << Quartile_vec[1];
+			cout << " third_quartile:" << Quartile_vec[1];
+			cout << endl;
+		}
+
+		float th_max, th_min;
+		th_max = value_max;
+		th_min = value_min;
+		th_max = 180.;
+
+		vector<pcl::PointCloud<T_PointType2>::Ptr> cloud_save_vec;
+		for (int j = 0; j < features_vec.size(); j++)
+		{
+			pcl::PointCloud<T_PointType2>::Ptr cloud_(new pcl::PointCloud<T_PointType2>());
+			for (int i = 0; i < features_vec[j].size(); i++)
+			{
+				vector<std::uint8_t> color_vec;
+				color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(features_vec[j][i], th_max, th_min);
+				T_PointType2 point_;
+				point_.x = cloud_vec[j]->points[i].x;
+				point_.y = cloud_vec[j]->points[i].y;
+				point_.z = cloud_vec[j]->points[i].z;
+				point_.r = color_vec[0];
+				point_.g = color_vec[1];
+				point_.b = color_vec[2];
+				cloud_->push_back(point_);
+			}
+			cloud_->is_dense = true;
+			cloud_save_vec.push_back(cloud_);
+		}
+
+		for (int j = 0; j < cloud_save_vec.size(); j++)
+		{
+			string s_file_save ="_" +  filenames_[j].substr(0, filenames_[j].size() - 4) + "_ColorNIR.pcd";
+			pcl::io::savePCDFile<T_PointType2>(dir_ + "/generated/" + s_file_save, *cloud_save_vec[j]);
+		}
+	}
+	else if (i_method == 4)//simple ICP
 	{
 
 		//#include <pcl/registration/icp.h>
@@ -8944,7 +9061,7 @@ void CPointcloudFunction::DoDifferential_PairEvaluation3(string dir_)
 {
 	typedef pcl::PointXYZRGB T_PointType;
 	bool b_useParameterAdjustment = false;
-	bool b_useShow_AllFrame_AllPairs = false;
+	bool b_show_AllFrame_AllPairs = false;
 	bool b_useGeometricConstraints = false;
 	bool b_useRigidTransformation = false;
 
@@ -8958,12 +9075,12 @@ void CPointcloudFunction::DoDifferential_PairEvaluation3(string dir_)
 	bool b_changeColor_velodyne = false;
 
 	b_useParameterAdjustment = true;
-	b_useShow_AllFrame_AllPairs = true;
+	b_show_AllFrame_AllPairs = true;
 	b_useGeometricConstraints = true;
 
 	b_useNir = true;
-	//b_useVelodyne = true;
-	//b_useFPFH = true;
+	b_useVelodyne = true;
+	b_useFPFH = true;
 
 	//b_useColorfullCorr = true;
 
@@ -9126,6 +9243,17 @@ void CPointcloudFunction::DoDifferential_PairEvaluation3(string dir_)
 				|| i == 16
 				)) continue;
 
+			//if (!(j == 5
+			//	|| j == 6
+			//	|| j == 7
+			//	|| j == 8
+			//	)) continue;
+			//if (!(i == 5
+			//	|| i == 6
+			//	|| i == 7
+			//	|| i == 8
+			//	)) continue;
+
 			index_pair_vec.push_back(make_pair(i_tgt, i_src));
 		}
 	}
@@ -9237,7 +9365,7 @@ void CPointcloudFunction::DoDifferential_PairEvaluation3(string dir_)
 			}
 		}
 
-		if (b_useShow_AllFrame_AllPairs && !b_useRigidTransformation)
+		if (b_show_AllFrame_AllPairs && !b_useRigidTransformation)
 		{
 			CPointVisualization<T_PointType> pv;
 			pv.setWindowName("Pairs");

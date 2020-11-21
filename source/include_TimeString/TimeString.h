@@ -261,6 +261,8 @@ public:
 	template<typename T>
 	static vector<T> getMedian_Quartile(vector<T> value_vec)
 	{
+		//return: first_quartile, median_, third_quartile
+
 		//https://atarimae.biz/archives/19162
 		sortVector(value_vec);
 		int size = value_vec.size();
@@ -597,6 +599,5 @@ public:
 private:
 	static bool getDirectoryExistance(string foder_Path);
 	static bool getDirectoryExistance_detail(string foder_Path, bool b_first);
-
 
 };

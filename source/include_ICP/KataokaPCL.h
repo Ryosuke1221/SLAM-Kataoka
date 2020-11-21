@@ -1224,6 +1224,7 @@ public:
 				else
 				{
 					compare_src = calcCovarianceMatrix(calcEigenMatrixFromPointCloud(cloud_near)).trace();
+					compare_src += 0.001;
 					if (compare_src > 10000.)
 					{
 						cout << "so big!!" << endl;
@@ -1247,6 +1248,7 @@ public:
 				else
 				{
 					compare_tgt = calcCovarianceMatrix(calcEigenMatrixFromPointCloud(cloud_near)).trace();
+					compare_tgt += 0.001;
 					if (compare_tgt > 10000.)
 					{
 						cout << "so big!!" << endl;
@@ -1264,6 +1266,98 @@ public:
 		vector<int> &frame_vec, vector<int> &corr_index_vec, vector<bool> &b_queryOrNot_vec, vector<float> &evaluation_vec, bool b_cout = false);
 
 	static vector<vector<int>> calcRanking_compareArg(const vector<vector<pair<float, float>>> &compare_vecvec, bool b_cout = false);
+
+	//writing
+	static void calcRanking_compareArg_eachValue_multipleEachCovariance(const vector<vector<float>> &compare_vecvec,
+		vector<int> &frame_vec, vector<int> &corr_index_vec, vector<float> &evaluation_vec, bool b_cout = false)
+	{
+		vector<vector<float>> ranking_vecvec;
+		for (int j = 0; j < compare_vecvec.size(); j++)
+		{
+			for (int i = 0; i < compare_vecvec[j].size(); i++)
+			{
+				vector<float> ranking_vec;
+				ranking_vec.push_back((float)(j));						//frame
+				ranking_vec.push_back((float)(i));				//index
+				ranking_vec.push_back(compare_vecvec[j][i]);	//evaluation
+				ranking_vecvec.push_back(ranking_vec);
+			}
+		}
+		CTimeString::sortVector2d(ranking_vecvec, 2);
+
+		for (int j = 0; j < ranking_vecvec.size(); j++)
+		{
+			frame_vec.push_back(ranking_vecvec[j][0]);
+			corr_index_vec.push_back((int)(ranking_vecvec[j][1]));
+			evaluation_vec.push_back(ranking_vecvec[j][2]);
+		}
+
+		if (!b_cout) return;
+
+		for (int j = 0; j < ranking_vecvec.size(); j++)
+		{
+			if (j % 10 == 0)
+			{
+				cout << "j:" << j;
+				cout << " frame:" << ranking_vecvec[j][0];
+				cout << " corr_index:" << ((int)ranking_vecvec[j][1]);
+				cout << " evaluation:" << ranking_vecvec[j][2] << endl;
+			}
+		}
+		cout << endl;
+	}
+
+	//writing
+	static vector<vector<int>> calcRanking_compareArg_multipleEachCovariance(const vector<vector<pair<float, float>>> &compare_vecvec, bool b_cout = false)
+	{
+		vector<vector<float>> compare_vecvec_multiple;
+		for (int j = 0; j < compare_vecvec.size(); j++)
+		{
+			vector<float> compare_vec_multiple;
+			for (int i = 0; i < compare_vecvec[j].size(); i++)
+				compare_vec_multiple.push_back(compare_vecvec[j][i].first * compare_vecvec[j][i].second);
+			compare_vecvec_multiple.push_back(compare_vec_multiple);
+		}
+
+		vector<int> frame_vec;
+		vector<int>corr_index_vec;
+		vector<float> evaluation_vec;
+		calcRanking_compareArg_eachValue_multipleEachCovariance(compare_vecvec_multiple, frame_vec, corr_index_vec, evaluation_vec, b_cout);
+
+		vector<vector<int>> rank_output_vecvec;
+		for (int j = 0; j < compare_vecvec_multiple.size(); j++)
+		{
+			vector<int> rank_output_vec;
+			for (int i = 0; i < compare_vecvec_multiple[j].size(); i++)
+				rank_output_vec.push_back(-1);
+			rank_output_vecvec.push_back(rank_output_vec);
+		}
+
+		{
+			float value_before = 0.;
+			float value_now = 0.;
+			int rank_last;
+			for (int j = 0; j < evaluation_vec.size(); j++)
+			{
+				value_now = evaluation_vec[j];
+				if (j == 0 || value_now != value_before)
+					rank_last = j;
+				rank_output_vecvec[frame_vec[j]][corr_index_vec[j]] = rank_last;//[index_frame_pair][index_pair]
+				value_before = value_now;
+			}
+		}
+		
+		if (!b_cout) return rank_output_vecvec;
+
+		//show
+		for (int j = 0; j < rank_output_vecvec.size(); j++)
+		{
+			for (int i = 0; i < rank_output_vecvec[j].size(); i++)
+				if (i % 10 == 0)cout << "frame:" << j << " index:" << i << "  rank:" << rank_output_vecvec[j][i] << endl;
+		}
+
+		return rank_output_vecvec;
+	}
 
 	template <class T_PointType, typename T>
 	static vector<vector<int>> calcRanking_featureScalar(const vector<pair<int, int>> &index_pair_vec, const vector<pcl::Correspondences> &corrs_vec,
@@ -1286,7 +1380,8 @@ public:
 			compare_vecvec.push_back(compare_vec);
 		}
 		vector<vector<int>> rank_output_vecvec;//[index_frame_pair][index_pair]
-		rank_output_vecvec = calcRanking_compareArg(compare_vecvec, b_cout);
+		//rank_output_vecvec = calcRanking_compareArg(compare_vecvec, b_cout);
+		rank_output_vecvec = calcRanking_compareArg_multipleEachCovariance(compare_vecvec, b_cout);
 		return rank_output_vecvec;
 	}
 
