@@ -1071,8 +1071,8 @@ void CPointcloudFunction::HandRegistration()
 			cout << " -X:Q  -Y:W  -Z:E  -Roll:R  -Pitch:T  -Yaw:Y" << endl;
 			cout << "Resolution: translation:" << resolution_translation;
 			cout << "[m] rotation:" << resolution_rotation * R2D << "[deg]" << endl;
-			cout << "calc median: Left SHIFT" << endl;
-			cout << "Registration: Left CTRL" << endl;
+			cout << "calc median: Right SHIFT" << endl;
+			cout << "Registration: Right CTRL" << endl;
 			cout << "Reset:0" << endl;
 			cout << "Next:ENTER" << endl;
 			cout << "Escape:ESC" << endl;
