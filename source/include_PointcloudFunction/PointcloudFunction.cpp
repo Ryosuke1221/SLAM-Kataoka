@@ -149,6 +149,7 @@ void CPointcloudFunction::FreeSpace()
 	i_method = 2;
 	i_method = 3;
 	//i_method = 4;
+	i_method = 5;
 
 	if (i_method == 0)	//calc nearest neighbor of FPFH
 	{
@@ -446,6 +447,47 @@ void CPointcloudFunction::FreeSpace()
 			//posotion of cloud_src: "0" -> "T(i-1) + odometory(i)" -> "T(i-1) + odometory(i) + T_ICP" = "T(i)" 
 		}
 
+
+	}
+
+	else if (i_method == 5)//akiba: generate .pcd from .csv
+	{
+		int aa;
+		typedef typename pcl::PointXYZRGB T_PointType;
+
+		string dir_;
+		dir_ = "../../data";
+		vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec;
+
+		vector<string> filenames_;
+		CTimeString::getFileNames_extension(dir_, filenames_, ".csv");
+
+		for (int j = 0; j < filenames_.size(); j++)
+		{
+			vector<vector<double>> pc_vecvec = CTimeString::getVecVecFromCSV(dir_ + "/" + filenames_[j]);
+			pcl::PointCloud<T_PointType>::Ptr cloud_(new pcl::PointCloud<T_PointType>());
+			for (int i = 0; i < pc_vecvec.size(); i++)
+			{
+				T_PointType point_;
+				point_.x = pc_vecvec[i][1];
+				point_.y = pc_vecvec[i][2];
+				point_.z = pc_vecvec[i][3];
+				point_.r = 255;
+				point_.g = 255;
+				point_.b = 255;
+				cloud_->push_back(point_);
+			}
+			cloud_vec.push_back(cloud_);
+		}
+
+		//save
+		dir_ = dir_ + "/process01_handregistration";
+		for (int j = 0; j < cloud_vec.size(); j++)
+		{
+			string s_name;
+			s_name = filenames_[j].substr(0, filenames_[j].size() - 4) + ".pcd";
+			pcl::io::savePCDFile<T_PointType>(dir_ + "/" + s_name, *cloud_vec[j]);
+		}
 
 	}
 
@@ -989,7 +1031,7 @@ void CPointcloudFunction::HandRegistration()
 			cout << "found no txt file and make it." << endl;
 
 			//generation
-			filename_txt = dir_ + "/transformation.txt";
+			filename_txt = dir_ + "/transformation.csv";
 			for (int i = 0; i < filenames_.size(); i++)
 			{
 				Eigen::Vector6d trajectory_vec = Eigen::Vector6d::Zero();
@@ -1052,9 +1094,11 @@ void CPointcloudFunction::HandRegistration()
 		cout << "HM_displacement_vec size = " << HM_displacement_vec.size() << endl;
 	}
 
-	while (1) {
+	while (1) 
+	{
 		//input next PointCloud
-		if (b_makeNewPC) {
+		if (b_makeNewPC) 
+		{
 
 			cloud_moving_init->clear();
 
@@ -1121,6 +1165,7 @@ void CPointcloudFunction::HandRegistration()
 		{
 			HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(resolution_translation, 0., 0., 0., 0., 0.)
 				* HM_Trans_now;
+			cout << "debug: input +X" << endl;
 		}
 		else if (key_ == Y_)
 		{
@@ -1151,6 +1196,7 @@ void CPointcloudFunction::HandRegistration()
 		{
 			HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(-resolution_translation, 0., 0., 0., 0., 0.)
 				* HM_Trans_now;
+			cout << "debug: input -X" << endl;
 		}
 		else if (key_ == Y_MINUS)
 		{
@@ -1288,7 +1334,8 @@ void CPointcloudFunction::HandRegistration()
 			cout << endl;
 		}
 
-		if (!(key_ == NONE || key_ == ENTER)) {
+		if (!(key_ == NONE || key_ == ENTER)) 
+		{
 			cloud_moving->clear();
 			Trans_ = Eigen::Affine3f::Identity();
 			Trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(HM_Trans_now);
@@ -1301,10 +1348,12 @@ void CPointcloudFunction::HandRegistration()
 		*cloud_show_2frame += *cloud_before;
 		*cloud_show_2frame += *cloud_moving;
 
-		if (cloud_show->size() != 0) {
-			pv.setPointCloud(cloud_show);
+		if (cloud_show->size() != 0 && !b_break)
+		{
+			//pv.setPointCloud(cloud_show);
+			pv.setPointCloud(cloud_show, filenames_[index_PC_now]);
 			pv.updateViewer();
-			pv_2frame.setPointCloud(cloud_show_2frame);
+			pv_2frame.setPointCloud(cloud_show_2frame, filenames_[index_PC_now]);
 			pv_2frame.updateViewer();
 		}
 
@@ -1312,9 +1361,26 @@ void CPointcloudFunction::HandRegistration()
 	}
 
 	bool b_save_txt;
+	bool b_loop = true;
+	int i_save = 2;
 	cout << "Do you save txt?  Yes:1 No:0" << endl;
 	cout << "->";
-	cin >> b_save_txt;
+	while (b_loop)
+	{
+		//b_loop = false;
+		cin >> i_save;
+		if (i_save == 1)
+		{
+			b_save_txt = true;
+			b_loop = false;
+		}
+		else if (i_save == 0) 
+		{
+			b_save_txt = false;
+			b_loop = false;
+		}
+		else b_loop = true;
+	}
 
 	//output txt
 	if (b_save_txt)

@@ -711,8 +711,6 @@ public:
 			{
 				if (lock.owns_lock() && M_cloud_ && M_cloud_second)
 				{
-					//cout << "locked";
-					//cout << "(WindowName:" << M_name_window << ")" << endl;
 					M_handler->setInputCloud(M_cloud_);
 					//update viewer
 					if (!M_viewer->updatePointCloud(M_cloud_, *M_handler, "cloud1"))
@@ -722,6 +720,9 @@ public:
 				}
 			}
 		}
+
+		else
+			cout << "viewer error" << endl;
 	}
 
 	void closeViewer()
