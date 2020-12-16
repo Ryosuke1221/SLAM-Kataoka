@@ -22,6 +22,14 @@
 #define D2R 0.017453288888889
 #define R2D 57.29579143313326
 
+namespace Eigen {
+
+	/// Extending Eigen namespace by adding frequently used matrix type
+	typedef Eigen::Matrix<double, 6, 6> Matrix6d;
+	typedef Eigen::Matrix<double, 6, 1> Vector6d;
+
+}    // namespace Eigen
+
 template <class T_PointType>
 class CPointVisualization
 {
@@ -235,8 +243,8 @@ class CPointVisualization
 		}
 
 		Eigen::Affine3f Trans_ = Eigen::Affine3f::Identity();
-		Trans_ = CPointcloudFunction::calcAffine3fFromHomogeneousMatrix(
-			CPointcloudFunction::calcHomogeneousMatrixFromVector6d(
+		Trans_ = calcAffine3fFromHomogeneousMatrix(
+			calcHomogeneousMatrixFromVector6d(
 				-length_horizontal / 2. + point_center.x, -length_half_vertical + point_center.y,
 				point_center.z, 0., 0., 0.));
 		pcl::transformPointCloud(*cloud_, *cloud_, Trans_);
