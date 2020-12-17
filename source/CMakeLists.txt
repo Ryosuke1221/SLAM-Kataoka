@@ -12,4 +12,4 @@ add_subdirectory(test_GlobalRegistration)
 add_subdirectory(test_PointcloudFunction)
 add_subdirectory(test_SLAM)
 add_subdirectory(test_03GlobalFeatureRegistration)
-
+add_subdirectory(test_HandRegistration)

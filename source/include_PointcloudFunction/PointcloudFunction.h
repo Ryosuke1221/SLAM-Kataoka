@@ -77,7 +77,6 @@ public:
 	void FreeSpace();
 	void filterNIRPointCloud_naraha();
 	void getCSVFromPointCloud();
-	void HandRegistration();
 	void combinePointCloud_naraha();
 
 	template <class T_PointType>
@@ -205,17 +204,5 @@ public:
 	vector<string> DoEvaluation_ICP_property_mergeResult_OnePattern(string dir_, string s_folder);
 
 	void DoMappingFromTrajectory();
-
-	void DoDifferential();
-	void DoDifferential_1pointcloud(string dir_);
-	void DoDifferential_SomePointclouds(string dir_);
-	void FPFH_unique(string dir_);
-	void DoDifferential_showFeatureValue(string dir_);
-	void DoDifferential_RigidTransformation_FPFH_Features(string dir_);
-	void DoDifferential_RigidTransformation_FPFH_Features_new(string dir_);
-	void DoDifferential_RigidTransformation_FPFH_Features_allFrames(string dir_);
-	void DoDifferential_PairEvaluation(string dir_);
-	void DoDifferential_PairEvaluation2(string dir_);
-	void DoDifferential_PairEvaluation3(string dir_);
 
 };

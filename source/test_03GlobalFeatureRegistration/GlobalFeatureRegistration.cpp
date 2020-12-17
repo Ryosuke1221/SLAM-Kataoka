@@ -48,7 +48,7 @@ void CGlobalFeatureRegistration::mainProcess()
 		cout << "//////////////////////////////////" << endl;
 		cout << endl;
 
-		string dir_ = "../../data/process13_DoDifferential";
+		string dir_ = "../../data/data_test_03GlobalFeatureRegistration";
 
 		switch (WhichProcess)
 		{
@@ -304,8 +304,8 @@ void CGlobalFeatureRegistration::DoDifferential_1pointcloud(string dir_)
 		}
 	}
 
-	Eigen::Affine3f trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
-		CKataokaPCL::calcHomogeneousMatrixFromVector6d(40., 0., 0., 0., 0., 0.));
+	Eigen::Affine3f trans_ = calcAffine3fFromHomogeneousMatrix(
+		calcHomogeneousMatrixFromVector6d(40., 0., 0., 0., 0., 0.));
 	pcl::transformPointCloud(*cloud_colored, *cloud_colored, trans_);
 	*cloud_colored += *cloud_;
 	//pcl::io::savePCDFile<T_PointType>(dir_save + "/cloud_colored.pcd", *cloud_colored);
@@ -470,8 +470,8 @@ void CGlobalFeatureRegistration::DoDifferential_SomePointclouds(string dir_)
 		pcl::copyPointCloud(*cloud_vec[1], *cloud_src);
 		pcl::copyPointCloud(*cloud_vec[0], *cloud_tgt);
 		{
-			Eigen::Affine3f trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
-				CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 10., 0., 0., 0.));
+			Eigen::Affine3f trans_ = calcAffine3fFromHomogeneousMatrix(
+				calcHomogeneousMatrixFromVector6d(0., 0., 10., 0., 0., 0.));
 			pcl::transformPointCloud(*cloud_src, *cloud_src, trans_);
 		}
 		*cloud_show += *cloud_src;
@@ -575,15 +575,15 @@ void CGlobalFeatureRegistration::DoDifferential_SomePointclouds(string dir_)
 		*cloud_ZValue = *CKataokaPCL::getPointCloud_ZAaxisByFeature(cloud_ZValue, feature_vec, 10.);
 
 		{
-			Eigen::Affine3f trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
-				CKataokaPCL::calcHomogeneousMatrixFromVector6d(40., 0., 0., 0., 0., 0.));
+			Eigen::Affine3f trans_ = calcAffine3fFromHomogeneousMatrix(
+				calcHomogeneousMatrixFromVector6d(40., 0., 0., 0., 0., 0.));
 			pcl::transformPointCloud(*cloud_colored, *cloud_colored, trans_);
 			*cloud_vec[j] += *cloud_colored;
 		}
 
 		{
-			Eigen::Affine3f trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
-				CKataokaPCL::calcHomogeneousMatrixFromVector6d(40., 0., 15., 0., 0., 0.));
+			Eigen::Affine3f trans_ = calcAffine3fFromHomogeneousMatrix(
+				calcHomogeneousMatrixFromVector6d(40., 0., 15., 0., 0., 0.));
 			pcl::transformPointCloud(*cloud_ZValue, *cloud_ZValue, trans_);
 			*cloud_vec[j] += *cloud_ZValue;
 		}
@@ -732,16 +732,16 @@ void CGlobalFeatureRegistration::DoDifferential_showFeatureValue(string dir_)
 		*cloud_ZValue = *CKataokaPCL::getPointCloud_ZAaxisByFeature(cloud_ZValue, feature_vecvec[j], 3.);
 
 		{
-			Eigen::Affine3f trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
-				CKataokaPCL::calcHomogeneousMatrixFromVector6d(40., 0., 0., 0., 0., 0.));
+			Eigen::Affine3f trans_ = calcAffine3fFromHomogeneousMatrix(
+				calcHomogeneousMatrixFromVector6d(40., 0., 0., 0., 0., 0.));
 			pcl::transformPointCloud(*cloud_colored, *cloud_colored, trans_);
 			*cloud_vec[j] += *cloud_colored;
 
 		}
 
 		{
-			Eigen::Affine3f trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
-				CKataokaPCL::calcHomogeneousMatrixFromVector6d(40., 0., 15., 0., 0., 0.));
+			Eigen::Affine3f trans_ = calcAffine3fFromHomogeneousMatrix(
+				calcHomogeneousMatrixFromVector6d(40., 0., 15., 0., 0., 0.));
 			pcl::transformPointCloud(*cloud_ZValue, *cloud_ZValue, trans_);
 			*cloud_vec[j] += *cloud_ZValue;
 		}
@@ -1103,8 +1103,8 @@ void CGlobalFeatureRegistration::DoDifferential_RigidTransformation_FPFH_Feature
 		pcl::copyPointCloud(*cloud_vec[i_src], *cloud_src);
 		pcl::copyPointCloud(*cloud_vec[i_tgt], *cloud_tgt);
 		{
-			Eigen::Affine3f trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
-				CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 10., 0., 0., 0.));
+			Eigen::Affine3f trans_ = calcAffine3fFromHomogeneousMatrix(
+				calcHomogeneousMatrixFromVector6d(0., 0., 10., 0., 0., 0.));
 			pcl::transformPointCloud(*cloud_src, *cloud_src, trans_);
 		}
 		*cloud_show += *cloud_src;
@@ -1411,8 +1411,8 @@ void CGlobalFeatureRegistration::DoDifferential_RigidTransformation_FPFH_Feature
 
 			//showing
 			{
-				Eigen::Affine3f trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
-					CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 10., 0., 0., 0.));
+				Eigen::Affine3f trans_ = calcAffine3fFromHomogeneousMatrix(
+					calcHomogeneousMatrixFromVector6d(0., 0., 10., 0., 0., 0.));
 				pcl::transformPointCloud(*cloud_src, *cloud_src, trans_);
 			}
 			*cloud_show += *cloud_src;
@@ -1697,8 +1697,8 @@ void CGlobalFeatureRegistration::DoDifferential_RigidTransformation_FPFH_Feature
 
 			//showing
 			{
-				Eigen::Affine3f trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
-					CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 10., 0., 0., 0.));
+				Eigen::Affine3f trans_ = calcAffine3fFromHomogeneousMatrix(
+					calcHomogeneousMatrixFromVector6d(0., 0., 10., 0., 0., 0.));
 				pcl::transformPointCloud(*cloud_src, *cloud_src, trans_);
 			}
 			*cloud_show += *cloud_src;
@@ -2108,8 +2108,8 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation(string dir_)
 
 			//showing
 			{
-				Eigen::Affine3f trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
-					CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 10., 0., 0., 0.));
+				Eigen::Affine3f trans_ = calcAffine3fFromHomogeneousMatrix(
+					calcHomogeneousMatrixFromVector6d(0., 0., 10., 0., 0., 0.));
 				pcl::transformPointCloud(*cloud_src, *cloud_src, trans_);
 			}
 			*cloud_show += *cloud_src;
@@ -2232,8 +2232,8 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation(string dir_)
 
 	//		//showing
 	//		{
-	//			Eigen::Affine3f trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
-	//				CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 10., 0., 0., 0.));
+	//			Eigen::Affine3f trans_ = calcAffine3fFromHomogeneousMatrix(
+	//				calcHomogeneousMatrixFromVector6d(0., 0., 10., 0., 0., 0.));
 	//			pcl::transformPointCloud(*cloud_src, *cloud_src, trans_);
 	//		}
 	//		*cloud_show += *cloud_src;
@@ -2625,8 +2625,8 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation2(string dir_)
 
 				//showing
 				{
-					Eigen::Affine3f trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
-						CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 10., 0., 0., 0.));
+					Eigen::Affine3f trans_ = calcAffine3fFromHomogeneousMatrix(
+						calcHomogeneousMatrixFromVector6d(0., 0., 10., 0., 0., 0.));
 					pcl::transformPointCloud(*cloud_src, *cloud_src, trans_);
 				}
 				*cloud_show += *cloud_src;
@@ -3051,10 +3051,10 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation3(string dir_)
 					pcl::copyPointCloud(*cloud_vec[i_tgt_vis], *cloud_tgt);
 					//showing
 					{
-						//Eigen::Affine3f trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
-						//	CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 20., 0., 0., 0.));
-						Eigen::Affine3f trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
-							CKataokaPCL::calcHomogeneousMatrixFromVector6d(10., 0., 20., 0., 0., 0.));
+						//Eigen::Affine3f trans_ = calcAffine3fFromHomogeneousMatrix(
+						//	calcHomogeneousMatrixFromVector6d(0., 0., 20., 0., 0., 0.));
+						Eigen::Affine3f trans_ = calcAffine3fFromHomogeneousMatrix(
+							calcHomogeneousMatrixFromVector6d(10., 0., 20., 0., 0., 0.));
 						pcl::transformPointCloud(*cloud_src, *cloud_src, trans_);
 					}
 					cloud_show->clear();
