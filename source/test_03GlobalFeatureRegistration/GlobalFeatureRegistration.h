@@ -6,12 +6,11 @@
 
 using namespace std;
 
-class CGlobalFeatureRegistration
+class CGlobalFeatureRegistration : public CPointcloudBasic
 {
 public:
 	void mainProcess();
-
-	//void DoDifferential();
+	void FreeSpace();
 	void DoDifferential_1pointcloud(string dir_);
 	void DoDifferential_SomePointclouds(string dir_);
 	void FPFH_unique(string dir_);

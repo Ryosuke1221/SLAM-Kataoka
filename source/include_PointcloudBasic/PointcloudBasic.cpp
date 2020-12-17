@@ -12,20 +12,8 @@ void CPointcloudBasic::all_process()
 		EN_FreeSpace,
 		EN_FileProcess,
 		EN_SequentShow,
-		EN_handregistration,
-		EN_GetPcdFromCSV,
-		EN_FilterPointCloud,
-		EN_CombinePointCloud,
-		EN_CSV_FromPointCloud,
-		EN_DynamicTranslation,
 		EN_DrawTrajectory,
-		EN_Segmentation,
-		EN_GR_FPFH_SAC_IA,
-		EN_DoOutlierRejector,
-		EN_ICP_Proposed_AllFrames,
-		EN_Evaluate_ICP_property_Optimization,
 		EN_DoMappingFromTrajectory,
-		EN_DoDifferential
 	};
 
 	while (!b_finish)
@@ -36,20 +24,8 @@ void CPointcloudBasic::all_process()
 		cout << " " << EN_FreeSpace << ": free space" << endl;
 		cout << " " << EN_FileProcess << ": FileProcess" << endl;
 		cout << " " << EN_SequentShow << ": sequent show" << endl;
-		cout << " " << EN_handregistration << ": hand registration" << endl;
-		cout << " " << EN_GetPcdFromCSV << ": get .pcd from .csv" << endl;
-		cout << " " << EN_FilterPointCloud << ": filter PointCloud_naraha" << endl;
-		cout << " " << EN_CombinePointCloud << ": CombinePointCloud" << endl;
-		cout << " " << EN_CSV_FromPointCloud << ": CSV_FromPointCloud" << endl;
-		cout << " " << EN_DynamicTranslation << ": DynamicTranslation" << endl;
 		cout << " " << EN_DrawTrajectory << ": DrawTrajectory" << endl;
-		cout << " " << EN_Segmentation << ": Segmentation" << endl;
-		cout << " " << EN_GR_FPFH_SAC_IA << ": GR_FPFH_SAC_IA" << endl;
-		cout << " " << EN_DoOutlierRejector << ": DoOutlierRejector" << endl;
-		cout << " " << EN_ICP_Proposed_AllFrames << ": ICP_Proposed_AllFrames" << endl;
-		cout << " " << EN_Evaluate_ICP_property_Optimization << ": Evaluate_ICP_property_Optimization" << endl;
 		cout << " " << EN_DoMappingFromTrajectory << ": DoMappingFromTrajectory" << endl;
-		cout << " " << EN_DoDifferential << ": DoDifferential" << endl;
 
 		cout << "WhichProcess: ";
 		cin >> WhichProcess;
@@ -77,61 +53,13 @@ void CPointcloudBasic::all_process()
 			show_sequent();
 			break;
 
-		//case EN_handregistration:
-		//	HandRegistration();
-		//	break;
-
-		//case EN_GetPcdFromCSV:
-		//	getPCDFromCSV_naraha();
-		//	break;
-
-		//case EN_FilterPointCloud:
-		//	filterNIRPointCloud_naraha();
-		//	break;
-
-		//case EN_CSV_FromPointCloud:
-		//	getCSVFromPointCloud();
-		//	break;
-
-		//case EN_CombinePointCloud:
-		//	combinePointCloud_naraha();
-		//	break;
-
-		//case EN_DynamicTranslation:
-		//	DynamicTranslation();
-		//	break;
-
 		case EN_DrawTrajectory:
 			DrawTrajectory();
 			break;
 
-		//case EN_Segmentation:
-		//	DoSegmentation();
-		//	break;
-
-		//case EN_GR_FPFH_SAC_IA:
-		//	GlobalRegistration_FPFH_SAC_IA();
-		//	break;
-
-		//case EN_DoOutlierRejector:
-		//	DoOutlierRejector();
-		//	break;
-
-		//case EN_ICP_Proposed_AllFrames:
-		//	DoICP_proposed_AllFrames();
-		//	break;
-
-		//case EN_Evaluate_ICP_property_Optimization:
-		//	DoEvaluation_ICP_property();
-		//	break;
-
 		case EN_DoMappingFromTrajectory:
 			DoMappingFromTrajectory();
 			break;
-
-		//case EN_DoDifferential:
-		//	DoDifferential();
-		//	break;
 
 		default:
 			break;

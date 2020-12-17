@@ -2,37 +2,123 @@
 
 void CGlobalFeatureRegistration::mainProcess()
 {
-	string dir_ = "../../data/process13_DoDifferential";
+	int WhichProcess = 0;
+	string filename1, filename2;
+	bool b_finish = false;
+	enum OPTION {
+		EN_escape = 0,
+		EN_FreeSpace,
+		EN_FileProcess,
+		EN_SequentShow,
+		EN_DrawTrajectory,
+		EN_DoMappingFromTrajectory,
+		EN_SomePointclouds,
+		EN_showFeatureValue,
+		EN_FPFH_unique,
+		EN_RigidTransformation_FPFH_Features_new,
+		EN_RigidTransformation_FPFH_Features_allFrames,
+		EN_PairEvaluation,
+		EN_PairEvaluation2,
+		EN_PairEvaluation3
+	};
 
-	int i_method;
-	cout << "select method:" << endl;
-	cout << "0: SomePointclouds" << endl;
-	cout << "1: DoDifferential_showFeatureValue" << endl;
-	cout << "2: FPFH_unique" << endl;
-	cout << "3: RigidTransformation_FPFH_Features" << endl;
-	cout << "4: RigidTransformation_FPFH_Features_allFrames" << endl;
-	cout << "5: DoDifferential_PairEvaluation" << endl;
-	cout << "6: DoDifferential_PairEvaluation2" << endl;
-	cout << "7: DoDifferential_PairEvaluation3" << endl;
-	cout << "->";
-	cin >> i_method;
+	while (!b_finish)
+	{
+		cout << endl;
+		cout << "please input process number" << endl;
+		cout << " " << EN_escape << ": escape" << endl;
+		cout << " " << EN_FreeSpace << ": free space" << endl;
+		cout << " " << EN_FileProcess << ": FileProcess" << endl;
+		cout << " " << EN_SequentShow << ": sequent show" << endl;
+		cout << " " << EN_DrawTrajectory << ": DrawTrajectory" << endl;
+		cout << " " << EN_DoMappingFromTrajectory << ": DoMappingFromTrajectory" << endl;
+		cout << " " << EN_SomePointclouds << ": SomePointclouds" << endl;
+		cout << " " << EN_showFeatureValue << ": showFeatureValue" << endl;
+		cout << " " << EN_FPFH_unique << ": FPFH_unique" << endl;
+		cout << " " << EN_RigidTransformation_FPFH_Features_new << ": RigidTransformation_FPFH_Features_new" << endl;
+		cout << " " << EN_RigidTransformation_FPFH_Features_allFrames << ": RigidTransformation_FPFH_Features_allFrames" << endl;
+		cout << " " << EN_PairEvaluation << ": PairEvaluation" << endl;
+		cout << " " << EN_PairEvaluation2 << ": PairEvaluation2" << endl;
+		cout << " " << EN_PairEvaluation3 << ": PairEvaluation3" << endl;
 
-	if (i_method == 0)
-		DoDifferential_SomePointclouds(dir_);
-	else if (i_method == 1)
-		DoDifferential_showFeatureValue(dir_);
-	else if (i_method == 2)
-		FPFH_unique(dir_);
-	else if (i_method == 3)
-		DoDifferential_RigidTransformation_FPFH_Features_new(dir_);
-	else if (i_method == 4)
-		DoDifferential_RigidTransformation_FPFH_Features_allFrames(dir_);
-	else if (i_method == 5)
-		DoDifferential_PairEvaluation(dir_);
-	else if (i_method == 6)
-		DoDifferential_PairEvaluation2(dir_);
-	else if (i_method == 7)
-		DoDifferential_PairEvaluation3(dir_);
+		cout << "WhichProcess: ";
+		cin >> WhichProcess;
+
+		cout << endl;
+		cout << "//////////////////////////////////" << endl;
+		cout << endl;
+
+		string dir_ = "../../data/process13_DoDifferential";
+
+		switch (WhichProcess)
+		{
+		case EN_escape:
+			//escape
+			b_finish = true;
+			break;
+
+		case EN_FreeSpace:
+			CGlobalFeatureRegistration::FreeSpace();
+			break;
+
+		case EN_FileProcess:
+			FileProcess();
+			break;
+
+		case EN_SequentShow:
+			show_sequent();
+			break;
+
+		case EN_DrawTrajectory:
+			DrawTrajectory();
+			break;
+
+		case EN_DoMappingFromTrajectory:
+			DoMappingFromTrajectory();
+			break;
+
+		case EN_SomePointclouds:
+			DoDifferential_SomePointclouds(dir_);
+			break;
+
+		case EN_showFeatureValue:
+			DoDifferential_showFeatureValue(dir_);
+			break;
+
+		case EN_FPFH_unique:
+			FPFH_unique(dir_);
+			break;
+
+		case EN_RigidTransformation_FPFH_Features_new:
+			DoDifferential_RigidTransformation_FPFH_Features_new(dir_);
+			break;
+
+		case EN_RigidTransformation_FPFH_Features_allFrames:
+			DoDifferential_RigidTransformation_FPFH_Features_allFrames(dir_);
+			break;
+
+		case EN_PairEvaluation:
+			DoDifferential_PairEvaluation(dir_);
+			break;
+
+		case EN_PairEvaluation2:
+			DoDifferential_PairEvaluation2(dir_);
+			break;
+
+		case EN_PairEvaluation3:
+			DoDifferential_PairEvaluation3(dir_);
+			break;
+
+		default:
+			break;
+		}
+
+	}
+}
+
+void CGlobalFeatureRegistration::FreeSpace()
+{
+
 }
 
 void CGlobalFeatureRegistration::DoDifferential_1pointcloud(string dir_)
