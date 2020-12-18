@@ -936,6 +936,7 @@ void CPointcloudFunction::getCSVFromPointCloud()
 
 CPointcloudFunction::KEYNUM CPointcloudFunction::getKEYNUM()
 {
+
 	//http://kts.sakaiweb.com/virtualkeycodes.html
 
 	KEYNUM key_;
