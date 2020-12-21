@@ -146,10 +146,8 @@ void CHandRegistration::HandRegistration(string dir_)
 
 	vector<Eigen::Matrix4d>	HM_displacement_vec;
 
-	CKataokaPCL kataokaPCL;
 	int MaximumIterations;
 	double MaxCorrespondenceDistance, EuclideanFitnessEpsilon, TransformationEpsilon;
-	kataokaPCL.setMothodInt(0);
 	MaximumIterations = 50000;
 	MaxCorrespondenceDistance = 1.;
 	EuclideanFitnessEpsilon = 1e-5;
@@ -302,7 +300,6 @@ void CHandRegistration::HandRegistration(string dir_)
 		{
 			HM_Trans_now = calcHomogeneousMatrixFromVector6d(resolution_translation, 0., 0., 0., 0., 0.)
 				* HM_Trans_now;
-			cout << "debug: input +X" << endl;
 		}
 		else if (key_ == Y_)
 		{
@@ -333,7 +330,6 @@ void CHandRegistration::HandRegistration(string dir_)
 		{
 			HM_Trans_now = calcHomogeneousMatrixFromVector6d(-resolution_translation, 0., 0., 0., 0., 0.)
 				* HM_Trans_now;
-			cout << "debug: input -X" << endl;
 		}
 		else if (key_ == Y_MINUS)
 		{
@@ -416,14 +412,16 @@ void CHandRegistration::HandRegistration(string dir_)
 			cin >> i_select;
 			if (i_select == 0 || i_select == 1)
 			{
-				kataokaPCL.setMaximumIterations(MaximumIterations);
-				kataokaPCL.setMaxCorrespondenceDistance(MaxCorrespondenceDistance);
-				kataokaPCL.setEuclideanFitnessEpsilon(EuclideanFitnessEpsilon);
-				kataokaPCL.setTransformationEpsilon(TransformationEpsilon);
-				kataokaPCL.setInputSource(cloud_moving);
-				kataokaPCL.setInputTarget(cloud_before);
-				kataokaPCL.align();
-				Registration_Vec = kataokaPCL.getFinalTransformation_Vec();
+				pcl::IterativeClosestPoint<PointType_func, PointType_func> align_ICP;
+				pcl::PointCloud<PointType_func>::Ptr cloud_temp_align(new pcl::PointCloud<PointType_func>());
+				align_ICP.setMaximumIterations(MaximumIterations);
+				align_ICP.setMaxCorrespondenceDistance(MaxCorrespondenceDistance);
+				align_ICP.setEuclideanFitnessEpsilon(EuclideanFitnessEpsilon);
+				align_ICP.setTransformationEpsilon(TransformationEpsilon);
+				align_ICP.setInputSource(cloud_moving);
+				align_ICP.setInputTarget(cloud_before);
+				align_ICP.align(*cloud_temp_align);
+				Registration_Vec = calcVector6dFromHomogeneousMatrix(align_ICP.getFinalTransformation().cast<double>());
 				if (i_select == 0)
 				{
 					HM_Trans_now = calcHomogeneousMatrixFromVector6d(
