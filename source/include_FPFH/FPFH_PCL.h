@@ -276,12 +276,12 @@ public:
 				pcl::copyPointCloud(*cloud_src, *cloud_src_estTRUE);
 				{
 					Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-					Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(transform_);
+					Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(transform_);
 					pcl::transformPointCloud(*cloud_src_est, *cloud_src_est, Trans_temp);
 				}
 				{
 					Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-					Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(transformation_true);
+					Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(transformation_true);
 					pcl::transformPointCloud(*cloud_src_estTRUE, *cloud_src_estTRUE, Trans_temp);
 				}
 				//distance to true
@@ -395,7 +395,7 @@ public:
 			//cout << "correspondences size = " << nr_valid_correspondences << endl;
 		}
 
-		//return CKataokaPCL::getErrorOfFPFHSource_corr(median_arg, correspondences, fpfh_src, fpfh_tgt);
+		//return CExtendableICP::getErrorOfFPFHSource_corr(median_arg, correspondences, fpfh_src, fpfh_tgt);
 		return getErrorOfFPFHSource_corr(median_arg, correspondences, fpfh_src, fpfh_tgt);
 	}
 
@@ -605,7 +605,7 @@ public:
 					compare_src = 10000.;
 				else
 				{
-					compare_src = CKataokaPCL::calcCovarianceMatrix(CKataokaPCL::calcEigenMatrixFromPointCloud(cloud_near)).trace();
+					compare_src = CExtendableICP::calcCovarianceMatrix(CExtendableICP::calcEigenMatrixFromPointCloud(cloud_near)).trace();
 					if (compare_src > 10000.)
 					{
 						cout << "so big!!" << endl;
@@ -628,7 +628,7 @@ public:
 					compare_tgt = 10000.;
 				else
 				{
-					compare_tgt = CKataokaPCL::calcCovarianceMatrix(CKataokaPCL::calcEigenMatrixFromPointCloud(cloud_near)).trace();
+					compare_tgt = CExtendableICP::calcCovarianceMatrix(CExtendableICP::calcEigenMatrixFromPointCloud(cloud_near)).trace();
 					if (compare_tgt > 10000.)
 					{
 						cout << "so big!!" << endl;
@@ -665,7 +665,7 @@ public:
 			compare_vecvec.push_back(compare_vec);
 		}
 		vector<vector<int>> rank_output_vecvec;//[index_frame_pair][index_pair]
-		rank_output_vecvec = CKataokaPCL::calcRanking_compareArg(compare_vecvec, b_cout);
+		rank_output_vecvec = CExtendableICP::calcRanking_compareArg(compare_vecvec, b_cout);
 		return rank_output_vecvec;
 	}
 

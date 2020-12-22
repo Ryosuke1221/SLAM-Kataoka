@@ -222,8 +222,8 @@ void CPointcloudFunction::FreeSpace()
 		cloud_src->is_dense = true;
 
 		Eigen::Matrix<float, 3, Eigen::Dynamic> mat_(3, cloud_tgt->size());
-		mat_ = CKataokaPCL::calcEigenMatrixFromPointCloud(cloud_tgt);
-		Eigen::Matrix<float, 3, 3> mat_cov = CKataokaPCL::calcCovarianceMatrix(mat_);
+		mat_ = CExtendableICP::calcEigenMatrixFromPointCloud(cloud_tgt);
+		Eigen::Matrix<float, 3, 3> mat_cov = CExtendableICP::calcCovarianceMatrix(mat_);
 		cout << "show mat_cov" << endl;
 		cout << mat_cov << endl;
 
@@ -850,9 +850,9 @@ void CPointcloudFunction::filterNIRPointCloud_naraha()
 
 		//turn pitch(camera coordinate to robot one)
 		HM_free = Eigen::Matrix4d::Identity();
-		HM_free = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
+		HM_free = CExtendableICP::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
 		Trans_ = Eigen::Affine3f::Identity();
-		Trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(HM_free);
+		Trans_ = CExtendableICP::calcAffine3fFromHomogeneousMatrix(HM_free);
 		pcl::transformPointCloud(*cloud_, *cloud_, Trans_);
 
 		//range
@@ -887,9 +887,9 @@ void CPointcloudFunction::filterNIRPointCloud_naraha()
 
 		//-turn pitch(camera coordinate)
 		HM_free = Eigen::Matrix4d::Identity();
-		HM_free = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., -pitch_init, 0.);
+		HM_free = CExtendableICP::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., -pitch_init, 0.);
 		Trans_ = Eigen::Affine3f::Identity();
-		Trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(HM_free);
+		Trans_ = CExtendableICP::calcAffine3fFromHomogeneousMatrix(HM_free);
 		pcl::transformPointCloud(*cloud_, *cloud_, Trans_);
 
 		string filename_save = filenames_[index_].substr(0, filenames_[index_].size() - 4) + "_filtered_nir.pcd";
@@ -1100,9 +1100,9 @@ void CPointcloudFunction::combinePointCloud_naraha()
 			{
 				//turn pitch(camera coordinate to robot one)
 				HM_free = Eigen::Matrix4d::Identity();
-				HM_free = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
+				HM_free = CExtendableICP::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
 				Trans_ = Eigen::Affine3f::Identity();
-				Trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(HM_free);
+				Trans_ = CExtendableICP::calcAffine3fFromHomogeneousMatrix(HM_free);
 				pcl::transformPointCloud(*cloud_velo, *cloud_velo, Trans_);
 				if (b_removeGround)
 				{
@@ -1132,8 +1132,8 @@ void CPointcloudFunction::combinePointCloud_naraha()
 
 			if (b_rejectOutlier)
 			{
-				//CKataokaPCL::rejectOutlier(cloud_save, cloud_save, Tolerance_out, MinClusterSize_out);
-				CKataokaPCL::Remove_outliers(cloud_save, cloud_save, Meank_out, StddevMulThresh_out);
+				//CExtendableICP::rejectOutlier(cloud_save, cloud_save, Tolerance_out, MinClusterSize_out);
+				CExtendableICP::Remove_outliers(cloud_save, cloud_save, Meank_out, StddevMulThresh_out);
 			}
 			string filename_save = filenames_velo_nonir[index_].substr(0, 3) + "XYZRGB_naraha.pcd";
 			pcl::io::savePCDFile<pcl::PointXYZRGB>
@@ -1164,9 +1164,9 @@ void CPointcloudFunction::combinePointCloud_naraha()
 			{
 				//turn pitch(camera coordinate to robot one)
 				HM_free = Eigen::Matrix4d::Identity();
-				HM_free = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
+				HM_free = CExtendableICP::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
 				Trans_ = Eigen::Affine3f::Identity();
-				Trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(HM_free);
+				Trans_ = CExtendableICP::calcAffine3fFromHomogeneousMatrix(HM_free);
 				pcl::transformPointCloud(*cloud_velo, *cloud_velo, Trans_);
 				if (b_removeGround)
 				{
@@ -1186,9 +1186,9 @@ void CPointcloudFunction::combinePointCloud_naraha()
 			{
 				//turn pitch(camera coordinate to robot one)
 				HM_free = Eigen::Matrix4d::Identity();
-				HM_free = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
+				HM_free = CExtendableICP::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
 				Trans_ = Eigen::Affine3f::Identity();
-				Trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(HM_free);
+				Trans_ = CExtendableICP::calcAffine3fFromHomogeneousMatrix(HM_free);
 				pcl::transformPointCloud(*cloud_nir, *cloud_nir, Trans_);
 			}
 
@@ -1219,8 +1219,8 @@ void CPointcloudFunction::combinePointCloud_naraha()
 
 			if (b_rejectOutlier)
 			{
-				//CKataokaPCL::rejectOutlier(cloud_save, cloud_save, Tolerance_out, MinClusterSize_out);
-				CKataokaPCL::Remove_outliers(cloud_save, cloud_save, Meank_out, StddevMulThresh_out);
+				//CExtendableICP::rejectOutlier(cloud_save, cloud_save, Tolerance_out, MinClusterSize_out);
+				CExtendableICP::Remove_outliers(cloud_save, cloud_save, Meank_out, StddevMulThresh_out);
 			}
 			string filename_save = filenames_velo[index_].substr(0, 3) + "XYZRGB_naraha.pcd";
 			pcl::io::savePCDFile<pcl::PointXYZRGB>
@@ -1409,7 +1409,7 @@ void CPointcloudFunction::DynamicTranslation()
 
 				cloud_moving->clear();
 				Trans_ = Eigen::Affine3f::Identity();
-				Trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(HM_Trans_now);
+				Trans_ = CExtendableICP::calcAffine3fFromHomogeneousMatrix(HM_Trans_now);
 				pcl::transformPointCloud(*cloud_moving_before, *cloud_moving, Trans_);
 			}
 			else
@@ -1477,27 +1477,27 @@ void CPointcloudFunction::DynamicTranslation()
 			switch (var)
 			{
 			case X_vr:
-				HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(d_value_, 0., 0., 0., 0., 0.)
+				HM_Trans_now = CExtendableICP::calcHomogeneousMatrixFromVector6d(d_value_, 0., 0., 0., 0., 0.)
 					* HM_Trans_now;
 				break;
 			case Y_vr:
-				HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., d_value_, 0., 0., 0., 0.)
+				HM_Trans_now = CExtendableICP::calcHomogeneousMatrixFromVector6d(0., d_value_, 0., 0., 0., 0.)
 					* HM_Trans_now;
 				break;
 			case Z_vr:
-				HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., d_value_, 0., 0., 0.)
+				HM_Trans_now = CExtendableICP::calcHomogeneousMatrixFromVector6d(0., 0., d_value_, 0., 0., 0.)
 					* HM_Trans_now;
 				break;
 			case Roll_vr:
-				HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 0., d_value_ * M_PI / 180., 0., 0.)
+				HM_Trans_now = CExtendableICP::calcHomogeneousMatrixFromVector6d(0., 0., 0., d_value_ * M_PI / 180., 0., 0.)
 					* HM_Trans_now;
 				break;
 			case Pitch_vr:
-				HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., d_value_ * M_PI / 180., 0.)
+				HM_Trans_now = CExtendableICP::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., d_value_ * M_PI / 180., 0.)
 					* HM_Trans_now;
 				break;
 			case Yaw_vr:
-				HM_Trans_now = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., d_value_ * M_PI / 180.)
+				HM_Trans_now = CExtendableICP::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., d_value_ * M_PI / 180.)
 					* HM_Trans_now;
 				break;
 			default:
@@ -1516,7 +1516,7 @@ void CPointcloudFunction::DynamicTranslation()
 		if (!(key_ == KEY_NONE || key_ == KEY_SPACE)) {
 			cloud_moving->clear();
 			Trans_ = Eigen::Affine3f::Identity();
-			Trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(HM_Trans_now);
+			Trans_ = CExtendableICP::calcAffine3fFromHomogeneousMatrix(HM_Trans_now);
 			pcl::transformPointCloud(*cloud_moving_before, *cloud_moving, Trans_);
 		}
 
@@ -1998,7 +1998,7 @@ void CPointcloudFunction::DoSegmentation()
 
 		vector <pcl::PointCloud<T_PointType>::Ptr> cloud_cluster_vec;
 		pcl::PointCloud<T_PointType>::Ptr cloud_rest(new pcl::PointCloud<T_PointType>);
-		cloud_cluster_vec = CKataokaPCL::getSegmentation_robust(cloud_vec[idx], cloud_rest, Tolerance, 100);
+		cloud_cluster_vec = CExtendableICP::getSegmentation_robust(cloud_vec[idx], cloud_rest, Tolerance, 100);
 
 		cout << "cloud_cluster_vec.size(): " << cloud_cluster_vec.size() << endl;
 
@@ -2769,7 +2769,7 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_2frames(string dir_, vector<float> para
 		//transform
 		{
 			Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-			Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(transform_);
+			Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(transform_);
 			pcl::transformPointCloud(*cloud_src_show, *cloud_src_show, Trans_temp);
 		}
 		//add to global
@@ -3121,8 +3121,8 @@ vector<string> CPointcloudFunction::GR_FPFH_SAC_IA_Allframes_OnePair(string dir_
 	else
 	{
 		Eigen::Matrix4d T_src_TRUE = Eigen::Matrix4d::Identity();
-		T_src_TRUE = CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]).inverse()
-			* CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
+		T_src_TRUE = CExtendableICP::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]).inverse()
+			* CExtendableICP::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
 
 		b_hasConverged = CFPFH_PCL::align_SAC_AI_RANSAC_TRUE<pcl::PointXYZRGB>(transform_, inlier_, fitnessscore, frame_failed,
 			cloud_vec[i_src], fpfh_vec[i_src], cloud_vec[i_tgt], fpfh_vec[i_tgt],
@@ -3161,7 +3161,7 @@ vector<string> CPointcloudFunction::GR_FPFH_SAC_IA_Allframes_OnePair(string dir_
 	pcl::copyPointCloud(*cloud_src, *cloud_src_true);		//evaluation
 	{
 		Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-		Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(transform_);
+		Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(transform_);
 		pcl::transformPointCloud(*cloud_src, *cloud_src, Trans_temp);
 	}
 	//distance
@@ -3171,11 +3171,11 @@ vector<string> CPointcloudFunction::GR_FPFH_SAC_IA_Allframes_OnePair(string dir_
 		Eigen::Matrix4d T_i1_tgt = Eigen::Matrix4d::Identity();
 		Eigen::Matrix4d T_i_GL = Eigen::Matrix4d::Identity();
 		//T_i_src = T_i1_tgt * T_i_GL
-		T_i_src = CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
-		T_i1_tgt = CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]);
+		T_i_src = CExtendableICP::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
+		T_i1_tgt = CExtendableICP::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]);
 		T_i_GL = T_i1_tgt.inverse() * T_i_src;
 		Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-		Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(T_i_GL);
+		Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(T_i_GL);
 		pcl::transformPointCloud(*cloud_src_true, *cloud_src_true, Trans_temp);
 		//distance to true
 		for (size_t i = 0; i < cloud_src->size(); i++)
@@ -3199,7 +3199,7 @@ vector<string> CPointcloudFunction::GR_FPFH_SAC_IA_Allframes_OnePair(string dir_
 		cout << "distance_:" << distance_ << endl;
 	}
 	//median
-	double median_ = CKataokaPCL::getMedianDistance(cloud_src, cloud_tgt);
+	double median_ = CExtendableICP::getMedianDistance(cloud_src, cloud_tgt);
 	cout << "median_:" << median_ << endl;
 	//add for saving
 	*cloud_tgt += *cloud_src;
@@ -3224,7 +3224,7 @@ vector<string> CPointcloudFunction::GR_FPFH_SAC_IA_Allframes_OnePair(string dir_
 		pcl::io::savePCDFile<pcl::PointXYZRGB>(dir_ + "/" + s_filename_output, *cloud_tgt);
 	//output csv
 	Eigen::Vector6d transform_vec = Eigen::Vector6d::Zero();
-	transform_vec = CKataokaPCL::calcVector6dFromHomogeneousMatrix(transform_);
+	transform_vec = CExtendableICP::calcVector6dFromHomogeneousMatrix(transform_);
 	string time_end_frame = CTimeString::getTimeString();
 	string time_elapsed_frame = CTimeString::getTimeElapsefrom2Strings(time_start_frame, time_end_frame);
 	vector<string> s_temp_vec;
@@ -3524,11 +3524,11 @@ void CPointcloudFunction::GR_FPFH_error(string dir_, vector<float> parameter_vec
 			Eigen::Matrix4d T_i1_tgt = Eigen::Matrix4d::Identity();
 			Eigen::Matrix4d T_i_GL = Eigen::Matrix4d::Identity();
 			//T_i_src = T_i1_tgt * T_i_GL
-			T_i_src = CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
-			T_i1_tgt = CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]);
+			T_i_src = CExtendableICP::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
+			T_i1_tgt = CExtendableICP::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]);
 			T_i_GL = T_i1_tgt.inverse() * T_i_src;
 			Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-			Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(T_i_GL);
+			Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(T_i_GL);
 			pcl::transformPointCloud(*cloud_src_show, *cloud_src_show, Trans_temp);
 		}
 
@@ -3561,7 +3561,7 @@ void CPointcloudFunction::GR_FPFH_error(string dir_, vector<float> parameter_vec
 
 		////calc variance
 		//vector<float> variance_vec;
-		//variance_vec = CKataokaPCL::getFPFHVariance(fpfh_src);
+		//variance_vec = CExtendableICP::getFPFHVariance(fpfh_src);
 		//cout << "calc variance" << endl;
 		//for (int i = 0; i < variance_vec.size(); i++)
 		//	cout << "i:" << i << " " << variance_vec[i] << endl;
@@ -3744,11 +3744,11 @@ void CPointcloudFunction::GR_FPFH_error_AllFrames(string dir_, vector<float> par
 				Eigen::Matrix4d T_i1_tgt = Eigen::Matrix4d::Identity();
 				Eigen::Matrix4d T_i_GL = Eigen::Matrix4d::Identity();
 				//T_i_src = T_i1_tgt * T_i_GL
-				T_i_src = CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
-				T_i1_tgt = CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]);
+				T_i_src = CExtendableICP::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
+				T_i1_tgt = CExtendableICP::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]);
 				T_i_GL = T_i1_tgt.inverse() * T_i_src;
 				Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-				Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(T_i_GL);
+				Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(T_i_GL);
 				pcl::transformPointCloud(*cloud_src, *cloud_src, Trans_temp);
 			}
 
@@ -3889,7 +3889,7 @@ void CPointcloudFunction::DoOutlierRejector()
 			{
 				//use outlier rejector
 				cout << "use outlier rejector" << endl;
-				CKataokaPCL::Remove_outliers(cloud_, cloud_, Meank_out, StddevMulThresh_out);
+				CExtendableICP::Remove_outliers(cloud_, cloud_, Meank_out, StddevMulThresh_out);
 			}
 
 			//remove ground plane
@@ -4666,7 +4666,7 @@ void CPointcloudFunction::DoICP_proposed_only1method(
 		for (int i = 0; i < cloud_vec.size(); i++)
 		{
 			vector<int> chara_vec;
-			chara_vec = CKataokaPCL::ICP_Chara_GetCharaData(cloud_vec[i]);
+			chara_vec = CExtendableICP::ICP_Chara_GetCharaData(cloud_vec[i]);
 			chara_vecvec.push_back(chara_vec);
 		}
 	}
@@ -4706,8 +4706,8 @@ void CPointcloudFunction::DoICP_proposed_only1method(
 		//transform src by InitPos
 		{
 			Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-			Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
-				CKataokaPCL::calcHomogeneousMatrixFromVector6d(initPos_vec[j].Init_Vector));
+			Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(
+				CExtendableICP::calcHomogeneousMatrixFromVector6d(initPos_vec[j].Init_Vector));
 			pcl::transformPointCloud(*cloud_src, *cloud_src_transformed, Trans_temp);
 		}
 
@@ -4737,13 +4737,13 @@ void CPointcloudFunction::DoICP_proposed_only1method(
 			//align
 			align_ICP.align(*cloud_temp);
 			b_hasConverged = align_ICP.hasConverged();
-			Registration_Vector = CKataokaPCL::calcVector6dFromHomogeneousMatrix(
+			Registration_Vector = CExtendableICP::calcVector6dFromHomogeneousMatrix(
 				align_ICP.getFinalTransformation().cast<double>());
 			fitnessscore = align_ICP.getFitnessScore();
 		}
 		else if (i_method == 1)
 		{
-			CKataokaPCL align_ICP_proposed;
+			CExtendableICP align_ICP_proposed;
 			//parameter
 			align_ICP_proposed.setMothodInt(i_method);
 			align_ICP_proposed.setMaximumIterations(MaximumIterations);
@@ -4794,8 +4794,8 @@ void CPointcloudFunction::DoICP_proposed_only1method(
 		//transformation
 		{
 			Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-			Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
-				CKataokaPCL::calcHomogeneousMatrixFromVector6d(Registration_Vector));
+			Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(
+				CExtendableICP::calcHomogeneousMatrixFromVector6d(Registration_Vector));
 			pcl::transformPointCloud(*cloud_src_transformed, *cloud_src_transformed, Trans_temp);
 		}
 
@@ -4804,7 +4804,7 @@ void CPointcloudFunction::DoICP_proposed_only1method(
 		if (cloud_src->size() != 0)
 		{
 			pcl::Correspondences corr;
-			corr = CKataokaPCL::determineCorrespondences_output(cloud_src_transformed, cloud_tgt, MaxCorrespondenceDistance);
+			corr = CExtendableICP::determineCorrespondences_output(cloud_src_transformed, cloud_tgt, MaxCorrespondenceDistance);
 			rate_inlier = (float)corr.size() / (float)(cloud_src->size());
 		}
 		else rate_inlier = 0.;
@@ -4817,11 +4817,11 @@ void CPointcloudFunction::DoICP_proposed_only1method(
 			Eigen::Matrix4d T_i1_tgt = Eigen::Matrix4d::Identity();
 			Eigen::Matrix4d T_i_TRUE = Eigen::Matrix4d::Identity();
 			//T_i_src = T_i1_tgt * T_i_GL
-			T_i_src = CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
-			T_i1_tgt = CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]);
+			T_i_src = CExtendableICP::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
+			T_i1_tgt = CExtendableICP::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]);
 			T_i_TRUE = T_i1_tgt.inverse() * T_i_src;
 			Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-			Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(T_i_TRUE);
+			Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(T_i_TRUE);
 			pcl::transformPointCloud(*cloud_src, *cloud_src, Trans_temp);
 			//distance to true
 			for (size_t i = 0; i < cloud_src_transformed->size(); i++)
@@ -4849,7 +4849,7 @@ void CPointcloudFunction::DoICP_proposed_only1method(
 		}
 		//median
 		double median_;
-		median_ = CKataokaPCL::getMedianDistance(cloud_src_transformed, cloud_tgt);
+		median_ = CExtendableICP::getMedianDistance(cloud_src_transformed, cloud_tgt);
 		cout << "median_:" << median_ << endl;
 		//save pointcloud
 		{
@@ -4877,9 +4877,9 @@ void CPointcloudFunction::DoICP_proposed_only1method(
 
 		//output csv
 		Eigen::Vector6d transform_vec = Eigen::Vector6d::Zero();
-		transform_vec = CKataokaPCL::calcVector6dFromHomogeneousMatrix(
-			CKataokaPCL::calcHomogeneousMatrixFromVector6d(Registration_Vector)
-			*CKataokaPCL::calcHomogeneousMatrixFromVector6d(initPos_vec[j].Init_Vector));
+		transform_vec = CExtendableICP::calcVector6dFromHomogeneousMatrix(
+			CExtendableICP::calcHomogeneousMatrixFromVector6d(Registration_Vector)
+			*CExtendableICP::calcHomogeneousMatrixFromVector6d(initPos_vec[j].Init_Vector));
 		string time_end_frame = CTimeString::getTimeString();
 		string time_elapsed_frame = CTimeString::getTimeElapsefrom2Strings(time_start_frame, time_end_frame);
 		vector<string> s_temp_vec;
@@ -5605,9 +5605,9 @@ void CPointcloudFunction::DoEvaluation_ICP_property_calculation(string dir_, str
 		if (j != 0)
 		{
 			displacementMat_ =
-				CKataokaPCL::calcHomogeneousMatrixFromVector6d(
+				CExtendableICP::calcHomogeneousMatrixFromVector6d(
 					trajectoryVector_vec_TRUE[frames_ajusted[j - 1]]).inverse()
-				* CKataokaPCL::calcHomogeneousMatrixFromVector6d(
+				* CExtendableICP::calcHomogeneousMatrixFromVector6d(
 					trajectoryVector_vec_TRUE[frames_ajusted[j]]);
 		}
 		displacementMat_vector_TRUE.push_back(displacementMat_);
@@ -5620,9 +5620,9 @@ void CPointcloudFunction::DoEvaluation_ICP_property_calculation(string dir_, str
 		if (j != 0)
 		{
 			displacementMat_ =
-				CKataokaPCL::calcHomogeneousMatrixFromVector6d(
+				CExtendableICP::calcHomogeneousMatrixFromVector6d(
 					trajectoryVector_vec[frames_ajusted[j - 1]]).inverse()
-				* CKataokaPCL::calcHomogeneousMatrixFromVector6d(
+				* CExtendableICP::calcHomogeneousMatrixFromVector6d(
 					trajectoryVector_vec[frames_ajusted[j]]);
 		}
 		displacementMat_vector.push_back(displacementMat_);
@@ -5667,10 +5667,10 @@ void CPointcloudFunction::DoEvaluation_ICP_property_calculation(string dir_, str
 		pcl::copyPointCloud(*cloud_vec[frames_ajusted[j - 1]], *cloud_tgt);
 		pcl::copyPointCloud(*cloud_vec[frames_ajusted[j]], *cloud_src);
 		Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-		Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
+		Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(
 			displacementMat_vector[j]);
 		pcl::transformPointCloud(*cloud_src, *cloud_src, Trans_temp);
-		frameCloudMedian_vec.push_back(CKataokaPCL::getMedianDistance(cloud_src, cloud_tgt));
+		frameCloudMedian_vec.push_back(CExtendableICP::getMedianDistance(cloud_src, cloud_tgt));
 	}
 
 	//map
@@ -5680,7 +5680,7 @@ void CPointcloudFunction::DoEvaluation_ICP_property_calculation(string dir_, str
 		pcl::PointCloud<T_PointType>::Ptr cloud_(new pcl::PointCloud<T_PointType>());
 		pcl::copyPointCloud(*cloud_vec[frames_ajusted[j]], *cloud_);
 		Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-		Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(displacementMat_vector_TRUE[j]);
+		Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(displacementMat_vector_TRUE[j]);
 		pcl::transformPointCloud(*cloud_, *cloud_, Trans_temp);
 		*cloud_map_TRUE += *cloud_;
 	}
@@ -5690,7 +5690,7 @@ void CPointcloudFunction::DoEvaluation_ICP_property_calculation(string dir_, str
 		pcl::PointCloud<T_PointType>::Ptr cloud_(new pcl::PointCloud<T_PointType>());
 		pcl::copyPointCloud(*cloud_vec[frames_ajusted[j]], *cloud_);
 		Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-		Trans_temp = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(displacementMat_vector[j]);
+		Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(displacementMat_vector[j]);
 		pcl::transformPointCloud(*cloud_, *cloud_, Trans_temp);
 		*cloud_map_ += *cloud_;
 	}
@@ -5965,9 +5965,9 @@ void CPointcloudFunction::DoMappingFromTrajectory()
 				stod(s_temp_vecvec[j][6]);
 			//yaw
 			Eigen::Matrix4d yaw_Mat = Eigen::Matrix4d::Identity();
-			yaw_Mat = CKataokaPCL::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., yaw_trans);
-			yaw_Mat = yaw_Mat * CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectoryVector_);
-			trajectoryVector_ = CKataokaPCL::calcVector6dFromHomogeneousMatrix(yaw_Mat);
+			yaw_Mat = CExtendableICP::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., yaw_trans);
+			yaw_Mat = yaw_Mat * CExtendableICP::calcHomogeneousMatrixFromVector6d(trajectoryVector_);
+			trajectoryVector_ = CExtendableICP::calcVector6dFromHomogeneousMatrix(yaw_Mat);
 			trajectoryVector_vec.push_back(trajectoryVector_);
 			if (stoi(s_temp_vecvec[j][7]) == 1) frames_all.push_back(-1);
 			else frames_all.push_back(j - 1);
@@ -6041,8 +6041,8 @@ void CPointcloudFunction::DoMappingFromTrajectory()
 				pcl::copyPointCloud(*cloud_vec[index_cloud], *cloud);
 				//transformation
 				{
-					auto trans_ = CKataokaPCL::calcAffine3fFromHomogeneousMatrix(
-						CKataokaPCL::calcHomogeneousMatrixFromVector6d(trajectoryVector_vec[index_cloud])
+					auto trans_ = CExtendableICP::calcAffine3fFromHomogeneousMatrix(
+						CExtendableICP::calcHomogeneousMatrixFromVector6d(trajectoryVector_vec[index_cloud])
 					);
 					pcl::transformPointCloud(*cloud, *cloud, trans_);
 				}

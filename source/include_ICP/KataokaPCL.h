@@ -53,12 +53,13 @@ namespace Eigen {
 using namespace std;
 
 
-class __declspec(dllexport) CKataokaPCL {
+class __declspec(dllexport) CExtendableICP 
+{
 
 public:
 
-	CKataokaPCL();
-	~CKataokaPCL();
+	CExtendableICP();
+	~CExtendableICP();
 
 	typedef pcl::search::KdTree<pcl::PointXYZRGB> KdTree;
 
@@ -227,7 +228,7 @@ public:
 		const int npts = static_cast <int> (correspondences.size());
 		if (npts == 0)
 		{
-			cout << "input has no corrs in CKataokaPCL::estimateRigidTransformation_static" << endl;
+			cout << "input has no corrs in CExtendableICP::estimateRigidTransformation_static" << endl;
 			transformation_matrix = Eigen::Matrix4f::Identity();
 			return;
 		}
@@ -1127,8 +1128,8 @@ public:
 		int npts = cloud_->size();
 		if (npts == 0)
 		{
-			cout << "ERROR(CKataokaPCL::calcEigenMatrixFromPointCloud): No point contained." << endl;
-			throw std::runtime_error("ERROR(CKataokaPCL::calcEigenMatrixFromPointCloud): No point contained.");
+			cout << "ERROR(CExtendableICP::calcEigenMatrixFromPointCloud): No point contained." << endl;
+			throw std::runtime_error("ERROR(CExtendableICP::calcEigenMatrixFromPointCloud): No point contained.");
 		}
 		Eigen::Matrix<float, 3, Eigen::Dynamic> mat_(3, npts);
 		{
@@ -1152,8 +1153,8 @@ public:
 		int npts = mat_.cols();
 		if (npts == 0)
 		{
-			cout << "ERROR(CKataokaPCL::calcCovarianceMatrix): No point contained." << endl;
-			throw std::runtime_error("ERROR(CKataokaPCL::calcCovarianceMatrix): No point contained.");
+			cout << "ERROR(CExtendableICP::calcCovarianceMatrix): No point contained." << endl;
+			throw std::runtime_error("ERROR(CExtendableICP::calcCovarianceMatrix): No point contained.");
 		}
 		const float one_over_n = 1. / static_cast<float>(npts);
 		Eigen::Matrix<float, Eigen::Dynamic, 1> mat_mean(mat_.rows(), 1);
@@ -1553,8 +1554,8 @@ public:
 
 		if (num_valid < 3)
 		{
-			cout << "ERROR(CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt): Few correspondednces exist simultaneously." << endl;
-			throw std::runtime_error("ERROR(CKataokaPCL::getCorrespondance_RatioOfDistanceOfSrcAndTgt): Few correspondednces exist simultaneously.");
+			cout << "ERROR(CExtendableICP::getCorrespondance_RatioOfDistanceOfSrcAndTgt): Few correspondednces exist simultaneously." << endl;
+			throw std::runtime_error("ERROR(CExtendableICP::getCorrespondance_RatioOfDistanceOfSrcAndTgt): Few correspondednces exist simultaneously.");
 		}
 
 		vector<vector<int>> corr_pair_cluster_vecvec_new;
@@ -1606,7 +1607,7 @@ public:
 	{
 		if (corrs_vec.size() == 0)
 		{
-			cout << "input has no corrs in CKataokaPCL::determineCorrespondences_geometricConstraint_evaluateCluster" << endl;
+			cout << "input has no corrs in CExtendableICP::determineCorrespondences_geometricConstraint_evaluateCluster" << endl;
 			pcl::Correspondences temp;
 			return temp;
 		}
@@ -1628,7 +1629,7 @@ public:
 
 		for (int j = 0; j < transformation_vec.size(); j++)
 		{
-			pcl::transformPointCloud(*cloud_src, *cloud_src_moving, CKataokaPCL::calcAffine3fFromHomogeneousMatrix(transformation_vec[j]));
+			pcl::transformPointCloud(*cloud_src, *cloud_src_moving, CExtendableICP::calcAffine3fFromHomogeneousMatrix(transformation_vec[j]));
 			vector<float> distance_vec;
 
 			//distances of correspondences 

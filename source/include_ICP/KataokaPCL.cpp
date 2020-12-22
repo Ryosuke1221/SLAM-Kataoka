@@ -1,6 +1,6 @@
 #include "KataokaPCL.h"
 
-CKataokaPCL::CKataokaPCL()
+CExtendableICP::CExtendableICP()
 	:
 M_convergence_criteria_()
 //, M_correspondences_(new pcl::Correspondences())
@@ -42,22 +42,22 @@ M_convergence_criteria_()
 
 }
 
-CKataokaPCL::~CKataokaPCL()
+CExtendableICP::~CExtendableICP()
 {
 
 }
 
-void CKataokaPCL::setCharaVector_src(vector<int> chara_vec)
+void CExtendableICP::setCharaVector_src(vector<int> chara_vec)
 {
 	M_chara_src_vec = chara_vec;
 }
 
-void CKataokaPCL::setCharaVector_tgt(vector<int> chara_vec)
+void CExtendableICP::setCharaVector_tgt(vector<int> chara_vec)
 {
 	M_chara_tgt_vec = chara_vec;
 }
 
-Eigen::Matrix4d CKataokaPCL::calcHomogeneousMatrixFromVector6d(double X_, double Y_, double Z_,
+Eigen::Matrix4d CExtendableICP::calcHomogeneousMatrixFromVector6d(double X_, double Y_, double Z_,
 	double Roll_, double Pitch_, double Yaw_) 
 {
 	Eigen::Matrix4d	transformation_Position = Eigen::Matrix4d::Identity();
@@ -84,7 +84,7 @@ Eigen::Matrix4d CKataokaPCL::calcHomogeneousMatrixFromVector6d(double X_, double
 	return transformation_Position;
 }
 
-Eigen::Matrix4d CKataokaPCL::calcHomogeneousMatrixFromVector6d(Eigen::Vector6d XYZRPY_arg)
+Eigen::Matrix4d CExtendableICP::calcHomogeneousMatrixFromVector6d(Eigen::Vector6d XYZRPY_arg)
 {
 	Eigen::Matrix4d	transformation_Position = Eigen::Matrix4d::Identity();
 	Eigen::Matrix4d T_mat = Eigen::Matrix4d::Identity();
@@ -111,7 +111,7 @@ Eigen::Matrix4d CKataokaPCL::calcHomogeneousMatrixFromVector6d(Eigen::Vector6d X
 }
 
 //Not very confident
-Eigen::Vector6d CKataokaPCL::calcVector6dFromHomogeneousMatrix(Eigen::Matrix4d input_Mat)
+Eigen::Vector6d CExtendableICP::calcVector6dFromHomogeneousMatrix(Eigen::Matrix4d input_Mat)
 {
 	Eigen::Vector6d XYZRPY = Eigen::Vector6d::Zero();
 	double X_, Y_, Z_, Roll_, Pitch_, Yaw_;
@@ -155,7 +155,7 @@ Eigen::Vector6d CKataokaPCL::calcVector6dFromHomogeneousMatrix(Eigen::Matrix4d i
 	return XYZRPY;
 }
 
-Eigen::Affine3f CKataokaPCL::calcAffine3fFromHomogeneousMatrix(Eigen::Matrix4d input_Mat)
+Eigen::Affine3f CExtendableICP::calcAffine3fFromHomogeneousMatrix(Eigen::Matrix4d input_Mat)
 {
 	Eigen::Affine3f Trans_Affine = Eigen::Affine3f::Identity();
 	Eigen::Vector6d Trans_Vec = Eigen::Vector6d::Identity();
@@ -167,7 +167,7 @@ Eigen::Affine3f CKataokaPCL::calcAffine3fFromHomogeneousMatrix(Eigen::Matrix4d i
 	return Trans_Affine;
 }
 
-void CKataokaPCL::align()
+void CExtendableICP::align()
 {
 
 	M_converged_ = false;
@@ -201,7 +201,7 @@ void CKataokaPCL::align()
 	computeTransformation();
 }
 
-void CKataokaPCL::align(Eigen::Matrix4d init)
+void CExtendableICP::align(Eigen::Matrix4d init)
 {
 
 	//ÉÅÉìÉoïœêîÇ…ìnÇ∑ÅD
@@ -213,7 +213,7 @@ void CKataokaPCL::align(Eigen::Matrix4d init)
 
 }
 
-void CKataokaPCL::computeTransformation()
+void CExtendableICP::computeTransformation()
 {
 	static bool b_convergence_original = false;
 	b_convergence_original = true;
@@ -456,7 +456,7 @@ void CKataokaPCL::computeTransformation()
 
 }
 
-void CKataokaPCL::determineCorrespondences(pcl::Correspondences &correspondences, double max_distance)
+void CExtendableICP::determineCorrespondences(pcl::Correspondences &correspondences, double max_distance)
 {
 
 	//cout << "determineCorrespondences" << endl;
@@ -504,7 +504,7 @@ void CKataokaPCL::determineCorrespondences(pcl::Correspondences &correspondences
 	cout << "correspondences size = " << nr_valid_correspondences << endl;
 }
 
-void CKataokaPCL::determineCorrespondences(Correspondences_Kataoka &correspondences, double max_distance)
+void CExtendableICP::determineCorrespondences(Correspondences_Kataoka &correspondences, double max_distance)
 {
 
 	//cout << "determineCorrespondences" << endl;
@@ -555,7 +555,7 @@ void CKataokaPCL::determineCorrespondences(Correspondences_Kataoka &corresponden
 }
 
 
-void CKataokaPCL::determineCorrespondences_chara(pcl::Correspondences &correspondences,
+void CExtendableICP::determineCorrespondences_chara(pcl::Correspondences &correspondences,
 	double penalty_chara, double dist_search_arg, double weight_dist_chara)
 {
 
@@ -642,7 +642,7 @@ void CKataokaPCL::determineCorrespondences_chara(pcl::Correspondences &correspon
 	cout << "correspondences size = " << nr_valid_correspondences << endl;
 }
 
-void CKataokaPCL::determineCorrespondences_chara(Correspondences_Kataoka &correspondences,
+void CExtendableICP::determineCorrespondences_chara(Correspondences_Kataoka &correspondences,
 	double penalty_chara, double dist_search_arg, double weight_dist_chara)
 {
 
@@ -730,7 +730,7 @@ void CKataokaPCL::determineCorrespondences_chara(Correspondences_Kataoka &corres
 	cout << "correspondences size = " << nr_valid_correspondences << endl;
 }
 
-//void CKataokaPCL::determineCorrespondences_argPC(pcl::Correspondences &correspondences, double max_distance,
+//void CExtendableICP::determineCorrespondences_argPC(pcl::Correspondences &correspondences, double max_distance,
 //	pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud_src, pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud_tgt)
 //{
 //
@@ -775,7 +775,7 @@ void CKataokaPCL::determineCorrespondences_chara(Correspondences_Kataoka &corres
 //	cout << "correspondences size = " << nr_valid_correspondences << endl;
 //}
 
-void CKataokaPCL::determineCorrespondences_argPC_chara(pcl::Correspondences &correspondences, double max_distance,
+void CExtendableICP::determineCorrespondences_argPC_chara(pcl::Correspondences &correspondences, double max_distance,
 	double penalty_chara, double dist_search_arg, double weight_dist_chara,
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr pPointCloud_src_arg, pcl::PointCloud<pcl::PointXYZRGB>::Ptr pPointCloud_tgt_arg,
 	vector<int> Chara_start_vec, vector<int> Chara_end_vec)
@@ -855,7 +855,7 @@ void CKataokaPCL::determineCorrespondences_argPC_chara(pcl::Correspondences &cor
 }
 //	CorrespondencesPtr_Spring_1 M_correspondences_spring1;
 
-void CKataokaPCL::determineCorrespondences_Spring1(Correspondences_Spring1 &correspondences,
+void CExtendableICP::determineCorrespondences_Spring1(Correspondences_Spring1 &correspondences,
 	double max_distance, vector<double> WeightConstant_spring_vec)
 {
 	correspondences.resize(M_pPointCloud_src_transformed->size());
@@ -908,7 +908,7 @@ void CKataokaPCL::determineCorrespondences_Spring1(Correspondences_Spring1 &corr
 	cout << "correspondences size = " << nr_valid_correspondences << endl;
 }
 
-void CKataokaPCL::determineCorrespondences_Spring2(Correspondences_Spring2 &correspondences,
+void CExtendableICP::determineCorrespondences_Spring2(Correspondences_Spring2 &correspondences,
 	double max_distance, vector<double> WeightConstant_spring_vec)
 {
 	correspondences.resize(M_pPointCloud_src_transformed->size());
@@ -987,7 +987,7 @@ void CKataokaPCL::determineCorrespondences_Spring2(Correspondences_Spring2 &corr
 	cout << "correspondences size = " << nr_valid_correspondences << endl;
 }
 
-void CKataokaPCL::transformPointCloud(pcl::PointCloud<pcl::PointXYZRGB> &input_arg,
+void CExtendableICP::transformPointCloud(pcl::PointCloud<pcl::PointXYZRGB> &input_arg,
 	pcl::PointCloud<pcl::PointXYZRGB> &output_arg, Eigen::Matrix4f transformation_arg)
 {
 
@@ -1000,7 +1000,7 @@ void CKataokaPCL::transformPointCloud(pcl::PointCloud<pcl::PointXYZRGB> &input_a
 
 }
 
-double CKataokaPCL::getFitnessScore()
+double CExtendableICP::getFitnessScore()
 {
 
 	double fitness_score = 0.0;
@@ -1037,7 +1037,7 @@ double CKataokaPCL::getFitnessScore()
 
 }
 
-double CKataokaPCL::getFitnessScore_chara() 
+double CExtendableICP::getFitnessScore_chara() 
 {
 
 	double fitness_score_chara = 0.0;
@@ -1079,7 +1079,7 @@ double CKataokaPCL::getFitnessScore_chara()
 }
 
 
-void CKataokaPCL::print4x4Matrix(const Eigen::Matrix4d & matrix)
+void CExtendableICP::print4x4Matrix(const Eigen::Matrix4d & matrix)
 {
 	printf("Rotation matrix :\n");
 	printf("    | %6.3f %6.3f %6.3f | \n", matrix(0, 0), matrix(0, 1), matrix(0, 2));
@@ -1089,7 +1089,7 @@ void CKataokaPCL::print4x4Matrix(const Eigen::Matrix4d & matrix)
 	printf("t = < %6.3f, %6.3f, %6.3f >\n\n", matrix(0, 3), matrix(1, 3), matrix(2, 3));
 }
 
-double CKataokaPCL::getDistanceOf2PointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud1_arg, pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud2_arg)
+double CExtendableICP::getDistanceOf2PointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud1_arg, pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_cloud2_arg)
 {
 	pcl::KdTreeFLANN<pcl::PointXYZRGB> match_search;
 
@@ -1165,7 +1165,7 @@ double CKataokaPCL::getDistanceOf2PointCloud(pcl::PointCloud<pcl::PointXYZRGB>::
 
 }
 
-int CKataokaPCL::do_exp_getCharaOfPoint_Todai(double x_, double y_, double z_)
+int CExtendableICP::do_exp_getCharaOfPoint_Todai(double x_, double y_, double z_)
 {
 
 	int chara_value = 0;
@@ -1350,7 +1350,7 @@ int CKataokaPCL::do_exp_getCharaOfPoint_Todai(double x_, double y_, double z_)
 	return chara_value;
 }
 
-bool CKataokaPCL::do_exp_getIsRemovedPoint_Todai(double x_, double y_, double z_)
+bool CExtendableICP::do_exp_getIsRemovedPoint_Todai(double x_, double y_, double z_)
 {
 
 	bool b_remove = false;
@@ -1528,18 +1528,18 @@ bool CKataokaPCL::do_exp_getIsRemovedPoint_Todai(double x_, double y_, double z_
 
 //	vector<vector<double>> M_chara_src_vecvec;
 
-void CKataokaPCL::setSpring1VecVec_src(vector<vector<double>> spring1_src_vecvec)
+void CExtendableICP::setSpring1VecVec_src(vector<vector<double>> spring1_src_vecvec)
 {
 	M_spring_src_vecvec = spring1_src_vecvec;
 }
 
-void CKataokaPCL::setSpring1VecVec_tgt(vector<vector<double>> spring1_tgt_vecvec)
+void CExtendableICP::setSpring1VecVec_tgt(vector<vector<double>> spring1_tgt_vecvec)
 {
 	M_spring_tgt_vecvec = spring1_tgt_vecvec;
 }
 
 template <typename PointSource, typename PointTarget> void
-CKataokaPCL::estimateRigidTransformation(
+CExtendableICP::estimateRigidTransformation(
 	const pcl::PointCloud<PointSource> &cloud_src_arg,
 	const pcl::PointCloud<PointTarget> &cloud_tgt_arg,
 	const pcl::Correspondences &correspondences,
@@ -1648,7 +1648,7 @@ CKataokaPCL::estimateRigidTransformation(
 }
 
 template <typename PointSource, typename PointTarget> void
-CKataokaPCL::estimateRigidTransformation(
+CExtendableICP::estimateRigidTransformation(
 	const pcl::PointCloud<PointSource> &cloud_src_arg,
 	const pcl::PointCloud<PointTarget> &cloud_tgt_arg,
 	const Correspondences_Kataoka &correspondences,
@@ -1780,7 +1780,7 @@ CKataokaPCL::estimateRigidTransformation(
 }
 
 template <typename PointSource, typename PointTarget> void
-CKataokaPCL::estimateRigidTransformation(
+CExtendableICP::estimateRigidTransformation(
 	const pcl::PointCloud<PointSource> &cloud_src_arg,
 	const pcl::PointCloud<PointTarget> &cloud_tgt_arg,
 	const Correspondences_Spring1 &correspondences,
@@ -1914,7 +1914,7 @@ CKataokaPCL::estimateRigidTransformation(
 }
 
 template <typename PointSource, typename PointTarget> void
-CKataokaPCL::estimateRigidTransformation(
+CExtendableICP::estimateRigidTransformation(
 	const pcl::PointCloud<PointSource> &cloud_src_arg,
 	const pcl::PointCloud<PointTarget> &cloud_tgt_arg,
 	const Correspondences_Spring2 &correspondences,
@@ -2042,7 +2042,7 @@ CKataokaPCL::estimateRigidTransformation(
 
 }
 
-float CKataokaPCL::getCorrMedianDistance(pcl::Correspondences correspondences)
+float CExtendableICP::getCorrMedianDistance(pcl::Correspondences correspondences)
 {
 	vector<float> distance_vec;
 	int size = correspondences.size();
@@ -2059,7 +2059,7 @@ float CKataokaPCL::getCorrMedianDistance(pcl::Correspondences correspondences)
 
 }
 
-float CKataokaPCL::getCorrMedianDistance(CorrespondencesPtr_Kataoka correspondences)
+float CExtendableICP::getCorrMedianDistance(CorrespondencesPtr_Kataoka correspondences)
 {
 	vector<float> distance_vec;
 	int size = correspondences->size();
@@ -2078,7 +2078,7 @@ float CKataokaPCL::getCorrMedianDistance(CorrespondencesPtr_Kataoka corresponden
 
 }
 
-float CKataokaPCL::getCorrMedianDistance(CorrespondencesPtr_Spring1 correspondences)
+float CExtendableICP::getCorrMedianDistance(CorrespondencesPtr_Spring1 correspondences)
 {
 	vector<float> distance_vec;
 	int size = correspondences->size();
@@ -2097,7 +2097,7 @@ float CKataokaPCL::getCorrMedianDistance(CorrespondencesPtr_Spring1 corresponden
 
 }
 
-float CKataokaPCL::getCorrMedianDistance(CorrespondencesPtr_Spring2 correspondences)
+float CExtendableICP::getCorrMedianDistance(CorrespondencesPtr_Spring2 correspondences)
 {
 	vector<float> distance_vec;
 	int size = correspondences->size();
@@ -2116,7 +2116,7 @@ float CKataokaPCL::getCorrMedianDistance(CorrespondencesPtr_Spring2 corresponden
 
 }
 
-Eigen::Vector6d CKataokaPCL::calcRobotPosition_3DoF(Eigen::Vector6d pos_before, Eigen::Vector6d disp_odometry,
+Eigen::Vector6d CExtendableICP::calcRobotPosition_3DoF(Eigen::Vector6d pos_before, Eigen::Vector6d disp_odometry,
 	Eigen::Vector6d pose_sensor, Eigen::Vector6d disp_registration)
 {
 	//T(i-1)T(odo,i)T(s)T(icp,i)=T(i)T(s)
@@ -2155,7 +2155,7 @@ Eigen::Vector6d CKataokaPCL::calcRobotPosition_3DoF(Eigen::Vector6d pos_before, 
 	return pos_reg;
 }
 
-Eigen::Vector6d CKataokaPCL::calcRobotPosition_6DoF(Eigen::Vector6d pos_before, Eigen::Vector6d disp_odometry,
+Eigen::Vector6d CExtendableICP::calcRobotPosition_6DoF(Eigen::Vector6d pos_before, Eigen::Vector6d disp_odometry,
 	Eigen::Vector6d pose_sensor, Eigen::Vector6d disp_registration)
 {
 	//T(i-1)T(odo,i)T(s)T(icp,i)=T(i)T(s)
@@ -2170,7 +2170,7 @@ Eigen::Vector6d CKataokaPCL::calcRobotPosition_6DoF(Eigen::Vector6d pos_before, 
 	return pos_reg;
 }
 
-int CKataokaPCL::ICP_Chara_getCharaOfPoint_NarahaWinter(pcl::PointXYZRGB point_arg, vector<double> th_vec)
+int CExtendableICP::ICP_Chara_getCharaOfPoint_NarahaWinter(pcl::PointXYZRGB point_arg, vector<double> th_vec)
 {
 	int chara_value = 0;
 	int value_none = 0;
@@ -2198,7 +2198,7 @@ int CKataokaPCL::ICP_Chara_getCharaOfPoint_NarahaWinter(pcl::PointXYZRGB point_a
 	return chara_value;
 }
 
-vector<int> CKataokaPCL::ICP_Chara_GetCharaData(pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_PointCloud_arg)
+vector<int> CExtendableICP::ICP_Chara_GetCharaData(pcl::PointCloud<pcl::PointXYZRGB>::Ptr p_PointCloud_arg)
 {
 	vector<int> chara_vec;
 	for (int i = 0; i < p_PointCloud_arg->size(); i++)
@@ -2212,7 +2212,7 @@ vector<int> CKataokaPCL::ICP_Chara_GetCharaData(pcl::PointCloud<pcl::PointXYZRGB
 	return chara_vec;
 }
 
-pcl::Correspondences CKataokaPCL::getCorrespondences_eachPairHaving(const pcl::Correspondences &corr_src_tgt,
+pcl::Correspondences CExtendableICP::getCorrespondences_eachPairHaving(const pcl::Correspondences &corr_src_tgt,
 	const pcl::Correspondences &corr_tgt_src)
 {
 	vector<vector<int>> index_corr_temp_vecvec;
@@ -2266,7 +2266,7 @@ pcl::Correspondences CKataokaPCL::getCorrespondences_eachPairHaving(const pcl::C
 	return corr_new;
 }
 
-vector<vector<int>> CKataokaPCL::calcValidIndex_feature(const vector<vector<float>> &feature_vecvec, int num_bin_hist, bool b_showHistogram)
+vector<vector<int>> CExtendableICP::calcValidIndex_feature(const vector<vector<float>> &feature_vecvec, int num_bin_hist, bool b_showHistogram)
 {
 	float value_max_hist;
 	float value_min_hist;
@@ -2332,7 +2332,7 @@ vector<vector<int>> CKataokaPCL::calcValidIndex_feature(const vector<vector<floa
 	return index_valid_vecvec;
 }
 
-void CKataokaPCL::calcRanking_compareArg_eachValue(const vector<vector<pair<float, float>>> &compare_vecvec,
+void CExtendableICP::calcRanking_compareArg_eachValue(const vector<vector<pair<float, float>>> &compare_vecvec,
 	vector<int> &frame_vec, vector<int> &corr_index_vec, vector<bool> &b_queryOrNot_vec, vector<float> &evaluation_vec, bool b_cout)
 {
 	vector<vector<float>> ranking_vecvec;
@@ -2379,7 +2379,7 @@ void CKataokaPCL::calcRanking_compareArg_eachValue(const vector<vector<pair<floa
 	cout << endl;
 }
 
-vector<vector<int>> CKataokaPCL::calcRanking_compareArg(const vector<vector<pair<float, float>>> &compare_vecvec, bool b_cout)
+vector<vector<int>> CExtendableICP::calcRanking_compareArg(const vector<vector<pair<float, float>>> &compare_vecvec, bool b_cout)
 {
 	vector<int> frame_vec;
 	vector<int>corr_index_vec;
