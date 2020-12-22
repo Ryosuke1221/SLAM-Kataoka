@@ -39,7 +39,7 @@
 //VTK_MODULE_INIT(vtkRenderingOpenGL);
 //VTK_MODULE_INIT(vtkInteractionStyle);
 
-#include"KataokaPCL.h"
+#include"ExtendableICP.h"
 #include"FPFH_PCL.h"
 #include "PointVisualization.h"
 

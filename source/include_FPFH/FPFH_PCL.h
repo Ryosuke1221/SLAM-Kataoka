@@ -37,7 +37,7 @@
 #include <pcl/filters/statistical_outlier_removal.h>
 
 #include"TimeString.h"
-#include"KataokaPCL.h"
+#include"ExtendableICP.h"
 
 namespace Eigen {
 

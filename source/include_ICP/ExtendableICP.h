@@ -53,7 +53,8 @@ namespace Eigen {
 using namespace std;
 
 
-class __declspec(dllexport) CExtendableICP 
+//class __declspec(dllexport) CExtendableICP
+class CExtendableICP
 {
 
 public:
