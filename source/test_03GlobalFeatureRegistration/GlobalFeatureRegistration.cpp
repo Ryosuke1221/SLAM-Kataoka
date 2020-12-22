@@ -160,7 +160,7 @@ void CGlobalFeatureRegistration::DoDifferential_1pointcloud(string dir_)
 	}
 
 	vector<float> featureDivergence_vec;
-	featureDivergence_vec = CKataokaPCL::getPointCloud_featureDivergence(cloud_, feature_vec, kdtree_, radius_differential, 0.25);
+	featureDivergence_vec = CExtendableICP::getPointCloud_featureDivergence(cloud_, feature_vec, kdtree_, radius_differential, 0.25);
 
 	//for (int j = 0; j < featureDivergence_vec.size(); j++)
 	//{
@@ -421,7 +421,7 @@ void CGlobalFeatureRegistration::DoDifferential_SomePointclouds(string dir_)
 		pcl::KdTreeFLANN<T_PointType>::Ptr kdtree_(new pcl::KdTreeFLANN<T_PointType>);
 		kdtree_->setInputCloud(cloud_vec[j]);
 		vector<float> featureDivergence_vec;
-		featureDivergence_vec = CKataokaPCL::getPointCloud_featureDivergence(cloud_vec[j], feature_vecvec[j], kdtree_, radius_differential, sigma_weight, true);
+		featureDivergence_vec = CExtendableICP::getPointCloud_featureDivergence(cloud_vec[j], feature_vecvec[j], kdtree_, radius_differential, sigma_weight, true);
 		featureDivergence_vecvec.push_back(featureDivergence_vec);
 	}
 
@@ -437,10 +437,10 @@ void CGlobalFeatureRegistration::DoDifferential_SomePointclouds(string dir_)
 	}
 
 	vector<vector<int>> index_valid_vecvec;
-	index_valid_vecvec = CKataokaPCL::calcValidIndex_feature(featureDivergence_vecvec, num_bin_hist, true);
+	index_valid_vecvec = CExtendableICP::calcValidIndex_feature(featureDivergence_vecvec, num_bin_hist, true);
 
 	////botsu?
-	//vector<pair<int, int>> corr_vec = CKataokaPCL::determineCorrespondences_feature_histogram(featureDivergence_vecvec[1],
+	//vector<pair<int, int>> corr_vec = CExtendableICP::determineCorrespondences_feature_histogram(featureDivergence_vecvec[1],
 	//	featureDivergence_vecvec[0], num_bin_hist, value_max_hist, value_min_hist, range_hist, true);
 	//cout << "corr_vec.size():" << corr_vec.size() << endl;
 
@@ -450,11 +450,11 @@ void CGlobalFeatureRegistration::DoDifferential_SomePointclouds(string dir_)
 		int i_src = 1;
 		int i_tgt = 0;
 		int num_nearest = 10;
-		//corr_new = CKataokaPCL::determineCorrespondences_feature(featureDivergence_vecvec[i_src], featureDivergence_vecvec[i_tgt], num_nearest);
-		corr_new = CKataokaPCL::determineCorrespondences_featureScalar_num_remove(featureDivergence_vecvec[i_src], featureDivergence_vecvec[i_tgt],
+		//corr_new = CExtendableICP::determineCorrespondences_feature(featureDivergence_vecvec[i_src], featureDivergence_vecvec[i_tgt], num_nearest);
+		corr_new = CExtendableICP::determineCorrespondences_featureScalar_num_remove(featureDivergence_vecvec[i_src], featureDivergence_vecvec[i_tgt],
 			index_valid_vecvec[i_src], index_valid_vecvec[i_tgt], num_nearest);
 		cout << "corr_new.size():" << corr_new.size() << endl;
-		corr_new_vec = CKataokaPCL::determineCorrespondences_geometricConstraint(cloud_vec[i_src], cloud_vec[i_tgt], corr_new, 0.9);
+		corr_new_vec = CExtendableICP::determineCorrespondences_geometricConstraint(cloud_vec[i_src], cloud_vec[i_tgt], corr_new, 0.9);
 		for (int j = 0; j < corr_new_vec.size(); j++)
 			cout << "j:" << j << " corr_new_vec[j].size():" << corr_new_vec[j].size() << endl;
 	}
@@ -572,7 +572,7 @@ void CGlobalFeatureRegistration::DoDifferential_SomePointclouds(string dir_)
 
 		//give z by features
 		pcl::copyPointCloud(*cloud_colored, *cloud_ZValue);
-		*cloud_ZValue = *CKataokaPCL::getPointCloud_ZAaxisByFeature(cloud_ZValue, feature_vec, 10.);
+		*cloud_ZValue = *CExtendableICP::getPointCloud_ZAaxisByFeature(cloud_ZValue, feature_vec, 10.);
 
 		{
 			Eigen::Affine3f trans_ = calcAffine3fFromHomogeneousMatrix(
@@ -729,7 +729,7 @@ void CGlobalFeatureRegistration::DoDifferential_showFeatureValue(string dir_)
 
 		//give z by features
 		pcl::copyPointCloud(*cloud_colored, *cloud_ZValue);
-		*cloud_ZValue = *CKataokaPCL::getPointCloud_ZAaxisByFeature(cloud_ZValue, feature_vecvec[j], 3.);
+		*cloud_ZValue = *CExtendableICP::getPointCloud_ZAaxisByFeature(cloud_ZValue, feature_vecvec[j], 3.);
 
 		{
 			Eigen::Affine3f trans_ = calcAffine3fFromHomogeneousMatrix(
@@ -973,7 +973,7 @@ void CGlobalFeatureRegistration::DoDifferential_RigidTransformation_FPFH_Feature
 			pcl::KdTreeFLANN<T_PointType>::Ptr kdtree_(new pcl::KdTreeFLANN<T_PointType>);
 			kdtree_->setInputCloud(cloud_vec[j]);
 			vector<float> featureDivergence_vec;
-			featureDivergence_vec = CKataokaPCL::getPointCloud_featureDivergence(cloud_vec[j], feature_vecvec_nir[j], kdtree_, radius_differential, sigma_weight, true);
+			featureDivergence_vec = CExtendableICP::getPointCloud_featureDivergence(cloud_vec[j], feature_vecvec_nir[j], kdtree_, radius_differential, sigma_weight, true);
 			featureDivergence_vecvec_nir.push_back(featureDivergence_vec);
 		}
 		for (int j = 0; j < cloud_vec.size(); j++)
@@ -981,13 +981,13 @@ void CGlobalFeatureRegistration::DoDifferential_RigidTransformation_FPFH_Feature
 			pcl::KdTreeFLANN<T_PointType>::Ptr kdtree_(new pcl::KdTreeFLANN<T_PointType>);
 			kdtree_->setInputCloud(cloud_vec[j]);
 			vector<float> featureDivergence_vec;
-			featureDivergence_vec = CKataokaPCL::getPointCloud_featureDivergence(cloud_vec[j], feature_vecvec_velodyne[j], kdtree_, radius_differential, sigma_weight, true);
+			featureDivergence_vec = CExtendableICP::getPointCloud_featureDivergence(cloud_vec[j], feature_vecvec_velodyne[j], kdtree_, radius_differential, sigma_weight, true);
 			featureDivergence_vecvec_velodyne.push_back(featureDivergence_vec);
 		}
 		bool b_showHistogram = false;
 		b_showHistogram = true;
-		index_valid_vecvec_nir = CKataokaPCL::calcValidIndex_feature(featureDivergence_vecvec_nir, num_bin_hist, b_showHistogram);
-		index_valid_vecvec_velodyne = CKataokaPCL::calcValidIndex_feature(featureDivergence_vecvec_velodyne, num_bin_hist, b_showHistogram);
+		index_valid_vecvec_nir = CExtendableICP::calcValidIndex_feature(featureDivergence_vecvec_nir, num_bin_hist, b_showHistogram);
+		index_valid_vecvec_velodyne = CExtendableICP::calcValidIndex_feature(featureDivergence_vecvec_velodyne, num_bin_hist, b_showHistogram);
 	}
 
 
@@ -1038,14 +1038,14 @@ void CGlobalFeatureRegistration::DoDifferential_RigidTransformation_FPFH_Feature
 	float th_nearest_velodyne = 0.05;
 	float th_nearest_fpfh = 1800.;
 
-	//corrs_nir = CKataokaPCL::determineCorrespondences_feature_remove(featureDivergence_vecvec_nir[i_src], featureDivergence_vecvec_nir[i_tgt],
+	//corrs_nir = CExtendableICP::determineCorrespondences_feature_remove(featureDivergence_vecvec_nir[i_src], featureDivergence_vecvec_nir[i_tgt],
 	//	index_valid_vecvec_nir[i_src], index_valid_vecvec_nir[i_tgt], num_nearest);
-	corrs_nir = CKataokaPCL::determineCorrespondences_featureScalar_remove(featureDivergence_vecvec_nir[i_src], featureDivergence_vecvec_nir[i_tgt],
+	corrs_nir = CExtendableICP::determineCorrespondences_featureScalar_remove(featureDivergence_vecvec_nir[i_src], featureDivergence_vecvec_nir[i_tgt],
 		index_valid_vecvec_nir[i_src], index_valid_vecvec_nir[i_tgt], th_nearest_nir);
 
-	//corrs_velodyne = CKataokaPCL::determineCorrespondences_feature_remove(featureDivergence_vecvec_velodyne[i_src], featureDivergence_vecvec_velodyne[i_tgt],
+	//corrs_velodyne = CExtendableICP::determineCorrespondences_feature_remove(featureDivergence_vecvec_velodyne[i_src], featureDivergence_vecvec_velodyne[i_tgt],
 	//	index_valid_vecvec_velodyne[i_src], index_valid_vecvec_velodyne[i_tgt], num_nearest);
-	corrs_velodyne = CKataokaPCL::determineCorrespondences_featureScalar_remove(featureDivergence_vecvec_velodyne[i_src], featureDivergence_vecvec_velodyne[i_tgt],
+	corrs_velodyne = CExtendableICP::determineCorrespondences_featureScalar_remove(featureDivergence_vecvec_velodyne[i_src], featureDivergence_vecvec_velodyne[i_tgt],
 		index_valid_vecvec_velodyne[i_src], index_valid_vecvec_velodyne[i_tgt], th_nearest_velodyne);
 
 	//corrs_fpfh = CFPFH_PCL::getNearestOfFPFH_eachPairHaving_remove(fpfh_vec[i_src], fpfh_vec[i_tgt],
@@ -1059,7 +1059,7 @@ void CGlobalFeatureRegistration::DoDifferential_RigidTransformation_FPFH_Feature
 		corrs_temp.insert(corrs_temp.end(), corrs_nir.begin(), corrs_nir.end());
 		corrs_temp.insert(corrs_temp.end(), corrs_velodyne.begin(), corrs_velodyne.end());
 		corrs_temp.insert(corrs_temp.end(), corrs_fpfh.begin(), corrs_fpfh.end());
-		corrs_vec = CKataokaPCL::determineCorrespondences_geometricConstraint(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, 0.9);
+		corrs_vec = CExtendableICP::determineCorrespondences_geometricConstraint(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, 0.9);
 		//for (int j = 0; j < corrs_vec.size(); j++)
 		//	cout << "j:" << j << " corrs_vec[j].size():" << corrs_vec[j].size() << endl;
 	}
@@ -1138,7 +1138,7 @@ void CGlobalFeatureRegistration::DoDifferential_RigidTransformation_FPFH_Feature
 	//for (int j = 0; j < corrs_vec.size(); j++)
 	//{
 	//	Eigen::Matrix4f transformation_matrix = Eigen::Matrix4f::Identity();
-	//	CKataokaPCL::estimateRigidTransformation_static(cloud_vec[i_src], cloud_vec[i_tgt], corrs_vec[j], transformation_matrix);
+	//	CExtendableICP::estimateRigidTransformation_static(cloud_vec[i_src], cloud_vec[i_tgt], corrs_vec[j], transformation_matrix);
 
 	//}
 
@@ -1242,7 +1242,7 @@ void CGlobalFeatureRegistration::DoDifferential_RigidTransformation_FPFH_Feature
 	//		pcl::KdTreeFLANN<T_PointType>::Ptr kdtree_(new pcl::KdTreeFLANN<T_PointType>);
 	//		kdtree_->setInputCloud(cloud_vec[j]);
 	//		vector<float> featureDivergence_vec;
-	//		featureDivergence_vec = CKataokaPCL::getPointCloud_featureDivergence(cloud_vec[j], feature_vecvec_nir[j], kdtree_, radius_differential, sigma_weight, true);
+	//		featureDivergence_vec = CExtendableICP::getPointCloud_featureDivergence(cloud_vec[j], feature_vecvec_nir[j], kdtree_, radius_differential, sigma_weight, true);
 	//		featureDivergence_vecvec_nir.push_back(featureDivergence_vec);
 	//	}
 	//	for (int j = 0; j < cloud_vec.size(); j++)
@@ -1250,13 +1250,13 @@ void CGlobalFeatureRegistration::DoDifferential_RigidTransformation_FPFH_Feature
 	//		pcl::KdTreeFLANN<T_PointType>::Ptr kdtree_(new pcl::KdTreeFLANN<T_PointType>);
 	//		kdtree_->setInputCloud(cloud_vec[j]);
 	//		vector<float> featureDivergence_vec;
-	//		featureDivergence_vec = CKataokaPCL::getPointCloud_featureDivergence(cloud_vec[j], feature_vecvec_velodyne[j], kdtree_, radius_differential, sigma_weight, true);
+	//		featureDivergence_vec = CExtendableICP::getPointCloud_featureDivergence(cloud_vec[j], feature_vecvec_velodyne[j], kdtree_, radius_differential, sigma_weight, true);
 	//		featureDivergence_vecvec_velodyne.push_back(featureDivergence_vec);
 	//	}
 	//	bool b_showHistogram = false;
 	//	b_showHistogram = true;
-	//	index_valid_vecvec_nir = CKataokaPCL::calcValidIndex_feature(featureDivergence_vecvec_nir, num_bin_hist, b_showHistogram);
-	//	index_valid_vecvec_velodyne = CKataokaPCL::calcValidIndex_feature(featureDivergence_vecvec_velodyne, num_bin_hist, b_showHistogram);
+	//	index_valid_vecvec_nir = CExtendableICP::calcValidIndex_feature(featureDivergence_vecvec_nir, num_bin_hist, b_showHistogram);
+	//	index_valid_vecvec_velodyne = CExtendableICP::calcValidIndex_feature(featureDivergence_vecvec_velodyne, num_bin_hist, b_showHistogram);
 	//}
 
 
@@ -1327,14 +1327,14 @@ void CGlobalFeatureRegistration::DoDifferential_RigidTransformation_FPFH_Feature
 		pcl::Correspondences corrs_velodyne;
 		pcl::Correspondences corrs_fpfh;
 
-		//corrs_nir = CKataokaPCL::determineCorrespondences_feature_remove(featureDivergence_vecvec_nir[i_src], featureDivergence_vecvec_nir[i_tgt],
+		//corrs_nir = CExtendableICP::determineCorrespondences_feature_remove(featureDivergence_vecvec_nir[i_src], featureDivergence_vecvec_nir[i_tgt],
 		//	index_valid_vecvec_nir[i_src], index_valid_vecvec_nir[i_tgt], num_nearest);
-		//corrs_nir = CKataokaPCL::determineCorrespondences_feature_value_remove(featureDivergence_vecvec_nir[i_src], featureDivergence_vecvec_nir[i_tgt],
+		//corrs_nir = CExtendableICP::determineCorrespondences_feature_value_remove(featureDivergence_vecvec_nir[i_src], featureDivergence_vecvec_nir[i_tgt],
 		//	index_valid_vecvec_nir[i_src], index_valid_vecvec_nir[i_tgt], th_nearest_nir);
 
-		//corrs_velodyne = CKataokaPCL::determineCorrespondences_feature_remove(featureDivergence_vecvec_velodyne[i_src], featureDivergence_vecvec_velodyne[i_tgt],
+		//corrs_velodyne = CExtendableICP::determineCorrespondences_feature_remove(featureDivergence_vecvec_velodyne[i_src], featureDivergence_vecvec_velodyne[i_tgt],
 		//	index_valid_vecvec_velodyne[i_src], index_valid_vecvec_velodyne[i_tgt], num_nearest);
-		//corrs_velodyne = CKataokaPCL::determineCorrespondences_feature_value_remove(featureDivergence_vecvec_velodyne[i_src], featureDivergence_vecvec_velodyne[i_tgt],
+		//corrs_velodyne = CExtendableICP::determineCorrespondences_feature_value_remove(featureDivergence_vecvec_velodyne[i_src], featureDivergence_vecvec_velodyne[i_tgt],
 		//	index_valid_vecvec_velodyne[i_src], index_valid_vecvec_velodyne[i_tgt], th_nearest_velodyne);
 
 		//corrs_fpfh = CFPFH_PCL::getNearestOfFPFH_eachPairHaving_remove(fpfh_vec[i_src], fpfh_vec[i_tgt],
@@ -1348,7 +1348,7 @@ void CGlobalFeatureRegistration::DoDifferential_RigidTransformation_FPFH_Feature
 			//corrs_temp.insert(corrs_temp.end(), corrs_nir.begin(), corrs_nir.end());
 			//corrs_temp.insert(corrs_temp.end(), corrs_velodyne.begin(), corrs_velodyne.end());
 			corrs_temp.insert(corrs_temp.end(), corrs_fpfh.begin(), corrs_fpfh.end());
-			corrs_vec = CKataokaPCL::determineCorrespondences_geometricConstraint(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, 0.9);
+			corrs_vec = CExtendableICP::determineCorrespondences_geometricConstraint(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, 0.9);
 			//for (int j = 0; j < corrs_vec.size(); j++)
 			//	cout << "j:" << j << " corrs_vec[j].size():" << corrs_vec[j].size() << endl;
 		}
@@ -1539,7 +1539,7 @@ void CGlobalFeatureRegistration::DoDifferential_RigidTransformation_FPFH_Feature
 	//		pcl::KdTreeFLANN<T_PointType>::Ptr kdtree_(new pcl::KdTreeFLANN<T_PointType>);
 	//		kdtree_->setInputCloud(cloud_vec[j]);
 	//		vector<float> featureDivergence_vec;
-	//		featureDivergence_vec = CKataokaPCL::getPointCloud_featureDivergence(cloud_vec[j], feature_vecvec_nir[j], kdtree_, radius_differential, sigma_weight, true);
+	//		featureDivergence_vec = CExtendableICP::getPointCloud_featureDivergence(cloud_vec[j], feature_vecvec_nir[j], kdtree_, radius_differential, sigma_weight, true);
 	//		featureDivergence_vecvec_nir.push_back(featureDivergence_vec);
 	//	}
 	//	for (int j = 0; j < cloud_vec.size(); j++)
@@ -1547,13 +1547,13 @@ void CGlobalFeatureRegistration::DoDifferential_RigidTransformation_FPFH_Feature
 	//		pcl::KdTreeFLANN<T_PointType>::Ptr kdtree_(new pcl::KdTreeFLANN<T_PointType>);
 	//		kdtree_->setInputCloud(cloud_vec[j]);
 	//		vector<float> featureDivergence_vec;
-	//		featureDivergence_vec = CKataokaPCL::getPointCloud_featureDivergence(cloud_vec[j], feature_vecvec_velodyne[j], kdtree_, radius_differential, sigma_weight, true);
+	//		featureDivergence_vec = CExtendableICP::getPointCloud_featureDivergence(cloud_vec[j], feature_vecvec_velodyne[j], kdtree_, radius_differential, sigma_weight, true);
 	//		featureDivergence_vecvec_velodyne.push_back(featureDivergence_vec);
 	//	}
 	//	bool b_showHistogram = false;
 	//	b_showHistogram = true;
-	//	index_valid_vecvec_nir = CKataokaPCL::calcValidIndex_feature(featureDivergence_vecvec_nir, num_bin_hist, b_showHistogram);
-	//	index_valid_vecvec_velodyne = CKataokaPCL::calcValidIndex_feature(featureDivergence_vecvec_velodyne, num_bin_hist, b_showHistogram);
+	//	index_valid_vecvec_nir = CExtendableICP::calcValidIndex_feature(featureDivergence_vecvec_nir, num_bin_hist, b_showHistogram);
+	//	index_valid_vecvec_velodyne = CExtendableICP::calcValidIndex_feature(featureDivergence_vecvec_velodyne, num_bin_hist, b_showHistogram);
 	//}
 
 
@@ -1619,9 +1619,9 @@ void CGlobalFeatureRegistration::DoDifferential_RigidTransformation_FPFH_Feature
 			pcl::Correspondences corrs_velodyne;
 			pcl::Correspondences corrs_fpfh;
 
-			//corrs_nir = CKataokaPCL::determineCorrespondences_feature_remove(featureDivergence_vecvec_nir[i_src], featureDivergence_vecvec_nir[i_tgt],
+			//corrs_nir = CExtendableICP::determineCorrespondences_feature_remove(featureDivergence_vecvec_nir[i_src], featureDivergence_vecvec_nir[i_tgt],
 			//	index_valid_vecvec_nir[i_src], index_valid_vecvec_nir[i_tgt], num_nearest);
-			//corrs_velodyne = CKataokaPCL::determineCorrespondences_feature_remove(featureDivergence_vecvec_velodyne[i_src], featureDivergence_vecvec_velodyne[i_tgt],
+			//corrs_velodyne = CExtendableICP::determineCorrespondences_feature_remove(featureDivergence_vecvec_velodyne[i_src], featureDivergence_vecvec_velodyne[i_tgt],
 			//	index_valid_vecvec_velodyne[i_src], index_valid_vecvec_velodyne[i_tgt], num_nearest);
 			corrs_fpfh = CFPFH_PCL::determineCorrespondences_featureFpfh_eachPairHaving_num_remove(fpfh_vec[i_src], fpfh_vec[i_tgt],
 				index_valid_vecvec_FPFH[i_src], index_valid_vecvec_FPFH[i_tgt], num_nearest);
@@ -1632,7 +1632,7 @@ void CGlobalFeatureRegistration::DoDifferential_RigidTransformation_FPFH_Feature
 				//corrs_temp.insert(corrs_temp.end(), corrs_nir.begin(), corrs_nir.end());
 				//corrs_temp.insert(corrs_temp.end(), corrs_velodyne.begin(), corrs_velodyne.end());
 				corrs_temp.insert(corrs_temp.end(), corrs_fpfh.begin(), corrs_fpfh.end());
-				corrs_vec = CKataokaPCL::determineCorrespondences_geometricConstraint(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, 0.9);
+				corrs_vec = CExtendableICP::determineCorrespondences_geometricConstraint(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, 0.9);
 				//for (int j = 0; j < corrs_vec.size(); j++)
 				//	cout << "j:" << j << " corrs_vec[j].size():" << corrs_vec[j].size() << endl;
 			}
@@ -1837,7 +1837,7 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation(string dir_)
 				pcl::KdTreeFLANN<T_PointType>::Ptr kdtree_(new pcl::KdTreeFLANN<T_PointType>);
 				kdtree_->setInputCloud(cloud_vec[j]);
 				vector<float> featureDivergence_vec;
-				featureDivergence_vec = CKataokaPCL::getPointCloud_featureDivergence(cloud_vec[j], feature_vecvec_nir[j], kdtree_, radius_differential, sigma_weight, true);
+				featureDivergence_vec = CExtendableICP::getPointCloud_featureDivergence(cloud_vec[j], feature_vecvec_nir[j], kdtree_, radius_differential, sigma_weight, true);
 				featureDivergence_vecvec_nir.push_back(featureDivergence_vec);
 			}
 			for (int j = 0; j < cloud_vec.size(); j++)
@@ -1845,7 +1845,7 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation(string dir_)
 				pcl::KdTreeFLANN<T_PointType>::Ptr kdtree_(new pcl::KdTreeFLANN<T_PointType>);
 				kdtree_->setInputCloud(cloud_vec[j]);
 				vector<float> featureDivergence_vec;
-				featureDivergence_vec = CKataokaPCL::getPointCloud_featureDivergence(cloud_vec[j], feature_vecvec_velodyne[j], kdtree_, radius_differential, sigma_weight, true);
+				featureDivergence_vec = CExtendableICP::getPointCloud_featureDivergence(cloud_vec[j], feature_vecvec_velodyne[j], kdtree_, radius_differential, sigma_weight, true);
 				featureDivergence_vecvec_velodyne.push_back(featureDivergence_vec);
 			}
 		}
@@ -1881,8 +1881,8 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation(string dir_)
 	if (b_useHistogramRemover)
 	{
 		cout << "calc HistogramRemover" << endl;
-		index_valid_vecvec_nir = CKataokaPCL::calcValidIndex_feature(featureDivergence_vecvec_nir, num_bin_hist, b_showHistogram);
-		index_valid_vecvec_velodyne = CKataokaPCL::calcValidIndex_feature(featureDivergence_vecvec_velodyne, num_bin_hist, b_showHistogram);
+		index_valid_vecvec_nir = CExtendableICP::calcValidIndex_feature(featureDivergence_vecvec_nir, num_bin_hist, b_showHistogram);
+		index_valid_vecvec_velodyne = CExtendableICP::calcValidIndex_feature(featureDivergence_vecvec_velodyne, num_bin_hist, b_showHistogram);
 	}
 
 	//FPFH
@@ -1956,14 +1956,14 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation(string dir_)
 		pcl::Correspondences corrs_velodyne;
 		pcl::Correspondences corrs_fpfh;
 
-		//corrs_nir = CKataokaPCL::determineCorrespondences_feature_remove(featureDivergence_vecvec_nir[i_src], featureDivergence_vecvec_nir[i_tgt],
+		//corrs_nir = CExtendableICP::determineCorrespondences_feature_remove(featureDivergence_vecvec_nir[i_src], featureDivergence_vecvec_nir[i_tgt],
 		//	index_valid_vecvec_nir[i_src], index_valid_vecvec_nir[i_tgt], num_nearest);
-		corrs_nir = CKataokaPCL::determineCorrespondences_featureScalar_remove(featureDivergence_vecvec_nir[i_src], featureDivergence_vecvec_nir[i_tgt],
+		corrs_nir = CExtendableICP::determineCorrespondences_featureScalar_remove(featureDivergence_vecvec_nir[i_src], featureDivergence_vecvec_nir[i_tgt],
 			index_valid_vecvec_nir[i_src], index_valid_vecvec_nir[i_tgt], th_nearest_nir);
 
-		//corrs_velodyne = CKataokaPCL::determineCorrespondences_feature_remove(featureDivergence_vecvec_velodyne[i_src], featureDivergence_vecvec_velodyne[i_tgt],
+		//corrs_velodyne = CExtendableICP::determineCorrespondences_feature_remove(featureDivergence_vecvec_velodyne[i_src], featureDivergence_vecvec_velodyne[i_tgt],
 		//	index_valid_vecvec_velodyne[i_src], index_valid_vecvec_velodyne[i_tgt], num_nearest);
-		corrs_velodyne = CKataokaPCL::determineCorrespondences_featureScalar_remove(featureDivergence_vecvec_velodyne[i_src], featureDivergence_vecvec_velodyne[i_tgt],
+		corrs_velodyne = CExtendableICP::determineCorrespondences_featureScalar_remove(featureDivergence_vecvec_velodyne[i_src], featureDivergence_vecvec_velodyne[i_tgt],
 			index_valid_vecvec_velodyne[i_src], index_valid_vecvec_velodyne[i_tgt], th_nearest_velodyne);
 
 		//corrs_fpfh = CFPFH_PCL::getNearestOfFPFH_eachPairHaving_remove(fpfh_vec[i_src], fpfh_vec[i_tgt],
@@ -1982,7 +1982,7 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation(string dir_)
 		cout << "nir" << endl;
 		{
 			vector<vector<int>> rank_nir_vecvec;
-			rank_nir_vecvec = CKataokaPCL::calcRanking_featureScalar(index_pair_vec, corrs_nir_vec, cloud_vec, featureDivergence_vecvec_nir, index_valid_vecvec_nir, th_nearest_nir, true);
+			rank_nir_vecvec = CExtendableICP::calcRanking_featureScalar(index_pair_vec, corrs_nir_vec, cloud_vec, featureDivergence_vecvec_nir, index_valid_vecvec_nir, th_nearest_nir, true);
 			vector<pcl::Correspondences> corrs_vec_temp;
 			for (int j = 0; j < rank_nir_vecvec.size(); j++)
 			{
@@ -2003,7 +2003,7 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation(string dir_)
 		cout << "velodyne" << endl;
 		{
 			vector<vector<int>> rank_velodyne_vecvec;
-			rank_velodyne_vecvec = CKataokaPCL::calcRanking_featureScalar(index_pair_vec, corrs_velodyne_vec, cloud_vec, featureDivergence_vecvec_velodyne, index_valid_vecvec_velodyne, th_nearest_velodyne, true);
+			rank_velodyne_vecvec = CExtendableICP::calcRanking_featureScalar(index_pair_vec, corrs_velodyne_vec, cloud_vec, featureDivergence_vecvec_velodyne, index_valid_vecvec_velodyne, th_nearest_velodyne, true);
 			vector<pcl::Correspondences> corrs_vec_temp;
 			for (int j = 0; j < rank_velodyne_vecvec.size(); j++)
 			{
@@ -2036,7 +2036,7 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation(string dir_)
 		if (b_useGeometricConstraints)
 		{
 			cout << "calc GeometricConstraints" << endl;
-			corrs_all_vecvec.push_back(CKataokaPCL::determineCorrespondences_geometricConstraint(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, 0.9));
+			corrs_all_vecvec.push_back(CExtendableICP::determineCorrespondences_geometricConstraint(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, 0.9));
 		}
 		else
 		{
@@ -2376,7 +2376,7 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation2(string dir_)
 				pcl::KdTreeFLANN<T_PointType>::Ptr kdtree_(new pcl::KdTreeFLANN<T_PointType>);
 				kdtree_->setInputCloud(cloud_vec[j]);
 				vector<float> featureDivergence_vec;
-				featureDivergence_vec = CKataokaPCL::getPointCloud_featureDivergence(cloud_vec[j], feature_vecvec_nir[j], kdtree_, radius_differential, sigma_weight, true);
+				featureDivergence_vec = CExtendableICP::getPointCloud_featureDivergence(cloud_vec[j], feature_vecvec_nir[j], kdtree_, radius_differential, sigma_weight, true);
 				featureDivergence_vecvec_nir.push_back(featureDivergence_vec);
 			}
 			for (int j = 0; j < cloud_vec.size(); j++)
@@ -2384,7 +2384,7 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation2(string dir_)
 				pcl::KdTreeFLANN<T_PointType>::Ptr kdtree_(new pcl::KdTreeFLANN<T_PointType>);
 				kdtree_->setInputCloud(cloud_vec[j]);
 				vector<float> featureDivergence_vec;
-				featureDivergence_vec = CKataokaPCL::getPointCloud_featureDivergence(cloud_vec[j], feature_vecvec_velodyne[j], kdtree_, radius_differential, sigma_weight, true);
+				featureDivergence_vec = CExtendableICP::getPointCloud_featureDivergence(cloud_vec[j], feature_vecvec_velodyne[j], kdtree_, radius_differential, sigma_weight, true);
 				featureDivergence_vecvec_velodyne.push_back(featureDivergence_vec);
 			}
 		}
@@ -2415,8 +2415,8 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation2(string dir_)
 	if (b_useHistogramRemover && b_useDivergence)
 	{
 		cout << "calc HistogramRemover" << endl;
-		index_valid_vecvec_nir = CKataokaPCL::calcValidIndex_feature(featureDivergence_vecvec_nir, num_bin_hist, b_showHistogram);
-		index_valid_vecvec_velodyne = CKataokaPCL::calcValidIndex_feature(featureDivergence_vecvec_velodyne, num_bin_hist, b_showHistogram);
+		index_valid_vecvec_nir = CExtendableICP::calcValidIndex_feature(featureDivergence_vecvec_nir, num_bin_hist, b_showHistogram);
+		index_valid_vecvec_velodyne = CExtendableICP::calcValidIndex_feature(featureDivergence_vecvec_velodyne, num_bin_hist, b_showHistogram);
 	}
 
 	//FPFH
@@ -2546,15 +2546,15 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation2(string dir_)
 
 		cout << "nir" << endl;
 		if (b_useHistogramRemover && b_useDivergence)
-			CKataokaPCL::determineCorrespondences_allFramesRanking_featureScalar_remove(featureDivergence_vecvec_nir, cloud_vec, index_pair_vec, th_nearest_nir, th_rank_rate_nir, index_valid_vecvec_nir, corrs_nir_vec, true);
+			CExtendableICP::determineCorrespondences_allFramesRanking_featureScalar_remove(featureDivergence_vecvec_nir, cloud_vec, index_pair_vec, th_nearest_nir, th_rank_rate_nir, index_valid_vecvec_nir, corrs_nir_vec, true);
 		else
-			CKataokaPCL::determineCorrespondences_allFramesRanking_featureScalar(feature_vecvec_nir, cloud_vec, index_pair_vec, th_nearest_nir, th_rank_rate_nir, corrs_nir_vec, true);
+			CExtendableICP::determineCorrespondences_allFramesRanking_featureScalar(feature_vecvec_nir, cloud_vec, index_pair_vec, th_nearest_nir, th_rank_rate_nir, corrs_nir_vec, true);
 
 		cout << "velodyne" << endl;
 		if (b_useHistogramRemover && b_useDivergence)
-			CKataokaPCL::determineCorrespondences_allFramesRanking_featureScalar_remove(featureDivergence_vecvec_velodyne, cloud_vec, index_pair_vec, th_nearest_velodyne, th_rank_rate_nir, index_valid_vecvec_velodyne, corrs_velodyne_vec, true);
+			CExtendableICP::determineCorrespondences_allFramesRanking_featureScalar_remove(featureDivergence_vecvec_velodyne, cloud_vec, index_pair_vec, th_nearest_velodyne, th_rank_rate_nir, index_valid_vecvec_velodyne, corrs_velodyne_vec, true);
 		else
-			CKataokaPCL::determineCorrespondences_allFramesRanking_featureScalar(feature_vecvec_velodyne, cloud_vec, index_pair_vec, th_nearest_velodyne, th_rank_rate_nir, corrs_velodyne_vec, true);
+			CExtendableICP::determineCorrespondences_allFramesRanking_featureScalar(feature_vecvec_velodyne, cloud_vec, index_pair_vec, th_nearest_velodyne, th_rank_rate_nir, corrs_velodyne_vec, true);
 
 		cout << "fpfh" << endl;
 		CFPFH_PCL::determineCorrespondences_allFramesRanking_featureFpfh_remove(fpfh_vec, cloud_vec, index_pair_vec, th_nearest_fpfh, num_nearest_fpfh, th_rank_rate_fpfh,
@@ -2576,7 +2576,7 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation2(string dir_)
 				cout << "calc GeometricConstraints" << endl;
 				cout << "i_tgt:" << i_tgt << endl;
 				cout << "i_src:" << i_src << endl;
-				corrs_all_vecvec.push_back(CKataokaPCL::determineCorrespondences_geometricConstraint(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, th_geometricConstraint, true));
+				corrs_all_vecvec.push_back(CExtendableICP::determineCorrespondences_geometricConstraint(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, th_geometricConstraint, true));
 			}
 			else
 			{
@@ -2923,12 +2923,12 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation3(string dir_)
 		if (b_useNir)
 		{
 			cout << "nir" << endl;
-			CKataokaPCL::determineCorrespondences_allFramesRanking_featureScalar(feature_vecvec_nir, cloud_vec, index_pair_vec, th_nearest_nir, th_rank_rate_nir, corrs_nir_vec, evaluation_corr_vecvec_nir);
+			CExtendableICP::determineCorrespondences_allFramesRanking_featureScalar(feature_vecvec_nir, cloud_vec, index_pair_vec, th_nearest_nir, th_rank_rate_nir, corrs_nir_vec, evaluation_corr_vecvec_nir);
 		}
 		if (b_useVelodyne)
 		{
 			cout << "velodyne" << endl;
-			CKataokaPCL::determineCorrespondences_allFramesRanking_featureScalar(feature_vecvec_velodyne, cloud_vec, index_pair_vec, th_nearest_velodyne, th_rank_rate_nir, corrs_velodyne_vec, evaluation_corr_vecvec_velodyne);
+			CExtendableICP::determineCorrespondences_allFramesRanking_featureScalar(feature_vecvec_velodyne, cloud_vec, index_pair_vec, th_nearest_velodyne, th_rank_rate_nir, corrs_velodyne_vec, evaluation_corr_vecvec_velodyne);
 		}
 		if (b_useFPFH)
 		{
@@ -2957,7 +2957,7 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation3(string dir_)
 			cout << "i_tgt:" << i_tgt << endl;
 			cout << "i_src:" << i_src << endl;
 			if (b_useGeometricConstraints)
-				corrs_all_vecvec.push_back(CKataokaPCL::determineCorrespondences_geometricConstraint(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, th_geometricConstraint, true));
+				corrs_all_vecvec.push_back(CExtendableICP::determineCorrespondences_geometricConstraint(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, th_geometricConstraint, true));
 			else
 			{
 				vector<pcl::Correspondences> corrs_vec_temp;
@@ -3125,7 +3125,7 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation3(string dir_)
 			{
 				int i_tgt = index_pair_vec[j].first;
 				int i_src = index_pair_vec[j].second;
-				corrs_output_vec.push_back(CKataokaPCL::determineCorrespondences_geometricConstraint_evaluateCluster(
+				corrs_output_vec.push_back(CExtendableICP::determineCorrespondences_geometricConstraint_evaluateCluster(
 					cloud_vec[i_src], cloud_vec[i_tgt], corrs_all_vecvec[j], i_method_rigidTransformation));
 			}
 			vector<Eigen::Matrix4d> transformation_vec;
@@ -3134,7 +3134,7 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation3(string dir_)
 				int i_tgt = index_pair_vec[j].first;
 				int i_src = index_pair_vec[j].second;
 				Eigen::Matrix4f transformation_matrix = Eigen::Matrix4f::Identity();
-				CKataokaPCL::estimateRigidTransformation_static(cloud_vec[i_src], cloud_vec[i_tgt], corrs_output_vec[j], transformation_matrix);
+				CExtendableICP::estimateRigidTransformation_static(cloud_vec[i_src], cloud_vec[i_tgt], corrs_output_vec[j], transformation_matrix);
 				transformation_vec.push_back(transformation_matrix.cast<double>());
 			}
 			CPointVisualization<T_PointType> pv;
