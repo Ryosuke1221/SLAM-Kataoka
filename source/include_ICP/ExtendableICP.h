@@ -37,8 +37,8 @@
 #include <pcl/filters/statistical_outlier_removal.h>
 
 
-#include"KataokaCorrespondence.h"
-#include"KataokaConvergence.h"
+#include"Correspondence_ExtendableICP.h"
+#include"Convergence_ExtendableICP.h"
 #include "TimeString.h"
 
 
@@ -195,9 +195,9 @@ public:
 
 	//convergence
 private:
-	boost::shared_ptr<CKataokaConvergence_> M_convergence_criteria_original;
-	boost::shared_ptr<CKataokaConvergence_> M_convergence_criteria_Spring1;
-	boost::shared_ptr<CKataokaConvergence_> M_convergence_criteria_Spring2;
+	boost::shared_ptr<CConvergence_ExtendableICP> M_convergence_criteria_original;
+	boost::shared_ptr<CConvergence_ExtendableICP> M_convergence_criteria_Spring1;
+	boost::shared_ptr<CConvergence_ExtendableICP> M_convergence_criteria_Spring2;
 
 
 	//estimateRigidTransformation

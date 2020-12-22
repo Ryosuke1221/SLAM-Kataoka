@@ -1,4 +1,4 @@
-#include "KataokaPCL.h"
+#include "ExtendableICP.h"
 
 CExtendableICP::CExtendableICP()
 	:
@@ -32,10 +32,10 @@ M_convergence_criteria_()
 
 	M_min_number_correspondences_ = 3;	//same as PCL
 
-	//M_convergence_criteria_original.reset(new CKataokaConvergence_(M_nr_iterations_, M_transformation_, *M_correspondences_));
-	M_convergence_criteria_original.reset(new CKataokaConvergence_(M_nr_iterations_, M_transformation_, *M_correspondences_original));
-	M_convergence_criteria_Spring1.reset(new CKataokaConvergence_(M_nr_iterations_, M_transformation_, *M_correspondences_spring1));
-	M_convergence_criteria_Spring2.reset(new CKataokaConvergence_(M_nr_iterations_, M_transformation_, *M_correspondences_spring2));
+	//M_convergence_criteria_original.reset(new CConvergence_ExtendableICP(M_nr_iterations_, M_transformation_, *M_correspondences_));
+	M_convergence_criteria_original.reset(new CConvergence_ExtendableICP(M_nr_iterations_, M_transformation_, *M_correspondences_original));
+	M_convergence_criteria_Spring1.reset(new CConvergence_ExtendableICP(M_nr_iterations_, M_transformation_, *M_correspondences_spring1));
+	M_convergence_criteria_Spring2.reset(new CConvergence_ExtendableICP(M_nr_iterations_, M_transformation_, *M_correspondences_spring2));
 
 	M_chara_tgt_vec.push_back(1.);
 	M_chara_src_vec.push_back(1.);
@@ -539,7 +539,7 @@ void CExtendableICP::determineCorrespondences(Correspondences_Kataoka &correspon
 		if (distance[0] > max_distance * max_distance)
 			continue;
 
-		Correspondence_Kataoka corr;
+		CCorrespondence_ExtendableICP corr;
 		//pcl::Correspondence corr;
 		corr.index_query = i;
 		corr.index_match = index[0];
@@ -708,7 +708,7 @@ void CExtendableICP::determineCorrespondences_chara(Correspondences_Kataoka &cor
 			}
 		}
 
-		Correspondence_Kataoka corr;
+		CCorrespondence_ExtendableICP corr;
 		//pcl::Correspondence corr;
 		corr.index_query = i;
 		corr.index_match = index_min;

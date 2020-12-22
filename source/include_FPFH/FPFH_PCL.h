@@ -37,6 +37,7 @@
 #include <pcl/filters/statistical_outlier_removal.h>
 
 #include"TimeString.h"
+#include"KataokaPCL.h"
 
 namespace Eigen {
 
@@ -48,7 +49,8 @@ namespace Eigen {
 
 using namespace std;
 
-class __declspec(dllexport) CFPFH_PCL
+//class __declspec(dllexport) CFPFH_PCL
+class CFPFH_PCL
 {
 public:
 

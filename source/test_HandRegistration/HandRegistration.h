@@ -1,7 +1,7 @@
 #pragma once
 
 #include "PointcloudBasic.h"
-#include"KataokaPCL.h"
+#include"ExtendableICP.h"
 
 using namespace std;
 

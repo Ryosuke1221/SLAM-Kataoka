@@ -1,7 +1,7 @@
 add_library(lib_ICP STATIC 
-	KataokaPCL.cpp KataokaPCL.h 
-	KataokaConvergence.cpp KataokaConvergence.h 
-	KataokaCorrespondence.h)
+	ExtendableICP.cpp ExtendableICP.h 
+	Convergence_ExtendableICP.h 
+	Correspondence_ExtendableICP.h)
 
 #PCL 1.8
 find_package( PCL 1.8 REQUIRED )

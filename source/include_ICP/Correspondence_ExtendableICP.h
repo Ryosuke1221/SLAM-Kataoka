@@ -19,7 +19,7 @@ namespace Eigen {
 
 }    // namespace Eigen
 
-struct Correspondence_Kataoka
+struct CCorrespondence_ExtendableICP
 {
 	/** \brief Index of the query (source) point. */
 	int index_query;
@@ -35,17 +35,17 @@ struct Correspondence_Kataoka
 	/** \brief Standard constructor.
 	  * Sets \ref index_query to 0, \ref index_match to -1, and \ref distance to FLT_MAX.
 	  */
-	inline Correspondence_Kataoka() : index_query(0), index_match(-1),
+	inline CCorrespondence_ExtendableICP() : index_query(0), index_match(-1),
 		distance(std::numeric_limits<float>::max())
 	{}
 
 	/** \brief Empty destructor. */
-	virtual ~Correspondence_Kataoka() {}
+	virtual ~CCorrespondence_ExtendableICP() {}
 
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
-typedef std::vector< Correspondence_Kataoka, Eigen::aligned_allocator<Correspondence_Kataoka> > Correspondences_Kataoka;
+typedef std::vector< CCorrespondence_ExtendableICP, Eigen::aligned_allocator<CCorrespondence_ExtendableICP> > Correspondences_Kataoka;
 typedef boost::shared_ptr<Correspondences_Kataoka> CorrespondencesPtr_Kataoka;
 
 struct Correspondence_Spring1
