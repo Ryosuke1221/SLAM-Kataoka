@@ -1,6 +1,6 @@
 #include<iostream>
 
-#include "GlobalFeatureRegistration.h"
+#include "test_GlobalFeatureRegistration.h"
 #include "TimeString.h"
 
 using namespace std;

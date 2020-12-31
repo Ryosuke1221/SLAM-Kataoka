@@ -2675,6 +2675,8 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation3(string dir_)
 	bool b_changeColor_nir = false;
 	bool b_changeColor_velodyne = false;
 
+	bool b_useOldFPFH = false;
+
 	b_useParameterAdjustment = true;
 	b_show_AllFrame_AllPairs = true;
 	b_useGeometricConstraints = true;
@@ -2682,6 +2684,11 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation3(string dir_)
 	b_useNir = true;
 	b_useVelodyne = true;
 	b_useFPFH = true;
+
+	//b_useOldFPFH = true;
+
+	cout << "1: use FPFH   0: use proposed  ->";
+	cin >> b_useOldFPFH;
 
 	//b_useColorfullCorr = true;
 
@@ -2779,7 +2786,7 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation3(string dir_)
 	//calc valid point of FPFH
 	vector<vector<int>> index_valid_vecvec_FPFH;
 	vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> fpfh_vec;
-	if (b_useFPFH)
+	if (b_useFPFH && !(b_useOldFPFH))
 	{
 		float radius_normal_FPFH;
 		radius_normal_FPFH = 0.5;
@@ -2830,18 +2837,18 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation3(string dir_)
 			if (!(j == 5
 				|| j == 6
 				|| j == 7
-				|| j == 8
+				//|| j == 8
 				|| j == 11
-				|| j == 12
-				|| j == 16
+				//|| j == 12
+				//|| j == 16
 				)) continue;
 			if (!(i == 5
 				|| i == 6
 				|| i == 7
-				|| i == 8
+				//|| i == 8
 				|| i == 11
-				|| i == 12
-				|| i == 16
+				//|| i == 12
+				//|| i == 16
 				)) continue;
 
 			//if (!(j == 5
@@ -2913,58 +2920,307 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation3(string dir_)
 			b_useRigidTransformation = (bool)stoi(s_temp_vecvec[8][3]);
 		}
 
-		cout << "calc pairs" << endl;
-		vector<pcl::Correspondences> corrs_nir_vec;
-		vector<pcl::Correspondences> corrs_velodyne_vec;
-		vector<pcl::Correspondences> corrs_fpfh_vec;
+		vector<vector<pcl::Correspondences>> corrs_all_vecvec;
 		vector<vector<float>> evaluation_corr_vecvec_nir;
 		vector<vector<float>> evaluation_corr_vecvec_velodyne;
 		vector<vector<float>> evaluation_corr_vecvec_fpfh;
-		if (b_useNir)
-		{
-			cout << "nir" << endl;
-			CExtendableICP::determineCorrespondences_allFramesRanking_featureScalar(feature_vecvec_nir, cloud_vec, index_pair_vec, th_nearest_nir, th_rank_rate_nir, corrs_nir_vec, evaluation_corr_vecvec_nir);
-		}
-		if (b_useVelodyne)
-		{
-			cout << "velodyne" << endl;
-			CExtendableICP::determineCorrespondences_allFramesRanking_featureScalar(feature_vecvec_velodyne, cloud_vec, index_pair_vec, th_nearest_velodyne, th_rank_rate_nir, corrs_velodyne_vec, evaluation_corr_vecvec_velodyne);
-		}
-		if (b_useFPFH)
-		{
-			cout << "fpfh" << endl;
-			CFPFH_PCL::determineCorrespondences_allFramesRanking_featureFpfh_remove(fpfh_vec, cloud_vec, index_pair_vec, th_nearest_fpfh, num_nearest_fpfh, th_rank_rate_fpfh,
-				index_valid_vecvec_FPFH, corrs_fpfh_vec, evaluation_corr_vecvec_fpfh);
-		}
 
-		cout << "corr" << endl;
-		for (int j = 0; j < corrs_nir_vec.size(); j++)
-			cout << "j:" << j << " size:" << corrs_nir_vec[j].size() << endl;
-		cout << "evaluation" << endl;
-		for (int j = 0; j < evaluation_corr_vecvec_nir.size(); j++)
-			cout << "j:" << j << " size:" << evaluation_corr_vecvec_nir[j].size() << endl;
+		vector<Eigen::Matrix4d> transformation_vec;
 
-		if (b_useGeometricConstraints) cout << "calc GeometricConstraints" << endl;
-		vector<vector<pcl::Correspondences>> corrs_all_vecvec;
-		for (int j = 0; j < index_pair_vec.size(); j++)
+		if (b_useOldFPFH)
 		{
-			int i_tgt = index_pair_vec[j].first;
-			int i_src = index_pair_vec[j].second;
-			pcl::Correspondences corrs_temp;
-			if (b_useNir) corrs_temp.insert(corrs_temp.end(), corrs_nir_vec[j].begin(), corrs_nir_vec[j].end());
-			if (b_useVelodyne) corrs_temp.insert(corrs_temp.end(), corrs_velodyne_vec[j].begin(), corrs_velodyne_vec[j].end());
-			if (b_useFPFH) corrs_temp.insert(corrs_temp.end(), corrs_fpfh_vec[j].begin(), corrs_fpfh_vec[j].end());
-			cout << "i_tgt:" << i_tgt << endl;
-			cout << "i_src:" << i_src << endl;
-			if (b_useGeometricConstraints)
-				corrs_all_vecvec.push_back(CExtendableICP::determineCorrespondences_geometricConstraint(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, th_geometricConstraint, true));
-			else
+
+			float voxel_size;
+			voxel_size = 0.1;
+
+			float radius_normal_FPFH, radius_FPFH;
+			radius_normal_FPFH = 0.5;
+			radius_FPFH = 1.;
+
+			float MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC, InlierFraction_SAC;
+			MaxCorrespondenceDistance_SAC = 0.3;
+			SimilarityThreshold_SAC = 0.05;
+			InlierFraction_SAC = 0.2;
+
+			int MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC;
+			MaximumIterations_SAC = 500;
+			NumberOfSamples_SAC = 10;
+			CorrespondenceRandomness_SAC = 10;
+
+			int max_RANSAC;
+			max_RANSAC = 5;
+
+			for (int j = 0; j < index_pair_vec.size(); j++)
 			{
-				vector<pcl::Correspondences> corrs_vec_temp;
-				corrs_vec_temp.push_back(corrs_temp);
-				corrs_all_vecvec.push_back(corrs_vec_temp);
+				int i_tgt, i_src;
+
+				i_tgt = index_pair_vec[j].first;
+				i_src = index_pair_vec[j].second;
+
+				bool b_hasConverged = false;
+				vector<int> inlier_;
+				float fitnessscore;
+				int frame_failed = 0;
+				Eigen::Matrix4d transform_ = Eigen::Matrix4d::Identity();
+				bool b_cout_RANSAC = false;
+
+				cout << "i_tgt:" << i_tgt << " i_src" << i_src << endl;
+
+				//compute fpfh
+				pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_tgt(new pcl::PointCloud<pcl::FPFHSignature33>);
+				pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh_src(new pcl::PointCloud<pcl::FPFHSignature33>);
+				{
+					pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
+					const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
+					sor->setLeafSize(voxel_size, voxel_size, voxel_size);
+					sor->setInputCloud(cloud_vec[i_tgt]);
+					sor->filter(*cloud_VGF);
+					fpfh_tgt = CFPFH_PCL::computeFPFH<T_PointType>(cloud_VGF, cloud_vec[i_tgt], radius_normal_FPFH, radius_FPFH);
+				}
+				{
+					pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
+					const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
+					sor->setLeafSize(voxel_size, voxel_size, voxel_size);
+					sor->setInputCloud(cloud_vec[i_src]);
+					sor->filter(*cloud_VGF);
+					fpfh_src = CFPFH_PCL::computeFPFH<T_PointType>(cloud_VGF, cloud_vec[i_src], radius_normal_FPFH, radius_FPFH);
+				}
+
+				b_hasConverged = CFPFH_PCL::align_SAC_AI_RANSAC<T_PointType>(transform_, inlier_, fitnessscore, frame_failed,
+					cloud_vec[i_src], fpfh_src, cloud_vec[i_tgt], fpfh_tgt,
+					voxel_size, MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC, InlierFraction_SAC,
+					MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC, max_RANSAC, b_cout_RANSAC);
+				cout << "transform_:" << endl;
+				cout << transform_ << endl;
+				transformation_vec.push_back(transform_);
 			}
 		}
+		else
+		{
+			cout << "calc pairs" << endl;
+			vector<pcl::Correspondences> corrs_nir_vec;
+			vector<pcl::Correspondences> corrs_velodyne_vec;
+			vector<pcl::Correspondences> corrs_fpfh_vec;
+			if (b_useNir)
+			{
+				cout << "nir" << endl;
+				CExtendableICP::determineCorrespondences_allFramesRanking_featureScalar(feature_vecvec_nir, cloud_vec, index_pair_vec, th_nearest_nir, th_rank_rate_nir, corrs_nir_vec, evaluation_corr_vecvec_nir);
+			}
+			if (b_useVelodyne)
+			{
+				cout << "velodyne" << endl;
+				CExtendableICP::determineCorrespondences_allFramesRanking_featureScalar(feature_vecvec_velodyne, cloud_vec, index_pair_vec, th_nearest_velodyne, th_rank_rate_nir, corrs_velodyne_vec, evaluation_corr_vecvec_velodyne);
+			}
+			if (b_useFPFH)
+			{
+				cout << "fpfh" << endl;
+				CFPFH_PCL::determineCorrespondences_allFramesRanking_featureFpfh_remove(fpfh_vec, cloud_vec, index_pair_vec, th_nearest_fpfh, num_nearest_fpfh, th_rank_rate_fpfh,
+					index_valid_vecvec_FPFH, corrs_fpfh_vec, evaluation_corr_vecvec_fpfh);
+			}
+
+			cout << "corr" << endl;
+			for (int j = 0; j < corrs_nir_vec.size(); j++)
+				cout << "j:" << j << " size:" << corrs_nir_vec[j].size() << endl;
+			cout << "evaluation" << endl;
+			for (int j = 0; j < evaluation_corr_vecvec_nir.size(); j++)
+				cout << "j:" << j << " size:" << evaluation_corr_vecvec_nir[j].size() << endl;
+
+			if (b_useGeometricConstraints) cout << "calc GeometricConstraints" << endl;
+			for (int j = 0; j < index_pair_vec.size(); j++)
+			{
+				int i_tgt = index_pair_vec[j].first;
+				int i_src = index_pair_vec[j].second;
+				pcl::Correspondences corrs_temp;
+				if (b_useNir) corrs_temp.insert(corrs_temp.end(), corrs_nir_vec[j].begin(), corrs_nir_vec[j].end());
+				if (b_useVelodyne) corrs_temp.insert(corrs_temp.end(), corrs_velodyne_vec[j].begin(), corrs_velodyne_vec[j].end());
+				if (b_useFPFH) corrs_temp.insert(corrs_temp.end(), corrs_fpfh_vec[j].begin(), corrs_fpfh_vec[j].end());
+				cout << "i_tgt:" << i_tgt << endl;
+				cout << "i_src:" << i_src << endl;
+				if (b_useGeometricConstraints)
+					corrs_all_vecvec.push_back(CExtendableICP::determineCorrespondences_geometricConstraint(cloud_vec[i_src], cloud_vec[i_tgt], corrs_temp, th_geometricConstraint, true));
+				else
+				{
+					vector<pcl::Correspondences> corrs_vec_temp;
+					corrs_vec_temp.push_back(corrs_temp);
+					corrs_all_vecvec.push_back(corrs_vec_temp);
+				}
+			}
+
+			vector<pcl::Correspondences> corrs_output_vec;
+
+			for (int j = 0; j < index_pair_vec.size(); j++)
+			{
+				int i_tgt = index_pair_vec[j].first;
+				int i_src = index_pair_vec[j].second;
+				corrs_output_vec.push_back(CExtendableICP::determineCorrespondences_geometricConstraint_evaluateCluster(
+					cloud_vec[i_src], cloud_vec[i_tgt], corrs_all_vecvec[j], i_method_rigidTransformation));
+			}
+			for (int j = 0; j < index_pair_vec.size(); j++)
+			{
+				int i_tgt = index_pair_vec[j].first;
+				int i_src = index_pair_vec[j].second;
+				Eigen::Matrix4f transformation_matrix = Eigen::Matrix4f::Identity();
+				CExtendableICP::estimateRigidTransformation_static(cloud_vec[i_src], cloud_vec[i_tgt], corrs_output_vec[j], transformation_matrix);
+				transformation_vec.push_back(transformation_matrix.cast<double>());
+			}
+
+
+		}
+
+		//evaluation
+		{
+			string s_t = CTimeString::getTimeString();
+
+			//makenewfolder
+			CTimeString::makenewfolder(dir_, s_t);
+
+			//input true trajectory
+			vector<Eigen::Vector6d> trajectory_true_vec;
+			{
+				string filename_true = "transformation_fin.csv";
+				vector<vector<double>> trajectory_vecvec_temp = CTimeString::getVecVecFromCSV(dir_ + "/" + filename_true);
+				for (int i = 0; i < trajectory_vecvec_temp.size(); i++)
+				{
+					Eigen::Vector6d Pos_temp = Eigen::Vector6d::Zero();
+					Pos_temp << trajectory_vecvec_temp[i][1], trajectory_vecvec_temp[i][2],
+						trajectory_vecvec_temp[i][3], trajectory_vecvec_temp[i][4],
+						trajectory_vecvec_temp[i][5], trajectory_vecvec_temp[i][6];
+					trajectory_true_vec.push_back(Pos_temp);
+				}
+			}
+
+			vector<vector<string>> s_output_vecvec;
+			{
+				vector<string> s_output_vec;
+				s_output_vec.push_back("i_tgt");
+				s_output_vec.push_back("i_src");
+				s_output_vec.push_back("X");
+				s_output_vec.push_back("Y");
+				s_output_vec.push_back("Z");
+				s_output_vec.push_back("Roll");
+				s_output_vec.push_back("Pitch");
+				s_output_vec.push_back("Yaw");
+				s_output_vec.push_back("e_euqulid");
+				s_output_vec.push_back("e_error_PointCloudDistance");
+				s_output_vecvec.push_back(s_output_vec);
+			}
+
+			for (int j = 0; j < index_pair_vec.size(); j++)
+			{
+				vector<string> s_output_vec;
+				int i_tgt = index_pair_vec[j].first;
+				int i_src = index_pair_vec[j].second;
+
+				Eigen::Matrix4d transformation_ = Eigen::Matrix4d::Identity();
+				transformation_ = transformation_vec[j];
+
+				Eigen::Matrix4d transformation_true = Eigen::Matrix4d::Identity();
+				transformation_true =
+					calcHomogeneousMatrixFromVector6d(trajectory_true_vec[i_tgt]).inverse() *
+					calcHomogeneousMatrixFromVector6d(trajectory_true_vec[i_src]);
+
+				float error_euqulid;
+				error_euqulid = sqrt(
+					pow(transformation_(0, 3) - transformation_true(0, 3), 2.)
+					+ pow(transformation_(1, 3) - transformation_true(1, 3), 2.)
+					+ pow(transformation_(2, 3) - transformation_true(2, 3), 2.)
+				);
+
+				pcl::PointCloud<T_PointType>::Ptr cloud_src(new pcl::PointCloud<T_PointType>());
+				pcl::copyPointCloud(*cloud_vec[i_src], *cloud_src);
+				{
+					Eigen::Affine3f trans_ = calcAffine3fFromHomogeneousMatrix(transformation_);
+					pcl::transformPointCloud(*cloud_src, *cloud_src, trans_);
+
+				}
+				pcl::PointCloud<T_PointType>::Ptr cloud_src_true(new pcl::PointCloud<T_PointType>());
+				pcl::copyPointCloud(*cloud_vec[i_src], *cloud_src_true);
+				{
+					Eigen::Affine3f trans_ = calcAffine3fFromHomogeneousMatrix(transformation_true);
+					pcl::transformPointCloud(*cloud_src_true, *cloud_src_true, trans_);
+				}
+
+				float error_PointCloudDistance = 0.;
+				for (int i = 0; i < cloud_src->size(); i++)
+				{
+					error_PointCloudDistance += sqrt(
+						pow(cloud_src->points[i].x - cloud_src_true->points[i].x, 2.)
+						+ pow(cloud_src->points[i].y - cloud_src_true->points[i].y, 2.)
+						+ pow(cloud_src->points[i].y - cloud_src_true->points[i].z, 2.)
+					);
+				}
+				if (cloud_src->size() != 0) error_PointCloudDistance /= (float)cloud_src->size();
+
+				//{
+				//	float sin_sin_beta = 0.25 *(
+				//		pow(transformation_(1, 0) - transformation_(0, 1), 2.)
+				//		+ pow(transformation_(0, 2) - transformation_(2, 0), 2.)
+				//		+ pow(transformation_(2, 1) - transformation_(1, 2), 2.)
+				//	);
+				//	float cos_beta = 0.5 * (transformation_(0, 0) + transformation_(1, 1) + transformation_(2, 2) - 1.);
+
+				//	float beta_ = asin();
+
+				//}
+
+				//asin()
+
+				Eigen::Vector6d pos_vec = Eigen::Vector6d::Zero();
+				pos_vec = calcVector6dFromHomogeneousMatrix(transformation_);
+
+				s_output_vec.push_back(to_string(i_tgt));
+				s_output_vec.push_back(to_string(i_src));
+				s_output_vec.push_back(to_string(pos_vec(0, 0)));
+				s_output_vec.push_back(to_string(pos_vec(1, 0)));
+				s_output_vec.push_back(to_string(pos_vec(2, 0)));
+				s_output_vec.push_back(to_string(pos_vec(3, 0)));
+				s_output_vec.push_back(to_string(pos_vec(4, 0)));
+				s_output_vec.push_back(to_string(pos_vec(5, 0)));
+				s_output_vec.push_back(to_string(error_euqulid));
+				s_output_vec.push_back(to_string(error_PointCloudDistance));
+
+				pcl::PointCloud<T_PointType>::Ptr cloud_output(new pcl::PointCloud<T_PointType>());
+				cloud_output->clear();
+				pcl::copyPointCloud(*cloud_vec[i_tgt], *cloud_output);
+				//tgt -> red
+				for (int i = 0; i < cloud_output->size(); i++)
+				{
+					cloud_output->points[i].r = 255;
+					cloud_output->points[i].g = 0;
+					cloud_output->points[i].b = 0;
+				}
+				//src -> green
+				for (int i = 0; i < cloud_src->size(); i++)
+				{
+					cloud_src->points[i].r = 0;
+					cloud_src->points[i].g = 255;
+					cloud_src->points[i].b = 0;
+					cloud_output->push_back(cloud_src->points[i]);
+				}
+
+				string filename_pcd;
+				{
+					string s_tgt = to_string(i_tgt);
+					if (s_tgt.size() < 2) s_tgt = "0" + s_tgt;
+					s_tgt = "tgt" + s_tgt;
+					string s_src = to_string(i_src);
+					if (s_src.size() < 2) s_src = "0" + s_src;
+					s_src = "src" + s_src;
+					filename_pcd = s_tgt + s_src + "_result";
+
+					if (b_useOldFPFH) filename_pcd += "_01conventional";
+					else  filename_pcd += "_02proposed";
+					filename_pcd += ".pcd";
+				}
+
+				pcl::io::savePCDFile<T_PointType>(dir_ + "/" + s_t + "/" + filename_pcd, *cloud_output);
+				s_output_vecvec.push_back(s_output_vec);
+			}
+
+			CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + s_t + "/result_" + s_t + ".csv");
+
+		}
+
 
 		if (b_show_AllFrame_AllPairs && !b_useRigidTransformation)
 		{
@@ -3119,24 +3375,6 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation3(string dir_)
 		else
 		{
 			vector<vector<float>> evaluation_corrsCluster_vecvec;
-			vector<pcl::Correspondences> corrs_output_vec;
-
-			for (int j = 0; j < index_pair_vec.size(); j++)
-			{
-				int i_tgt = index_pair_vec[j].first;
-				int i_src = index_pair_vec[j].second;
-				corrs_output_vec.push_back(CExtendableICP::determineCorrespondences_geometricConstraint_evaluateCluster(
-					cloud_vec[i_src], cloud_vec[i_tgt], corrs_all_vecvec[j], i_method_rigidTransformation));
-			}
-			vector<Eigen::Matrix4d> transformation_vec;
-			for (int j = 0; j < index_pair_vec.size(); j++)
-			{
-				int i_tgt = index_pair_vec[j].first;
-				int i_src = index_pair_vec[j].second;
-				Eigen::Matrix4f transformation_matrix = Eigen::Matrix4f::Identity();
-				CExtendableICP::estimateRigidTransformation_static(cloud_vec[i_src], cloud_vec[i_tgt], corrs_output_vec[j], transformation_matrix);
-				transformation_vec.push_back(transformation_matrix.cast<double>());
-			}
 			CPointVisualization<T_PointType> pv;
 			pv.setWindowName("Transformation");
 			bool b_first_vis = true;

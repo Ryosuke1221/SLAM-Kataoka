@@ -679,6 +679,9 @@ public:
 		cout << "determineCorrespondences_allFramesRanking_featureFpfh_remove" << endl;
 		if (fpfh_vec.size() != cloud_vec.size())
 		{
+			cout << "fpfh_vec.size():" << fpfh_vec.size() << endl;
+			cout << "cloud_vec.size():" << cloud_vec.size() << endl;
+
 			cout << "ERROR: number of feature and one of pointcloud have different size." << endl;
 			return;
 		}
