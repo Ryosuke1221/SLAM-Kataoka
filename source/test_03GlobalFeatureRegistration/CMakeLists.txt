@@ -1,5 +1,5 @@
 add_executable(test_03GlobalFeatureRegistration 
-	main.cpp GlobalFeatureRegistration.cpp GlobalFeatureRegistration.h)
+	main.cpp test_GlobalFeatureRegistration.cpp test_GlobalFeatureRegistration.h)
 
 #PCL 1.8
 find_package( PCL 1.8 REQUIRED )

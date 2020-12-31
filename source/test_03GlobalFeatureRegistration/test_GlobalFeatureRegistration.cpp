@@ -1,4 +1,4 @@
-#include "GlobalFeatureRegistration.h"
+#include "test_GlobalFeatureRegistration.h"
 
 void CGlobalFeatureRegistration::mainProcess()
 {
