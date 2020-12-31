@@ -1,12 +1,12 @@
 #pragma once
 
-#include "PointcloudBasic.h"
-#include"ExtendableICP.h"
-#include"FPFH_PCL.h"
+#include "PointcloudBasicProcess.h"
+#include "ExtendableICP.h"
+#include "FPFH_PCL.h"
 
 using namespace std;
 
-class CGlobalFeatureRegistration : public CPointcloudBasic
+class CGlobalFeatureRegistration_test : public CPointcloudBasicProcess
 {
 public:
 	void mainProcess();

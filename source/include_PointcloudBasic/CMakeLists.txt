@@ -1,5 +1,5 @@
 add_library(lib_PointcloudBasic STATIC 
-	PointcloudBasic.cpp PointcloudBasic.h PointVisualization.h)
+	PointcloudBasic.cpp PointcloudBasic.h)
 
 #PCL 1.8
 find_package( PCL 1.8 REQUIRED )

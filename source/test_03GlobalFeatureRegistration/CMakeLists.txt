@@ -14,9 +14,9 @@ endif()
 include_directories("${CMAKE_SOURCE_DIR}/include_TimeString")
 target_link_libraries(test_03GlobalFeatureRegistration lib_TimeString)
 
-#PointcloudBasic
-include_directories("${CMAKE_SOURCE_DIR}/include_PointcloudBasic")
-target_link_libraries(test_03GlobalFeatureRegistration lib_PointcloudBasic)
+#lib_PointcloudBasicProcess
+include_directories("${CMAKE_SOURCE_DIR}/include_PointcloudBasicProcess")
+target_link_libraries(test_03GlobalFeatureRegistration lib_PointcloudBasicProcess)
 
 #ICP
 include_directories("${CMAKE_SOURCE_DIR}/include_ICP")

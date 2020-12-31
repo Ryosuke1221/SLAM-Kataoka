@@ -1,6 +1,6 @@
-#include "PointcloudBasic.h"
+#include "PointcloudBasicProcess.h"
 
-void CPointcloudBasic::all_process()
+void CPointcloudBasicProcess::all_process()
 {
 	//moveFile();
 
@@ -12,20 +12,8 @@ void CPointcloudBasic::all_process()
 		EN_FreeSpace,
 		EN_FileProcess,
 		EN_SequentShow,
-		EN_handregistration,
-		EN_GetPcdFromCSV,
-		EN_FilterPointCloud,
-		EN_CombinePointCloud,
-		EN_CSV_FromPointCloud,
-		EN_DynamicTranslation,
 		EN_DrawTrajectory,
-		EN_Segmentation,
-		EN_GR_FPFH_SAC_IA,
-		EN_DoOutlierRejector,
-		EN_ICP_Proposed_AllFrames,
-		EN_Evaluate_ICP_property_Optimization,
 		EN_DoMappingFromTrajectory,
-		EN_DoDifferential
 	};
 
 	while (!b_finish)
@@ -36,20 +24,8 @@ void CPointcloudBasic::all_process()
 		cout << " " << EN_FreeSpace << ": free space" << endl;
 		cout << " " << EN_FileProcess << ": FileProcess" << endl;
 		cout << " " << EN_SequentShow << ": sequent show" << endl;
-		cout << " " << EN_handregistration << ": hand registration" << endl;
-		cout << " " << EN_GetPcdFromCSV << ": get .pcd from .csv" << endl;
-		cout << " " << EN_FilterPointCloud << ": filter PointCloud_naraha" << endl;
-		cout << " " << EN_CombinePointCloud << ": CombinePointCloud" << endl;
-		cout << " " << EN_CSV_FromPointCloud << ": CSV_FromPointCloud" << endl;
-		cout << " " << EN_DynamicTranslation << ": DynamicTranslation" << endl;
 		cout << " " << EN_DrawTrajectory << ": DrawTrajectory" << endl;
-		cout << " " << EN_Segmentation << ": Segmentation" << endl;
-		cout << " " << EN_GR_FPFH_SAC_IA << ": GR_FPFH_SAC_IA" << endl;
-		cout << " " << EN_DoOutlierRejector << ": DoOutlierRejector" << endl;
-		cout << " " << EN_ICP_Proposed_AllFrames << ": ICP_Proposed_AllFrames" << endl;
-		cout << " " << EN_Evaluate_ICP_property_Optimization << ": Evaluate_ICP_property_Optimization" << endl;
 		cout << " " << EN_DoMappingFromTrajectory << ": DoMappingFromTrajectory" << endl;
-		cout << " " << EN_DoDifferential << ": DoDifferential" << endl;
 
 		cout << "WhichProcess: ";
 		cin >> WhichProcess;
@@ -77,61 +53,13 @@ void CPointcloudBasic::all_process()
 			show_sequent();
 			break;
 
-		//case EN_handregistration:
-		//	HandRegistration();
-		//	break;
-
-		//case EN_GetPcdFromCSV:
-		//	getPCDFromCSV_naraha();
-		//	break;
-
-		//case EN_FilterPointCloud:
-		//	filterNIRPointCloud_naraha();
-		//	break;
-
-		//case EN_CSV_FromPointCloud:
-		//	getCSVFromPointCloud();
-		//	break;
-
-		//case EN_CombinePointCloud:
-		//	combinePointCloud_naraha();
-		//	break;
-
-		//case EN_DynamicTranslation:
-		//	DynamicTranslation();
-		//	break;
-
 		case EN_DrawTrajectory:
 			DrawTrajectory();
 			break;
 
-		//case EN_Segmentation:
-		//	DoSegmentation();
-		//	break;
-
-		//case EN_GR_FPFH_SAC_IA:
-		//	GlobalRegistration_FPFH_SAC_IA();
-		//	break;
-
-		//case EN_DoOutlierRejector:
-		//	DoOutlierRejector();
-		//	break;
-
-		//case EN_ICP_Proposed_AllFrames:
-		//	DoICP_proposed_AllFrames();
-		//	break;
-
-		//case EN_Evaluate_ICP_property_Optimization:
-		//	DoEvaluation_ICP_property();
-		//	break;
-
 		case EN_DoMappingFromTrajectory:
 			DoMappingFromTrajectory();
 			break;
-
-		//case EN_DoDifferential:
-		//	DoDifferential();
-		//	break;
 
 		default:
 			break;
@@ -141,7 +69,7 @@ void CPointcloudBasic::all_process()
 
 }
 
-Eigen::Matrix4d CPointcloudBasic::calcHomogeneousMatrixFromVector6d(double X_, double Y_, double Z_,
+Eigen::Matrix4d CPointcloudBasicProcess::calcHomogeneousMatrixFromVector6d(double X_, double Y_, double Z_,
 	double Roll_, double Pitch_, double Yaw_)
 {
 	Eigen::Matrix4d	transformation_Position = Eigen::Matrix4d::Identity();
@@ -168,7 +96,7 @@ Eigen::Matrix4d CPointcloudBasic::calcHomogeneousMatrixFromVector6d(double X_, d
 	return transformation_Position;
 }
 
-Eigen::Matrix4d CPointcloudBasic::calcHomogeneousMatrixFromVector6d(Eigen::Vector6d XYZRPY_arg)
+Eigen::Matrix4d CPointcloudBasicProcess::calcHomogeneousMatrixFromVector6d(Eigen::Vector6d XYZRPY_arg)
 {
 	Eigen::Matrix4d	transformation_Position = Eigen::Matrix4d::Identity();
 	Eigen::Matrix4d T_mat = Eigen::Matrix4d::Identity();
@@ -195,7 +123,7 @@ Eigen::Matrix4d CPointcloudBasic::calcHomogeneousMatrixFromVector6d(Eigen::Vecto
 }
 
 //Not very confident
-Eigen::Vector6d CPointcloudBasic::calcVector6dFromHomogeneousMatrix(Eigen::Matrix4d input_Mat)
+Eigen::Vector6d CPointcloudBasicProcess::calcVector6dFromHomogeneousMatrix(Eigen::Matrix4d input_Mat)
 {
 	Eigen::Vector6d XYZRPY = Eigen::Vector6d::Zero();
 	double X_, Y_, Z_, Roll_, Pitch_, Yaw_;
@@ -239,7 +167,7 @@ Eigen::Vector6d CPointcloudBasic::calcVector6dFromHomogeneousMatrix(Eigen::Matri
 	return XYZRPY;
 }
 
-Eigen::Affine3f CPointcloudBasic::calcAffine3fFromHomogeneousMatrix(Eigen::Matrix4d input_Mat)
+Eigen::Affine3f CPointcloudBasicProcess::calcAffine3fFromHomogeneousMatrix(Eigen::Matrix4d input_Mat)
 {
 	Eigen::Affine3f Trans_Affine = Eigen::Affine3f::Identity();
 	Eigen::Vector6d Trans_Vec = Eigen::Vector6d::Identity();
@@ -250,7 +178,7 @@ Eigen::Affine3f CPointcloudBasic::calcAffine3fFromHomogeneousMatrix(Eigen::Matri
 	Trans_Affine.rotate(Eigen::AngleAxisf(Trans_Vec(3, 0), Eigen::Vector3f::UnitX()));
 	return Trans_Affine;
 }
-void CPointcloudBasic::FreeSpace()
+void CPointcloudBasicProcess::FreeSpace()
 {
 	int i_method;
 	//i_method = 0;
@@ -603,19 +531,19 @@ void CPointcloudBasic::FreeSpace()
 
 }
 
-void CPointcloudBasic::changeColor_plane(pcl::PointXYZRGB &point_)
+void CPointcloudBasicProcess::changeColor_plane(pcl::PointXYZRGB &point_)
 {
 	point_.r = 0;
 	point_.g = 0;
 	point_.b = 255;
 }
 
-void CPointcloudBasic::changeColor_plane(pcl::PointXYZI &point_)
+void CPointcloudBasicProcess::changeColor_plane(pcl::PointXYZI &point_)
 {
 	point_.intensity = 210;
 }
 
-void CPointcloudBasic::show_sequent()
+void CPointcloudBasicProcess::show_sequent()
 {
 	string dir_;
 	dir_ = "../../data";
@@ -797,7 +725,7 @@ void CPointcloudBasic::show_sequent()
 
 }
 
-void CPointcloudBasic::FileProcess()
+void CPointcloudBasicProcess::FileProcess()
 {
 
 	string dir_;
@@ -903,7 +831,7 @@ void CPointcloudBasic::FileProcess()
 
 }
 
-void CPointcloudBasic::FileProcess_copy(string dir_from, string dir_to)
+void CPointcloudBasicProcess::FileProcess_copy(string dir_from, string dir_to)
 {
 	vector<string> filenames_copy;
 	//check it can copy file
@@ -952,7 +880,7 @@ void CPointcloudBasic::FileProcess_copy(string dir_from, string dir_to)
 	}
 }
 
-void CPointcloudBasic::FileProcess_delete(string dir)
+void CPointcloudBasicProcess::FileProcess_delete(string dir)
 {
 
 	//check
@@ -994,7 +922,7 @@ void CPointcloudBasic::FileProcess_delete(string dir)
 	}
 }
 
-void CPointcloudBasic::FileProcess_evacuate(string dir)
+void CPointcloudBasicProcess::FileProcess_evacuate(string dir)
 {
 	vector<string> filenames_main;
 	CTimeString::getFileNames_extension(dir, filenames_main, ".pcd");
@@ -1052,7 +980,7 @@ void CPointcloudBasic::FileProcess_evacuate(string dir)
 	}
 }
 
-void CPointcloudBasic::FileProcess_FolderInFolder(string dir_, vector<string> &folder_vec)
+void CPointcloudBasicProcess::FileProcess_FolderInFolder(string dir_, vector<string> &folder_vec)
 {
 	folder_vec.clear();
 
@@ -1106,7 +1034,7 @@ void CPointcloudBasic::FileProcess_FolderInFolder(string dir_, vector<string> &f
 	}
 }
 
-void CPointcloudBasic::DrawTrajectory()
+void CPointcloudBasicProcess::DrawTrajectory()
 {
 	//typedef typename pcl::PointXYZI T_PointType;
 	typedef typename pcl::PointXYZRGB T_PointType;
@@ -1220,7 +1148,7 @@ void CPointcloudBasic::DrawTrajectory()
 	pv.closeViewer();
 }
 
-void CPointcloudBasic::DoMappingFromTrajectory()
+void CPointcloudBasicProcess::DoMappingFromTrajectory()
 {
 	typedef pcl::PointXYZRGB T_PointType;
 

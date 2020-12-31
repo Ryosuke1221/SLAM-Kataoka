@@ -1,6 +1,6 @@
 #include "test_GlobalFeatureRegistration.h"
 
-void CGlobalFeatureRegistration::mainProcess()
+void CGlobalFeatureRegistration_test::mainProcess()
 {
 	int WhichProcess = 0;
 	string filename1, filename2;
@@ -58,7 +58,7 @@ void CGlobalFeatureRegistration::mainProcess()
 			break;
 
 		case EN_FreeSpace:
-			CGlobalFeatureRegistration::FreeSpace();
+			CGlobalFeatureRegistration_test::FreeSpace();
 			break;
 
 		case EN_FileProcess:
@@ -116,12 +116,12 @@ void CGlobalFeatureRegistration::mainProcess()
 	}
 }
 
-void CGlobalFeatureRegistration::FreeSpace()
+void CGlobalFeatureRegistration_test::FreeSpace()
 {
 
 }
 
-void CGlobalFeatureRegistration::DoDifferential_1pointcloud(string dir_)
+void CGlobalFeatureRegistration_test::DoDifferential_1pointcloud(string dir_)
 {
 	typedef typename pcl::PointXYZRGB T_PointType;
 
@@ -325,7 +325,7 @@ void CGlobalFeatureRegistration::DoDifferential_1pointcloud(string dir_)
 	pv.closeViewer();
 }
 
-void CGlobalFeatureRegistration::DoDifferential_SomePointclouds(string dir_)
+void CGlobalFeatureRegistration_test::DoDifferential_SomePointclouds(string dir_)
 {
 	typedef pcl::PointXYZRGB T_PointType;
 
@@ -612,7 +612,7 @@ void CGlobalFeatureRegistration::DoDifferential_SomePointclouds(string dir_)
 
 }
 
-void CGlobalFeatureRegistration::DoDifferential_showFeatureValue(string dir_)
+void CGlobalFeatureRegistration_test::DoDifferential_showFeatureValue(string dir_)
 {
 	typedef pcl::PointXYZRGB T_PointType;
 
@@ -772,7 +772,7 @@ void CGlobalFeatureRegistration::DoDifferential_showFeatureValue(string dir_)
 
 }
 
-void CGlobalFeatureRegistration::FPFH_unique(string dir_)
+void CGlobalFeatureRegistration_test::FPFH_unique(string dir_)
 {
 	typedef pcl::PointXYZRGB T_PointType;
 
@@ -875,7 +875,7 @@ void CGlobalFeatureRegistration::FPFH_unique(string dir_)
 	}
 }
 
-void CGlobalFeatureRegistration::DoDifferential_RigidTransformation_FPFH_Features(string dir_)
+void CGlobalFeatureRegistration_test::DoDifferential_RigidTransformation_FPFH_Features(string dir_)
 {
 	typedef pcl::PointXYZRGB T_PointType;
 
@@ -1144,7 +1144,7 @@ void CGlobalFeatureRegistration::DoDifferential_RigidTransformation_FPFH_Feature
 
 }
 
-void CGlobalFeatureRegistration::DoDifferential_RigidTransformation_FPFH_Features_new(string dir_)
+void CGlobalFeatureRegistration_test::DoDifferential_RigidTransformation_FPFH_Features_new(string dir_)
 {
 	typedef pcl::PointXYZRGB T_PointType;
 
@@ -1441,7 +1441,7 @@ void CGlobalFeatureRegistration::DoDifferential_RigidTransformation_FPFH_Feature
 
 }
 
-void CGlobalFeatureRegistration::DoDifferential_RigidTransformation_FPFH_Features_allFrames(string dir_)
+void CGlobalFeatureRegistration_test::DoDifferential_RigidTransformation_FPFH_Features_allFrames(string dir_)
 {
 	typedef pcl::PointXYZRGB T_PointType;
 
@@ -1727,7 +1727,7 @@ void CGlobalFeatureRegistration::DoDifferential_RigidTransformation_FPFH_Feature
 
 }
 
-void CGlobalFeatureRegistration::DoDifferential_PairEvaluation(string dir_)
+void CGlobalFeatureRegistration_test::DoDifferential_PairEvaluation(string dir_)
 {
 	typedef pcl::PointXYZRGB T_PointType;
 
@@ -2262,7 +2262,7 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation(string dir_)
 
 }
 
-void CGlobalFeatureRegistration::DoDifferential_PairEvaluation2(string dir_)
+void CGlobalFeatureRegistration_test::DoDifferential_PairEvaluation2(string dir_)
 {
 	typedef pcl::PointXYZRGB T_PointType;
 
@@ -2658,7 +2658,7 @@ void CGlobalFeatureRegistration::DoDifferential_PairEvaluation2(string dir_)
 
 }
 
-void CGlobalFeatureRegistration::DoDifferential_PairEvaluation3(string dir_)
+void CGlobalFeatureRegistration_test::DoDifferential_PairEvaluation3(string dir_)
 {
 	typedef pcl::PointXYZRGB T_PointType;
 	bool b_useParameterAdjustment = false;

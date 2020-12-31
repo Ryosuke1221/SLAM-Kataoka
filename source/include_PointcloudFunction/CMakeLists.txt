@@ -14,9 +14,9 @@ endif()
 include_directories("${CMAKE_SOURCE_DIR}/include_TimeString")
 #target_link_libraries(lib_PointcloudFunction lib_TimeString)
 
-#PointVisualization
-target_include_directories(lib_PointcloudFunction PUBLIC "${CMAKE_SOURCE_DIR}/include_PointcloudBasic")
-target_link_libraries(lib_PointcloudFunction lib_PointcloudBasic)
+#PointVisualization(PointcloudBasicProcess)
+include_directories("${CMAKE_SOURCE_DIR}/include_PointcloudBasicProcess")
+target_link_libraries(lib_PointcloudFunction lib_PointcloudBasicProcess)
 
 #ICP
 target_include_directories(lib_PointcloudFunction PUBLIC "${CMAKE_SOURCE_DIR}/include_ICP")

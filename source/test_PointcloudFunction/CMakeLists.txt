@@ -13,7 +13,10 @@ endif()
 include_directories("${CMAKE_SOURCE_DIR}/include_TimeString")
 target_link_libraries(test_PointcloudFunction lib_TimeString)
 
+#PointcloudBasicProcess
+include_directories("${CMAKE_SOURCE_DIR}/include_PointcloudBasicProcess")
+target_link_libraries(test_PointcloudFunction lib_PointcloudBasicProcess)
+
 #PointcloudFuction
 include_directories("${CMAKE_SOURCE_DIR}/include_PointcloudFunction")
-#target_link_libraries(lib_PointcloudFunction lib_PointcloudFunction)
 target_link_libraries(test_PointcloudFunction lib_PointcloudFunction)

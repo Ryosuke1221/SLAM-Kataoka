@@ -7,6 +7,6 @@ using namespace std;
 
 int main()
 {
-	CGlobalFeatureRegistration global_;
+	CGlobalFeatureRegistration_test global_;
 	global_.mainProcess();
 }

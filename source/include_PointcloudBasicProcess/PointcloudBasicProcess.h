@@ -1,6 +1,6 @@
 #pragma once
 
-#include<iostream>
+#include <iostream>
 #include <vector>
 #include <random>
 
@@ -26,7 +26,7 @@
 #include "PointVisualization.h"
 
 //should be under pcl includes
-#include<windows.h>
+#include <windows.h>
 #include "TimeString.h"
 
 #define M_PI 3.14159265359
@@ -43,11 +43,11 @@ namespace Eigen {
 
 }    // namespace Eigen
 
-class CPointcloudBasic
+class CPointcloudBasicProcess
 {
 
 public:
-	CPointcloudBasic()
+	CPointcloudBasicProcess()
 	{
 
 	}

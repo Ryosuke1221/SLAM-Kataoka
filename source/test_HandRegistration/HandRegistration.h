@@ -1,11 +1,11 @@
 #pragma once
 
-#include "PointcloudBasic.h"
-#include"ExtendableICP.h"
+#include "PointcloudBasicProcess.h"
+#include "ExtendableICP.h"
 
 using namespace std;
 
-class CHandRegistration : public CPointcloudBasic
+class CHandRegistration : public CPointcloudBasicProcess
 {
 public:
 	void mainProcess();
