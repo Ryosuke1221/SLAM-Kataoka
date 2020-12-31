@@ -1,51 +1,23 @@
 #pragma once
 
-#define D2R 0.017453288888889
-#define R2D 57.29579143313326
-#define M_PI 3.141592
 
 #include <sstream>
 #include <iostream>
 #include <fstream>
 #include <random>
 
-#include <pcl/common/io.h>
-#include <pcl/common/copy_point.h>
-#include <pcl/correspondence.h>
-#include <pcl/registration/correspondence_estimation.h>
-#include <pcl/registration/impl/correspondence_estimation.hpp>
-#include <pcl/registration/registration.h>
-
-#include <pcl/pcl_base.h>
-
-#include <pcl/registration/default_convergence_criteria.h>
-
-#include <Eigen/Core>
-
-#include <pcl/registration/icp.h>
-
-#include <pcl/io/ply_io.h>
 #include <pcl/common/transforms.h>
-#include <pcl/filters/voxel_grid.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/features/fpfh.h>
-#include <pcl/sample_consensus/ransac.h>
-#include <pcl/registration/sample_consensus_prerejective.h>
-//#include <pcl/registration/icp.h>
-#include <pcl/io/pcd_io.h>
-
 #include <pcl/filters/statistical_outlier_removal.h>
+#include <pcl/io/ply_io.h>
+#include <pcl/pcl_base.h>
+#include <pcl/registration/default_convergence_criteria.h>
+#include <pcl/registration/sample_consensus_prerejective.h>
+#include <pcl/sample_consensus/ransac.h>
 
-#include"TimeString.h"
-#include"ExtendableICP.h"
-
-namespace Eigen {
-
-	/// Extending Eigen namespace by adding frequently used matrix type
-	typedef Eigen::Matrix<double, 6, 6> Matrix6d;
-	typedef Eigen::Matrix<double, 6, 1> Vector6d;
-
-}    // namespace Eigen
+#include "ExtendableICP.h"
+#include "TimeString.h"
 
 using namespace std;
 
@@ -278,12 +250,12 @@ public:
 				pcl::copyPointCloud(*cloud_src, *cloud_src_estTRUE);
 				{
 					Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-					Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(transform_);
+					Trans_temp = CPointcloudBasic::calcAffine3fFromHomogeneousMatrix(transform_);
 					pcl::transformPointCloud(*cloud_src_est, *cloud_src_est, Trans_temp);
 				}
 				{
 					Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-					Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(transformation_true);
+					Trans_temp = CPointcloudBasic::calcAffine3fFromHomogeneousMatrix(transformation_true);
 					pcl::transformPointCloud(*cloud_src_estTRUE, *cloud_src_estTRUE, Trans_temp);
 				}
 				//distance to true
@@ -607,7 +579,7 @@ public:
 					compare_src = 10000.;
 				else
 				{
-					compare_src = CExtendableICP::calcCovarianceMatrix(CExtendableICP::calcEigenMatrixFromPointCloud(cloud_near)).trace();
+					compare_src = CPointcloudBasic::calcCovarianceMatrix(CPointcloudBasic::calcEigenMatrixFromPointCloud(cloud_near)).trace();
 					if (compare_src > 10000.)
 					{
 						cout << "so big!!" << endl;
@@ -630,7 +602,7 @@ public:
 					compare_tgt = 10000.;
 				else
 				{
-					compare_tgt = CExtendableICP::calcCovarianceMatrix(CExtendableICP::calcEigenMatrixFromPointCloud(cloud_near)).trace();
+					compare_tgt = CPointcloudBasic::calcCovarianceMatrix(CPointcloudBasic::calcEigenMatrixFromPointCloud(cloud_near)).trace();
 					if (compare_tgt > 10000.)
 					{
 						cout << "so big!!" << endl;

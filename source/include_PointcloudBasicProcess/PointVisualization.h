@@ -4,31 +4,16 @@
 #include <vector>
 #include <random>
 
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/io/io.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/registration/transforms.h>
-#include <pcl/visualization/cloud_viewer.h>
-#include <pcl/ModelCoefficients.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/kdtree/kdtree.h>
+#include <pcl/ModelCoefficients.h>
+#include <pcl/registration/transforms.h>
+#include <pcl/visualization/cloud_viewer.h>
 
+#include "PointcloudBasic.h"
 //should be under pcl includes
 #include<windows.h>
 #include "TimeString.h"
-
-#define M_PI 3.14159265359
-#define D2R 0.017453288888889
-#define R2D 57.29579143313326
-
-namespace Eigen {
-
-	/// Extending Eigen namespace by adding frequently used matrix type
-	typedef Eigen::Matrix<double, 6, 6> Matrix6d;
-	typedef Eigen::Matrix<double, 6, 1> Vector6d;
-
-}    // namespace Eigen
 
 template <class T_PointType>
 class CPointVisualization
@@ -71,29 +56,6 @@ class CPointVisualization
 	//don't work
 	void doThread()
 	{
-		//while (!M_viewer->wasStopped())
-		//{
-		//	cout << "not stoped" << endl;
-
-		//	M_viewer->spinOnce(100);
-		//	cout << "not stoped" << endl;
-
-		//	//mutex with no stop
-		//	boost::mutex::scoped_try_lock lock(M_mutex);
-		//	//cout << "bool:" << lock.owns_lock() << endl;
-		//	if (lock.owns_lock() && M_cloud_)
-		//	{
-		//		M_handler->setInputCloud(M_cloud_);
-		//		//update viewer
-		//		//if (!M_viewer->updatePointCloud(M_cloud_, *M_handler, "cloud"))
-		//		//	M_viewer->addPointCloud(M_cloud_, *M_handler, "cloud");
-		//		if (!M_viewer->updatePointCloud(M_cloud_, *M_handler, "cloud"))
-		//			M_viewer->addPointCloud(M_cloud_, *M_handler, "cloud");
-		//		cout << "thread" << endl;
-		//	}
-		//	break;
-		//}
-
 		while (1)
 		{
 			cout << "while start" << endl;
@@ -434,115 +396,6 @@ class CPointVisualization
 		point.x = point1.x + point2.x; point.y = point1.y + point2.y; point.z = point1.z + point2.z;
 		point.r = point1.r + point2.r; point.g = point1.g + point2.g; point.b = point1.b + point2.b;
 		return point;
-	}
-
-	static Eigen::Matrix4d calcHomogeneousMatrixFromVector6d(double X_, double Y_, double Z_,
-		double Roll_, double Pitch_, double Yaw_)
-	{
-		Eigen::Matrix4d	transformation_Position = Eigen::Matrix4d::Identity();
-		Eigen::Matrix4d T_mat = Eigen::Matrix4d::Identity();
-		Eigen::Matrix4d Roll_mat = Eigen::Matrix4d::Identity();
-		Eigen::Matrix4d Pitch_mat = Eigen::Matrix4d::Identity();
-		Eigen::Matrix4d Yaw_mat = Eigen::Matrix4d::Identity();
-		T_mat(0, 3) = X_;
-		T_mat(1, 3) = Y_;
-		T_mat(2, 3) = Z_;
-		Roll_mat(1, 1) = cos(Roll_);
-		Roll_mat(1, 2) = -sin(Roll_);
-		Roll_mat(2, 1) = sin(Roll_);
-		Roll_mat(2, 2) = cos(Roll_);
-		Pitch_mat(0, 0) = cos(Pitch_);
-		Pitch_mat(2, 0) = -sin(Pitch_);
-		Pitch_mat(0, 2) = sin(Pitch_);
-		Pitch_mat(2, 2) = cos(Pitch_);
-		Yaw_mat(0, 0) = cos(Yaw_);
-		Yaw_mat(0, 1) = -sin(Yaw_);
-		Yaw_mat(1, 0) = sin(Yaw_);
-		Yaw_mat(1, 1) = cos(Yaw_);
-		transformation_Position = T_mat * Yaw_mat * Pitch_mat * Roll_mat;
-		return transformation_Position;
-	}
-
-	static Eigen::Matrix4d calcHomogeneousMatrixFromVector6d(Eigen::Vector6d XYZRPY_arg)
-	{
-		Eigen::Matrix4d	transformation_Position = Eigen::Matrix4d::Identity();
-		Eigen::Matrix4d T_mat = Eigen::Matrix4d::Identity();
-		Eigen::Matrix4d Roll_mat = Eigen::Matrix4d::Identity();
-		Eigen::Matrix4d Pitch_mat = Eigen::Matrix4d::Identity();
-		Eigen::Matrix4d Yaw_mat = Eigen::Matrix4d::Identity();
-		T_mat(0, 3) = XYZRPY_arg(0, 0);
-		T_mat(1, 3) = XYZRPY_arg(1, 0);
-		T_mat(2, 3) = XYZRPY_arg(2, 0);
-		Roll_mat(1, 1) = cos(XYZRPY_arg(3, 0));
-		Roll_mat(1, 2) = -sin(XYZRPY_arg(3, 0));
-		Roll_mat(2, 1) = sin(XYZRPY_arg(3, 0));
-		Roll_mat(2, 2) = cos(XYZRPY_arg(3, 0));
-		Pitch_mat(0, 0) = cos(XYZRPY_arg(4, 0));
-		Pitch_mat(2, 0) = -sin(XYZRPY_arg(4, 0));
-		Pitch_mat(0, 2) = sin(XYZRPY_arg(4, 0));
-		Pitch_mat(2, 2) = cos(XYZRPY_arg(4, 0));
-		Yaw_mat(0, 0) = cos(XYZRPY_arg(5, 0));
-		Yaw_mat(0, 1) = -sin(XYZRPY_arg(5, 0));
-		Yaw_mat(1, 0) = sin(XYZRPY_arg(5, 0));
-		Yaw_mat(1, 1) = cos(XYZRPY_arg(5, 0));
-		transformation_Position = T_mat * Yaw_mat * Pitch_mat * Roll_mat;
-		return transformation_Position;
-	}
-
-	static Eigen::Affine3f calcAffine3fFromHomogeneousMatrix(Eigen::Matrix4d input_Mat)
-	{
-		Eigen::Affine3f Trans_Affine = Eigen::Affine3f::Identity();
-		Eigen::Vector6d Trans_Vec = Eigen::Vector6d::Identity();
-		Trans_Vec = calcVector6dFromHomogeneousMatrix(input_Mat);
-		Trans_Affine.translation() << Trans_Vec(0, 0), Trans_Vec(1, 0), Trans_Vec(2, 0);
-		Trans_Affine.rotate(Eigen::AngleAxisf(Trans_Vec(5, 0), Eigen::Vector3f::UnitZ()));
-		Trans_Affine.rotate(Eigen::AngleAxisf(Trans_Vec(4, 0), Eigen::Vector3f::UnitY()));
-		Trans_Affine.rotate(Eigen::AngleAxisf(Trans_Vec(3, 0), Eigen::Vector3f::UnitX()));
-		return Trans_Affine;
-	}
-
-	static Eigen::Vector6d calcVector6dFromHomogeneousMatrix(Eigen::Matrix4d input_Mat)
-	{
-		Eigen::Vector6d XYZRPY = Eigen::Vector6d::Zero();
-		double X_, Y_, Z_, Roll_, Pitch_, Yaw_;
-		X_ = input_Mat(0, 3);
-		Y_ = input_Mat(1, 3);
-		Z_ = input_Mat(2, 3);
-		if (input_Mat(2, 0) == -1.) {
-			Pitch_ = M_PI / 2.0;
-			Roll_ = 0.;
-			Yaw_ = atan2(input_Mat(1, 2), input_Mat(1, 1));
-		}
-		else if (input_Mat(2, 0) == 1.) {
-			Pitch_ = -M_PI / 2.0;
-			Roll_ = 0.;
-			Yaw_ = atan2(-input_Mat(1, 2), input_Mat(1, 1));
-		}
-		else {
-			Yaw_ = atan2(input_Mat(1, 0), input_Mat(0, 0));
-			Roll_ = atan2(input_Mat(2, 1), input_Mat(2, 2));
-			double cos_Pitch;
-			if (cos(Yaw_) == 0.) {
-				cos_Pitch = input_Mat(0, 0) / sin(Yaw_);
-			}
-			else 	cos_Pitch = input_Mat(0, 0) / cos(Yaw_);
-
-			Pitch_ = atan2(-input_Mat(2, 0), cos_Pitch);
-		}
-		if (!(-M_PI < Roll_)) Roll_ += M_PI;
-		else if (!(Roll_ < M_PI)) Roll_ -= M_PI;
-		if (!(-M_PI < Pitch_)) Pitch_ += M_PI;
-		else if (!(Pitch_ < M_PI)) Pitch_ -= M_PI;
-		if (!(-M_PI < Yaw_)) Yaw_ += M_PI;
-		else if (!(Yaw_ < M_PI)) Yaw_ -= M_PI;
-
-		XYZRPY << X_, Y_, Z_,
-			Roll_, Pitch_, Yaw_;
-		//cout << "Roll_ = " << Roll_ << endl;
-		//cout << "Pitch_ = " << Pitch_ << endl;
-		//cout << "Yaw_ = " << Yaw_ << endl;
-
-		return XYZRPY;
 	}
 
 public:
@@ -1087,10 +940,10 @@ public:
 		point_end.x = length_arraw;
 		Eigen::Matrix4d point_end_homogeneous = Eigen::Matrix4d::Identity();
 		point_end_homogeneous =
-			calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., Yaw_)
-			*calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., Pitch_, 0.)
-			*calcHomogeneousMatrixFromVector6d(0., 0., 0., Roll_, 0., 0.)
-			*calcHomogeneousMatrixFromVector6d(
+			CPointcloudBasic::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., Yaw_)
+			*CPointcloudBasic::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., Pitch_, 0.)
+			*CPointcloudBasic::calcHomogeneousMatrixFromVector6d(0., 0., 0., Roll_, 0., 0.)
+			*CPointcloudBasic::calcHomogeneousMatrixFromVector6d(
 				point_end.x, point_end.y, point_end.z, 0., 0., 0.);
 		point_end.x = point_end_homogeneous(0, 3);
 		point_end.y = point_end_homogeneous(1, 3);
@@ -1484,35 +1337,4 @@ public:
 		drawCorrespondance(cloud_src, cloud_tgt, corr_, color_vecvec);
 	}
 
-	//template < typename T_Point >
-	//void drawCorrespondance(boost::shared_ptr<pcl::PointCloud<T_Point>> cloud_src,
-	//	boost::shared_ptr<pcl::PointCloud<T_Point>> cloud_tgt, pcl::Correspondences corr_, vector<std::uint8_t> color_vec)
-	//{
-	//	string s_corr = "corr";
-	//	//remove old corr
-	//	for (int j = M_s_line_vec.size() - 1; j >= 0; j--)
-	//	{
-	//		vector<int> find_vec = CTimeString::find_all(M_s_line_vec[j], s_corr);
-	//		if (find_vec.size() != 0)
-	//		{
-	//			M_viewer->removeShape(M_s_line_vec[j]);
-	//			M_s_line_vec.erase(M_s_line_vec.begin() + j);
-	//		}
-	//	}
-	//	//make new corr
-	//	for (int j = 0; j < corr_.size(); j++)
-	//	{
-	//		string s_j = to_string(j);
-	//		for (int i = 0; i < 6; i++)
-	//			if (s_j.size() < 6) s_j = " " + s_j;
-	//		string s_name = s_j + s_corr;
-	//		pcl::PointXYZRGB point_src = cloud_src->points[corr_[j].index_query];
-	//		pcl::PointXYZRGB point_tgt = cloud_tgt->points[corr_[j].index_match];
-	//		point_src.r = point_tgt.r = color_vec[0];
-	//		point_src.g = point_tgt.g = color_vec[1];
-	//		point_src.b = point_tgt.b = color_vec[2];
-	//		drawLine(point_src, point_tgt, s_name);
-	//		M_s_line_vec.push_back(s_name);
-	//	}
-	//}
 };

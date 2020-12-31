@@ -4,64 +4,27 @@
 #include <vector>
 #include <random>
 
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/io/io.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/registration/transforms.h>
-#include <pcl/visualization/cloud_viewer.h>
 #include <pcl/filters/approximate_voxel_grid.h>
-
-#include <pcl/ModelCoefficients.h>  
-#include <pcl/sample_consensus/method_types.h>  
-#include <pcl/sample_consensus/model_types.h>  
-#include <pcl/segmentation/sac_segmentation.h>  
 #include <pcl/filters/extract_indices.h>
-
-#include <pcl/ModelCoefficients.h>
-#include <pcl/point_types.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/filters/extract_indices.h>
-#include <pcl/filters/voxel_grid.h>
+#include <pcl/filters/passthrough.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/kdtree/kdtree.h>
-#include <pcl/sample_consensus/method_types.h>
-#include <pcl/sample_consensus/model_types.h>
-#include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/registration/transforms.h>
 #include <pcl/segmentation/extract_clusters.h>
-
-#include <pcl/filters/passthrough.h>
 #include <pcl/visualization/pcl_plotter.h>
 
-////https://akio-tanaka.tumblr.com/page/2
-//#pragma comment(lib,"opengl32.lib")	
-//#include <vtkAutoInit.h>
-//VTK_MODULE_INIT(vtkRenderingOpenGL);
-//VTK_MODULE_INIT(vtkInteractionStyle);
-
-#include"ExtendableICP.h"
-#include"FPFH_PCL.h"
+#include "PointcloudBasicProcess.h"
 #include "PointVisualization.h"
+#include "ExtendableICP.h"
+#include "FPFH_PCL.h"
 
 //should be under pcl includes
 #include<windows.h>
 #include "TimeString.h"
 
-#define M_PI 3.14159265359
-#define D2R 0.017453288888889
-#define R2D 57.29579143313326
-
 using namespace std;
 
-namespace Eigen {
-
-	/// Extending Eigen namespace by adding frequently used matrix type
-	typedef Eigen::Matrix<double, 6, 6> Matrix6d;
-	typedef Eigen::Matrix<double, 6, 1> Vector6d;
-
-}    // namespace Eigen
-
-class CPointcloudFunction
+class CPointcloudFunction : public CPointcloudBasicProcess
 {
 
 public:
@@ -71,7 +34,6 @@ public:
 	}
 
 	void all_process();
-	void show_sequent();
 	void getPCDFromCSV_naraha();
 	void getPCDFromCSV_gotFromPCAP(string dir_save, string dir_data, string file_RelativePath_);
 	void FreeSpace();
@@ -79,85 +41,8 @@ public:
 	void getCSVFromPointCloud();
 	void combinePointCloud_naraha();
 
-	template <class T_PointType>
-	void detectPlane(pcl::PointCloud<T_PointType> &cloud_,double th_distance, bool b_cout = false, bool b_remove = false)
-	{
-		//https://qiita.com/akachochin/items/47f1470565e76adb1880
-		//https://www.slideshare.net/masafuminoda/pcl-11030703
-		pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
-		pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
-		// Create the segmentation object  
-		pcl::SACSegmentation<T_PointType> seg;
-		// Optional  
-		seg.setOptimizeCoefficients(true);
-		// Mandatory  
-		seg.setModelType(pcl::SACMODEL_PLANE);
-		seg.setMethodType(pcl::SAC_RANSAC);
-		seg.setMaxIterations(200);
-		seg.setDistanceThreshold(th_distance);	
-		seg.setInputCloud(cloud_.makeShared());
-		seg.segment(*inliers, *coefficients);
-		if (inliers->indices.size() == 0)
-			PCL_ERROR("Could not estimate a planar model for the given dataset.");
-
-		if (b_cout)
-		{
-			cout << "Model coefficients:";
-			for (int i = 0; i < coefficients->values.size(); i++)
-				cout << " " << coefficients->values[i];
-			cout << " (pitch[deg]: " << -asin(coefficients->values[0]) * 180. / M_PI << ")";
-			cout << endl;
-			std::cerr << "Model inliers: " << inliers->indices.size() << std::endl;
-		}
-		for (size_t i = 0; i < inliers->indices.size(); ++i)
-			changeColor_plane(cloud_.points[inliers->indices[i]]);
-
-		if (b_remove)
-		{
-			pcl::ExtractIndices<T_PointType> extract;
-			extract.setInputCloud(cloud_.makeShared());
-			extract.setIndices(inliers);
-			extract.setNegative(true); //true: removing plane, false: removing except plane
-			extract.filter(cloud_);
-		}
-	}
-
-	void changeColor_plane(pcl::PointXYZRGB &point_);
-	void changeColor_plane(pcl::PointXYZI &point_);
-
 	void DynamicTranslation();
 
-	void FileProcess();
-	void FileProcess_copy(string dir_from, string dir_to);
-	void FileProcess_delete(string dir);
-	void FileProcess_evacuate(string dir);
-	void FileProcess_FolderInFolder(string dir_, vector<string> &folder_vec);
-
-private:
-	enum KEYNUM {
-		NONE,
-		ZERO,
-		X_,
-		Y_,
-		Z_,
-		ROLL_,
-		PITCH_,
-		YAW_,
-		X_MINUS,
-		Y_MINUS,
-		Z_MINUS,
-		ROLL_MINUS,
-		PITCH_MINUS,
-		YAW_MINUS,
-		ENTER,
-		RSHIFT,
-		RCTRL,
-		ESC
-	};
-public:
-	//should declare under enum type declaration
-	KEYNUM getKEYNUM();
-	void DrawTrajectory();
 	void DoSegmentation();
 
 	void GlobalRegistration_FPFH_SAC_IA();
@@ -202,7 +87,5 @@ public:
 		vector<double> &frameCloudMedian_vec, double &map_mean);
 	void DoEvaluation_ICP_property_mergeResult(string dir_);
 	vector<string> DoEvaluation_ICP_property_mergeResult_OnePattern(string dir_, string s_folder);
-
-	void DoMappingFromTrajectory();
 
 };

@@ -3060,7 +3060,7 @@ void CGlobalFeatureRegistration_test::DoDifferential_PairEvaluation3(string dir_
 				int i_tgt = index_pair_vec[j].first;
 				int i_src = index_pair_vec[j].second;
 				Eigen::Matrix4f transformation_matrix = Eigen::Matrix4f::Identity();
-				CExtendableICP::estimateRigidTransformation_static(cloud_vec[i_src], cloud_vec[i_tgt], corrs_output_vec[j], transformation_matrix);
+				estimateRigidTransformation_static(cloud_vec[i_src], cloud_vec[i_tgt], corrs_output_vec[j], transformation_matrix);
 				transformation_vec.push_back(transformation_matrix.cast<double>());
 			}
 

@@ -222,8 +222,8 @@ void CPointcloudFunction::FreeSpace()
 		cloud_src->is_dense = true;
 
 		Eigen::Matrix<float, 3, Eigen::Dynamic> mat_(3, cloud_tgt->size());
-		mat_ = CExtendableICP::calcEigenMatrixFromPointCloud(cloud_tgt);
-		Eigen::Matrix<float, 3, 3> mat_cov = CExtendableICP::calcCovarianceMatrix(mat_);
+		mat_ = calcEigenMatrixFromPointCloud(cloud_tgt);
+		Eigen::Matrix<float, 3, 3> mat_cov = calcCovarianceMatrix(mat_);
 		cout << "show mat_cov" << endl;
 		cout << mat_cov << endl;
 
@@ -482,188 +482,6 @@ void CPointcloudFunction::FreeSpace()
 
 }
 
-void CPointcloudFunction::show_sequent()
-{
-	string dir_;
-	dir_ = "../../data";
-	vector<string> dir_folder_vec;
-	FileProcess_FolderInFolder(dir_, dir_folder_vec);
-
-	int i_select;
-	cout << "select folder (index) ->";
-	cin >> i_select;
-	cout << i_select << "(" << dir_folder_vec[i_select] << ")" << endl;
-	dir_ = dir_ + "/" + dir_folder_vec[i_select];
-	cout << endl;
-
-	//typedef typename pcl::PointXYZI PointType_func;
-	typedef typename pcl::PointXYZRGB PointType_func;
-
-	bool b_useTXT = false;
-	//b_useTXT = true;
-
-	bool b_plane = false;
-	//b_plane = true;
-
-	bool b_onlyConvergence = false;
-	//b_onlyConvergence = true;
-	{
-		int i_find = dir_.find("GR_FPFH_SAC_IA/2020");
-		if (i_find == std::string::npos) b_onlyConvergence = false;
-		else b_onlyConvergence = true;
-	}
-
-	bool b_select = false;
-	//b_select = true;
-
-	bool b_normal = false;
-	//b_normal = true;
-
-	CPointVisualization<PointType_func> pv;
-	if (typeid(PointType_func) == typeid(pcl::PointXYZI))
-		pv.setWindowName("show XYZI");
-	else if (typeid(PointType_func) == typeid(pcl::PointXYZRGB))
-		pv.setWindowName("show XYZRGB");
-	else
-		throw std::runtime_error("This PointType is unsupported.");
-
-	//show normal
-	if (b_normal)
-	{
-		cout << "input: normal radius" << endl;
-		cout << "->";
-		float radius_normal;
-		cin >> radius_normal;
-		pv.useNormal(radius_normal, 10, 0.1);
-	}
-
-	vector<string> filenames_;
-	if(b_onlyConvergence) CTimeString::getFileNames_extension(dir_, filenames_, "C1_XYZRGB.pcd");
-	else CTimeString::getFileNames_extension(dir_, filenames_,".pcd");
-	cout << "file size: " << filenames_.size() << endl;
-
-	if (filenames_.size() == 0)
-	{
-		cout << "no pointcloud found" << endl;
-		pv.closeViewer();
-		return;
-	}
-
-	//ignore some files
-	if(b_select)
-	{
-		bool b_showAll = true;
-		cout << "select: Do you watch all .pcd or not?  Yes:1  No:0" << endl;
-		cout << "->";
-		cin >> b_showAll;
-		if (!b_showAll)
-		{
-			for (int i = 0; i < filenames_.size(); i++)
-			{
-				string s_i = to_string(i);
-				if (s_i.size() < 3) s_i = " " + s_i;
-				if (s_i.size() < 3) s_i = " " + s_i;
-				cout << "i:" << s_i << " " << filenames_[i] << endl;
-
-			}
-			cout << endl;
-			cout << "select(index): files you watch and separeted with spaces" << endl;
-			cout << "->";
-			vector<string> s_input_vec;
-			s_input_vec = CTimeString::inputSomeString();
-			vector<string> filenames_temp;
-			filenames_temp = filenames_;
-			filenames_.clear();
-			for (int i = 0; i < s_input_vec.size(); i++)
-			{
-				int index_temp = stoi(s_input_vec[i]);
-				if (!(0 <= index_temp && index_temp < filenames_temp.size()))
-				{
-					cout << "ERROR: ignored invalud:" << index_temp << endl;
-					continue;
-				}
-				filenames_.push_back(filenames_temp[index_temp]);
-				cout << "filenames_.back():" << filenames_.back() << endl;
-			}
-
-			if (filenames_.size() == 0) filenames_ = filenames_temp;
-		}
-
-	}
-
-	if (filenames_.size() == 0)
-	{
-		cout << "ERROR: no file found" << endl;
-		return ;
-	}
-
-	pcl::PointCloud<PointType_func>::Ptr cloud_(new pcl::PointCloud<PointType_func>());
-	pcl::PointCloud<PointType_func>::Ptr cloud_temp(new pcl::PointCloud<PointType_func>());
-
-	int index_ = 0;
-
-	vector<string> filename_use;
-	cout << "Press space to next" << endl;
-	while (1)
-	{
-		//short key_num = GetAsyncKeyState(VK_SPACE);
-		if ((GetAsyncKeyState(VK_SPACE) & 1) == 1)
-		{
-			if (index_ == filenames_.size())
-			{
-				cout << "index over" << endl;
-				break;
-			}
-			cout << "index_: " << index_ << endl;
-			//cout << "reading:" << filenames_[index_] << endl;
-			pcl::io::loadPCDFile(dir_ + "/" + filenames_[index_], *cloud_);
-			cout << "showing:" << filenames_[index_] <<" size:" << cloud_->size() << endl;
-			//pv.setPointCloud(cloud_);
-			pv.setPointCloud(cloud_, filenames_[index_]);
-
-			//remove ground plane
-			if (cloud_->size() != 0 && b_plane)
-			{
-				detectPlane<PointType_func>(*cloud_, 0.05, true, true);	//velo
-				//detectPlane<PointType_func>(*cloud_, 0.01, true, true);	//nir
-			}
-			index_++;
-		}
-		//save
-		if ((GetAsyncKeyState(VK_RETURN) & 1) == 1 && b_useTXT)
-		{
-			filename_use.push_back(filenames_[index_ - 1]);
-			cout << "add: " << filenames_[index_ - 1] << endl;
-		}
-		//escape
-		//short key_num_esc = GetAsyncKeyState(VK_ESCAPE);
-		if ((GetAsyncKeyState(VK_ESCAPE) & 1) == 1) {
-			cout << "toggled!" << endl;
-			break;
-		}
-		pv.updateViewer();
-	}
-
-	pv.closeViewer();
-
-	for (int i = 0; i < filename_use.size(); i++)
-	{
-		//cout << "file " << i << ": " << filename_use[i] << endl;
-		cout<< filename_use[i] << endl;
-	}
-
-	vector<vector<string>> save_vec_vec;
-	for (int i = 0; i < filename_use.size(); i++)
-	{
-		vector<string> save_vec;
-		save_vec.push_back(filename_use[i]);
-		save_vec_vec.push_back(save_vec);
-	}
-	if (b_useTXT)
-		CTimeString::getCSVFromVecVec(save_vec_vec, dir_ + "/_usePointCloud.csv");
-
-}
-
 void CPointcloudFunction::getPCDFromCSV_gotFromPCAP(string dir_save, string dir_data, string file_RelativePath_)
 {
 	pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_(new pcl::PointCloud<pcl::PointXYZI>());
@@ -850,9 +668,9 @@ void CPointcloudFunction::filterNIRPointCloud_naraha()
 
 		//turn pitch(camera coordinate to robot one)
 		HM_free = Eigen::Matrix4d::Identity();
-		HM_free = CExtendableICP::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
+		HM_free = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
 		Trans_ = Eigen::Affine3f::Identity();
-		Trans_ = CExtendableICP::calcAffine3fFromHomogeneousMatrix(HM_free);
+		Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
 		pcl::transformPointCloud(*cloud_, *cloud_, Trans_);
 
 		//range
@@ -887,9 +705,9 @@ void CPointcloudFunction::filterNIRPointCloud_naraha()
 
 		//-turn pitch(camera coordinate)
 		HM_free = Eigen::Matrix4d::Identity();
-		HM_free = CExtendableICP::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., -pitch_init, 0.);
+		HM_free = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., -pitch_init, 0.);
 		Trans_ = Eigen::Affine3f::Identity();
-		Trans_ = CExtendableICP::calcAffine3fFromHomogeneousMatrix(HM_free);
+		Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
 		pcl::transformPointCloud(*cloud_, *cloud_, Trans_);
 
 		string filename_save = filenames_[index_].substr(0, filenames_[index_].size() - 4) + "_filtered_nir.pcd";
@@ -933,92 +751,6 @@ void CPointcloudFunction::getCSVFromPointCloud()
 	
 	cout << "finish .csv method" << endl;
 }
-
-CPointcloudFunction::KEYNUM CPointcloudFunction::getKEYNUM()
-{
-
-	//http://kts.sakaiweb.com/virtualkeycodes.html
-
-	KEYNUM key_;
-	bool b_PChasNUMPAD = true;
-	b_PChasNUMPAD = false;
-
-	//https://www.slideshare.net/masafuminoda/pcl-11030703
-		//Viewer
-		//left drag：rotation of view point
-		//Shift+left drag：translation of view point
-		//Ctrl+left drag：rotation in display
-		//right drag：zoom
-		//g：display measure
-		//j：save screenshot
-
-		//input key
-	short key_num_X_;
-	short key_num_Y_;
-	short key_num_Z_;
-	short key_num_ROLL_;
-	short key_num_PITCH_;
-	short key_num_YAW_;
-	short key_num_X_minus;
-	short key_num_Y_minus;
-	short key_num_Z_minus;
-	short key_num_ROLL_minus;
-	short key_num_PITCH_minus;
-	short key_num_YAW_minus;
-	short key_num_ZERO;
-	short key_num_ENTER;
-	short key_num_ESC;
-	//short key_num_SUBTRACT;
-	short key_num_RSHIFT;
-	short key_num_RCTRL;
-
-	key_num_X_ = GetAsyncKeyState(0x31);	//1
-	key_num_Y_ = GetAsyncKeyState(0x32);	//2
-	key_num_Z_ = GetAsyncKeyState(0x33);	//3
-	key_num_ROLL_ = GetAsyncKeyState(0x34);	//4
-	key_num_PITCH_ = GetAsyncKeyState(0x35);//5
-	key_num_YAW_ = GetAsyncKeyState(0x36);	//6
-	key_num_X_minus = GetAsyncKeyState(0x51);	//Q
-	key_num_Y_minus = GetAsyncKeyState(0x57);	//W
-	key_num_Z_minus = GetAsyncKeyState(0x45);	//E
-	key_num_ROLL_minus = GetAsyncKeyState(0x52);	//R
-	key_num_PITCH_minus = GetAsyncKeyState(0x54);//T
-	key_num_YAW_minus = GetAsyncKeyState(0x59);	//Y
-	key_num_ZERO = GetAsyncKeyState(0x30);	//0
-	key_num_ENTER = GetAsyncKeyState(VK_RETURN);
-	key_num_ESC = GetAsyncKeyState(VK_ESCAPE);
-	//key_num_SUBTRACT = GetAsyncKeyState(VK_OEM_MINUS);
-	key_num_RSHIFT = GetAsyncKeyState(VK_RSHIFT);
-	key_num_RCTRL = GetAsyncKeyState(VK_RCONTROL);
-
-	if ((key_num_X_ & 1) == 1) key_ = X_;
-	else if ((key_num_Y_ & 1) == 1) key_ = Y_;
-	else if ((key_num_Z_ & 1) == 1) key_ = Z_;
-	else if ((key_num_ROLL_ & 1) == 1) key_ = ROLL_;
-	else if ((key_num_PITCH_ & 1) == 1) key_ = PITCH_;
-	else if ((key_num_YAW_ & 1) == 1) key_ = YAW_;
-	else if ((key_num_X_minus & 1) == 1) key_ = X_MINUS;
-	else if ((key_num_Y_minus & 1) == 1) key_ = Y_MINUS;
-	else if ((key_num_Z_minus & 1) == 1) key_ = Z_MINUS;
-	else if ((key_num_ROLL_minus & 1) == 1) key_ = ROLL_MINUS;
-	else if ((key_num_PITCH_minus & 1) == 1) key_ = PITCH_MINUS;
-	else if ((key_num_YAW_minus & 1) == 1) key_ = YAW_MINUS;
-	else if ((key_num_ZERO & 1) == 1) key_ = ZERO;
-	else if ((key_num_ENTER & 1) == 1) key_ = ENTER;
-	//else if ((key_num_SUBTRACT & 1) == 1) key_ = SUBTRACT;
-	else if ((key_num_ESC & 1) == 1) key_ = ESC;
-	else if ((key_num_RSHIFT & 1) == 1) key_ = RSHIFT;
-	else if ((key_num_RCTRL & 1) == 1) key_ = RCTRL;
-	//{
-	//	cout << "ESC called" << endl;
-	//	b_escaped = true;
-	//	break;
-	//}
-	else key_ = NONE;
-
-	return key_;
-}
-
 
 void CPointcloudFunction::combinePointCloud_naraha()
 {
@@ -1100,9 +832,9 @@ void CPointcloudFunction::combinePointCloud_naraha()
 			{
 				//turn pitch(camera coordinate to robot one)
 				HM_free = Eigen::Matrix4d::Identity();
-				HM_free = CExtendableICP::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
+				HM_free = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
 				Trans_ = Eigen::Affine3f::Identity();
-				Trans_ = CExtendableICP::calcAffine3fFromHomogeneousMatrix(HM_free);
+				Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
 				pcl::transformPointCloud(*cloud_velo, *cloud_velo, Trans_);
 				if (b_removeGround)
 				{
@@ -1164,9 +896,9 @@ void CPointcloudFunction::combinePointCloud_naraha()
 			{
 				//turn pitch(camera coordinate to robot one)
 				HM_free = Eigen::Matrix4d::Identity();
-				HM_free = CExtendableICP::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
+				HM_free = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
 				Trans_ = Eigen::Affine3f::Identity();
-				Trans_ = CExtendableICP::calcAffine3fFromHomogeneousMatrix(HM_free);
+				Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
 				pcl::transformPointCloud(*cloud_velo, *cloud_velo, Trans_);
 				if (b_removeGround)
 				{
@@ -1186,9 +918,9 @@ void CPointcloudFunction::combinePointCloud_naraha()
 			{
 				//turn pitch(camera coordinate to robot one)
 				HM_free = Eigen::Matrix4d::Identity();
-				HM_free = CExtendableICP::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
+				HM_free = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., pitch_init, 0.);
 				Trans_ = Eigen::Affine3f::Identity();
-				Trans_ = CExtendableICP::calcAffine3fFromHomogeneousMatrix(HM_free);
+				Trans_ = calcAffine3fFromHomogeneousMatrix(HM_free);
 				pcl::transformPointCloud(*cloud_nir, *cloud_nir, Trans_);
 			}
 
@@ -1229,18 +961,6 @@ void CPointcloudFunction::combinePointCloud_naraha()
 
 	}
 	
-}
-
-void CPointcloudFunction::changeColor_plane(pcl::PointXYZRGB &point_)
-{
-	point_.r = 0;
-	point_.g = 0;
-	point_.b = 255;
-}
-
-void CPointcloudFunction::changeColor_plane(pcl::PointXYZI &point_)
-{
-	point_.intensity = 210;
 }
 
 void CPointcloudFunction::DynamicTranslation()
@@ -1409,7 +1129,7 @@ void CPointcloudFunction::DynamicTranslation()
 
 				cloud_moving->clear();
 				Trans_ = Eigen::Affine3f::Identity();
-				Trans_ = CExtendableICP::calcAffine3fFromHomogeneousMatrix(HM_Trans_now);
+				Trans_ = calcAffine3fFromHomogeneousMatrix(HM_Trans_now);
 				pcl::transformPointCloud(*cloud_moving_before, *cloud_moving, Trans_);
 			}
 			else
@@ -1477,27 +1197,27 @@ void CPointcloudFunction::DynamicTranslation()
 			switch (var)
 			{
 			case X_vr:
-				HM_Trans_now = CExtendableICP::calcHomogeneousMatrixFromVector6d(d_value_, 0., 0., 0., 0., 0.)
+				HM_Trans_now = calcHomogeneousMatrixFromVector6d(d_value_, 0., 0., 0., 0., 0.)
 					* HM_Trans_now;
 				break;
 			case Y_vr:
-				HM_Trans_now = CExtendableICP::calcHomogeneousMatrixFromVector6d(0., d_value_, 0., 0., 0., 0.)
+				HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., d_value_, 0., 0., 0., 0.)
 					* HM_Trans_now;
 				break;
 			case Z_vr:
-				HM_Trans_now = CExtendableICP::calcHomogeneousMatrixFromVector6d(0., 0., d_value_, 0., 0., 0.)
+				HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., d_value_, 0., 0., 0.)
 					* HM_Trans_now;
 				break;
 			case Roll_vr:
-				HM_Trans_now = CExtendableICP::calcHomogeneousMatrixFromVector6d(0., 0., 0., d_value_ * M_PI / 180., 0., 0.)
+				HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., d_value_ * M_PI / 180., 0., 0.)
 					* HM_Trans_now;
 				break;
 			case Pitch_vr:
-				HM_Trans_now = CExtendableICP::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., d_value_ * M_PI / 180., 0.)
+				HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., d_value_ * M_PI / 180., 0.)
 					* HM_Trans_now;
 				break;
 			case Yaw_vr:
-				HM_Trans_now = CExtendableICP::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., d_value_ * M_PI / 180.)
+				HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., d_value_ * M_PI / 180.)
 					* HM_Trans_now;
 				break;
 			default:
@@ -1516,7 +1236,7 @@ void CPointcloudFunction::DynamicTranslation()
 		if (!(key_ == KEY_NONE || key_ == KEY_SPACE)) {
 			cloud_moving->clear();
 			Trans_ = Eigen::Affine3f::Identity();
-			Trans_ = CExtendableICP::calcAffine3fFromHomogeneousMatrix(HM_Trans_now);
+			Trans_ = calcAffine3fFromHomogeneousMatrix(HM_Trans_now);
 			pcl::transformPointCloud(*cloud_moving_before, *cloud_moving, Trans_);
 		}
 
@@ -1537,429 +1257,6 @@ void CPointcloudFunction::DynamicTranslation()
 		b_save_txt = true;
 	else
 		b_save_txt = false;
-
-	pv.closeViewer();
-}
-
-void CPointcloudFunction::FileProcess()
-{
-
-	string dir_;
-	//dir_ = "../../data/temp/_DynamicTranslation";
-	dir_ = "../../data";
-
-	vector<string> filenames_folder;
-
-	enum Process
-	{
-		EN_SHOW_DEEPLY,
-		EN_COPY,
-		EN_DELETE,
-		EN_EVACUATE,
-		EN_ESPACE
-	};
-
-	////debug
-	//{
-	//	vector<string> files_temp;
-	//	//CTimeString::getFileNames(dir_, files_temp, false, true, false);
-	//	CTimeString::getFileNames(dir_, files_temp, true, true, true);
-	//	cout << "files_temp.size():"<< files_temp.size() << endl;
-	//}
-
-
-	while (1)
-	{
-		//show get folder name
-		FileProcess_FolderInFolder(dir_, filenames_folder);
-
-		cout << endl;
-		cout << "select:" << endl;
-		cout << "  show deeply:" << EN_SHOW_DEEPLY << endl;
-		cout << "  copy file(.pcd):" << EN_COPY << endl;
-		cout << "  delete file(.pcd):" << EN_DELETE << endl;
-		cout << "  evacuate file(.pcd) in folder A to new folder B in A:" << EN_EVACUATE << endl;
-		cout << "  escape this function:" << EN_ESPACE << endl;
-		cout << "->";
-		int i_select = 0;
-		cin >> i_select;
-		cout << endl;
-
-		if (i_select == EN_SHOW_DEEPLY)
-		{
-			for (int i = 0; i < filenames_folder.size(); i++)
-			{
-				string s_filename = dir_ + "/" + filenames_folder[i];
-				vector<string> temp_;
-				CTimeString::getFileNames(s_filename, temp_, false, true, false);
-				cout << endl;
-				cout << s_filename << endl;
-				for (int j = 0; j < temp_.size(); j++)
-					cout << "     " << temp_[j] << endl;
-			}
-		}
-
-		else if (i_select == EN_COPY)
-		{
-			int i_copy_to = -1;
-			int i_copy_from = -1;
-
-			cout << endl;
-
-			cout << "copy from (index) ->";
-			cin >> i_copy_from;
-			//if (!(-1 < i_copy_from && i_copy_from < filenames_folder.size())) return;
-			cout << i_copy_from << "(" << filenames_folder[i_copy_from] << ")" << endl;
-
-			cout << "copy to (index) ->";
-			cin >> i_copy_to;
-			//if (!(-1 < i_copy_to && i_copy_to < filenames_folder.size())) return;
-			cout << i_copy_to << "(" << filenames_folder[i_copy_to] << ")" << endl;
-
-			FileProcess_copy(
-				dir_ + "/" + filenames_folder[i_copy_from], 
-				dir_ + "/" + filenames_folder[i_copy_to]);
-
-		}
-
-		else if (i_select == EN_DELETE)
-		{
-			int i_select_2;
-			cout << "delete file in folder (index) ->";
-			cin >> i_select_2;
-			cout << i_select_2 << "(" << filenames_folder[i_select_2] << ")" << endl;
-			FileProcess_delete(dir_ + "/" + filenames_folder[i_select_2]);
-		}
-
-		else if (i_select == EN_EVACUATE)
-		{
-			int i_select_2;
-			cout << "evaculate files in folder (index) ->";
-			cin >> i_select_2;
-			cout << i_select_2 << "(" << filenames_folder[i_select_2] << ")" << endl;
-			FileProcess_evacuate(dir_ + "/" + filenames_folder[i_select_2]);
-		}
-
-		else if (i_select == EN_ESPACE) break;
-
-		else return;
-	}
-
-}
-
-void CPointcloudFunction::FileProcess_copy(string dir_from, string dir_to)
-{
-	vector<string> filenames_copy;
-	//check it can copy file
-	{
-		vector<string> filenames_from;
-		CTimeString::getFileNames_extension(dir_from, filenames_from, ".pcd");
-		vector<string> filenames_to;
-		CTimeString::getFileNames_extension(dir_to, filenames_to, ".pcd");
-
-		for (int j = 0; j < filenames_from.size(); j++)
-		{
-			bool b_copy = true;
-			for (int i = 0; i < filenames_to.size(); i++)
-			{
-				if (filenames_from[j] == filenames_to[i])
-				{
-					cout << "ALERT: " << filenames_from[j] << " exist in each folder" << endl;
-					b_copy = false;
-					break;
-				}
-			}
-			if (b_copy) filenames_copy.push_back(filenames_from[j]);
-		}
-	}
-
-
-	//copy
-	for (int i = 0; i < filenames_copy.size(); i++)
-	{
-		string s_filefrom = dir_from + "/" + filenames_copy[i];
-		string s_fileto = dir_to + "/" + filenames_copy[i];
-		cout << "s_filefrom: " << s_filefrom << endl;
-		cout << "s_fileto: " << s_fileto << endl;
-		CTimeString::copyfile(s_filefrom, s_fileto);
-
-		//check whether copying succeeded
-		vector<string> check_vec;
-		bool b_succeeded = false;
-		CTimeString::getFileNames_extension(dir_to, check_vec, filenames_copy[i]);
-		if (check_vec.size() == 1) b_succeeded = true;
-		if (!b_succeeded)
-		{
-			cout << "ERROR: " << filenames_copy[i] << " was failed to copy" << endl;
-			return;
-		}
-	}
-}
-
-void CPointcloudFunction::FileProcess_delete(string dir)
-{
-
-	//check
-	bool b_canDelete = true;
-	vector<string> filenames_delete;
-	CTimeString::getFileNames_extension(dir, filenames_delete, ".pcd");
-	if (filenames_delete.size() == 0) b_canDelete = false;
-	if (!b_canDelete)
-	{
-		cout << "ERROR: " << dir << " has no file" << endl;
-		return;
-	}
-
-	{
-		cout << "Do you delete it realy?  yes:1  no:0" << endl;
-		cout << "->";
-		bool b_decision = false;
-		cin >> b_decision;
-		if (!b_decision) return;
-	}
-
-	//delete
-	for (int i = 0; i < filenames_delete.size(); i++)
-	{
-		string s_filedelete = dir + "/" + filenames_delete[i];
-		cout << "s_filedelete: " << s_filedelete << endl;
-		CTimeString::deletefile(s_filedelete);
-
-		//check whether deleting succeeded
-		vector<string> check_vec;
-		bool b_succeeded = false;
-		CTimeString::getFileNames_extension(dir, check_vec, filenames_delete[i]);
-		if (check_vec.size() == 0) b_succeeded = true;
-		if (!b_succeeded)
-		{
-			cout << "ERROR: " << filenames_delete[i] << " was failed to delete" << endl;
-			return;
-		}
-	}
-}
-
-void CPointcloudFunction::FileProcess_evacuate(string dir)
-{
-	vector<string> filenames_main;
-	CTimeString::getFileNames_extension(dir, filenames_main, ".pcd");
-	{
-		vector<string> filenames_show;
-		CTimeString::getFileNames_extension(dir, filenames_show, ".pcd");
-		cout << "show files" << endl;
-		for (int i = 0; i < filenames_show.size(); i++) cout << filenames_show[i] << endl;
-	}
-
-	//make new folder
-	string s_newfoldername;
-	cout << endl;
-	cout << "write new folder name (don't use SPACE)" << endl;
-	cout << "->";
-	cin >> s_newfoldername;
-	CTimeString::makenewfolder(dir, s_newfoldername);
-
-	//copy
-	for (int i = 0; i < filenames_main.size(); i++)
-	{
-		string s_filefrom = dir + "/" + filenames_main[i];
-		string s_fileto = dir + "/" + s_newfoldername + "/" + filenames_main[i];
-		cout << "s_filefrom: " << s_filefrom << endl;
-		cout << "s_fileto: " << s_fileto << endl;
-		CTimeString::copyfile(s_filefrom, s_fileto);
-		//check whether copying succeeded
-		vector<string> check_vec;
-		bool b_succeeded = false;
-		CTimeString::getFileNames_extension(dir + "/" + s_newfoldername, check_vec, filenames_main[i]);
-		if (check_vec.size() == 1) b_succeeded = true;
-		if (!b_succeeded)
-		{
-			cout << "ERROR: " << filenames_main[i] << " was failed to copy" << endl;
-			return;
-		}
-	}
-
-	//delete
-	for (int i = 0; i < filenames_main.size(); i++)
-	{
-		string s_filedelete = dir + "/" + filenames_main[i];
-		cout << "s_filedelete: " << s_filedelete << endl;
-		CTimeString::deletefile(s_filedelete);
-		//check whether deleting succeeded
-		vector<string> check_vec;
-		bool b_succeeded = false;
-		CTimeString::getFileNames_extension(dir, check_vec, filenames_main[i]);
-		if (check_vec.size() == 0) b_succeeded = true;
-		if (!b_succeeded)
-		{
-			cout << "ERROR: " << filenames_main[i] << " was failed to delete" << endl;
-			return;
-		}
-	}
-}
-
-void CPointcloudFunction::FileProcess_FolderInFolder(string dir_, vector<string> &folder_vec)
-{
-	folder_vec.clear();
-
-	vector<string> filenames_folder_temp;
-	CTimeString::getFileNames_folder(dir_, filenames_folder_temp);
-
-	////debug
-	//cout << "size: " << filenames_folder_temp.size() << endl;
-
-	int num_folder = 0;
-	string s_index_folder;
-	cout << endl;
-	for (int j = 0; j < filenames_folder_temp.size(); j++)
-	{
-		folder_vec.push_back(filenames_folder_temp[j]);
-		s_index_folder = to_string(num_folder);
-		if (s_index_folder.size() != 2) s_index_folder = " " + s_index_folder;
-		cout << "i:" << s_index_folder;
-		cout << " " << filenames_folder_temp[j];
-		num_folder++;
-		{
-			vector<string> filenames_folder_temp2;
-			CTimeString::getFileNames(dir_ + "/" + filenames_folder_temp[j], filenames_folder_temp2, false, true, false);
-			if (filenames_folder_temp2.size() == 0)
-			{
-				cout << "  <-(blank)" << endl;
-				continue;
-			}
-			cout << endl;
-		}
-		vector<string> filenames_folder_folder;
-		CTimeString::getFileNames_folder(dir_ + "/" + filenames_folder_temp[j], filenames_folder_folder);
-
-		for (int i = 0; i < filenames_folder_folder.size(); i++)
-		{
-			folder_vec.push_back(
-				filenames_folder_temp[j] + "/" + filenames_folder_folder[i]);
-
-			s_index_folder = to_string(num_folder);
-			if (s_index_folder.size() != 2) s_index_folder = " " + s_index_folder;
-			cout << "i:" << s_index_folder;
-			cout << " " << filenames_folder_temp[j] + "/" + filenames_folder_folder[i];
-			vector<string> filenames_folder_folder_folder;
-			CTimeString::getFileNames(
-				dir_ + "/" + filenames_folder_temp[j] + "/" + filenames_folder_folder[i],
-				filenames_folder_folder_folder, false, true, false);
-			if (filenames_folder_folder_folder.size() == 0) cout << "  <-(blank)";
-			cout << endl;
-			num_folder++;
-		}
-	}
-}
-
-void CPointcloudFunction::DrawTrajectory()
-{
-	//typedef typename pcl::PointXYZI T_PointType;
-	typedef typename pcl::PointXYZRGB T_PointType;
-
-	//read file name
-	string dir = "../../data/process07_DrawTrajectory";
-	vector<string> filenames_txt;
-	CTimeString::getFileNames_extension(dir, filenames_txt, ".csv");
-
-	if (filenames_txt.size() == 0)
-	{
-		cout << "ERROR: no file has found" << endl;
-		return;
-	}
-
-	cout << "select file:" << endl;
-	//int i_readfile = 0;
-	vector<int> i_readfile_vec;
-	for (int i = 0; i < filenames_txt.size(); i++)
-		cout << " " << i << ": " << filenames_txt[i] << endl;
-	cout << "->";
-	{
-		vector<string> s_vec;
-		s_vec = CTimeString::inputSomeString();
-		for (int i = 0; i < s_vec.size(); i++)
-		{
-			int i_value = stoi(s_vec[i]);
-			if(!(0 <= i_value && i_value < filenames_txt.size()))
-				throw std::runtime_error("ERROR: Invalid trajectories readed.");
-			i_readfile_vec.push_back(i_value);
-		}
-		if (!(1 <= i_readfile_vec.size() && i_readfile_vec.size() <= 2))
-			throw std::runtime_error("ERROR: Invalid trajectories readed.");
-	}
-
-	vector<Eigen::Vector6d> trajectory_vec_vec;
-	vector<Eigen::Vector6d> trajectory_vec_vec2;
-
-	//input trajectory 0
-	{
-		vector<vector<double>> trajectory_temp;
-		trajectory_temp = CTimeString::getVecVecFromCSV(dir + "/" + filenames_txt[i_readfile_vec[0]]);
-		for (int i = 0; i < trajectory_temp.size(); i++)
-		{
-			Eigen::Vector6d trajectory_vec = Eigen::Vector6d::Zero();
-			trajectory_vec <<
-				trajectory_temp[i][1],
-				trajectory_temp[i][2],
-				trajectory_temp[i][3],
-				trajectory_temp[i][4],
-				trajectory_temp[i][5],
-				trajectory_temp[i][6];
-			trajectory_vec_vec.push_back(trajectory_vec);
-		}
-	}
-
-	bool b_show_sequently = false;
-	if (i_readfile_vec.size() == 1)
-	{
-		cout << "input: show trajectory in   1:sequently  or  0:single frame" << endl;
-		cout << "->";
-		cin >> b_show_sequently;
-	}
-	else if (i_readfile_vec.size() == 2)
-	{
-		//input trajectory 1
-		vector<vector<double>> trajectory_temp;
-		trajectory_temp = CTimeString::getVecVecFromCSV(dir + "/" + filenames_txt[i_readfile_vec[1]]);
-		for (int i = 0; i < trajectory_temp.size(); i++)
-		{
-			Eigen::Vector6d trajectory_vec = Eigen::Vector6d::Zero();
-			trajectory_vec <<
-				trajectory_temp[i][1],
-				trajectory_temp[i][2],
-				trajectory_temp[i][3],
-				trajectory_temp[i][4],
-				trajectory_temp[i][5],
-				trajectory_temp[i][6];
-			trajectory_vec_vec2.push_back(trajectory_vec);
-		}
-	}
-
-	typedef typename CPointVisualization<T_PointType> CPV;
-	CPV pv;
-	pv.setWindowName("trajectory");
-
-	if (i_readfile_vec.size() == 2)
-	{
-		pv.drawTrajectory(trajectory_vec_vec, trajectory_vec_vec.size(), true, true, "trajectory0");
-		pv.drawTrajectory(trajectory_vec_vec2, trajectory_vec_vec.size(), true, true, "trajectory1");
-	}
-
-	else if (i_readfile_vec.size() == 1 && !b_show_sequently)
-		pv.drawTrajectory(trajectory_vec_vec, trajectory_vec_vec.size(), true, true, "trajectory0");
-
-	else if (i_readfile_vec.size() == 1 && b_show_sequently){}
-
-	int index_ = 0;
-	while (1)
-	{
-		if(b_show_sequently && GetAsyncKeyState(VK_SPACE) & 1)
-		{
-			pv.drawTrajectory(trajectory_vec_vec, index_, true, true, "trajectory0");
-			index_++;
-			if (index_ >= trajectory_vec_vec.size()) cout << "press ESC to escape" << endl;
-		}
-		pv.updateViewer();
-		if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
-	}
 
 	pv.closeViewer();
 }
@@ -2769,7 +2066,7 @@ void CPointcloudFunction::GR_FPFH_SAC_IA_2frames(string dir_, vector<float> para
 		//transform
 		{
 			Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-			Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(transform_);
+			Trans_temp = calcAffine3fFromHomogeneousMatrix(transform_);
 			pcl::transformPointCloud(*cloud_src_show, *cloud_src_show, Trans_temp);
 		}
 		//add to global
@@ -3121,8 +2418,8 @@ vector<string> CPointcloudFunction::GR_FPFH_SAC_IA_Allframes_OnePair(string dir_
 	else
 	{
 		Eigen::Matrix4d T_src_TRUE = Eigen::Matrix4d::Identity();
-		T_src_TRUE = CExtendableICP::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]).inverse()
-			* CExtendableICP::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
+		T_src_TRUE = calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]).inverse()
+			* calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
 
 		b_hasConverged = CFPFH_PCL::align_SAC_AI_RANSAC_TRUE<pcl::PointXYZRGB>(transform_, inlier_, fitnessscore, frame_failed,
 			cloud_vec[i_src], fpfh_vec[i_src], cloud_vec[i_tgt], fpfh_vec[i_tgt],
@@ -3161,7 +2458,7 @@ vector<string> CPointcloudFunction::GR_FPFH_SAC_IA_Allframes_OnePair(string dir_
 	pcl::copyPointCloud(*cloud_src, *cloud_src_true);		//evaluation
 	{
 		Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-		Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(transform_);
+		Trans_temp = calcAffine3fFromHomogeneousMatrix(transform_);
 		pcl::transformPointCloud(*cloud_src, *cloud_src, Trans_temp);
 	}
 	//distance
@@ -3171,11 +2468,11 @@ vector<string> CPointcloudFunction::GR_FPFH_SAC_IA_Allframes_OnePair(string dir_
 		Eigen::Matrix4d T_i1_tgt = Eigen::Matrix4d::Identity();
 		Eigen::Matrix4d T_i_GL = Eigen::Matrix4d::Identity();
 		//T_i_src = T_i1_tgt * T_i_GL
-		T_i_src = CExtendableICP::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
-		T_i1_tgt = CExtendableICP::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]);
+		T_i_src = calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
+		T_i1_tgt = calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]);
 		T_i_GL = T_i1_tgt.inverse() * T_i_src;
 		Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-		Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(T_i_GL);
+		Trans_temp = calcAffine3fFromHomogeneousMatrix(T_i_GL);
 		pcl::transformPointCloud(*cloud_src_true, *cloud_src_true, Trans_temp);
 		//distance to true
 		for (size_t i = 0; i < cloud_src->size(); i++)
@@ -3199,7 +2496,7 @@ vector<string> CPointcloudFunction::GR_FPFH_SAC_IA_Allframes_OnePair(string dir_
 		cout << "distance_:" << distance_ << endl;
 	}
 	//median
-	double median_ = CExtendableICP::getMedianDistance(cloud_src, cloud_tgt);
+	double median_ = getMedianDistance(cloud_src, cloud_tgt);
 	cout << "median_:" << median_ << endl;
 	//add for saving
 	*cloud_tgt += *cloud_src;
@@ -3224,7 +2521,7 @@ vector<string> CPointcloudFunction::GR_FPFH_SAC_IA_Allframes_OnePair(string dir_
 		pcl::io::savePCDFile<pcl::PointXYZRGB>(dir_ + "/" + s_filename_output, *cloud_tgt);
 	//output csv
 	Eigen::Vector6d transform_vec = Eigen::Vector6d::Zero();
-	transform_vec = CExtendableICP::calcVector6dFromHomogeneousMatrix(transform_);
+	transform_vec = calcVector6dFromHomogeneousMatrix(transform_);
 	string time_end_frame = CTimeString::getTimeString();
 	string time_elapsed_frame = CTimeString::getTimeElapsefrom2Strings(time_start_frame, time_end_frame);
 	vector<string> s_temp_vec;
@@ -3524,11 +2821,11 @@ void CPointcloudFunction::GR_FPFH_error(string dir_, vector<float> parameter_vec
 			Eigen::Matrix4d T_i1_tgt = Eigen::Matrix4d::Identity();
 			Eigen::Matrix4d T_i_GL = Eigen::Matrix4d::Identity();
 			//T_i_src = T_i1_tgt * T_i_GL
-			T_i_src = CExtendableICP::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
-			T_i1_tgt = CExtendableICP::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]);
+			T_i_src = calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
+			T_i1_tgt = calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]);
 			T_i_GL = T_i1_tgt.inverse() * T_i_src;
 			Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-			Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(T_i_GL);
+			Trans_temp = calcAffine3fFromHomogeneousMatrix(T_i_GL);
 			pcl::transformPointCloud(*cloud_src_show, *cloud_src_show, Trans_temp);
 		}
 
@@ -3744,11 +3041,11 @@ void CPointcloudFunction::GR_FPFH_error_AllFrames(string dir_, vector<float> par
 				Eigen::Matrix4d T_i1_tgt = Eigen::Matrix4d::Identity();
 				Eigen::Matrix4d T_i_GL = Eigen::Matrix4d::Identity();
 				//T_i_src = T_i1_tgt * T_i_GL
-				T_i_src = CExtendableICP::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
-				T_i1_tgt = CExtendableICP::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]);
+				T_i_src = calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
+				T_i1_tgt = calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]);
 				T_i_GL = T_i1_tgt.inverse() * T_i_src;
 				Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-				Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(T_i_GL);
+				Trans_temp = calcAffine3fFromHomogeneousMatrix(T_i_GL);
 				pcl::transformPointCloud(*cloud_src, *cloud_src, Trans_temp);
 			}
 
@@ -4706,8 +4003,8 @@ void CPointcloudFunction::DoICP_proposed_only1method(
 		//transform src by InitPos
 		{
 			Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-			Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(
-				CExtendableICP::calcHomogeneousMatrixFromVector6d(initPos_vec[j].Init_Vector));
+			Trans_temp = calcAffine3fFromHomogeneousMatrix(
+				calcHomogeneousMatrixFromVector6d(initPos_vec[j].Init_Vector));
 			pcl::transformPointCloud(*cloud_src, *cloud_src_transformed, Trans_temp);
 		}
 
@@ -4737,7 +4034,7 @@ void CPointcloudFunction::DoICP_proposed_only1method(
 			//align
 			align_ICP.align(*cloud_temp);
 			b_hasConverged = align_ICP.hasConverged();
-			Registration_Vector = CExtendableICP::calcVector6dFromHomogeneousMatrix(
+			Registration_Vector = calcVector6dFromHomogeneousMatrix(
 				align_ICP.getFinalTransformation().cast<double>());
 			fitnessscore = align_ICP.getFitnessScore();
 		}
@@ -4794,8 +4091,8 @@ void CPointcloudFunction::DoICP_proposed_only1method(
 		//transformation
 		{
 			Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-			Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(
-				CExtendableICP::calcHomogeneousMatrixFromVector6d(Registration_Vector));
+			Trans_temp = calcAffine3fFromHomogeneousMatrix(
+				calcHomogeneousMatrixFromVector6d(Registration_Vector));
 			pcl::transformPointCloud(*cloud_src_transformed, *cloud_src_transformed, Trans_temp);
 		}
 
@@ -4804,7 +4101,7 @@ void CPointcloudFunction::DoICP_proposed_only1method(
 		if (cloud_src->size() != 0)
 		{
 			pcl::Correspondences corr;
-			corr = CExtendableICP::determineCorrespondences_output(cloud_src_transformed, cloud_tgt, MaxCorrespondenceDistance);
+			corr = determineCorrespondences_output(cloud_src_transformed, cloud_tgt, MaxCorrespondenceDistance);
 			rate_inlier = (float)corr.size() / (float)(cloud_src->size());
 		}
 		else rate_inlier = 0.;
@@ -4817,11 +4114,11 @@ void CPointcloudFunction::DoICP_proposed_only1method(
 			Eigen::Matrix4d T_i1_tgt = Eigen::Matrix4d::Identity();
 			Eigen::Matrix4d T_i_TRUE = Eigen::Matrix4d::Identity();
 			//T_i_src = T_i1_tgt * T_i_GL
-			T_i_src = CExtendableICP::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
-			T_i1_tgt = CExtendableICP::calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]);
+			T_i_src = calcHomogeneousMatrixFromVector6d(trajectory_vec[i_src]);
+			T_i1_tgt = calcHomogeneousMatrixFromVector6d(trajectory_vec[i_tgt]);
 			T_i_TRUE = T_i1_tgt.inverse() * T_i_src;
 			Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-			Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(T_i_TRUE);
+			Trans_temp = calcAffine3fFromHomogeneousMatrix(T_i_TRUE);
 			pcl::transformPointCloud(*cloud_src, *cloud_src, Trans_temp);
 			//distance to true
 			for (size_t i = 0; i < cloud_src_transformed->size(); i++)
@@ -4849,7 +4146,7 @@ void CPointcloudFunction::DoICP_proposed_only1method(
 		}
 		//median
 		double median_;
-		median_ = CExtendableICP::getMedianDistance(cloud_src_transformed, cloud_tgt);
+		median_ = getMedianDistance(cloud_src_transformed, cloud_tgt);
 		cout << "median_:" << median_ << endl;
 		//save pointcloud
 		{
@@ -4877,9 +4174,9 @@ void CPointcloudFunction::DoICP_proposed_only1method(
 
 		//output csv
 		Eigen::Vector6d transform_vec = Eigen::Vector6d::Zero();
-		transform_vec = CExtendableICP::calcVector6dFromHomogeneousMatrix(
-			CExtendableICP::calcHomogeneousMatrixFromVector6d(Registration_Vector)
-			*CExtendableICP::calcHomogeneousMatrixFromVector6d(initPos_vec[j].Init_Vector));
+		transform_vec = calcVector6dFromHomogeneousMatrix(
+			calcHomogeneousMatrixFromVector6d(Registration_Vector)
+			*calcHomogeneousMatrixFromVector6d(initPos_vec[j].Init_Vector));
 		string time_end_frame = CTimeString::getTimeString();
 		string time_elapsed_frame = CTimeString::getTimeElapsefrom2Strings(time_start_frame, time_end_frame);
 		vector<string> s_temp_vec;
@@ -5605,9 +4902,9 @@ void CPointcloudFunction::DoEvaluation_ICP_property_calculation(string dir_, str
 		if (j != 0)
 		{
 			displacementMat_ =
-				CExtendableICP::calcHomogeneousMatrixFromVector6d(
+				calcHomogeneousMatrixFromVector6d(
 					trajectoryVector_vec_TRUE[frames_ajusted[j - 1]]).inverse()
-				* CExtendableICP::calcHomogeneousMatrixFromVector6d(
+				* calcHomogeneousMatrixFromVector6d(
 					trajectoryVector_vec_TRUE[frames_ajusted[j]]);
 		}
 		displacementMat_vector_TRUE.push_back(displacementMat_);
@@ -5620,9 +4917,9 @@ void CPointcloudFunction::DoEvaluation_ICP_property_calculation(string dir_, str
 		if (j != 0)
 		{
 			displacementMat_ =
-				CExtendableICP::calcHomogeneousMatrixFromVector6d(
+				calcHomogeneousMatrixFromVector6d(
 					trajectoryVector_vec[frames_ajusted[j - 1]]).inverse()
-				* CExtendableICP::calcHomogeneousMatrixFromVector6d(
+				* calcHomogeneousMatrixFromVector6d(
 					trajectoryVector_vec[frames_ajusted[j]]);
 		}
 		displacementMat_vector.push_back(displacementMat_);
@@ -5667,10 +4964,10 @@ void CPointcloudFunction::DoEvaluation_ICP_property_calculation(string dir_, str
 		pcl::copyPointCloud(*cloud_vec[frames_ajusted[j - 1]], *cloud_tgt);
 		pcl::copyPointCloud(*cloud_vec[frames_ajusted[j]], *cloud_src);
 		Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-		Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(
+		Trans_temp = calcAffine3fFromHomogeneousMatrix(
 			displacementMat_vector[j]);
 		pcl::transformPointCloud(*cloud_src, *cloud_src, Trans_temp);
-		frameCloudMedian_vec.push_back(CExtendableICP::getMedianDistance(cloud_src, cloud_tgt));
+		frameCloudMedian_vec.push_back(getMedianDistance(cloud_src, cloud_tgt));
 	}
 
 	//map
@@ -5680,7 +4977,7 @@ void CPointcloudFunction::DoEvaluation_ICP_property_calculation(string dir_, str
 		pcl::PointCloud<T_PointType>::Ptr cloud_(new pcl::PointCloud<T_PointType>());
 		pcl::copyPointCloud(*cloud_vec[frames_ajusted[j]], *cloud_);
 		Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-		Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(displacementMat_vector_TRUE[j]);
+		Trans_temp = calcAffine3fFromHomogeneousMatrix(displacementMat_vector_TRUE[j]);
 		pcl::transformPointCloud(*cloud_, *cloud_, Trans_temp);
 		*cloud_map_TRUE += *cloud_;
 	}
@@ -5690,7 +4987,7 @@ void CPointcloudFunction::DoEvaluation_ICP_property_calculation(string dir_, str
 		pcl::PointCloud<T_PointType>::Ptr cloud_(new pcl::PointCloud<T_PointType>());
 		pcl::copyPointCloud(*cloud_vec[frames_ajusted[j]], *cloud_);
 		Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
-		Trans_temp = CExtendableICP::calcAffine3fFromHomogeneousMatrix(displacementMat_vector[j]);
+		Trans_temp = calcAffine3fFromHomogeneousMatrix(displacementMat_vector[j]);
 		pcl::transformPointCloud(*cloud_, *cloud_, Trans_temp);
 		*cloud_map_ += *cloud_;
 	}
@@ -5925,152 +5222,4 @@ vector<string> CPointcloudFunction::DoEvaluation_ICP_property_mergeResult_OnePat
 	}
 
 	return s_vec_output;
-}
-
-void CPointcloudFunction::DoMappingFromTrajectory()
-{
-	typedef pcl::PointXYZRGB T_PointType;
-
-	string dir_ = "../../data/process12_DoMappingFromTrajectory";
-
-	bool b_showNumber = false;
-	b_showNumber = true;
-
-	bool b_showArrow = false;
-	b_showArrow = true;
-
-	bool b_useGrid = false;
-	b_useGrid = true;
-
-	float yaw_trans = 0.;
-	yaw_trans = -7.* D2R;
-
-	//input trajectory
-	string trajectory_csv = "trajectory.csv";
-	vector<Eigen::Vector6d> trajectoryVector_vec;
-	vector<int> frames_all;
-	{
-		vector<vector<string>> s_temp_vecvec;
-		s_temp_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + trajectory_csv);
-
-		for (int j = 1; j < s_temp_vecvec.size(); j++)
-		{
-			Eigen::Vector6d trajectoryVector_ = Eigen::Vector6d::Zero();
-			trajectoryVector_ <<
-				stod(s_temp_vecvec[j][1]),
-				stod(s_temp_vecvec[j][2]),
-				stod(s_temp_vecvec[j][3]),
-				stod(s_temp_vecvec[j][4]),
-				stod(s_temp_vecvec[j][5]),
-				stod(s_temp_vecvec[j][6]);
-			//yaw
-			Eigen::Matrix4d yaw_Mat = Eigen::Matrix4d::Identity();
-			yaw_Mat = CExtendableICP::calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., yaw_trans);
-			yaw_Mat = yaw_Mat * CExtendableICP::calcHomogeneousMatrixFromVector6d(trajectoryVector_);
-			trajectoryVector_ = CExtendableICP::calcVector6dFromHomogeneousMatrix(yaw_Mat);
-			trajectoryVector_vec.push_back(trajectoryVector_);
-			if (stoi(s_temp_vecvec[j][7]) == 1) frames_all.push_back(-1);
-			else frames_all.push_back(j - 1);
-		}
-	}
-
-	//input pointcloud
-	vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec;
-	{
-		vector<string> cloud_folder;
-		CTimeString::getFileNames_folder(dir_, cloud_folder);
-		for (int i = 0; i < cloud_folder.size(); i++)
-		{
-			string s_i = to_string(i);
-			if (s_i.size() < 2) s_i = " " + s_i;
-			cout << "i:" << s_i << " " << cloud_folder[i] << endl;
-		}
-		cout << "select folder of input point cloud" << endl;
-		cout << "->";
-		int i_folder;
-		cin >> i_folder;
-
-		vector<string> cloud_filenames;
-		CTimeString::getFileNames_extension(dir_ + "/" + cloud_folder[i_folder], cloud_filenames, ".pcd");
-		for (int i = 0; i < cloud_filenames.size(); i++)
-		{
-			pcl::PointCloud<T_PointType>::Ptr cloud(new pcl::PointCloud<T_PointType>());
-			pcl::io::loadPCDFile(dir_ + "/" + cloud_folder[i_folder] + "/" + cloud_filenames[i], *cloud);
-			cloud->is_dense = true;
-			cloud_vec.push_back(cloud);
-		}
-
-		if (cloud_vec.size() == 0)
-		{
-			cout << "ERROR: no point cloud found." << endl;
-			return;
-		}
-
-	}
-
-	bool b_show_sequently = false;
-	cout << "input: show map in   1:sequently  or  0:single frame" << endl;
-	cout << "->";
-	cin >> b_show_sequently;
-
-	for (int j = frames_all.size() - 1; j >= 0; j--)
-	{
-		if (frames_all[j] != -1) continue;
-		trajectoryVector_vec.erase(trajectoryVector_vec.begin() + j);
-		cloud_vec.erase(cloud_vec.begin() + j);
-	}
-
-	typedef typename CPointVisualization<T_PointType> CPV;
-	CPV pv;
-	pv.setWindowName("MAP");
-	if(b_useGrid) pv.drawGrid(30., 30., -30., -30.);
-
-	pcl::PointCloud<T_PointType>::Ptr cloud_map(new pcl::PointCloud<T_PointType>());
-
-	//show point cloud
-	{
-		int index_cloud = 0;
-		while (1)
-		{
-
-			bool b_next = (GetAsyncKeyState(VK_SPACE) & 1) == 1;
-			//if ((GetAsyncKeyState(VK_SPACE) & 1) == 1 && (index_cloud != cloud_vec.size()))
-			if ((b_next || !b_show_sequently) && (index_cloud != cloud_vec.size()))
-			{
-				pcl::PointCloud<T_PointType>::Ptr cloud(new pcl::PointCloud<T_PointType>());
-				pcl::copyPointCloud(*cloud_vec[index_cloud], *cloud);
-				//transformation
-				{
-					auto trans_ = CExtendableICP::calcAffine3fFromHomogeneousMatrix(
-						CExtendableICP::calcHomogeneousMatrixFromVector6d(trajectoryVector_vec[index_cloud])
-					);
-					pcl::transformPointCloud(*cloud, *cloud, trans_);
-				}
-				*cloud_map += *cloud;
-				pv.setPointCloud(cloud_map);
-				pv.drawTrajectory(trajectoryVector_vec, index_cloud, b_showNumber, b_showArrow, "trajectory0");
-				cout << "index:" << index_cloud << endl;
-				index_cloud++;
-			}
-			if ((GetAsyncKeyState(VK_ESCAPE) & 1) == 1) break;
-			pv.updateViewer();
-		}
-
-		cout << "escaped !" << endl;
-	}
-
-	pv.closeViewer();
-
-	bool b_savePointCloud = false;
-	cout << "Do you save .pcd of the Map?   Yes:1  No:0" << endl;
-	cout << "->";
-	cin >> b_savePointCloud;
-
-	if (b_savePointCloud)
-	{
-		string s_time = CTimeString::getTimeString();
-		string s_filename_save = "map_" + CTimeString::getTimeString() + ".pcd";
-		pcl::io::savePCDFile<T_PointType>(dir_ + "/" + s_filename_save, *cloud_map);
-	}
-
 }
