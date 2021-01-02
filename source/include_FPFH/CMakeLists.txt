@@ -14,6 +14,6 @@ endif()
 target_include_directories(lib_FPFH PUBLIC "${CMAKE_SOURCE_DIR}/include_TimeString")
 target_link_libraries(lib_FPFH lib_TimeString)
 
-#ICP
-target_include_directories(lib_FPFH PUBLIC "${CMAKE_SOURCE_DIR}/include_ICP")
-target_link_libraries(lib_FPFH lib_ICP)
+#PointcloudBasic
+target_include_directories(lib_FPFH PUBLIC "${CMAKE_SOURCE_DIR}/include_PointcloudBasic")
+target_link_libraries(lib_FPFH lib_PointcloudBasic)

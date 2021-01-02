@@ -1,8 +1,6 @@
 #pragma once
 
 #include "PointcloudBasicProcess.h"
-//#include "ExtendableICP.h"
-//#include "PointcloudBasic.h"
 
 using namespace std;
 

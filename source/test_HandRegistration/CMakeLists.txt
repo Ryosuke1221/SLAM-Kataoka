@@ -17,10 +17,3 @@ target_link_libraries(test_HandRegistration lib_TimeString)
 #PointcloudBasicProcess
 include_directories("${CMAKE_SOURCE_DIR}/include_PointcloudBasicProcess")
 target_link_libraries(test_HandRegistration lib_PointcloudBasicProcess)
-
-#ICP
-include_directories("${CMAKE_SOURCE_DIR}/include_ICP")
-target_link_libraries(test_HandRegistration lib_ICP)
-
-
-

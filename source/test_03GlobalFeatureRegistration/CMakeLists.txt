@@ -18,13 +18,6 @@ target_link_libraries(test_03GlobalFeatureRegistration lib_TimeString)
 include_directories("${CMAKE_SOURCE_DIR}/include_PointcloudBasicProcess")
 target_link_libraries(test_03GlobalFeatureRegistration lib_PointcloudBasicProcess)
 
-#ICP
-include_directories("${CMAKE_SOURCE_DIR}/include_ICP")
-target_link_libraries(test_03GlobalFeatureRegistration lib_ICP)
-
-#FPFH
-include_directories("${CMAKE_SOURCE_DIR}/include_FPFH")
-target_link_libraries(test_03GlobalFeatureRegistration lib_FPFH)
-
-
-
+#GlobalFeatureRegistration
+include_directories("${CMAKE_SOURCE_DIR}/include_GlobalFeatureRegistration")
+target_link_libraries(test_03GlobalFeatureRegistration lib_GlobalFeatureRegistration)

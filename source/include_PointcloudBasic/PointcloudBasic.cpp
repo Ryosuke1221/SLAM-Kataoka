@@ -333,3 +333,43 @@ pcl::Correspondences CPointcloudBasic::getCorrespondences_eachPairHaving(const p
 	}
 	return corr_new;
 }
+
+string CPointcloudBasic::getPointCloudType_string(string filename_)
+{
+	ifstream ifs_(filename_);
+	int line_ = 0;
+	string s_type;
+	vector<vector<string>> all_observation_vec_vec;
+	if (ifs_.fail()) cout << "Error: file could not be read." << endl;
+	else
+	{
+		string str_;
+		while (getline(ifs_, str_))
+		{
+			if (line_ == 2)
+			{
+				vector<int> find_vec = CTimeString::find_all(str_, " ");
+				if (find_vec.size() != 4)
+				{
+					cout << "ERROR(CPointcloudBasic::getPointCloudType_string): invalid file" << endl;
+					throw std::runtime_error("ERROR(CPointcloudBasic::getPointCloudType_string): invalid file");
+				}
+				int s_pos = 0;
+				s_type = str_.substr(find_vec[3] + 1, str_.size() - (find_vec[s_pos] + 1));
+				return s_type;
+			}
+			line_++;
+		}
+		ifs_.close();
+	}
+	return s_type;
+}
+
+int CPointcloudBasic::getPointCloudType(string filename_)
+{
+	string s_type = getPointCloudType_string(filename_);
+	int i_type = -1;
+	if (s_type == "intensity") i_type = 0;
+	else if (s_type == "rgb") i_type = 1;
+	return i_type;
+}

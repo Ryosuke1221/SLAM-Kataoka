@@ -596,6 +596,18 @@ public:
 	static bool sortStringVector_compare2strings(const string s_1, const string s_2);
 	static vector<string> sortStringVector(const vector<string> &s_vec, bool b_ascending = true);
 
+	static void getFileNames_removeByExtension(vector<string> &s_vec, string s_extension)
+	{
+		for (int j = s_vec.size() - 1; j >= 0; j--)
+		{
+			if (s_vec[j].find(s_extension) != std::string::npos)
+			{
+				s_vec.erase(s_vec.begin()+ j);
+			}
+		}
+	}
+
+
 private:
 	static bool getDirectoryExistance(string foder_Path);
 	static bool getDirectoryExistance_detail(string foder_Path, bool b_first);

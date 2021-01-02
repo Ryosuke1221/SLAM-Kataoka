@@ -16,8 +16,6 @@ void CHandRegistration::mainProcess()
 		EN_SequentShow,
 		EN_DrawTrajectory,
 		EN_DoMappingFromTrajectory,
-		EN_SomePointclouds,
-		EN_showFeatureValue,
 		EN_HandRegistration
 	};
 
@@ -31,8 +29,6 @@ void CHandRegistration::mainProcess()
 		cout << " " << EN_SequentShow << ": sequent show" << endl;
 		cout << " " << EN_DrawTrajectory << ": DrawTrajectory" << endl;
 		cout << " " << EN_DoMappingFromTrajectory << ": DoMappingFromTrajectory" << endl;
-		cout << " " << EN_SomePointclouds << ": SomePointclouds" << endl;
-		cout << " " << EN_showFeatureValue << ": showFeatureValue" << endl;
 		cout << " " << EN_HandRegistration << ": HandRegistration" << endl;
 
 		cout << "WhichProcess: ";
@@ -54,19 +50,19 @@ void CHandRegistration::mainProcess()
 			break;
 
 		case EN_FileProcess:
-			FileProcess();
+			FileProcess(dir_);
 			break;
 
 		case EN_SequentShow:
-			show_sequent();
+			show_sequent_PointTypes(dir_);
 			break;
 
 		case EN_DrawTrajectory:
-			DrawTrajectory();
+			DrawTrajectory(dir_ + "/DrawTrajectory");
 			break;
 
 		case EN_DoMappingFromTrajectory:
-			DoMappingFromTrajectory();
+			DoMappingFromTrajectory(dir_ + "/MappingFromTrajectory");
 			break;
 
 		case EN_HandRegistration:

@@ -46,19 +46,19 @@ void CPointcloudBasicProcess::all_process()
 			break;
 
 		case EN_FileProcess:
-			FileProcess();
+			FileProcess("../../data");
 			break;
 
 		case EN_SequentShow:
-			show_sequent();
+			show_sequent_PointTypes("../../data");
 			break;
 
 		case EN_DrawTrajectory:
-			DrawTrajectory();
+			DrawTrajectory("../../data");
 			break;
 
 		case EN_DoMappingFromTrajectory:
-			DoMappingFromTrajectory();
+			DoMappingFromTrajectory("../../data/process12_DoMappingFromTrajectory");
 			break;
 
 		default:
@@ -168,160 +168,7 @@ void CPointcloudBasicProcess::FreeSpace()
 		cout << mat_cov << endl;
 
 	}
-	else if (i_method == 2)//get RGB colored point cloud of NIR
-	{
-		//typedef typename pcl::PointXYZI T_PointType;
-		//typedef typename pcl::PointXYZRGB T_PointType2;
-		typedef typename pcl::PointXYZRGB T_PointType;
 
-		string dir_ = "../../data/process13_DoDifferential/00_nir";
-		vector<string> filenames_;
-		CTimeString::getFileNames_extension(dir_, filenames_, ".pcd");
-
-		vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec;
-		for (int j = 0; j < filenames_.size(); j++)
-		{
-			pcl::PointCloud<T_PointType>::Ptr cloud_(new pcl::PointCloud<T_PointType>());
-			pcl::io::loadPCDFile(dir_ + "/" + filenames_[j], *cloud_);
-			cloud_->is_dense = true;
-			cloud_vec.push_back(cloud_);
-		}
-
-		vector<vector<float>> features_vec;
-
-		float value_max = -std::numeric_limits<float>::max();
-		float value_min = std::numeric_limits<float>::max();
-		for (int j = 0; j < cloud_vec.size(); j++)
-		{
-			vector<float> features_;
-			for (int i = 0; i < cloud_vec[j]->size(); i++)
-			{
-				float value_ = (float)((int)cloud_vec[j]->points[i].r);
-				if (value_max < value_) value_max = value_;
-				if (value_min > value_) value_min = value_;
-				features_.push_back(value_);
-			}
-			features_vec.push_back(features_);
-		}
-
-		cout << "value_max:" << value_max << endl;
-		cout << "value_min:" << value_min << endl;
-
-		for (int j = 0; j < features_vec.size(); j++)
-		{
-			cout << "j:" << j;
-			vector<float> Quartile_vec = CTimeString::getMedian_Quartile(features_vec[j]);
-			cout << " first_quartile:" << Quartile_vec[0];
-			cout << " median_:" << Quartile_vec[1];
-			cout << " third_quartile:" << Quartile_vec[1];
-			cout << endl;
-		}
-
-		float th_max, th_min;
-
-		for (int j = 0; j < cloud_vec.size(); j++)
-		{
-			for (int i = 0; i < cloud_vec[j]->size(); i++)
-			{
-				float value_ = (float)((int)cloud_vec[j]->points[i].r);
-				vector<std::uint8_t> color_vec;
-				color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(value_, value_max, value_min);
-				cloud_vec[j]->points[i].r = color_vec[0];
-				cloud_vec[j]->points[i].g = color_vec[1];
-				cloud_vec[j]->points[i].b = color_vec[2];
-			}
-		}
-
-		//for (int j = 0; j < cloud_vec.size(); j++)
-		//{
-		//	string s_file_save = filenames_[j].substr(0, filenames_[j].size() - 4) + "_ColorNIR.pcd";
-		//	pcl::io::savePCDFile<T_PointType>(dir_ + "/" + s_file_save, *cloud_vec[j]);
-		//}
-
-	}
-
-	else if (i_method == 3)//get RGB colored point cloud of NIR
-	{
-		int aa;
-		typedef typename pcl::PointXYZI T_PointType;
-		typedef typename pcl::PointXYZRGB T_PointType2;
-		//typedef typename pcl::PointXYZRGB T_PointType;
-
-		string dir_ = "../../data/temp2";
-		vector<string> filenames_;
-		CTimeString::getFileNames_extension(dir_, filenames_, ".pcd");
-
-		vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec;
-		for (int j = 0; j < filenames_.size(); j++)
-		{
-			pcl::PointCloud<T_PointType>::Ptr cloud_(new pcl::PointCloud<T_PointType>());
-			pcl::io::loadPCDFile(dir_ + "/" + filenames_[j], *cloud_);
-			cloud_->is_dense = true;
-			cloud_vec.push_back(cloud_);
-		}
-
-		vector<vector<float>> features_vec;
-
-		float value_max = -std::numeric_limits<float>::max();
-		float value_min = std::numeric_limits<float>::max();
-		for (int j = 0; j < cloud_vec.size(); j++)
-		{
-			vector<float> features_;
-			for (int i = 0; i < cloud_vec[j]->size(); i++)
-			{
-				float value_ = cloud_vec[j]->points[i].intensity;
-				if (value_max < value_) value_max = value_;
-				if (value_min > value_) value_min = value_;
-				features_.push_back(value_);
-			}
-			features_vec.push_back(features_);
-		}
-
-		cout << "value_max:" << value_max << endl;
-		cout << "value_min:" << value_min << endl;
-
-		for (int j = 0; j < features_vec.size(); j++)
-		{
-			cout << "j:" << j;
-			vector<float> Quartile_vec = CTimeString::getMedian_Quartile(features_vec[j]);
-			cout << " first_quartile:" << Quartile_vec[0];
-			cout << " median_:" << Quartile_vec[1];
-			cout << " third_quartile:" << Quartile_vec[1];
-			cout << endl;
-		}
-
-		float th_max, th_min;
-		th_max = value_max;
-		th_min = value_min;
-		th_max = 180.;
-
-		vector<pcl::PointCloud<T_PointType2>::Ptr> cloud_save_vec;
-		for (int j = 0; j < features_vec.size(); j++)
-		{
-			pcl::PointCloud<T_PointType2>::Ptr cloud_(new pcl::PointCloud<T_PointType2>());
-			for (int i = 0; i < features_vec[j].size(); i++)
-			{
-				vector<std::uint8_t> color_vec;
-				color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(features_vec[j][i], th_max, th_min);
-				T_PointType2 point_;
-				point_.x = cloud_vec[j]->points[i].x;
-				point_.y = cloud_vec[j]->points[i].y;
-				point_.z = cloud_vec[j]->points[i].z;
-				point_.r = color_vec[0];
-				point_.g = color_vec[1];
-				point_.b = color_vec[2];
-				cloud_->push_back(point_);
-			}
-			cloud_->is_dense = true;
-			cloud_save_vec.push_back(cloud_);
-		}
-
-		for (int j = 0; j < cloud_save_vec.size(); j++)
-		{
-			string s_file_save = "_" + filenames_[j].substr(0, filenames_[j].size() - 4) + "_ColorNIR.pcd";
-			pcl::io::savePCDFile<T_PointType2>(dir_ + "/generated/" + s_file_save, *cloud_save_vec[j]);
-		}
-	}
 	//else if (i_method == 4)//simple ICP
 	//{
 
@@ -377,49 +224,6 @@ void CPointcloudBasicProcess::FreeSpace()
 
 
 	//}
-
-	else if (i_method == 5)//akiba: generate .pcd from .csv
-	{
-		int aa;
-		typedef typename pcl::PointXYZRGB T_PointType;
-
-		string dir_;
-		dir_ = "../../data";
-		vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec;
-
-		vector<string> filenames_;
-		CTimeString::getFileNames_extension(dir_, filenames_, ".csv");
-
-		for (int j = 0; j < filenames_.size(); j++)
-		{
-			vector<vector<double>> pc_vecvec = CTimeString::getVecVecFromCSV(dir_ + "/" + filenames_[j]);
-			pcl::PointCloud<T_PointType>::Ptr cloud_(new pcl::PointCloud<T_PointType>());
-			for (int i = 0; i < pc_vecvec.size(); i++)
-			{
-				T_PointType point_;
-				point_.x = pc_vecvec[i][1];
-				point_.y = pc_vecvec[i][2];
-				point_.z = pc_vecvec[i][3];
-				point_.r = 255;
-				point_.g = 255;
-				point_.b = 255;
-				cloud_->push_back(point_);
-			}
-			cloud_vec.push_back(cloud_);
-		}
-
-		//save
-		dir_ = dir_ + "/process01_handregistration";
-		for (int j = 0; j < cloud_vec.size(); j++)
-		{
-			string s_name;
-			s_name = filenames_[j].substr(0, filenames_[j].size() - 4) + ".pcd";
-			pcl::io::savePCDFile<T_PointType>(dir_ + "/" + s_name, *cloud_vec[j]);
-		}
-
-	}
-
-
 }
 
 void CPointcloudBasicProcess::changeColor_plane(pcl::PointXYZRGB &point_)
@@ -434,195 +238,8 @@ void CPointcloudBasicProcess::changeColor_plane(pcl::PointXYZI &point_)
 	point_.intensity = 210;
 }
 
-void CPointcloudBasicProcess::show_sequent()
+void CPointcloudBasicProcess::FileProcess(string dir_)
 {
-	string dir_;
-	dir_ = "../../data";
-	vector<string> dir_folder_vec;
-	FileProcess_FolderInFolder(dir_, dir_folder_vec);
-
-	int i_select;
-	cout << "select folder (index) ->";
-	cin >> i_select;
-	cout << i_select << "(" << dir_folder_vec[i_select] << ")" << endl;
-	dir_ = dir_ + "/" + dir_folder_vec[i_select];
-	cout << endl;
-
-	//typedef typename pcl::PointXYZI PointType_func;
-	typedef typename pcl::PointXYZRGB PointType_func;
-
-	bool b_useTXT = false;
-	//b_useTXT = true;
-
-	bool b_plane = false;
-	//b_plane = true;
-
-	bool b_onlyConvergence = false;
-	//b_onlyConvergence = true;
-	{
-		int i_find = dir_.find("GR_FPFH_SAC_IA/2020");
-		if (i_find == std::string::npos) b_onlyConvergence = false;
-		else b_onlyConvergence = true;
-	}
-
-	bool b_select = false;
-	//b_select = true;
-
-	bool b_normal = false;
-	//b_normal = true;
-
-	CPointVisualization<PointType_func> pv;
-	if (typeid(PointType_func) == typeid(pcl::PointXYZI))
-		pv.setWindowName("show XYZI");
-	else if (typeid(PointType_func) == typeid(pcl::PointXYZRGB))
-		pv.setWindowName("show XYZRGB");
-	else
-		throw std::runtime_error("This PointType is unsupported.");
-
-	//show normal
-	if (b_normal)
-	{
-		cout << "input: normal radius" << endl;
-		cout << "->";
-		float radius_normal;
-		cin >> radius_normal;
-		pv.useNormal(radius_normal, 10, 0.1);
-	}
-
-	vector<string> filenames_;
-	if (b_onlyConvergence) CTimeString::getFileNames_extension(dir_, filenames_, "C1_XYZRGB.pcd");
-	else CTimeString::getFileNames_extension(dir_, filenames_, ".pcd");
-	cout << "file size: " << filenames_.size() << endl;
-
-	if (filenames_.size() == 0)
-	{
-		cout << "no pointcloud found" << endl;
-		pv.closeViewer();
-		return;
-	}
-
-	//ignore some files
-	if (b_select)
-	{
-		bool b_showAll = true;
-		cout << "select: Do you watch all .pcd or not?  Yes:1  No:0" << endl;
-		cout << "->";
-		cin >> b_showAll;
-		if (!b_showAll)
-		{
-			for (int i = 0; i < filenames_.size(); i++)
-			{
-				string s_i = to_string(i);
-				if (s_i.size() < 3) s_i = " " + s_i;
-				if (s_i.size() < 3) s_i = " " + s_i;
-				cout << "i:" << s_i << " " << filenames_[i] << endl;
-
-			}
-			cout << endl;
-			cout << "select(index): files you watch and separeted with spaces" << endl;
-			cout << "->";
-			vector<string> s_input_vec;
-			s_input_vec = CTimeString::inputSomeString();
-			vector<string> filenames_temp;
-			filenames_temp = filenames_;
-			filenames_.clear();
-			for (int i = 0; i < s_input_vec.size(); i++)
-			{
-				int index_temp = stoi(s_input_vec[i]);
-				if (!(0 <= index_temp && index_temp < filenames_temp.size()))
-				{
-					cout << "ERROR: ignored invalud:" << index_temp << endl;
-					continue;
-				}
-				filenames_.push_back(filenames_temp[index_temp]);
-				cout << "filenames_.back():" << filenames_.back() << endl;
-			}
-
-			if (filenames_.size() == 0) filenames_ = filenames_temp;
-		}
-
-	}
-
-	if (filenames_.size() == 0)
-	{
-		cout << "ERROR: no file found" << endl;
-		return;
-	}
-
-	pcl::PointCloud<PointType_func>::Ptr cloud_(new pcl::PointCloud<PointType_func>());
-	pcl::PointCloud<PointType_func>::Ptr cloud_temp(new pcl::PointCloud<PointType_func>());
-
-	int index_ = 0;
-
-	vector<string> filename_use;
-	cout << "Press space to next" << endl;
-	while (1)
-	{
-		//short key_num = GetAsyncKeyState(VK_SPACE);
-		if ((GetAsyncKeyState(VK_SPACE) & 1) == 1)
-		{
-			if (index_ == filenames_.size())
-			{
-				cout << "index over" << endl;
-				break;
-			}
-			cout << "index_: " << index_ << endl;
-			//cout << "reading:" << filenames_[index_] << endl;
-			pcl::io::loadPCDFile(dir_ + "/" + filenames_[index_], *cloud_);
-			cout << "showing:" << filenames_[index_] << " size:" << cloud_->size() << endl;
-			//pv.setPointCloud(cloud_);
-			pv.setPointCloud(cloud_, filenames_[index_]);
-
-			//remove ground plane
-			if (cloud_->size() != 0 && b_plane)
-			{
-				detectPlane<PointType_func>(*cloud_, 0.05, true, true);	//velo
-				//detectPlane<PointType_func>(*cloud_, 0.01, true, true);	//nir
-			}
-			index_++;
-		}
-		//save
-		if ((GetAsyncKeyState(VK_RETURN) & 1) == 1 && b_useTXT)
-		{
-			filename_use.push_back(filenames_[index_ - 1]);
-			cout << "add: " << filenames_[index_ - 1] << endl;
-		}
-		//escape
-		//short key_num_esc = GetAsyncKeyState(VK_ESCAPE);
-		if ((GetAsyncKeyState(VK_ESCAPE) & 1) == 1) {
-			cout << "toggled!" << endl;
-			break;
-		}
-		pv.updateViewer();
-	}
-
-	pv.closeViewer();
-
-	for (int i = 0; i < filename_use.size(); i++)
-	{
-		//cout << "file " << i << ": " << filename_use[i] << endl;
-		cout << filename_use[i] << endl;
-	}
-
-	vector<vector<string>> save_vec_vec;
-	for (int i = 0; i < filename_use.size(); i++)
-	{
-		vector<string> save_vec;
-		save_vec.push_back(filename_use[i]);
-		save_vec_vec.push_back(save_vec);
-	}
-	if (b_useTXT)
-		CTimeString::getCSVFromVecVec(save_vec_vec, dir_ + "/_usePointCloud.csv");
-
-}
-
-void CPointcloudBasicProcess::FileProcess()
-{
-
-	string dir_;
-	//dir_ = "../../data/temp/_DynamicTranslation";
-	dir_ = "../../data";
-
 	vector<string> filenames_folder;
 
 	enum Process
@@ -925,15 +542,15 @@ void CPointcloudBasicProcess::FileProcess_FolderInFolder(string dir_, vector<str
 	}
 }
 
-void CPointcloudBasicProcess::DrawTrajectory()
+void CPointcloudBasicProcess::DrawTrajectory(string dir_)
 {
 	//typedef typename pcl::PointXYZI T_PointType;
 	typedef typename pcl::PointXYZRGB T_PointType;
 
 	//read file name
-	string dir = "../../data/process07_DrawTrajectory";
+	//string dir = "../../data/process07_DrawTrajectory";
 	vector<string> filenames_txt;
-	CTimeString::getFileNames_extension(dir, filenames_txt, ".csv");
+	CTimeString::getFileNames_extension(dir_, filenames_txt, ".csv");
 
 	if (filenames_txt.size() == 0)
 	{
@@ -967,7 +584,7 @@ void CPointcloudBasicProcess::DrawTrajectory()
 	//input trajectory 0
 	{
 		vector<vector<double>> trajectory_temp;
-		trajectory_temp = CTimeString::getVecVecFromCSV(dir + "/" + filenames_txt[i_readfile_vec[0]]);
+		trajectory_temp = CTimeString::getVecVecFromCSV(dir_ + "/" + filenames_txt[i_readfile_vec[0]]);
 		for (int i = 0; i < trajectory_temp.size(); i++)
 		{
 			Eigen::Vector6d trajectory_vec = Eigen::Vector6d::Zero();
@@ -993,7 +610,7 @@ void CPointcloudBasicProcess::DrawTrajectory()
 	{
 		//input trajectory 1
 		vector<vector<double>> trajectory_temp;
-		trajectory_temp = CTimeString::getVecVecFromCSV(dir + "/" + filenames_txt[i_readfile_vec[1]]);
+		trajectory_temp = CTimeString::getVecVecFromCSV(dir_ + "/" + filenames_txt[i_readfile_vec[1]]);
 		for (int i = 0; i < trajectory_temp.size(); i++)
 		{
 			Eigen::Vector6d trajectory_vec = Eigen::Vector6d::Zero();
@@ -1039,11 +656,9 @@ void CPointcloudBasicProcess::DrawTrajectory()
 	pv.closeViewer();
 }
 
-void CPointcloudBasicProcess::DoMappingFromTrajectory()
+void CPointcloudBasicProcess::DoMappingFromTrajectory(string dir_)
 {
 	typedef pcl::PointXYZRGB T_PointType;
-
-	string dir_ = "../../data/process12_DoMappingFromTrajectory";
 
 	bool b_showNumber = false;
 	b_showNumber = true;
@@ -1183,6 +798,61 @@ void CPointcloudBasicProcess::DoMappingFromTrajectory()
 		string s_time = CTimeString::getTimeString();
 		string s_filename_save = "map_" + CTimeString::getTimeString() + ".pcd";
 		pcl::io::savePCDFile<T_PointType>(dir_ + "/" + s_filename_save, *cloud_map);
+	}
+
+}
+
+void CPointcloudBasicProcess::show_sequent_PointTypes(string dir_)
+{
+	//string dir_;
+	//dir_ = "../../data";
+	vector<string> dir_folder_vec;
+	FileProcess_FolderInFolder(dir_, dir_folder_vec);
+
+	int i_select;
+	cout << "select folder (index) ->";
+	cin >> i_select;
+	cout << i_select << "(" << dir_folder_vec[i_select] << ")" << endl;
+	dir_ = dir_ + "/" + dir_folder_vec[i_select];
+	cout << endl;
+
+	bool b_onlyConvergence = false;
+	//b_onlyConvergence = true;
+	//{
+	//	int i_find = dir_.find("GR_FPFH_SAC_IA/2020");
+	//	if (i_find == std::string::npos) b_onlyConvergence = false;
+	//	else b_onlyConvergence = true;
+	//}
+
+	vector<string> filenames_;
+	if (!b_onlyConvergence) CTimeString::getFileNames_extension(dir_, filenames_, ".pcd");
+	else CTimeString::getFileNames_extension(dir_, filenames_, "C1_XYZRGB.pcd");
+	cout << "file size: " << filenames_.size() << endl;
+
+	//type check
+	{
+		int num_intensity = 0;
+		int num_rgb = 0;
+		for (int j = 0; j < filenames_.size(); j++)
+		{
+			int i_type = getPointCloudType(dir_ + "/" + filenames_[j]);
+			if (i_type == 0) num_intensity++;
+			else if (i_type == 1) num_rgb++;
+		}
+
+		if (num_intensity > 0 && num_rgb == 0)
+		{
+			show_sequent_template<pcl::PointXYZI>(dir_, filenames_);
+		}
+		else if (num_rgb > 0 && num_intensity == 0)
+		{
+			show_sequent_template<pcl::PointXYZRGB>(dir_, filenames_);
+		}
+		else
+		{
+			cout << "ERROR(CPointcloudBasicProcess::show_sequent): Different types contained." << endl;
+			throw std::runtime_error("ERROR(CPointcloudBasicProcess::show_sequent): Different types contained.");
+		}
 	}
 
 }

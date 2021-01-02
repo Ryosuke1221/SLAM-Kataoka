@@ -10,19 +10,21 @@
 
 #include <Eigen/Core>
 
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
+#include <pcl/common/copy_point.h>
+#include <pcl/common/io.h>
+#include <pcl/common/transforms.h>
+#include <pcl/correspondence.h>
+#include <pcl/filters/approximate_voxel_grid.h>
+#include <pcl/filters/voxel_grid.h>
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
-#include <pcl/filters/voxel_grid.h>
-
-#include <pcl/common/io.h>
-#include <pcl/common/copy_point.h>
-#include <pcl/correspondence.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
 #include <pcl/registration/correspondence_estimation.h>
 #include <pcl/registration/icp.h>
 #include <pcl/registration/impl/correspondence_estimation.hpp>
 #include <pcl/registration/registration.h>
+#include <pcl/registration/transforms.h>
 
 ////https://akio-tanaka.tumblr.com/page/2
 //#pragma comment(lib,"opengl32.lib")	
@@ -400,5 +402,8 @@ public:
 		mat_cov = mat_demean * mat_demean.transpose() * one_over_n;
 		return mat_cov;
 	}
+
+	static string getPointCloudType_string(string filename_);
+	static int getPointCloudType(string filename_);
 
 };

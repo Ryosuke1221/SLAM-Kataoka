@@ -1,8 +1,7 @@
 #pragma once
 
 #include "PointcloudBasicProcess.h"
-#include "ExtendableICP.h"
-#include "FPFH_PCL.h"
+#include "GlobalFeatureRegistration.h"
 
 using namespace std;
 
