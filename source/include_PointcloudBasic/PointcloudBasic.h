@@ -406,4 +406,74 @@ public:
 	static string getPointCloudType_string(string filename_);
 	static int getPointCloudType(string filename_);
 
+	static vector<float> getAngleError(Eigen::Matrix4d A_transformation, Eigen::Matrix4d B_transformation)
+	{
+		//rotation matrix
+		Eigen::Matrix3d A_transformation_rotation = Eigen::Matrix3d::Identity();
+		A_transformation_rotation <<
+			A_transformation(0, 0), A_transformation(0, 1), A_transformation(0, 2),
+			A_transformation(1, 0), A_transformation(1, 1), A_transformation(1, 2),
+			A_transformation(2, 0), A_transformation(2, 1), A_transformation(2, 2);
+
+		//rotation matrix
+		Eigen::Matrix3d B_transformation_rotation = Eigen::Matrix3d::Identity();
+		B_transformation_rotation <<
+			B_transformation(0, 0), B_transformation(0, 1), B_transformation(0, 2),
+			B_transformation(1, 0), B_transformation(1, 1), B_transformation(1, 2),
+			B_transformation(2, 0), B_transformation(2, 1), B_transformation(2, 2);
+
+		return getAngleError(A_transformation_rotation, B_transformation_rotation);
+	}
+
+	static vector<float> getAngleError(Eigen::Matrix3d A_transformation, Eigen::Matrix3d B_transformation)
+
+	{
+		float error_beta;
+		float error_angle_normal;
+		
+		Eigen::Matrix3d transformation_relative = Eigen::Matrix3d::Identity();
+		transformation_relative = A_transformation * B_transformation.inverse();
+
+		//cout << "A_transformation:" << endl;
+		//cout << A_transformation << endl;
+
+		//cout << "B_transformation:" << endl;
+		//cout << B_transformation << endl;
+
+		//cout << "transformation_relative:" << endl;
+		//cout << transformation_relative << endl;
+
+		float sin_sin_beta = 0.25 *(
+			pow(transformation_relative(1, 0) - transformation_relative(0, 1), 2.)
+			+ pow(transformation_relative(0, 2) - transformation_relative(2, 0), 2.)
+			+ pow(transformation_relative(2, 1) - transformation_relative(1, 2), 2.));
+
+		if (sin_sin_beta == 0.)
+		{
+			error_beta = 10000.;
+			error_angle_normal = 10000.;
+		}
+		else
+		{
+			float cos_beta = 0.5 * (transformation_relative(0, 0) + transformation_relative(1, 1) + transformation_relative(2, 2) - 1.);
+			error_beta = fabs(acos(cos_beta));
+			float n_x = 0.5 * (transformation_relative(2, 1) - transformation_relative(1, 2)) / sin(error_beta);
+			float n_y = 0.5 * (transformation_relative(0, 2) - transformation_relative(2, 0)) / sin(error_beta);
+			float n_z = 0.5 * (transformation_relative(1, 0) - transformation_relative(0, 1)) / sin(error_beta);
+			cout << "n_x:" << n_x << endl;
+			cout << "n_y:" << n_y << endl;
+			cout << "n_z:" << n_z << endl;
+			//error_angle_normal = fabs(acos(n_x));
+			error_angle_normal = fabs(acos(transformation_relative(0, 0)));
+		}
+		cout << "error_beta:" << error_beta << endl;
+		cout << "error_angle_normal:" << error_angle_normal << endl;
+
+		vector<float> angle_return;
+		angle_return.push_back(error_beta);
+		angle_return.push_back(error_angle_normal);
+		//cout << endl;
+		return angle_return;
+	}
+
 };

@@ -271,7 +271,8 @@ public:
 			compare_vecvec.push_back(compare_vec);
 		}
 		vector<vector<int>> rank_output_vecvec;//[index_frame_pair][index_pair]
-		rank_output_vecvec = calcRanking_compareArg(compare_vecvec, b_cout);
+		//rank_output_vecvec = calcRanking_compareArg(compare_vecvec, b_cout);
+		rank_output_vecvec = calcRanking_compareArg_multipleEachCovariance(compare_vecvec, b_cout);
 		return rank_output_vecvec;
 	}
 
