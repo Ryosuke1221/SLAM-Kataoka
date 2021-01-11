@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 
+project(Project)
+
 set_property( DIRECTORY PROPERTY VS_STARTUP_PROJECT "test_PointcloudFunction" )
 
 add_subdirectory(include_FPFH)
