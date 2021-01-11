@@ -53,4 +53,6 @@ private:
 		bool b_useGeometricConstraints, bool b_useColorfullCorr);
 	void showRigidTransformation(vector<pair<int, int>> index_pair_vec);
 
+	void variParamaters(string dir_);
+	void alignAllFrames(string dir_, vector<float> parameter_vec);
 };

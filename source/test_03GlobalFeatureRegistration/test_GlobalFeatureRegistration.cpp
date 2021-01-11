@@ -19,7 +19,8 @@ void CGlobalFeatureRegistration_test::mainProcess()
 		EN_RigidTransformation_FPFH_Features_allFrames,
 		EN_PairEvaluation,
 		EN_PairEvaluation2,
-		EN_PairEvaluation3
+		EN_PairEvaluation3,
+		EN_VariParamaters
 	};
 
 	while (!b_finish)
@@ -40,6 +41,7 @@ void CGlobalFeatureRegistration_test::mainProcess()
 		cout << " " << EN_PairEvaluation << ": PairEvaluation" << endl;
 		cout << " " << EN_PairEvaluation2 << ": PairEvaluation2" << endl;
 		cout << " " << EN_PairEvaluation3 << ": PairEvaluation3" << endl;
+		cout << " " << EN_VariParamaters << ": VariParamaters" << endl;
 
 		cout << "WhichProcess: ";
 		cin >> WhichProcess;
@@ -107,6 +109,10 @@ void CGlobalFeatureRegistration_test::mainProcess()
 
 		case EN_PairEvaluation3:
 			DoDifferential_PairEvaluation3(dir_);
+			break;
+
+		case EN_VariParamaters:
+			variParamaters(dir_);
 			break;
 
 		default:
@@ -3507,5 +3513,407 @@ void CGlobalFeatureRegistration_test::showRigidTransformation(vector<pair<int, i
 
 	}
 	pv.closeViewer();
+
+}
+
+void CGlobalFeatureRegistration_test::variParamaters(string dir_)
+{
+	vector<float> parameter_vec_init;
+
+	vector<string> name_parameter_vec;
+	name_parameter_vec.push_back("voxel_size");
+	name_parameter_vec.push_back("radius_normal_FPFH");
+	name_parameter_vec.push_back("radius_FPFH");
+	name_parameter_vec.push_back("MaxCorrespondenceDistance_SAC");
+	name_parameter_vec.push_back("SimilarityThreshold_SAC");
+	name_parameter_vec.push_back("InlierFraction_SAC");
+	name_parameter_vec.push_back("MaximumIterations_SAC");
+	name_parameter_vec.push_back("NumberOfSamples_SAC");
+	name_parameter_vec.push_back("CorrespondenceRandomness_SAC");
+	name_parameter_vec.push_back("max_RANSAC");
+
+	cout << "0: registration of all frames and output files(.csv and .pcd)" << endl;
+	cout << "1: output error of fpfh value (all frames)" << endl;
+	cout << "2: output show FPFH variance (all frames)" << endl;
+
+
+	bool b_create_new_pattern_file = false;
+	cout << "do you create new pattern?  Yes:1  No:0" << endl;
+	cout << "->";
+	cin >> b_create_new_pattern_file;
+
+	if (b_create_new_pattern_file)
+	{
+		vector<vector<float>> pattern_vec_vec_new;
+		//input parameter
+		vector<vector<float>> parameter_vec_vec;
+		//CTimeString::changeParameter_2dimension(parameter_vec_vec, name_parameter_vec, parameter_vec_arg);
+		CTimeString::changeParameter_2dimension(parameter_vec_vec, name_parameter_vec, parameter_vec_init,
+			dir_ + "/" + "parameter_vecvec.csv", 1, 4, -1, -1);
+		pattern_vec_vec_new = CTimeString::calcVectorPairPattern(parameter_vec_vec);
+		//write new parameter_vec_vec
+		{
+			vector<vector<string>> s_vec_vec;
+			//header
+			{
+				vector<string> s_header_vec;
+				//s_header_vec.push_back("Parameter");
+				for (int i = 0; i < name_parameter_vec.size(); i++)
+					s_header_vec.push_back(name_parameter_vec[i]);
+				s_vec_vec.push_back(s_header_vec);
+			}
+			for (int j = 0; j < pattern_vec_vec_new.size(); j++)
+			{
+				vector<string> s_vec;
+				for (int i = 0; i < pattern_vec_vec_new[j].size(); i++)
+					s_vec.push_back(to_string(pattern_vec_vec_new[j][i]));
+				s_vec_vec.push_back(s_vec);
+			}
+			CTimeString::getCSVFromVecVec(s_vec_vec, dir_ + "/" + "pattern_vec_vec.csv");
+		}
+	}
+
+	cout << "press 1 and Enter if you have closed file" << endl;
+	{
+		int aa;
+		cin >> aa;
+	}
+
+	//read pattern_vec_vec.csv
+	vector<vector<float>> pattern_vec_vec;
+	{
+		vector<vector<string>> s_vec_vec;
+		s_vec_vec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + "pattern_vec_vec.csv");
+		for (int j = 1; j < s_vec_vec.size(); j++)
+		{
+			vector<float> pattern_vec;
+			for (int i = 0; i < s_vec_vec[j].size(); i++)
+				pattern_vec.push_back(stof(s_vec_vec[j][i]));
+			pattern_vec_vec.push_back(pattern_vec);
+		}
+	}
+	cout << "show pattern" << endl;
+	for (int j = 0; j < pattern_vec_vec.size(); j++)
+	{
+		cout << j << ":";
+		for (int i = 0; i < pattern_vec_vec[j].size(); i++)
+		{
+			string s_value;
+			s_value = to_string(pattern_vec_vec[j][i]);
+			if (s_value.size() < 4) s_value = " " + s_value;
+			if (s_value.size() < 4) s_value = " " + s_value;
+			if (s_value.size() < 4) s_value = " " + s_value;
+			cout << "  " << s_value;
+		}
+		cout << endl;
+	}
+
+	for (int j = 0; j < pattern_vec_vec.size(); j++)
+	{
+		vector<float> parameter_vec = pattern_vec_vec[j];
+		alignAllFrames(dir_ + "/varyParameters", parameter_vec);
+		//switch (i_method)
+		//{
+		//case 0:
+		//	CTimeString::showParameter(parameter_vec, name_parameter_vec);
+		//	GR_FPFH_SAC_IA_Allframes(dir_, parameter_vec, false);
+		//	break;
+		//case 1:
+		//	CTimeString::showParameter(parameter_vec, name_parameter_vec, 3);
+		//	GR_FPFH_error_AllFrames(dir_, parameter_vec, false);
+		//	break;
+		//case 2:
+		//	CTimeString::showParameter(parameter_vec, name_parameter_vec);
+		//	GR_FPFH_variance_AllFrames(dir_, parameter_vec, false);
+		//	break;
+		//default:
+		//	break;
+		//}
+	}
+
+	cout << endl;
+
+}
+
+void CGlobalFeatureRegistration_test::alignAllFrames(string dir_, vector<float> parameter_vec)
+{
+	//typedef pcl::PointXYZ T_PointType;
+	typedef pcl::PointXYZRGB T_PointType;
+
+	int th_minute_CSV;
+	th_minute_CSV = 20;
+	//th_minute_CSV = 2;	//for debug
+
+	bool b_useClusterNotification = false;
+	b_useClusterNotification = true;
+
+	bool b_useRANSAC_EST = false;
+	b_useRANSAC_EST = true;
+
+	vector<string> name_parameter_vec;
+	name_parameter_vec.push_back("voxel_size");
+	name_parameter_vec.push_back("radius_normal_FPFH");
+	name_parameter_vec.push_back("radius_FPFH");
+	name_parameter_vec.push_back("MaxCorrespondenceDistance_SAC");
+	name_parameter_vec.push_back("SimilarityThreshold_SAC");
+	name_parameter_vec.push_back("InlierFraction_SAC");
+	name_parameter_vec.push_back("MaximumIterations_SAC");
+	name_parameter_vec.push_back("NumberOfSamples_SAC");
+	name_parameter_vec.push_back("CorrespondenceRandomness_SAC");
+	name_parameter_vec.push_back("max_RANSAC");
+
+	vector<string> filenames_;
+	CTimeString::getFileNames_extension(dir_, filenames_, ".pcd");
+
+	//true trajectory
+	vector<Eigen::Vector6d> trajectory_vec;
+	{
+		string filename_true = "transformation_fin.csv";
+		vector<vector<double>> trajectory_vecvec_temp = CTimeString::getVecVecFromCSV(dir_ + "/" + filename_true);
+		for (int i = 0; i < trajectory_vecvec_temp.size(); i++)
+		{
+			Eigen::Vector6d Pos_temp = Eigen::Vector6d::Zero();
+			Pos_temp << trajectory_vecvec_temp[i][1], trajectory_vecvec_temp[i][2],
+				trajectory_vecvec_temp[i][3], trajectory_vecvec_temp[i][4],
+				trajectory_vecvec_temp[i][5], trajectory_vecvec_temp[i][6];
+			trajectory_vec.push_back(Pos_temp);
+		}
+
+		//for (int i = 0; i < trajectory_vec.size(); i++)
+		//{
+		//	cout << "i:" << i;
+		//	cout << " x:" << trajectory_vec[i](0, 0);
+		//	cout << " y:" << trajectory_vec[i](1, 0);
+		//	cout << " z:" << trajectory_vec[i](2, 0);
+		//	cout << " roll:" << trajectory_vec[i](3, 0);
+		//	cout << " pitch:" << trajectory_vec[i](4, 0);
+		//	cout << " yaw:" << trajectory_vec[i](5, 0);
+		//	cout << endl;
+		//}
+
+	}
+
+	vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec;
+	vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> fpfh_vec;
+	vector<vector<string>> s_output_vecvec;
+
+	if (b_changeParameter)
+		CTimeString::changeParameter(parameter_vec, name_parameter_vec);
+
+	//parameter
+	float voxel_size;
+	voxel_size = parameter_vec[0];
+
+	float radius_normal_FPFH, radius_FPFH;
+	radius_normal_FPFH = parameter_vec[1];
+	radius_FPFH = parameter_vec[2];
+
+	float MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC, InlierFraction_SAC;
+	MaxCorrespondenceDistance_SAC = parameter_vec[3];
+	SimilarityThreshold_SAC = parameter_vec[4];
+	InlierFraction_SAC = parameter_vec[5];
+
+	int MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC;
+	MaximumIterations_SAC = (int)parameter_vec[6];
+	NumberOfSamples_SAC = (int)parameter_vec[7];
+	CorrespondenceRandomness_SAC = (int)parameter_vec[8];
+
+	int max_RANSAC;
+	max_RANSAC = (int)parameter_vec[9];
+
+	//push_back parameter information to s_output_vecvec
+	{
+		vector<string> s_temp_vec;
+		s_temp_vec.push_back("Parameter");
+		s_output_vecvec.push_back(s_temp_vec);
+	}
+	for (int i = 0; i < name_parameter_vec.size(); i++)
+	{
+		vector<string> s_temp_vec;
+		s_temp_vec.push_back(name_parameter_vec[i]);
+		s_temp_vec.push_back("");
+		s_temp_vec.push_back("");
+		s_temp_vec.push_back("");
+		s_temp_vec.push_back(to_string(parameter_vec[i]));
+		s_output_vecvec.push_back(s_temp_vec);
+	}
+
+	{
+		vector<string> s_temp_vec;
+		s_temp_vec.push_back("");
+		s_output_vecvec.push_back(s_temp_vec);
+	}
+	{
+		vector<string> s_temp_vec;
+		s_temp_vec.push_back("Result");
+		s_output_vecvec.push_back(s_temp_vec);
+	}
+
+	GR_addToOutputString_OutputHeader_FPFH(s_output_vecvec);
+
+	int i_tgt_start = 0;
+	//cout << "select first tgt frame" << endl;
+	//cout << "i_tgt_start ->";
+	//cin >> i_tgt_start;
+
+	if (!(0 <= i_tgt_start && i_tgt_start <= filenames_.size() - 2))
+	{
+		cout << "ERROR: first frame is invalid and insert 0" << endl;
+		i_tgt_start = 0;
+	}
+
+	string time_start = CTimeString::getTimeString();
+	string time_regular = time_start;
+	cout << "time_start:" << time_start << endl;
+	//make new folder
+	string s_newfoldername = time_start;
+	CTimeString::makenewfolder(dir_, s_newfoldername);
+
+	for (int i = 0; i < filenames_.size(); i++)
+	{
+		pcl::PointCloud<T_PointType>::Ptr cloud(new pcl::PointCloud<T_PointType>());
+		pcl::io::loadPCDFile(dir_ + "/" + filenames_[i], *cloud);
+		cloud->is_dense = true;
+		cloud_vec.push_back(cloud);
+	}
+
+	for (int i = 0; i < filenames_.size(); i++)
+	{
+		pcl::PointCloud<T_PointType>::Ptr cloud_VGF(new pcl::PointCloud<T_PointType>());
+		const boost::shared_ptr<pcl::VoxelGrid<T_PointType>> sor(new pcl::VoxelGrid<T_PointType>);
+		sor->setLeafSize(voxel_size, voxel_size, voxel_size);
+		sor->setInputCloud(cloud_vec[i]);
+		sor->filter(*cloud_VGF);
+		pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfh(new pcl::PointCloud<pcl::FPFHSignature33>);
+		fpfh = CFPFH_PCL::computeFPFH<T_PointType>(cloud_VGF, cloud_vec[i], radius_normal_FPFH, radius_FPFH);
+		fpfh_vec.push_back(fpfh);
+	}
+
+	string time_end_FPFH = CTimeString::getTimeString();
+	cout << "time_end_FPFH:" << time_end_FPFH << endl;
+
+	vector<pair<int, int>> frame_pair_vec;
+	frame_pair_vec = GR_FPFH_SAC_IA_get_frame_pair_vec(dir_);
+
+	vector<pair<int, int>> frame_pair_est;
+
+	for (int i_frame_pair = 0; i_frame_pair < frame_pair_vec.size(); i_frame_pair++)
+	{
+		int i_tgt = frame_pair_vec[i_frame_pair].first;
+		int i_src = frame_pair_vec[i_frame_pair].second;
+		cout << "i_tgt:" << i_tgt << " i_src:" << i_src << endl;
+
+		vector<string> s_result_vec;
+		s_result_vec = GR_FPFH_SAC_IA_Allframes_OnePair(dir_ + "/" + s_newfoldername, parameter_vec, i_tgt, i_src, cloud_vec, fpfh_vec,
+			trajectory_vec, b_useRANSAC_EST, true);
+		string time_end_frame = CTimeString::getTimeString();
+
+		bool b_hasConverged = false;
+
+		if (stoi(s_result_vec[8]) == 1)
+			b_hasConverged = true;
+
+		if (b_useRANSAC_EST)
+		{
+			if (b_hasConverged)
+				frame_pair_est.push_back(make_pair(i_tgt, i_src));
+			cout << "show frames estimated success" << endl;
+			for (int j = 0; j < frame_pair_est.size(); j++)
+				cout << "i_tgt:" << frame_pair_est[j].first << " i_src:" << frame_pair_est[j].second << endl;
+		}
+
+		s_output_vecvec.push_back(s_result_vec);
+
+		//regular saving csv
+		string s_elapsed_frame = CTimeString::getTimeElapsefrom2Strings(time_regular, time_end_frame);
+		cout << "time_elapsed from last .csv output: " << s_elapsed_frame << endl;
+		cout << "time_elapsed from start:            " << CTimeString::getTimeElapsefrom2Strings(time_start, time_end_frame) << endl;
+		int elapsed_millisec = CTimeString::getTimeElapsefrom2Strings_millisec(time_regular, time_end_frame);
+		int elapsed_minute = (int)(((float)elapsed_millisec / 1000.) / 60.);
+		if (elapsed_minute >= th_minute_CSV)
+		{
+			//save
+			CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + s_newfoldername + "/" + time_regular + "_output.csv");
+			time_regular = CTimeString::getTimeString();
+			//clear s_output_vecvec
+			s_output_vecvec.clear();
+			GR_addToOutputString_OutputHeader_FPFH(s_output_vecvec);
+		}
+		cout << endl;
+
+		if (i_frame_pair % 5 == 0 && !b_changeParameter)
+		{
+			cout << "Parameter list" << endl;
+			CTimeString::showParameter(parameter_vec, name_parameter_vec);
+			cout << endl;
+		}
+	}
+
+	string time_end = CTimeString::getTimeString();
+	string time_elapsed = CTimeString::getTimeElapsefrom2Strings(time_start, time_end);
+	cout << "time_elapsed:" << time_elapsed << endl;
+
+	{
+		vector<string> s_temp_vec;
+		s_temp_vec.push_back("");
+		s_output_vecvec.push_back(s_temp_vec);
+	}
+	{
+		vector<string> s_temp_vec;
+		s_temp_vec.push_back("Sum elapsed time");
+		s_output_vecvec.push_back(s_temp_vec);
+	}
+	{
+		vector<string> s_temp_vec;
+		s_temp_vec.push_back(time_elapsed);
+		s_output_vecvec.push_back(s_temp_vec);
+	}
+
+	CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + s_newfoldername + "/" + time_end + "_output.csv");
+
+	GR_FPFH_getResultAnalysis(dir_, s_newfoldername);
+
+	//cluster size
+	if (b_useClusterNotification)
+	{
+		vector<vector<string>> s_vecvec;
+		{
+			vector<vector<string>> s_input_vecvec;
+			vector<string> filenames_;
+			CTimeString::getFileNames_extension(dir_ + "/" + s_newfoldername, filenames_, "_SucEst.csv");
+			if (filenames_.size() != 1)
+			{
+				cout << "ERROR: one _SucEst.csv have not been found" << endl;
+				return;
+			}
+			s_input_vecvec = CTimeString::getVecVecFromCSV_string(
+				dir_ + "/" + s_newfoldername + "/" + filenames_[0]);
+			s_vecvec = CTimeString::getMatrixData_fromFormatOfFPFH(s_input_vecvec, "Result", 2, "Sum elapsed time", -2);
+		}
+
+		vector<vector<int>> pairs_vecvec;
+		for (int j = 0; j < s_vecvec.size(); j++)
+		{
+			if (stoi(s_vecvec[j][20]) == 0) continue;
+			vector<int> pairs_vec;
+			int i_tgt = stoi(s_vecvec[j][0]);
+			int i_src = stoi(s_vecvec[j][1]);
+			pairs_vec.push_back(i_tgt);
+			pairs_vec.push_back(i_src);
+			pairs_vecvec.push_back(pairs_vec);
+		}
+		vector<vector<int>> cluster_vecvec;
+		cluster_vecvec = CTimeString::getIntCluster_SomeToSome(pairs_vecvec);
+		cout << "cluster_vecvec[0].size():" << cluster_vecvec[0].size() << endl;
+		if (cluster_vecvec[0].size() >= 11)
+		{
+			vector<vector<string>> s_temp;
+			vector<string> s_temp2;
+			s_temp.push_back(s_temp2);
+			CTimeString::getCSVFromVecVec(s_temp, dir_ + "/" + s_newfoldername + "_hasClusterSize" + to_string(cluster_vecvec[0].size()) + ".csv");
+		}
+	}
+
+	cout << endl;
 
 }
