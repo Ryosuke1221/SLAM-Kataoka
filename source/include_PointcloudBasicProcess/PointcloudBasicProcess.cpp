@@ -666,21 +666,77 @@ void CPointcloudBasicProcess::DoMappingFromTrajectory(string dir_)
 	bool b_showArrow = false;
 	b_showArrow = true;
 
+	bool b_showTrajectory = false;
+	b_showTrajectory = true;
+
 	bool b_useGrid = false;
 	b_useGrid = true;
+
+	bool b_useTurnYaw = false;
+	//b_useTurnYaw = true;
+
+	bool b_useWhiteCloud = false;
+	//b_useWhiteCloud = true;
+
+	if (!b_showTrajectory)
+	{
+		b_showNumber = false;
+		b_showArrow = false;
+	}
 
 	float yaw_trans = 0.;
 	yaw_trans = -7.* D2R;
 
+	string s_folder;
+	{
+		vector<string> s_folder_vec;
+		CTimeString::getFileNames_folder(dir_, s_folder_vec);
+
+		if (s_folder_vec.size() == 0)
+		{
+			cout << "ERROR: No PointCloud folder found." << endl;
+			return;
+		}
+
+		for (int i = 0; i < s_folder_vec.size(); i++)
+		{
+			string s_i = to_string(i);
+			if (s_i.size() < 2) s_i = " " + s_i;
+			cout << "i:" << s_i << " " << s_folder_vec[i] << endl;
+		}
+		cout << "select folder of input point cloud" << endl;
+		cout << "->";
+		int i_folder;
+		cin >> i_folder;
+		s_folder = s_folder_vec[i_folder];
+	}
+
 	//input trajectory
-	string trajectory_csv = "trajectory.csv";
+	//string trajectory_csv = "trajectory.csv";
+	string s_trajectory_csv;
+	{
+		vector<string> filenames_;
+		CTimeString::getFileNames_extension(dir_ + "/" + s_folder, filenames_, ".csv");
+		if (filenames_.size() == 1)
+			s_trajectory_csv = filenames_[0];
+		else if (filenames_.size() == 0)
+		{
+			cout << "ERROR: No trajectory file found." << endl;
+			return;
+		}
+		else
+		{
+			cout << "ERROR: Too many trajectory files found." << endl;
+			return;
+		}
+	}
 	vector<Eigen::Vector6d> trajectoryVector_vec;
 	vector<int> frames_all;
 	{
 		vector<vector<string>> s_temp_vecvec;
-		s_temp_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + trajectory_csv);
+		s_temp_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + s_folder + "/" + s_trajectory_csv);
 
-		for (int j = 1; j < s_temp_vecvec.size(); j++)
+		for (int j = 0; j < s_temp_vecvec.size(); j++)
 		{
 			Eigen::Vector6d trajectoryVector_ = Eigen::Vector6d::Zero();
 			trajectoryVector_ <<
@@ -690,39 +746,29 @@ void CPointcloudBasicProcess::DoMappingFromTrajectory(string dir_)
 				stod(s_temp_vecvec[j][4]),
 				stod(s_temp_vecvec[j][5]),
 				stod(s_temp_vecvec[j][6]);
-			//yaw
-			Eigen::Matrix4d yaw_Mat = Eigen::Matrix4d::Identity();
-			yaw_Mat = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., yaw_trans);
-			yaw_Mat = yaw_Mat * calcHomogeneousMatrixFromVector6d(trajectoryVector_);
-			trajectoryVector_ = calcVector6dFromHomogeneousMatrix(yaw_Mat);
+			if (b_useTurnYaw)
+			{
+				Eigen::Matrix4d yaw_Mat = Eigen::Matrix4d::Identity();
+				yaw_Mat = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., yaw_trans);
+				yaw_Mat = yaw_Mat * calcHomogeneousMatrixFromVector6d(trajectoryVector_);
+				trajectoryVector_ = calcVector6dFromHomogeneousMatrix(yaw_Mat);
+				if (stoi(s_temp_vecvec[j][7]) == 1) frames_all.push_back(-1);
+				else frames_all.push_back(j - 1);
+			}
 			trajectoryVector_vec.push_back(trajectoryVector_);
-			if (stoi(s_temp_vecvec[j][7]) == 1) frames_all.push_back(-1);
-			else frames_all.push_back(j - 1);
 		}
 	}
 
 	//input pointcloud
 	vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec;
 	{
-		vector<string> cloud_folder;
-		CTimeString::getFileNames_folder(dir_, cloud_folder);
-		for (int i = 0; i < cloud_folder.size(); i++)
-		{
-			string s_i = to_string(i);
-			if (s_i.size() < 2) s_i = " " + s_i;
-			cout << "i:" << s_i << " " << cloud_folder[i] << endl;
-		}
-		cout << "select folder of input point cloud" << endl;
-		cout << "->";
-		int i_folder;
-		cin >> i_folder;
 
 		vector<string> cloud_filenames;
-		CTimeString::getFileNames_extension(dir_ + "/" + cloud_folder[i_folder], cloud_filenames, ".pcd");
+		CTimeString::getFileNames_extension(dir_ + "/" + s_folder, cloud_filenames, ".pcd");
 		for (int i = 0; i < cloud_filenames.size(); i++)
 		{
 			pcl::PointCloud<T_PointType>::Ptr cloud(new pcl::PointCloud<T_PointType>());
-			pcl::io::loadPCDFile(dir_ + "/" + cloud_folder[i_folder] + "/" + cloud_filenames[i], *cloud);
+			pcl::io::loadPCDFile(dir_ + "/" + s_folder + "/" + cloud_filenames[i], *cloud);
 			cloud->is_dense = true;
 			cloud_vec.push_back(cloud);
 		}
@@ -766,6 +812,15 @@ void CPointcloudBasicProcess::DoMappingFromTrajectory(string dir_)
 			{
 				pcl::PointCloud<T_PointType>::Ptr cloud(new pcl::PointCloud<T_PointType>());
 				pcl::copyPointCloud(*cloud_vec[index_cloud], *cloud);
+				if (b_useWhiteCloud)
+				{
+					for (int i = 0; i < cloud->size(); i++)
+					{
+						cloud->points[i].r = 255;
+						cloud->points[i].g = 255;
+						cloud->points[i].b = 255;
+					}
+				}
 				//transformation
 				{
 					auto trans_ = calcAffine3fFromHomogeneousMatrix(
@@ -775,7 +830,8 @@ void CPointcloudBasicProcess::DoMappingFromTrajectory(string dir_)
 				}
 				*cloud_map += *cloud;
 				pv.setPointCloud(cloud_map);
-				pv.drawTrajectory(trajectoryVector_vec, index_cloud, b_showNumber, b_showArrow, "trajectory0");
+				if(b_showTrajectory)
+					pv.drawTrajectory(trajectoryVector_vec, index_cloud, b_showNumber, b_showArrow, "trajectory0");
 				cout << "index:" << index_cloud << endl;
 				index_cloud++;
 			}
