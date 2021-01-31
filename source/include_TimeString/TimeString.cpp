@@ -788,6 +788,70 @@ void CTimeString::changeParameter_2dimension(vector<vector<float>> &parameter_ve
 
 }
 
+void CTimeString::changeParameter_2dimension(vector<vector<float>> &parameter_vec_vec, vector<string> name_vec, 
+	string filename_, int row_small, int col_small, int row_big, int col_big)
+{
+	parameter_vec_vec.clear();
+
+	vector<vector<string>> s_vec_vec_temp;
+	s_vec_vec_temp = getVecVecFromCSV_string(filename_);
+
+	int num_col = 0;
+	for (int j = 0; j < s_vec_vec_temp.size(); j++)
+		if (num_col < s_vec_vec_temp[j].size()) num_col = s_vec_vec_temp[j].size();
+	if (row_big == -1) row_big = s_vec_vec_temp.size();
+	if (col_big == -1) col_big = num_col - 1;
+
+	if (!(0 <= row_big && row_big < s_vec_vec_temp.size())) row_big = s_vec_vec_temp.size() - 1;
+	if (!(0 <= row_small && row_small <= row_big)) row_small = 0;
+	if (!(0 <= col_big && col_big < num_col)) col_big = num_col - 1;
+	if (!(0 <= col_small && col_small <= col_big)) col_small = 0;
+
+	vector<vector<float>> parameter_vec_vec_new;
+	for (int j = row_small; j < row_big + 1; j++)
+	{
+		vector<float> parameter_vec_new;
+		for (int i = col_small; i < col_big + 1; i++)
+		{
+			float value_;
+			if (s_vec_vec_temp[j][i].size() == 0) continue;
+			else value_ = stof(s_vec_vec_temp[j][i]);
+			parameter_vec_new.push_back(value_);
+		}
+		parameter_vec_vec_new.push_back(parameter_vec_new);
+	}
+
+	if (name_vec.size() != parameter_vec_vec_new.size())
+		throw std::runtime_error("ERROR(CTimeString::changeParameter): parameter size invalid");
+
+	parameter_vec_vec = parameter_vec_vec_new;
+
+	removeSameValue_vecvec_VectorPairPattern(parameter_vec_vec);
+
+	//count longest string for showing
+	int size_string_longest = 0;
+	for (int i = 0; i < name_vec.size(); i++)
+		if (size_string_longest < name_vec[i].size()) size_string_longest = name_vec[i].size();
+	//show parameter
+	cout << "Parameter list (vector)" << endl;
+	for (int j = 0; j < parameter_vec_vec.size(); j++)
+	{
+		string s_show = name_vec[j];
+		s_show += ":";
+		while (1)
+		{
+			if (s_show.size() < size_string_longest + 1) s_show += " ";
+			else break;
+		}
+		cout << j << ": " << s_show;
+		for (int i = 0; i < parameter_vec_vec[j].size(); i++)
+			cout << "  " << parameter_vec_vec[j][i];
+		cout << endl;
+	}
+	cout << endl;
+
+}
+
 vector<vector<float>> CTimeString::inputParameters_2dimension(string filename_, int row_small, int col_small)
 {
 	vector<vector<float>> parameter_vecvec;

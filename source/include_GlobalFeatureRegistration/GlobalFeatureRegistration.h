@@ -297,8 +297,8 @@ public:
 		{
 			int i_tgt = index_pair_vec[j].first;
 			int i_src = index_pair_vec[j].second;
-			cout << "  i_tgt:" << i_tgt << endl;
-			cout << "  i_src:" << i_src << endl;
+			cout << "  i_tgt:" << i_tgt;
+			cout << ", i_src:" << i_src << endl;
 			pcl::Correspondences corrs_;
 			corrs_ = determineCorrespondences_featureFpfh_eachPairHaving_remove(fpfh_vec[i_src], fpfh_vec[i_tgt],
 				index_valid_vecvec[i_src], index_valid_vecvec[i_tgt], th_nearest_num, th_nearest_fpfh);
@@ -746,13 +746,15 @@ public:
 	static pcl::Correspondences determineCorrespondences_featureScalar_remove(const vector<T> &features_src, const vector<T> &features_tgt,
 		const vector<int> &index_unique_vec_src, const vector<int> &index_unique_vec_tgt, float th_value)
 	{
+		pcl::Correspondences corrs_;
+		if (features_src.size() == 0 || features_tgt.size() == 0) return corrs_;
 		vector<T> features_src_removed;
 		vector<T> features_tgt_removed;
 		for (int j = 0; j < index_unique_vec_src.size(); j++)
 			features_src_removed.push_back(features_src[index_unique_vec_src[j]]);
 		for (int j = 0; j < index_unique_vec_tgt.size(); j++)
 			features_tgt_removed.push_back(features_tgt[index_unique_vec_tgt[j]]);
-		pcl::Correspondences corrs_ = determineCorrespondences_featureScalar(features_src_removed, features_tgt_removed, th_value);
+		corrs_ = determineCorrespondences_featureScalar(features_src_removed, features_tgt_removed, th_value);
 		for (int j = 0; j < corrs_.size(); j++)
 		{
 			corrs_[j].index_query = index_unique_vec_src[corrs_[j].index_query];
@@ -767,6 +769,8 @@ public:
 		const vector<T> &features_src, const vector<T> &features_tgt,
 		const vector<int> &index_unique_vec_src, const vector<int> &index_unique_vec_tgt, float th_value)
 	{
+		vector<pair<float, float>> compare_srctgt_vec;
+		if (features_src.size() == 0 || features_tgt.size() == 0) return compare_srctgt_vec;
 		pcl::PointCloud<T_PointType>::Ptr cloud_src_removed(new pcl::PointCloud<T_PointType>());
 		pcl::PointCloud<T_PointType>::Ptr cloud_tgt_removed(new pcl::PointCloud<T_PointType>());
 		for (int j = 0; j < index_unique_vec_src.size(); j++)
@@ -802,7 +806,6 @@ public:
 		pcl::KdTreeFLANN<T_PointType_feature>::Ptr kdtree_feature_tgt(new pcl::KdTreeFLANN<T_PointType_feature>);
 		kdtree_feature_src->setInputCloud(cloud_feature_src);
 		kdtree_feature_tgt->setInputCloud(cloud_feature_tgt);
-		vector<pair<float, float>> compare_srctgt_vec;
 		for (int j = 0; j < corr_.size(); j++)
 		{
 			float compare_src;
@@ -866,7 +869,7 @@ public:
 	static void calcRanking_compareArg_eachValue_multipleEachCovariance(const vector<vector<float>> &compare_vecvec,
 		vector<int> &frame_vec, vector<int> &corr_index_vec, vector<float> &evaluation_vec, bool b_cout = false)
 	{
-		vector<vector<float>> ranking_vecvec;
+		vector<vector<float>> ranking_vecvec;	//[ranking][kind_value]
 		for (int j = 0; j < compare_vecvec.size(); j++)
 		{
 			for (int i = 0; i < compare_vecvec[j].size(); i++)
@@ -902,10 +905,9 @@ public:
 		cout << endl;
 	}
 
-	//writing
 	static vector<vector<int>> calcRanking_compareArg_multipleEachCovariance(const vector<vector<pair<float, float>>> &compare_vecvec, bool b_cout = false)
 	{
-		vector<vector<float>> compare_vecvec_multiple;
+		vector<vector<float>> compare_vecvec_multiple;	//[index_frame_pair][index_pair] :variance
 		for (int j = 0; j < compare_vecvec.size(); j++)
 		{
 			vector<float> compare_vec_multiple;
@@ -914,17 +916,17 @@ public:
 			compare_vecvec_multiple.push_back(compare_vec_multiple);
 		}
 
-		vector<int> frame_vec;
-		vector<int>corr_index_vec;
-		vector<float> evaluation_vec;
+		vector<int> frame_vec;			//[ranking][value]
+		vector<int> corr_index_vec;		//[ranking][value]
+		vector<float> evaluation_vec;	//[ranking][value]
 		calcRanking_compareArg_eachValue_multipleEachCovariance(compare_vecvec_multiple, frame_vec, corr_index_vec, evaluation_vec, b_cout);
 
-		vector<vector<int>> rank_output_vecvec;
+		vector<vector<int>> rank_output_vecvec;	//[index_frame_pair][index_pair] :ranking, Some ingredients have no rank (invalid frame_pair).
 		for (int j = 0; j < compare_vecvec_multiple.size(); j++)
 		{
 			vector<int> rank_output_vec;
 			for (int i = 0; i < compare_vecvec_multiple[j].size(); i++)
-				rank_output_vec.push_back(-1);
+				rank_output_vec.push_back(-1);	//initialization
 			rank_output_vecvec.push_back(rank_output_vec);
 		}
 
@@ -961,8 +963,8 @@ public:
 		vector<vector<pair<float, float>>> compare_vecvec;//[index_frame_pair][index_pair] :variance
 		for (int j = 0; j < index_pair_vec.size(); j++)
 		{
-			int i_tgt = index_pair_vec[j].first;
-			int i_src = index_pair_vec[j].second;
+			int i_tgt = index_pair_vec[j].first;		//index of cloud
+			int i_src = index_pair_vec[j].second;		//index of cloud
 			vector<pair<float, float>> compare_vec;
 			compare_vec = calcRanking_compare_featureScalar(corrs_vec[j],
 				cloud_vec[i_src], cloud_vec[i_tgt], feature_vecvec[i_src], feature_vecvec[i_tgt],
@@ -996,8 +998,8 @@ public:
 		{
 			int i_tgt = index_pair_vec[j].first;
 			int i_src = index_pair_vec[j].second;
-			cout << "  i_tgt:" << i_tgt << endl;
-			cout << "  i_src:" << i_src << endl;
+			cout << "  i_tgt:" << i_tgt;
+			cout << ", i_src:" << i_src << endl;
 			pcl::Correspondences corrs_;
 			corrs_ = determineCorrespondences_featureScalar_remove(feature_vecvec[i_src], feature_vecvec[i_tgt],
 				index_valid_vecvec[i_src], index_valid_vecvec[i_tgt], th_nearest);
@@ -1006,7 +1008,7 @@ public:
 		}
 		cout << "  calc ranking" << endl;
 		{
-			vector<vector<int>> rank_vecvec;//[index_frame_pair][index_pair]
+			vector<vector<int>> rank_vecvec;//[index_frame_pair][index_pair] : ranking, Some ingredients have no rank (invalid frame_pair).
 			rank_vecvec = calcRanking_featureScalar(index_pair_vec, corrs_vec, cloud_vec, feature_vecvec, index_valid_vecvec, th_nearest, b_cout);
 			vector<pcl::Correspondences> corrs_vec_temp;
 			for (int j = 0; j < index_pair_vec.size(); j++)
@@ -1015,7 +1017,7 @@ public:
 				corrs_vec_temp.push_back(temp);
 			}
 			//sort
-			vector<vector<int>> sort_vecvec;
+			vector<vector<int>> sort_vecvec;	//[num][kind_value(index_frame_pair, index_pair, ranking)] : ranking
 			for (int j = 0; j < rank_vecvec.size(); j++)
 			{
 				for (int i = 0; i < rank_vecvec[j].size(); i++)
@@ -1041,7 +1043,7 @@ public:
 				corrs_vec_temp[index_frame_pair].push_back(corrs_vec[index_frame_pair][index_pair]);
 				evaluation_vecvec[index_frame_pair].push_back((float)sort_vecvec[j][2]);
 			}
-			corrs_vec = corrs_vec_temp;
+			corrs_vec = corrs_vec_temp;//[index_frame_pair][index_pair], Some frame_pair has no correspond (invalid frame_pair).
 		}
 
 		if (b_cout)

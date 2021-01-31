@@ -2666,179 +2666,179 @@ void CGlobalFeatureRegistration_test::DoDifferential_PairEvaluation2(string dir_
 
 void CGlobalFeatureRegistration_test::DoDifferential_PairEvaluation3(string dir_)
 {
-	typedef pcl::PointXYZRGB T_PointType;
-	bool b_useParameterAdjustment = false;
-	bool b_show_AllFrame_AllPairs = false;
-	bool b_useGeometricConstraints = false;
-	bool b_useRigidTransformation = false;
+	//typedef pcl::PointXYZRGB T_PointType;
+	//bool b_useParameterAdjustment = false;
+	//bool b_show_AllFrame_AllPairs = false;
+	//bool b_useGeometricConstraints = false;
+	//bool b_useRigidTransformation = false;
 
-	bool b_useNir = false;
-	bool b_useVelodyne = false;
-	bool b_useFPFH = false;
+	//bool b_useNir = false;
+	//bool b_useVelodyne = false;
+	//bool b_useFPFH = false;
 
-	bool b_useColorfullCorr = false;
+	//bool b_useColorfullCorr = false;
 
-	bool b_changeColor_nir = false;
-	bool b_changeColor_velodyne = false;
+	//bool b_changeColor_nir = false;
+	//bool b_changeColor_velodyne = false;
 
-	bool b_useOldFPFH = false;
+	//bool b_useOldFPFH = false;
 
-	b_useParameterAdjustment = true;
-	b_useGeometricConstraints = true;
+	//b_useParameterAdjustment = true;
+	//b_useGeometricConstraints = true;
 
-	b_useNir = true;
-	b_useVelodyne = true;
-	b_useFPFH = true;
+	//b_useNir = true;
+	//b_useVelodyne = true;
+	//b_useFPFH = true;
 
-	//b_useOldFPFH = true;
+	////b_useOldFPFH = true;
 
-	cout << "1: use FPFH   0: use proposed  ->";
-	cin >> b_useOldFPFH;
+	//cout << "1: use FPFH   0: use proposed  ->";
+	//cin >> b_useOldFPFH;
 
-	b_changeColor_nir = true;
+	//b_changeColor_nir = true;
 
-	b_useRigidTransformation = true;
+	//b_useRigidTransformation = true;
 
-	if (!b_useRigidTransformation) b_show_AllFrame_AllPairs = true;
+	//if (!b_useRigidTransformation) b_show_AllFrame_AllPairs = true;
 
-	if (!b_useNir)  b_changeColor_nir = false;
+	//if (!b_useNir)  b_changeColor_nir = false;
 
-	inputData(dir_, b_useNir, b_useVelodyne, b_changeColor_nir, b_useFPFH, b_useOldFPFH);
+	//inputData(dir_, b_useNir, b_useVelodyne, b_changeColor_nir, b_useFPFH, b_useOldFPFH);
 
-	vector<pair<int, int>> index_pair_vec;
+	//vector<pair<int, int>> index_pair_vec;
 
+	////{
+	////	int i_tgt = 5;
+	////	int i_src = 6;
+	////	index_pair_vec.push_back(make_pair(i_tgt, i_src));
+	////}
+	////{
+	////	int i_tgt = 5;
+	////	int i_src = 7;
+	////	index_pair_vec.push_back(make_pair(i_tgt, i_src));
+	////}
+	//for (int j = 0; j < M_cloud_vec.size() - 1; j++)
 	//{
-	//	int i_tgt = 5;
-	//	int i_src = 6;
-	//	index_pair_vec.push_back(make_pair(i_tgt, i_src));
+	//	for (int i = j + 1; i < M_cloud_vec.size(); i++)
+	//	{
+	//		int i_tgt = j;
+	//		int i_src = i;
+	//		if (!(j == 5
+	//			|| j == 6
+	//			|| j == 7
+	//			//|| j == 8
+	//			|| j == 11
+	//			//|| j == 12
+	//			//|| j == 16
+	//			)) continue;
+	//		if (!(i == 5
+	//			|| i == 6
+	//			|| i == 7
+	//			//|| i == 8
+	//			|| i == 11
+	//			//|| i == 12
+	//			//|| i == 16
+	//			)) continue;
+
+	//		//if (!(j == 5
+	//		//	|| j == 6
+	//		//	|| j == 7
+	//		//	|| j == 8
+	//		//	)) continue;
+	//		//if (!(i == 5
+	//		//	|| i == 6
+	//		//	|| i == 7
+	//		//	|| i == 8
+	//		//	)) continue;
+
+	//		index_pair_vec.push_back(make_pair(i_tgt, i_src));
+	//	}
 	//}
+
+	//float th_nearest_nir;
+	//float th_rank_rate_nir;
+	//float th_nearest_velodyne;
+	//float th_rank_rate_velodyne;
+	//float th_nearest_fpfh;
+	//int num_nearest_fpfh;
+	//float th_rank_rate_fpfh;
+	//int i_method_rigidTransformation;
+	//float th_geometricConstraint;
+
+
+	//bool b_first = true;
+
+	//while (1)
 	//{
-	//	int i_tgt = 5;
-	//	int i_src = 7;
-	//	index_pair_vec.push_back(make_pair(i_tgt, i_src));
+	//	th_nearest_nir = 10.;
+	//	//th_rank_rate_nir = 0.5;
+	//	//th_rank_rate_nir = 1.;
+	//	th_rank_rate_nir = 0.2;
+	//	//cout << "input th_nearest_nir:";
+	//	//cin >> th_nearest_nir;
+	//	th_nearest_velodyne = 10.;
+	//	//th_rank_rate_velodyne = 0.5;
+	//	th_rank_rate_velodyne = 1.;
+
+	//	th_nearest_fpfh = 1800.;
+	//	num_nearest_fpfh = 10;
+	//	//th_rank_rate_fpfh = 0.5;
+	//	th_rank_rate_fpfh = 0.5;
+
+	//	th_geometricConstraint = 0.8;
+
+	//	if (b_useParameterAdjustment)
+	//	{
+	//		if (!b_first)
+	//		{
+	//			int aa;
+	//			cout << "input txt:";
+	//			cin >> aa;
+	//		}
+	//		b_first = false;
+	//		vector<vector<string>> s_temp_vecvec;
+	//		s_temp_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/parameter2.csv");
+	//		th_nearest_nir = stof(s_temp_vecvec[1][3]);
+	//		th_rank_rate_nir = stof(s_temp_vecvec[2][3]);
+	//		th_nearest_velodyne = stof(s_temp_vecvec[3][3]);
+	//		th_rank_rate_velodyne = stof(s_temp_vecvec[4][3]);
+	//		th_rank_rate_fpfh = stof(s_temp_vecvec[5][3]);
+	//		th_geometricConstraint = stof(s_temp_vecvec[6][3]);
+	//		i_method_rigidTransformation = stoi(s_temp_vecvec[7][3]);
+	//		b_useRigidTransformation = (bool)stoi(s_temp_vecvec[8][3]);
+	//	}
+
+
+	//	if (b_useOldFPFH)
+	//	{
+	//		DoOldFPFHRegistration(index_pair_vec);
+	//	}
+	//	else
+	//	{
+	//		DoFeatureRegistration(index_pair_vec, th_nearest_nir, th_rank_rate_nir,
+	//			th_nearest_velodyne, th_rank_rate_velodyne,
+	//			th_nearest_fpfh, num_nearest_fpfh, th_rank_rate_fpfh,
+	//			i_method_rigidTransformation, th_geometricConstraint,
+	//			b_useNir, b_useVelodyne, b_useFPFH,
+	//			b_useGeometricConstraints);
+	//	}
+
+	//	//evaluation
+	//	DoEvaluation(dir_, index_pair_vec, b_useOldFPFH);
+
+	//	if(b_useRigidTransformation)
+	//		showRigidTransformation(index_pair_vec);
+
+	//	else if(b_show_AllFrame_AllPairs)
+	//		showAllPairs(index_pair_vec, b_useNir, b_useVelodyne, b_useFPFH, b_useGeometricConstraints, b_useColorfullCorr);
+
+	//	if (!b_useParameterAdjustment) break;
 	//}
-	for (int j = 0; j < M_cloud_vec.size() - 1; j++)
-	{
-		for (int i = j + 1; i < M_cloud_vec.size(); i++)
-		{
-			int i_tgt = j;
-			int i_src = i;
-			if (!(j == 5
-				|| j == 6
-				|| j == 7
-				//|| j == 8
-				|| j == 11
-				//|| j == 12
-				//|| j == 16
-				)) continue;
-			if (!(i == 5
-				|| i == 6
-				|| i == 7
-				//|| i == 8
-				|| i == 11
-				//|| i == 12
-				//|| i == 16
-				)) continue;
-
-			//if (!(j == 5
-			//	|| j == 6
-			//	|| j == 7
-			//	|| j == 8
-			//	)) continue;
-			//if (!(i == 5
-			//	|| i == 6
-			//	|| i == 7
-			//	|| i == 8
-			//	)) continue;
-
-			index_pair_vec.push_back(make_pair(i_tgt, i_src));
-		}
-	}
-
-	float th_nearest_nir;
-	float th_rank_rate_nir;
-	float th_nearest_velodyne;
-	float th_rank_rate_velodyne;
-	float th_nearest_fpfh;
-	int num_nearest_fpfh;
-	float th_rank_rate_fpfh;
-	int i_method_rigidTransformation;
-	float th_geometricConstraint;
-
-
-	bool b_first = true;
-
-	while (1)
-	{
-		th_nearest_nir = 10.;
-		//th_rank_rate_nir = 0.5;
-		//th_rank_rate_nir = 1.;
-		th_rank_rate_nir = 0.2;
-		//cout << "input th_nearest_nir:";
-		//cin >> th_nearest_nir;
-		th_nearest_velodyne = 10.;
-		//th_rank_rate_velodyne = 0.5;
-		th_rank_rate_velodyne = 1.;
-
-		th_nearest_fpfh = 1800.;
-		num_nearest_fpfh = 10;
-		//th_rank_rate_fpfh = 0.5;
-		th_rank_rate_fpfh = 0.5;
-
-		th_geometricConstraint = 0.8;
-
-		if (b_useParameterAdjustment)
-		{
-			if (!b_first)
-			{
-				int aa;
-				cout << "input txt:";
-				cin >> aa;
-			}
-			b_first = false;
-			vector<vector<string>> s_temp_vecvec;
-			s_temp_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/parameter2.csv");
-			th_nearest_nir = stof(s_temp_vecvec[1][3]);
-			th_rank_rate_nir = stof(s_temp_vecvec[2][3]);
-			th_nearest_velodyne = stof(s_temp_vecvec[3][3]);
-			th_rank_rate_velodyne = stof(s_temp_vecvec[4][3]);
-			th_rank_rate_fpfh = stof(s_temp_vecvec[5][3]);
-			th_geometricConstraint = stof(s_temp_vecvec[6][3]);
-			i_method_rigidTransformation = stoi(s_temp_vecvec[7][3]);
-			b_useRigidTransformation = (bool)stoi(s_temp_vecvec[8][3]);
-		}
-
-
-		if (b_useOldFPFH)
-		{
-			DoOldFPFHRegistration(index_pair_vec);
-		}
-		else
-		{
-			DoFeatureRegistration(index_pair_vec, th_nearest_nir, th_rank_rate_nir,
-				th_nearest_velodyne, th_rank_rate_velodyne,
-				th_nearest_fpfh, num_nearest_fpfh, th_rank_rate_fpfh,
-				i_method_rigidTransformation, th_geometricConstraint,
-				b_useNir, b_useVelodyne, b_useFPFH,
-				b_useGeometricConstraints);
-		}
-
-		//evaluation
-		DoEvaluation(dir_, index_pair_vec, b_useOldFPFH);
-
-		if(b_useRigidTransformation)
-			showRigidTransformation(index_pair_vec);
-
-		else if(b_show_AllFrame_AllPairs)
-			showAllPairs(index_pair_vec, b_useNir, b_useVelodyne, b_useFPFH, b_useGeometricConstraints, b_useColorfullCorr);
-
-		if (!b_useParameterAdjustment) break;
-	}
 
 }
 
 void CGlobalFeatureRegistration_test::inputData(string dir_, bool b_useNir, bool b_useVelodyne, bool b_changeColor_nir,
-	bool b_useFPFH, bool b_useOldFPFH)
+	bool b_useFPFH, bool b_useProposed)
 {
 	M_cloud_vec.clear();
 	M_feature_vecvec_nir.clear();
@@ -2846,8 +2846,24 @@ void CGlobalFeatureRegistration_test::inputData(string dir_, bool b_useNir, bool
 	M_index_valid_vecvec_FPFH.clear();
 	M_fpfh_vec.clear();
 	M_transformation_vec.clear();
+	M_trajectory_true_vec.clear();
+	
+	//input true trajectory
+	{
+		string filename_true = "transformation_fin.csv";
+		vector<vector<double>> trajectory_vecvec_temp = CTimeString::getVecVecFromCSV(dir_ + "/" + filename_true);
+		for (int i = 0; i < trajectory_vecvec_temp.size(); i++)
+		{
+			Eigen::Vector6d Pos_temp = Eigen::Vector6d::Zero();
+			Pos_temp << trajectory_vecvec_temp[i][1], trajectory_vecvec_temp[i][2],
+				trajectory_vecvec_temp[i][3], trajectory_vecvec_temp[i][4],
+				trajectory_vecvec_temp[i][5], trajectory_vecvec_temp[i][6];
+			M_trajectory_true_vec.push_back(Pos_temp);
+		}
+	}
 
 	string s_folder;
+	//what folder? -> "0:00_nir", "1:01_velodyne", or "2:03_all"
 	{
 		vector<string> filenames_folder;
 
@@ -2888,22 +2904,51 @@ void CGlobalFeatureRegistration_test::inputData(string dir_, bool b_useNir, bool
 	//feature
 	//vector<vector<float>> feature_vecvec_nir;
 	//vector<vector<float>> feature_vecvec_velodyne;
-	if (b_useNir)
-		for (int j = 0; j < M_cloud_vec.size(); j++)
+	//if (b_useNir)
+	//	for (int j = 0; j < M_cloud_vec.size(); j++)
+	//	{
+	//		vector<float> feature_vec;
+	//		for (int i = 0; i < M_cloud_vec[j]->size(); i++)
+	//			feature_vec.push_back((float)((int)M_cloud_vec[j]->points[i].r));
+	//		M_feature_vecvec_nir.push_back(feature_vec);
+	//	}
+	//if (b_useVelodyne)
+	//	for (int j = 0; j < M_cloud_vec.size(); j++)
+	//	{
+	//		vector<float> feature_vec;
+	//		for (int i = 0; i < M_cloud_vec[j]->size(); i++)
+	//			feature_vec.push_back((float)((int)M_cloud_vec[j]->points[i].g));
+	//		M_feature_vecvec_velodyne.push_back(feature_vec);
+	//	}
+
+	for (int j = 0; j < M_cloud_vec.size(); j++)
+	{
+		bool b_onlyVelodyneData = false;
+		int num_r255 = 0;
+		for (int i = 0; i < M_cloud_vec[j]->size(); i++)
+			if ((int)M_cloud_vec[j]->points[i].r == 255) num_r255++;
+		if (num_r255 == M_cloud_vec[j]->size())  b_onlyVelodyneData = true;
+		//velodyne
 		{
 			vector<float> feature_vec;
-			for (int i = 0; i < M_cloud_vec[j]->size(); i++)
-				feature_vec.push_back((float)((int)M_cloud_vec[j]->points[i].r));
-			M_feature_vecvec_nir.push_back(feature_vec);
-		}
-	if (b_useVelodyne)
-		for (int j = 0; j < M_cloud_vec.size(); j++)
-		{
-			vector<float> feature_vec;
-			for (int i = 0; i < M_cloud_vec[j]->size(); i++)
-				feature_vec.push_back((float)((int)M_cloud_vec[j]->points[i].g));
+			if (b_useVelodyne)
+			{
+				for (int i = 0; i < M_cloud_vec[j]->size(); i++)
+					feature_vec.push_back((float)((int)M_cloud_vec[j]->points[i].g));
+			}
 			M_feature_vecvec_velodyne.push_back(feature_vec);
 		}
+		//nir
+		{
+			vector<float> feature_vec;
+			if (b_useNir && !b_onlyVelodyneData)
+			{
+				for (int i = 0; i < M_cloud_vec[j]->size(); i++)
+					feature_vec.push_back((float)((int)M_cloud_vec[j]->points[i].r));
+			}
+			M_feature_vecvec_nir.push_back(feature_vec);
+		}
+	}
 
 	if (b_changeColor_nir)
 	{
@@ -2917,17 +2962,47 @@ void CGlobalFeatureRegistration_test::inputData(string dir_, bool b_useNir, bool
 				if (value_min > M_feature_vecvec_nir[j][i]) value_min = M_feature_vecvec_nir[j][i];
 			}
 		}
+		//for (int j = 0; j < M_feature_vecvec_nir.size(); j++)
+		//{
+		//	for (int i = 0; i < M_feature_vecvec_nir[j].size(); i++)
+		//	{
+		//		vector<std::uint8_t> color_vec;
+		//		color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(M_feature_vecvec_nir[j][i], value_max, value_min);
+		//		T_PointType point_ = M_cloud_vec[j]->points[i];
+		//		point_.r = color_vec[0];
+		//		point_.g = color_vec[1];
+		//		point_.b = color_vec[2];
+		//		M_cloud_vec[j]->points[i] = point_;
+		//	}
+		//}
 		for (int j = 0; j < M_feature_vecvec_nir.size(); j++)
 		{
-			for (int i = 0; i < M_feature_vecvec_nir[j].size(); i++)
+			vector<std::uint8_t> color_vec;
+			if (M_feature_vecvec_nir[j].size() == 0)
 			{
-				vector<std::uint8_t> color_vec;
-				color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(M_feature_vecvec_nir[j][i], value_max, value_min);
-				T_PointType point_ = M_cloud_vec[j]->points[i];
-				point_.r = color_vec[0];
-				point_.g = color_vec[1];
-				point_.b = color_vec[2];
-				M_cloud_vec[j]->points[i] = point_;
+				color_vec.push_back((std::uint8_t)255);
+				color_vec.push_back((std::uint8_t)0);
+				color_vec.push_back((std::uint8_t)0);
+				for (int i = 0; i < M_cloud_vec[j]->size(); i++)
+				{
+					T_PointType point_ = M_cloud_vec[j]->points[i];
+					point_.r = color_vec[0];
+					point_.g = color_vec[1];
+					point_.b = color_vec[2];
+					M_cloud_vec[j]->points[i] = point_;
+				}
+			}
+			else
+			{
+				for (int i = 0; i < M_cloud_vec[j]->size(); i++)
+				{
+					color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(M_feature_vecvec_nir[j][i], value_max, value_min);
+					T_PointType point_ = M_cloud_vec[j]->points[i];
+					point_.r = color_vec[0];
+					point_.g = color_vec[1];
+					point_.b = color_vec[2];
+					M_cloud_vec[j]->points[i] = point_;
+				}
 			}
 		}
 	}
@@ -2935,7 +3010,7 @@ void CGlobalFeatureRegistration_test::inputData(string dir_, bool b_useNir, bool
 	//calc valid point of FPFH
 	//vector<vector<int>> index_valid_vecvec_FPFH;
 	//vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> fpfh_vec;
-	if (b_useFPFH && !(b_useOldFPFH))
+	if (b_useFPFH && b_useProposed)
 	{
 		float radius_normal_FPFH;
 		radius_normal_FPFH = 0.5;
@@ -2966,24 +3041,31 @@ void CGlobalFeatureRegistration_test::inputData(string dir_, bool b_useNir, bool
 	}
 }
 
-void CGlobalFeatureRegistration_test::DoOldFPFHRegistration(vector<pair<int, int>> index_pair_vec)
+void CGlobalFeatureRegistration_test::DoOldFPFHRegistration(vector<pair<int, int>> index_pair_vec, vector<float> parameter_vec)
 {
 	float voxel_size;
-	voxel_size = 0.1;
-
 	float radius_normal_FPFH, radius_FPFH;
-	radius_normal_FPFH = 0.5;
-	radius_FPFH = 1.;
-
 	float MaxCorrespondenceDistance_SAC, SimilarityThreshold_SAC, InlierFraction_SAC;
-	MaxCorrespondenceDistance_SAC = 0.3;
-	SimilarityThreshold_SAC = 0.05;
-	InlierFraction_SAC = 0.2;
-
 	int MaximumIterations_SAC, NumberOfSamples_SAC, CorrespondenceRandomness_SAC;
-	MaximumIterations_SAC = 500;
-	NumberOfSamples_SAC = 10;
-	CorrespondenceRandomness_SAC = 10;
+
+	//voxel_size = 0.1;
+	//radius_normal_FPFH = 0.5;
+	//radius_FPFH = 1.;
+	//MaxCorrespondenceDistance_SAC = 0.3;
+	//SimilarityThreshold_SAC = 0.05;
+	//InlierFraction_SAC = 0.2;
+	//MaximumIterations_SAC = 500;
+	//NumberOfSamples_SAC = 10;
+	//CorrespondenceRandomness_SAC = 10;
+	voxel_size = parameter_vec[0];
+	radius_normal_FPFH = parameter_vec[1];
+	radius_FPFH = parameter_vec[2];
+	MaxCorrespondenceDistance_SAC = parameter_vec[3];
+	SimilarityThreshold_SAC = parameter_vec[4];
+	InlierFraction_SAC = parameter_vec[5];
+	MaximumIterations_SAC = parameter_vec[6];
+	NumberOfSamples_SAC = parameter_vec[7];
+	CorrespondenceRandomness_SAC = parameter_vec[8];
 
 	//int max_RANSAC;
 	//max_RANSAC = 5;
@@ -3057,43 +3139,94 @@ void CGlobalFeatureRegistration_test::DoOldFPFHRegistration(vector<pair<int, int
 
 }
 
-void CGlobalFeatureRegistration_test::DoFeatureRegistration(vector<pair<int, int>> index_pair_vec,
-	float th_nearest_nir, float th_rank_rate_nir,
-	float th_nearest_velodyne, float th_rank_rate_velodyne,
-	float th_nearest_fpfh, int num_nearest_fpfh, float th_rank_rate_fpfh,
-	int i_method_rigidTransformation, float th_geometricConstraint,
-	bool b_useNir, bool b_useVelodyne, bool b_useFPFH,
-	bool b_useGeometricConstraints)
+void CGlobalFeatureRegistration_test::DoFeatureRegistration(vector<pair<int, int>> index_pair_vec, vector<float> parameter_vec, 
+	bool b_useNir, bool b_useVelodyne, bool b_useFPFH)
 {
 	M_corrs_all_vecvec.clear();
 	M_evaluation_corr_vecvec_nir.clear();
 	M_evaluation_corr_vecvec_velodyne.clear();
 	M_evaluation_corr_vecvec_fpfh.clear();
 
+	float th_nearest_nir;
+	float th_rank_rate_nir;
+	float th_nearest_velodyne;
+	float th_rank_rate_velodyne;
+	float th_nearest_fpfh;
+	int num_nearest_fpfh;
+	float th_rank_rate_fpfh;
+	int i_method_rigidTransformation;
+	float th_geometricConstraint;
+	
+	bool b_useGeometricConstraints;
+
+	th_nearest_nir = parameter_vec[0];
+	th_rank_rate_nir = parameter_vec[1];
+	th_nearest_velodyne = parameter_vec[2];
+	th_rank_rate_velodyne = parameter_vec[3];
+	th_nearest_fpfh = parameter_vec[4];
+	num_nearest_fpfh = (int)parameter_vec[5];
+	th_rank_rate_fpfh = parameter_vec[6];
+	i_method_rigidTransformation = (int)parameter_vec[7];
+	th_geometricConstraint = parameter_vec[8];
+
+	//if (parameter_vec[0] == 1.) b_useNir = true;
+	//else b_useNir = false;
+	//if (parameter_vec[0] == 1.) b_useVelodyne = true;
+	//else b_useVelodyne = false;
+	//if (parameter_vec[0] == 1.) b_useFPFH = true;
+	//else b_useFPFH = false;
+	//if (parameter_vec[0] == 1.) b_useGeometricConstraints = true;
+	//else b_useGeometricConstraints = false;
+	b_useNir = true;
+	b_useVelodyne = true;
+	b_useFPFH = true;
+	b_useGeometricConstraints = true;
+
 	cout << "calc pairs" << endl;
-	vector<pcl::Correspondences> corrs_nir_vec;
-	vector<pcl::Correspondences> corrs_velodyne_vec;
-	vector<pcl::Correspondences> corrs_fpfh_vec;
 	if (b_useNir)
 	{
 		cout << "nir" << endl;
-		CGlobalFeatureRegistration::determineCorrespondences_allFramesRanking_featureScalar(M_feature_vecvec_nir, M_cloud_vec, index_pair_vec, th_nearest_nir, th_rank_rate_nir, corrs_nir_vec, M_evaluation_corr_vecvec_nir);
+		M_corrs_nir_vec.clear();
+		CGlobalFeatureRegistration::determineCorrespondences_allFramesRanking_featureScalar(M_feature_vecvec_nir, M_cloud_vec, index_pair_vec, th_nearest_nir, th_rank_rate_nir, M_corrs_nir_vec, M_evaluation_corr_vecvec_nir);
+		for (int j = 0; j < M_corrs_nir_vec.size(); j++)
+			if (M_corrs_nir_vec[j].size() == 0)
+			{
+				cout << "No correspondence found in ";
+				cout << "i_tgt:" << index_pair_vec[j].first;
+				cout << ", i_src:" << index_pair_vec[j].second << endl;;
+			}
 	}
 	if (b_useVelodyne)
 	{
 		cout << "velodyne" << endl;
-		CGlobalFeatureRegistration::determineCorrespondences_allFramesRanking_featureScalar(M_feature_vecvec_velodyne, M_cloud_vec, index_pair_vec, th_nearest_velodyne, th_rank_rate_nir, corrs_velodyne_vec, M_evaluation_corr_vecvec_velodyne);
+		M_corrs_velodyne_vec.clear();
+		CGlobalFeatureRegistration::determineCorrespondences_allFramesRanking_featureScalar(M_feature_vecvec_velodyne, M_cloud_vec, index_pair_vec, th_nearest_velodyne, th_rank_rate_nir, M_corrs_velodyne_vec, M_evaluation_corr_vecvec_velodyne);
+		for (int j = 0; j < M_corrs_velodyne_vec.size(); j++)
+			if (M_corrs_velodyne_vec[j].size() == 0)
+			{
+				cout << "No correspondence found in ";
+				cout << "i_tgt:" << index_pair_vec[j].first;
+				cout << ", i_src:" << index_pair_vec[j].second << endl;;
+			}
 	}
 	if (b_useFPFH)
 	{
 		cout << "fpfh" << endl;
+		M_corrs_fpfh_vec.clear();
 		CGlobalFeatureRegistration::determineCorrespondences_allFramesRanking_featureFpfh_remove(M_fpfh_vec, M_cloud_vec, index_pair_vec, th_nearest_fpfh, num_nearest_fpfh, th_rank_rate_fpfh,
-			M_index_valid_vecvec_FPFH, corrs_fpfh_vec, M_evaluation_corr_vecvec_fpfh);
+			M_index_valid_vecvec_FPFH, M_corrs_fpfh_vec, M_evaluation_corr_vecvec_fpfh);
+		for (int j = 0; j < M_corrs_fpfh_vec.size(); j++)
+			if (M_corrs_fpfh_vec[j].size() == 0)
+			{
+				cout << "No correspondence found in ";
+				cout << "i_tgt:" << index_pair_vec[j].first;
+				cout << ", i_src:" << index_pair_vec[j].second << endl;;
+			}
 	}
 
 	cout << "corr" << endl;
-	for (int j = 0; j < corrs_nir_vec.size(); j++)
-		cout << "j:" << j << " size:" << corrs_nir_vec[j].size() << endl;
+	for (int j = 0; j < M_corrs_nir_vec.size(); j++)
+		cout << "j:" << j << " size:" << M_corrs_nir_vec[j].size() << endl;
 	cout << "evaluation" << endl;
 	for (int j = 0; j < M_evaluation_corr_vecvec_nir.size(); j++)
 		cout << "j:" << j << " size:" << M_evaluation_corr_vecvec_nir[j].size() << endl;
@@ -3104,9 +3237,9 @@ void CGlobalFeatureRegistration_test::DoFeatureRegistration(vector<pair<int, int
 		int i_tgt = index_pair_vec[j].first;
 		int i_src = index_pair_vec[j].second;
 		pcl::Correspondences corrs_temp;
-		if (b_useNir) corrs_temp.insert(corrs_temp.end(), corrs_nir_vec[j].begin(), corrs_nir_vec[j].end());
-		if (b_useVelodyne) corrs_temp.insert(corrs_temp.end(), corrs_velodyne_vec[j].begin(), corrs_velodyne_vec[j].end());
-		if (b_useFPFH) corrs_temp.insert(corrs_temp.end(), corrs_fpfh_vec[j].begin(), corrs_fpfh_vec[j].end());
+		if (b_useNir) corrs_temp.insert(corrs_temp.end(), M_corrs_nir_vec[j].begin(), M_corrs_nir_vec[j].end());
+		if (b_useVelodyne) corrs_temp.insert(corrs_temp.end(), M_corrs_velodyne_vec[j].begin(), M_corrs_velodyne_vec[j].end());
+		if (b_useFPFH) corrs_temp.insert(corrs_temp.end(), M_corrs_fpfh_vec[j].begin(), M_corrs_fpfh_vec[j].end());
 		cout << "i_tgt:" << i_tgt << endl;
 		cout << "i_src:" << i_src << endl;
 		if (b_useGeometricConstraints)
@@ -3136,168 +3269,6 @@ void CGlobalFeatureRegistration_test::DoFeatureRegistration(vector<pair<int, int
 		estimateRigidTransformation_static(M_cloud_vec[i_src], M_cloud_vec[i_tgt], corrs_output_vec[j], transformation_matrix);
 		M_transformation_vec.push_back(transformation_matrix.cast<double>());
 	}
-
-}
-
-void CGlobalFeatureRegistration_test::DoEvaluation(string dir_, vector<pair<int, int>> index_pair_vec, bool b_useOldFPFH)
-{
-	string s_t = CTimeString::getTimeString();
-
-	//makenewfolder
-	CTimeString::makenewfolder(dir_, s_t);
-
-	//input true trajectory
-	vector<Eigen::Vector6d> trajectory_true_vec;
-	{
-		string filename_true = "transformation_fin.csv";
-		vector<vector<double>> trajectory_vecvec_temp = CTimeString::getVecVecFromCSV(dir_ + "/" + filename_true);
-		for (int i = 0; i < trajectory_vecvec_temp.size(); i++)
-		{
-			Eigen::Vector6d Pos_temp = Eigen::Vector6d::Zero();
-			Pos_temp << trajectory_vecvec_temp[i][1], trajectory_vecvec_temp[i][2],
-				trajectory_vecvec_temp[i][3], trajectory_vecvec_temp[i][4],
-				trajectory_vecvec_temp[i][5], trajectory_vecvec_temp[i][6];
-			trajectory_true_vec.push_back(Pos_temp);
-		}
-	}
-
-	vector<vector<string>> s_output_vecvec;
-	{
-		vector<string> s_output_vec;
-		s_output_vec.push_back("i_tgt");
-		s_output_vec.push_back("i_src");
-		s_output_vec.push_back("X");
-		s_output_vec.push_back("Y");
-		s_output_vec.push_back("Z");
-		s_output_vec.push_back("Roll");
-		s_output_vec.push_back("Pitch");
-		s_output_vec.push_back("Yaw");
-		s_output_vec.push_back("e_euqulid");
-		s_output_vec.push_back("e_error_PointCloudDistance");
-		s_output_vec.push_back("e_error_beta");
-		s_output_vec.push_back("e_error_angle_normal");
-		s_output_vecvec.push_back(s_output_vec);
-	}
-
-	for (int j = 0; j < index_pair_vec.size(); j++)
-	{
-		vector<string> s_output_vec;
-		int i_tgt = index_pair_vec[j].first;
-		int i_src = index_pair_vec[j].second;
-
-		cout << endl;
-		cout << "i_tgt:" << i_tgt << endl;
-		cout << "i_src:" << i_src << endl;
-
-		Eigen::Matrix4d transformation_ = Eigen::Matrix4d::Identity();
-		transformation_ = M_transformation_vec[j];
-
-		cout << "transformation_:" << endl;
-		cout << transformation_ << endl;
-
-		Eigen::Matrix4d transformation_true = Eigen::Matrix4d::Identity();
-		transformation_true =
-			calcHomogeneousMatrixFromVector6d(trajectory_true_vec[i_tgt]).inverse() *
-			calcHomogeneousMatrixFromVector6d(trajectory_true_vec[i_src]);
-
-		cout << "transformation_true:" << endl;
-		cout << transformation_true << endl;
-
-		float error_euqulid;
-		error_euqulid = sqrt(
-			pow(transformation_(0, 3) - transformation_true(0, 3), 2.)
-			+ pow(transformation_(1, 3) - transformation_true(1, 3), 2.)
-			+ pow(transformation_(2, 3) - transformation_true(2, 3), 2.)
-		);
-
-		pcl::PointCloud<T_PointType>::Ptr cloud_src(new pcl::PointCloud<T_PointType>());
-		pcl::copyPointCloud(*M_cloud_vec[i_src], *cloud_src);
-		{
-			Eigen::Affine3f trans_ = calcAffine3fFromHomogeneousMatrix(transformation_);
-			pcl::transformPointCloud(*cloud_src, *cloud_src, trans_);
-
-		}
-		pcl::PointCloud<T_PointType>::Ptr cloud_src_true(new pcl::PointCloud<T_PointType>());
-		pcl::copyPointCloud(*M_cloud_vec[i_src], *cloud_src_true);
-		{
-			Eigen::Affine3f trans_ = calcAffine3fFromHomogeneousMatrix(transformation_true);
-			pcl::transformPointCloud(*cloud_src_true, *cloud_src_true, trans_);
-		}
-
-		float error_PointCloudDistance = 0.;
-		for (int i = 0; i < cloud_src->size(); i++)
-		{
-			error_PointCloudDistance += sqrt(
-				pow(cloud_src->points[i].x - cloud_src_true->points[i].x, 2.)
-				+ pow(cloud_src->points[i].y - cloud_src_true->points[i].y, 2.)
-				+ pow(cloud_src->points[i].y - cloud_src_true->points[i].z, 2.)
-			);
-		}
-		if (cloud_src->size() != 0) error_PointCloudDistance /= (float)cloud_src->size();
-
-		float error_beta;
-		float error_angle_normal;
-		vector<float> error_angle_vec;
-		//error_angle_vec = getAngleError(transformation_true, transformation_);
-		error_angle_vec = getAngleError(transformation_, transformation_true);
-		error_beta = error_angle_vec[0];
-		error_angle_normal = error_angle_vec[1];
-
-		Eigen::Vector6d pos_vec = Eigen::Vector6d::Zero();
-		pos_vec = calcVector6dFromHomogeneousMatrix(transformation_);
-
-		s_output_vec.push_back(to_string(i_tgt));
-		s_output_vec.push_back(to_string(i_src));
-		s_output_vec.push_back(to_string(pos_vec(0, 0)));
-		s_output_vec.push_back(to_string(pos_vec(1, 0)));
-		s_output_vec.push_back(to_string(pos_vec(2, 0)));
-		s_output_vec.push_back(to_string(pos_vec(3, 0)));
-		s_output_vec.push_back(to_string(pos_vec(4, 0)));
-		s_output_vec.push_back(to_string(pos_vec(5, 0)));
-		s_output_vec.push_back(to_string(error_euqulid));
-		s_output_vec.push_back(to_string(error_PointCloudDistance));
-		s_output_vec.push_back(to_string(error_beta));
-		s_output_vec.push_back(to_string(error_angle_normal));
-
-		pcl::PointCloud<T_PointType>::Ptr cloud_output(new pcl::PointCloud<T_PointType>());
-		cloud_output->clear();
-		pcl::copyPointCloud(*M_cloud_vec[i_tgt], *cloud_output);
-		//tgt -> red
-		for (int i = 0; i < cloud_output->size(); i++)
-		{
-			cloud_output->points[i].r = 255;
-			cloud_output->points[i].g = 0;
-			cloud_output->points[i].b = 0;
-		}
-		//src -> green
-		for (int i = 0; i < cloud_src->size(); i++)
-		{
-			cloud_src->points[i].r = 0;
-			cloud_src->points[i].g = 255;
-			cloud_src->points[i].b = 0;
-			cloud_output->push_back(cloud_src->points[i]);
-		}
-
-		string filename_pcd;
-		{
-			string s_tgt = to_string(i_tgt);
-			if (s_tgt.size() < 2) s_tgt = "0" + s_tgt;
-			s_tgt = "tgt" + s_tgt;
-			string s_src = to_string(i_src);
-			if (s_src.size() < 2) s_src = "0" + s_src;
-			s_src = "src" + s_src;
-			filename_pcd = s_tgt + s_src + "_result";
-
-			if (b_useOldFPFH) filename_pcd += "_01conventional";
-			else  filename_pcd += "_02proposed";
-			filename_pcd += ".pcd";
-		}
-
-		pcl::io::savePCDFile<T_PointType>(dir_ + "/" + s_t + "/" + filename_pcd, *cloud_output);
-		s_output_vecvec.push_back(s_output_vec);
-	}
-
-	CTimeString::getCSVFromVecVec(s_output_vecvec, dir_ + "/" + s_t + "/result_" + s_t + ".csv");
 
 }
 
@@ -3516,3 +3487,822 @@ void CGlobalFeatureRegistration_test::showRigidTransformation(vector<pair<int, i
 
 }
 
+void CGlobalFeatureRegistration_test::fillParameterToTXT(vector<vector<string>> &s_output_vecvec, vector<float> parameter_oldFPFH_vec, vector<float> parameter_featureRegistration_vec)
+{
+	//s_output_vecvec <- parameter_oldFPFH_vec
+	//s_output_vecvec <- parameter_featureRegistration_vec
+
+	{
+		vector<string> s_vec;
+		s_vec.push_back("Parameter_oldFPFH");
+		s_output_vecvec.push_back(s_vec);
+	}
+
+	for (int j = 0; j < M_name_parameter_vec.size(); j++)
+	{
+		if (j == 9)
+		{
+			vector<string> s_vec;
+			s_vec.push_back("Parameter_featureRegistration");
+			s_vec.push_back("");
+			s_vec.push_back("");
+			s_vec.push_back("");
+			s_output_vecvec.push_back(s_vec);
+		}
+
+		vector<string> s_vec;
+		s_vec.push_back(M_name_parameter_vec[j]);
+		s_vec.push_back("");
+		s_vec.push_back("");
+		s_vec.push_back("");
+
+		if (j < 9)
+		{
+			if(j == 6 || j == 7 || j == 8)
+				s_vec.push_back(to_string((int)parameter_oldFPFH_vec[j]));
+			else
+				s_vec.push_back(to_string(parameter_oldFPFH_vec[j]));
+		}
+		else
+		{
+			if(j - 9 == 5 || j - 9 == 7)
+				s_vec.push_back(to_string((int)parameter_featureRegistration_vec[j - 9]));
+			else 
+				s_vec.push_back(to_string(parameter_featureRegistration_vec[j - 9]));
+		}
+
+		s_output_vecvec.push_back(s_vec);
+
+	}
+
+	//voxel_size = parameter_oldFPFH_vec[0];
+	//radius_normal_FPFH = parameter_oldFPFH_vec[1];
+	//radius_FPFH = parameter_oldFPFH_vec[2];
+	//MaxCorrespondenceDistance_SAC = parameter_oldFPFH_vec[3];
+	//SimilarityThreshold_SAC = parameter_oldFPFH_vec[4];
+	//InlierFraction_SAC = parameter_oldFPFH_vec[5];
+	//MaximumIterations_SAC = parameter_oldFPFH_vec[6];
+	//NumberOfSamples_SAC = parameter_oldFPFH_vec[7];
+	//CorrespondenceRandomness_SAC = parameter_oldFPFH_vec[8];
+
+	//th_nearest_nir = parameter_featureRegistration_vec[0];
+	//th_rank_rate_nir = parameter_featureRegistration_vec[1];
+	//th_nearest_velodyne = parameter_featureRegistration_vec[2];
+	//th_rank_rate_velodyne = parameter_featureRegistration_vec[3];
+	//th_nearest_fpfh = parameter_featureRegistration_vec[4];
+	//num_nearest_fpfh = (int)parameter_featureRegistration_vec[5];
+	//th_rank_rate_fpfh = parameter_featureRegistration_vec[6];
+	//i_method_rigidTransformation = (int)parameter_featureRegistration_vec[7];
+	//th_geometricConstraint = parameter_featureRegistration_vec[8];
+
+}
+
+vector<pair<int, int>> CGlobalFeatureRegistration_test::getFramePairVec(string dir_)
+{
+	vector<pair<int, int>> frame_pair_vec;
+
+	vector<vector<bool>> b_ignore_vecvec;
+	vector<vector<bool>> b_ahead_vecvec;
+
+	//input from text
+	vector<vector<string>> s_matrix_vecvec;
+	{
+		//input text
+		vector<vector<string>> s_matrix_vecvec_temp;
+		s_matrix_vecvec_temp = CTimeString::getVecVecFromCSV_string(dir_ + "/matrix_ignore_ahead.csv");
+		for (int j = 1; j < s_matrix_vecvec_temp.size(); j++)
+		{
+			vector<string> s_frame_vec;
+			for (int i = 1; i < s_matrix_vecvec_temp[j].size(); i++)
+			{
+				s_frame_vec.push_back(s_matrix_vecvec_temp[j][i]);
+			}
+			s_matrix_vecvec.push_back(s_frame_vec);
+		}
+
+		//init ignore and ahead
+		for (int j = 0; j < s_matrix_vecvec.size(); j++)
+		{
+			vector<bool> b_vecvec;
+			for (int i = 0; i < s_matrix_vecvec.size(); i++)
+				b_vecvec.push_back(false);
+			b_ignore_vecvec.push_back(b_vecvec);
+		}
+		for (int j = 0; j < s_matrix_vecvec.size(); j++)
+		{
+			vector<bool> b_vecvec;
+			for (int i = 0; i < s_matrix_vecvec.size(); i++)
+				b_vecvec.push_back(false);
+			b_ahead_vecvec.push_back(b_vecvec);
+		}
+
+		//extract from vecvec
+		for (int i_tgt = 0; i_tgt < s_matrix_vecvec.size(); i_tgt++)
+		{
+			for (int i_src = 0; i_src < s_matrix_vecvec.size(); i_src++)
+			{
+				string s_value = s_matrix_vecvec[i_tgt][i_src];
+				if (s_value.size() == 0 || s_value == "-")
+					continue;
+				else if (stoi(s_value) == -1)
+				{
+					b_ignore_vecvec[i_tgt][i_src] = true;
+					cout << "i_tgt:" << i_tgt << " i_src:" << i_src << "  ignored" << endl;
+
+				}
+				else if (stoi(s_value) == 1)
+				{
+					b_ahead_vecvec[i_tgt][i_src] = true;
+					cout << "i_tgt:" << i_tgt << " i_src:" << i_src << "  aheaded" << endl;
+				}
+			}
+		}
+	}
+
+	//ahead loop
+	for (int i_tgt = 0; i_tgt < s_matrix_vecvec.size() - 1; i_tgt++)
+	{
+		for (int i_src = i_tgt + 1; i_src < s_matrix_vecvec.size(); i_src++)
+		{
+			if (!b_ahead_vecvec[i_tgt][i_src]) continue;
+			frame_pair_vec.push_back(make_pair(i_tgt, i_src));
+			b_ignore_vecvec[i_tgt][i_src] = true;
+		}
+	}
+
+	//normal loop
+	for (int i_tgt = 0; i_tgt < s_matrix_vecvec.size() - 1; i_tgt++)
+	{
+		for (int i_src = i_tgt + 1; i_src < s_matrix_vecvec.size(); i_src++)
+		{
+			if (b_ignore_vecvec[i_tgt][i_src]) continue;
+			frame_pair_vec.push_back(make_pair(i_tgt, i_src));
+			b_ignore_vecvec[i_tgt][i_src] = true;
+		}
+	}
+
+	cout << endl;
+	return frame_pair_vec;
+
+}
+
+vector<vector<string>> CGlobalFeatureRegistration_test::DoEvaluation(string dir_save, vector<pair<int, int>> index_pair_vec, bool b_useProposed,
+	bool b_useNir, bool b_useVelodyne, bool b_useFPFH)
+{
+	vector<vector<string>> s_output_vecvec;
+	{
+		vector<string> s_output_vec;
+		s_output_vec.push_back("i_tgt");
+		s_output_vec.push_back("i_src");
+		s_output_vec.push_back("b_usedNIR");
+		s_output_vec.push_back("b_usedVelodyne");
+		s_output_vec.push_back("b_usedFPFH");
+		s_output_vec.push_back("X");
+		s_output_vec.push_back("Y");
+		s_output_vec.push_back("Z");
+		s_output_vec.push_back("Roll");
+		s_output_vec.push_back("Pitch");
+		s_output_vec.push_back("Yaw");
+		s_output_vec.push_back("isProposed");
+		s_output_vec.push_back("isConverged");
+		s_output_vec.push_back("e_euqulid");
+		s_output_vec.push_back("e_error_PointCloudDistance");
+		s_output_vec.push_back("median_nearest");
+		s_output_vec.push_back("e_error_beta");
+		s_output_vec.push_back("e_error_angle_normal");
+		s_output_vecvec.push_back(s_output_vec);
+	}
+
+	for (int j = 0; j < index_pair_vec.size(); j++)
+	{
+		vector<string> s_output_vec;
+		int i_tgt = index_pair_vec[j].first;
+		int i_src = index_pair_vec[j].second;
+
+		cout << endl;
+		cout << "i_tgt:" << i_tgt << endl;
+		cout << "i_src:" << i_src << endl;
+
+		Eigen::Matrix4d transformation_ = Eigen::Matrix4d::Identity();
+		transformation_ = M_transformation_vec[j];
+
+		cout << "transformation_:" << endl;
+		cout << transformation_ << endl;
+
+		Eigen::Matrix4d transformation_true = Eigen::Matrix4d::Identity();
+		transformation_true =
+			calcHomogeneousMatrixFromVector6d(M_trajectory_true_vec[i_tgt]).inverse() *
+			calcHomogeneousMatrixFromVector6d(M_trajectory_true_vec[i_src]);
+
+		cout << "transformation_true:" << endl;
+		cout << transformation_true << endl;
+
+		float error_euqulid;
+		error_euqulid = sqrt(
+			pow(transformation_(0, 3) - transformation_true(0, 3), 2.)
+			+ pow(transformation_(1, 3) - transformation_true(1, 3), 2.)
+			+ pow(transformation_(2, 3) - transformation_true(2, 3), 2.)
+		);
+
+		pcl::PointCloud<T_PointType>::Ptr cloud_src(new pcl::PointCloud<T_PointType>());
+		pcl::copyPointCloud(*M_cloud_vec[i_src], *cloud_src);
+		{
+			Eigen::Affine3f trans_ = calcAffine3fFromHomogeneousMatrix(transformation_);
+			pcl::transformPointCloud(*cloud_src, *cloud_src, trans_);
+
+		}
+		pcl::PointCloud<T_PointType>::Ptr cloud_src_true(new pcl::PointCloud<T_PointType>());
+		pcl::copyPointCloud(*M_cloud_vec[i_src], *cloud_src_true);
+		{
+			Eigen::Affine3f trans_ = calcAffine3fFromHomogeneousMatrix(transformation_true);
+			pcl::transformPointCloud(*cloud_src_true, *cloud_src_true, trans_);
+		}
+
+		pcl::PointCloud<T_PointType>::Ptr cloud_tgt(new pcl::PointCloud<T_PointType>());
+		pcl::copyPointCloud(*M_cloud_vec[i_tgt], *cloud_tgt);
+		double median_nearest = getMedianDistance(cloud_src, cloud_tgt);
+
+		float error_PointCloudDistance = 0.;
+		for (int i = 0; i < cloud_src->size(); i++)
+		{
+			error_PointCloudDistance += sqrt(
+				pow(cloud_src->points[i].x - cloud_src_true->points[i].x, 2.)
+				+ pow(cloud_src->points[i].y - cloud_src_true->points[i].y, 2.)
+				+ pow(cloud_src->points[i].y - cloud_src_true->points[i].z, 2.)
+			);
+		}
+		if (cloud_src->size() != 0) error_PointCloudDistance /= (float)cloud_src->size();
+
+		float error_beta;
+		float error_angle_normal;
+		vector<float> error_angle_vec;
+		//error_angle_vec = getAngleError(transformation_true, transformation_);
+		error_angle_vec = getAngleError(transformation_, transformation_true);
+		error_beta = error_angle_vec[0];
+		error_angle_normal = error_angle_vec[1];
+
+		Eigen::Vector6d pos_vec = Eigen::Vector6d::Zero();
+		pos_vec = calcVector6dFromHomogeneousMatrix(transformation_);
+
+		bool b_isConverged = true;
+		{
+			int num_zero = 0;
+			for (int j = 0; j < pos_vec.rows(); j++)
+			{
+				if (pos_vec(j, 0) == 0.) num_zero++;
+			}
+			if (num_zero == 6) b_isConverged = false;
+		}
+
+		bool b_usedNIR = b_useNir;
+		bool b_usedVelodyne = b_useVelodyne;
+		bool b_usedFPFH = b_useFPFH;
+		if (M_corrs_nir_vec[j].size() == 0) b_usedNIR = false;
+		if (M_corrs_velodyne_vec[j].size() == 0) b_usedVelodyne = false;
+		if (M_corrs_fpfh_vec[j].size() == 0) b_usedFPFH = false;
+
+		s_output_vec.push_back(to_string(i_tgt));
+		s_output_vec.push_back(to_string(i_src));
+		s_output_vec.push_back(to_string((int)b_usedNIR));
+		s_output_vec.push_back(to_string((int)b_usedVelodyne));
+		s_output_vec.push_back(to_string((int)b_usedFPFH));
+		s_output_vec.push_back(to_string(pos_vec(0, 0)));
+		s_output_vec.push_back(to_string(pos_vec(1, 0)));
+		s_output_vec.push_back(to_string(pos_vec(2, 0)));
+		s_output_vec.push_back(to_string(pos_vec(3, 0)));
+		s_output_vec.push_back(to_string(pos_vec(4, 0)));
+		s_output_vec.push_back(to_string(pos_vec(5, 0)));
+		s_output_vec.push_back(to_string((int)b_useProposed));
+		s_output_vec.push_back(to_string((int)b_isConverged));
+		s_output_vec.push_back(to_string(error_euqulid));
+		s_output_vec.push_back(to_string(error_PointCloudDistance));
+		s_output_vec.push_back(to_string(median_nearest));			//median of distance of nearest neightbor(after registration)
+		s_output_vec.push_back(to_string(error_beta));
+		s_output_vec.push_back(to_string(error_angle_normal));
+
+		pcl::PointCloud<T_PointType>::Ptr cloud_output(new pcl::PointCloud<T_PointType>());
+		cloud_output->clear();
+		pcl::copyPointCloud(*M_cloud_vec[i_tgt], *cloud_output);
+		//tgt -> red
+		for (int i = 0; i < cloud_output->size(); i++)
+		{
+			cloud_output->points[i].r = 255;
+			cloud_output->points[i].g = 0;
+			cloud_output->points[i].b = 0;
+		}
+		//src -> green
+		for (int i = 0; i < cloud_src->size(); i++)
+		{
+			cloud_src->points[i].r = 0;
+			cloud_src->points[i].g = 255;
+			cloud_src->points[i].b = 0;
+			cloud_output->push_back(cloud_src->points[i]);
+		}
+
+		string filename_pcd;
+		{
+			string s_tgt = to_string(i_tgt);
+			if (s_tgt.size() < 2) s_tgt = "0" + s_tgt;
+			s_tgt = "tgt" + s_tgt;
+			string s_src = to_string(i_src);
+			if (s_src.size() < 2) s_src = "0" + s_src;
+			s_src = "src" + s_src;
+			filename_pcd = s_tgt + s_src + "_result";
+
+			if (!b_useProposed) filename_pcd += "_00conventional";
+			else  filename_pcd += "_01proposed";
+			filename_pcd += ".pcd";
+		}
+
+		pcl::io::savePCDFile<T_PointType>(dir_save + "/" + filename_pcd, *cloud_output);
+		s_output_vecvec.push_back(s_output_vec);
+	}
+
+	{
+		vector<string> s_vec;
+		s_output_vecvec.push_back(s_vec);
+	}
+	{
+		vector<string> s_vec;
+		s_vec.push_back("time_elapsed:");
+		s_vec.push_back("");
+		s_vec.push_back(M_t_elapsed);
+		s_output_vecvec.push_back(s_vec);
+	}
+
+	return s_output_vecvec;
+}
+
+void CGlobalFeatureRegistration_test::alignAllFrames(string dir_, 
+	vector<float> parameter_oldFPFH_vec, vector<float> parameter_featureRegistration_vec, int i_method)
+{
+	typedef pcl::PointXYZRGB T_PointType;
+
+	//vector<vector<string>> s_output_vecvec;
+
+	string s_folder = "varyParameters_Result";
+
+	bool b_show_AllFrame_AllPairs = false;
+	bool b_useRigidTransformation = false;
+
+	bool b_useNir = false;
+	bool b_useVelodyne = false;
+	bool b_useFPFH = false;
+
+	bool b_useColorfullCorr = false;
+
+	bool b_changeColor_nir = false;
+	bool b_changeColor_velodyne = false;
+
+	bool b_useProposed = false;
+
+	b_useNir = true;
+	b_useVelodyne = true;
+	b_useFPFH = true;
+
+	//b_useOldFPFH = true;
+
+	//cout << "1: use FPFH   0: use proposed  ->";
+	//cin >> b_useOldFPFH;
+
+	if (i_method == 0) b_useProposed = false;
+	else if (i_method == 1) b_useProposed = true;
+
+	b_changeColor_nir = true;
+
+	//b_useRigidTransformation = true;
+
+	//if (!b_useRigidTransformation) b_show_AllFrame_AllPairs = true;
+
+	if (!b_useNir)  b_changeColor_nir = false;
+
+	M_s_output_vecvec.clear();
+
+	string t_start = CTimeString::getTimeString();
+
+	inputData(dir_, b_useNir, b_useVelodyne, b_changeColor_nir, b_useFPFH, b_useProposed);
+
+	fillParameterToTXT(M_s_output_vecvec, parameter_oldFPFH_vec, parameter_featureRegistration_vec);
+
+	cout << "M_s_output_vecvec:" << endl;
+	for (int j = 0; j < M_s_output_vecvec.size(); j++)
+	{
+		for (int i = 0; i < M_s_output_vecvec[j].size(); i++)
+			cout << M_s_output_vecvec[j][i] << "  ";
+		cout << endl;
+	}
+	cout << endl;
+
+	vector<pair<int, int>> index_pair_vec;
+
+	//vector<pair<int, int>> getFramePairVec(string dir_)
+	//index_pair_vec = getFramePairVec(dir_);
+
+	//{
+	//	int i_tgt = 5;
+	//	int i_src = 6;
+	//	index_pair_vec.push_back(make_pair(i_tgt, i_src));
+	//}
+	//{
+	//	int i_tgt = 5;
+	//	int i_src = 7;
+	//	index_pair_vec.push_back(make_pair(i_tgt, i_src));
+	//}
+	for (int j = 0; j < M_cloud_vec.size() - 1; j++)
+	{
+		for (int i = j + 1; i < M_cloud_vec.size(); i++)
+		{
+			int i_tgt = j;
+			int i_src = i;
+
+			bool b_JValid = false;
+			bool b_IValid = false;
+
+			if (i_tgt == 0) b_JValid = true; if (i_src == 0) b_IValid = true;
+			if (i_tgt == 1) b_JValid = true; if (i_src == 1) b_IValid = true;
+			if (i_tgt == 2) b_JValid = true; if (i_src == 2) b_IValid = true;
+			if (i_tgt == 3) b_JValid = true; if (i_src == 3) b_IValid = true;
+			if (i_tgt == 4) b_JValid = true; if (i_src == 4) b_IValid = true;
+			if (i_tgt == 5) b_JValid = true; if (i_src == 5) b_IValid = true;		//NIR
+			if (i_tgt == 6) b_JValid = true; if (i_src == 6) b_IValid = true;		//NIR
+			if (i_tgt == 7) b_JValid = true; if (i_src == 7) b_IValid = true;		//NIR
+			if (i_tgt == 8) b_JValid = true; if (i_src == 8) b_IValid = true;		//NIR
+			if (i_tgt == 9) b_JValid = true; if (i_src == 9) b_IValid = true;
+			if (i_tgt == 10) b_JValid = true; if (i_src == 10) b_IValid = true;
+			if (i_tgt == 11) b_JValid = true; if (i_src == 11) b_IValid = true;		//NIR
+			if (i_tgt == 12) b_JValid = true; if (i_src == 12) b_IValid = true;		//NIR
+			if (i_tgt == 13) b_JValid = true; if (i_src == 13) b_IValid = true;
+			if (i_tgt == 14) b_JValid = true; if (i_src == 14) b_IValid = true;
+			if (i_tgt == 15) b_JValid = true; if (i_src == 15) b_IValid = true;
+			if (i_tgt == 16) b_JValid = true; if (i_src == 16) b_IValid = true;		//NIR
+
+			////if (i_tgt == 0) b_JValid = true; if (i_src == 0) b_IValid = true;
+			////if (i_tgt == 1) b_JValid = true; if (i_src == 1) b_IValid = true;
+			////if (i_tgt == 2) b_JValid = true; if (i_src == 2) b_IValid = true;
+			////if (i_tgt == 3) b_JValid = true; if (i_src == 3) b_IValid = true;
+			////if (i_tgt == 4) b_JValid = true; if (i_src == 4) b_IValid = true;
+			//if (i_tgt == 5) b_JValid = true; if (i_src == 5) b_IValid = true;		//NIR
+			//if (i_tgt == 6) b_JValid = true; if (i_src == 6) b_IValid = true;		//NIR
+			//if (i_tgt == 7) b_JValid = true; if (i_src == 7) b_IValid = true;		//NIR
+			//if (i_tgt == 8) b_JValid = true; if (i_src == 8) b_IValid = true;		//NIR
+			////if (i_tgt == 9) b_JValid = true; if (i_src == 9) b_IValid = true;
+			////if (i_tgt == 10) b_JValid = true; if (i_src == 10) b_IValid = true;
+			//if (i_tgt == 11) b_JValid = true; if (i_src == 11) b_IValid = true;		//NIR
+			//if (i_tgt == 12) b_JValid = true; if (i_src == 12) b_IValid = true;		//NIR
+			////if (i_tgt == 13) b_JValid = true; if (i_src == 13) b_IValid = true;
+			////if (i_tgt == 14) b_JValid = true; if (i_src == 14) b_IValid = true;
+			////if (i_tgt == 15) b_JValid = true; if (i_src == 15) b_IValid = true;
+			//if (i_tgt == 16) b_JValid = true; if (i_src == 16) b_IValid = true;		//NIR
+
+			////if (i_tgt == 0) b_JValid = true; if (i_src == 0) b_IValid = true;
+			////if (i_tgt == 1) b_JValid = true; if (i_src == 1) b_IValid = true;
+			////if (i_tgt == 2) b_JValid = true; if (i_src == 2) b_IValid = true;
+			////if (i_tgt == 3) b_JValid = true; if (i_src == 3) b_IValid = true;
+			////if (i_tgt == 4) b_JValid = true; if (i_src == 4) b_IValid = true;
+			//if (i_tgt == 5) b_JValid = true; if (i_src == 5) b_IValid = true;		//NIR
+			//if (i_tgt == 6) b_JValid = true; if (i_src == 6) b_IValid = true;		//NIR
+			//if (i_tgt == 7) b_JValid = true; if (i_src == 7) b_IValid = true;		//NIR
+			////if (i_tgt == 8) b_JValid = true; if (i_src == 8) b_IValid = true;		//NIR
+			////if (i_tgt == 9) b_JValid = true; if (i_src == 9) b_IValid = true;
+			////if (i_tgt == 10) b_JValid = true; if (i_src == 10) b_IValid = true;
+			//if (i_tgt == 11) b_JValid = true; if (i_src == 11) b_IValid = true;		//NIR
+			////if (i_tgt == 12) b_JValid = true; if (i_src == 12) b_IValid = true;		//NIR
+			////if (i_tgt == 13) b_JValid = true; if (i_src == 13) b_IValid = true;
+			////if (i_tgt == 14) b_JValid = true; if (i_src == 14) b_IValid = true;
+			////if (i_tgt == 15) b_JValid = true; if (i_src == 15) b_IValid = true;
+			////if (i_tgt == 16) b_JValid = true; if (i_src == 16) b_IValid = true;		//NIR
+
+			//if (i_tgt == 0) b_JValid = true; if (i_src == 0) b_IValid = true;
+			////if (i_tgt == 1) b_JValid = true; if (i_src == 1) b_IValid = true;
+			////if (i_tgt == 2) b_JValid = true; if (i_src == 2) b_IValid = true;
+			////if (i_tgt == 3) b_JValid = true; if (i_src == 3) b_IValid = true;
+			////if (i_tgt == 4) b_JValid = true; if (i_src == 4) b_IValid = true;
+			//if (i_tgt == 5) b_JValid = true; if (i_src == 5) b_IValid = true;		//NIR
+			//if (i_tgt == 6) b_JValid = true; if (i_src == 6) b_IValid = true;		//NIR
+			//if (i_tgt == 7) b_JValid = true; if (i_src == 7) b_IValid = true;		//NIR
+			////if (i_tgt == 8) b_JValid = true; if (i_src == 8) b_IValid = true;		//NIR
+			////if (i_tgt == 9) b_JValid = true; if (i_src == 9) b_IValid = true;
+			////if (i_tgt == 10) b_JValid = true; if (i_src == 10) b_IValid = true;
+			////if (i_tgt == 11) b_JValid = true; if (i_src == 11) b_IValid = true;		//NIR
+			////if (i_tgt == 12) b_JValid = true; if (i_src == 12) b_IValid = true;		//NIR
+			////if (i_tgt == 13) b_JValid = true; if (i_src == 13) b_IValid = true;
+			////if (i_tgt == 14) b_JValid = true; if (i_src == 14) b_IValid = true;
+			////if (i_tgt == 15) b_JValid = true; if (i_src == 15) b_IValid = true;
+			////if (i_tgt == 16) b_JValid = true; if (i_src == 16) b_IValid = true;		//NIR
+
+			if (!b_JValid) continue;
+			if (!b_IValid) continue;
+
+			index_pair_vec.push_back(make_pair(i_tgt, i_src));
+		}
+	}
+
+	cout << "index_pair_vec:" << endl;
+	for (int j = 0; j < index_pair_vec.size(); j++)
+		cout << "i_tgt:" << index_pair_vec[j].first << ", i_src:" << index_pair_vec[j].second << endl;
+
+	//float th_nearest_nir;
+	//float th_rank_rate_nir;
+	//float th_nearest_velodyne;
+	//float th_rank_rate_velodyne;
+	//float th_nearest_fpfh;
+	//int num_nearest_fpfh;
+	//float th_rank_rate_fpfh;
+	//int i_method_rigidTransformation;
+	//float th_geometricConstraint;
+
+
+	//th_nearest_nir = 10.;
+	////th_rank_rate_nir = 0.5;
+	////th_rank_rate_nir = 1.;
+	//th_rank_rate_nir = 0.2;
+	////cout << "input th_nearest_nir:";
+	////cin >> th_nearest_nir;
+	//th_nearest_velodyne = 10.;
+	////th_rank_rate_velodyne = 0.5;
+	//th_rank_rate_velodyne = 1.;
+
+	//th_nearest_fpfh = 1800.;
+	//num_nearest_fpfh = 10;
+	////th_rank_rate_fpfh = 0.5;
+	//th_rank_rate_fpfh = 0.5;
+
+	//if (b_useParameterAdjustment)
+	//{
+	//	if (!b_first)
+	//	{
+	//		int aa;
+	//		cout << "input txt:";
+	//		cin >> aa;
+	//	}
+	//	b_first = false;
+	//	vector<vector<string>> s_temp_vecvec;
+	//	s_temp_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/parameter2.csv");
+	//	th_nearest_nir = stof(s_temp_vecvec[1][3]);
+	//	th_rank_rate_nir = stof(s_temp_vecvec[2][3]);
+	//	th_nearest_velodyne = stof(s_temp_vecvec[3][3]);
+	//	th_rank_rate_velodyne = stof(s_temp_vecvec[4][3]);
+	//	th_rank_rate_fpfh = stof(s_temp_vecvec[5][3]);
+	//	th_geometricConstraint = stof(s_temp_vecvec[6][3]);
+	//	i_method_rigidTransformation = stoi(s_temp_vecvec[7][3]);
+	//	b_useRigidTransformation = (bool)stoi(s_temp_vecvec[8][3]);
+	//}
+
+
+	//th_geometricConstraint = 0.8;
+
+	bool b_useGeometricConstraints = false;
+	b_useGeometricConstraints = true;
+
+	//if (b_useParameterAdjustment)
+	//{
+	//	if (!b_first)
+	//	{
+	//		int aa;
+	//		cout << "input txt:";
+	//		cin >> aa;
+	//	}
+	//	b_first = false;
+	//	vector<vector<string>> s_temp_vecvec;
+	//	s_temp_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/parameter2.csv");
+	//	th_nearest_nir = stof(s_temp_vecvec[1][3]);
+	//	th_rank_rate_nir = stof(s_temp_vecvec[2][3]);
+	//	th_nearest_velodyne = stof(s_temp_vecvec[3][3]);
+	//	th_rank_rate_velodyne = stof(s_temp_vecvec[4][3]);
+	//	th_rank_rate_fpfh = stof(s_temp_vecvec[5][3]);
+	//	th_geometricConstraint = stof(s_temp_vecvec[6][3]);
+	//	i_method_rigidTransformation = stoi(s_temp_vecvec[7][3]);
+	//	b_useRigidTransformation = (bool)stoi(s_temp_vecvec[8][3]);
+	//}
+
+
+	if (!b_useProposed)
+		DoOldFPFHRegistration(index_pair_vec, parameter_oldFPFH_vec);
+	else
+		DoFeatureRegistration(index_pair_vec, parameter_featureRegistration_vec, b_useNir, b_useVelodyne, b_useFPFH);
+	//result: M_transformation_vec
+
+	string t_end = CTimeString::getTimeString();
+	string t_elapsed = CTimeString::getTimeElapsefrom2Strings(t_start, t_end);
+	cout << "t_elapsed(all frames):" << t_elapsed << endl;
+	M_t_elapsed = t_elapsed;
+
+
+	//s_output_vecvec <- Result
+	{
+		vector<string> s_vec;
+		M_s_output_vecvec.push_back(s_vec);
+	}
+	{
+		vector<string> s_vec;
+		s_vec.push_back("Result");
+		M_s_output_vecvec.push_back(s_vec);
+	}
+
+	string s_newfoldername = CTimeString::getTimeString();
+	if (!b_useProposed)
+		s_newfoldername += "_conventional";
+	else
+		s_newfoldername += "_proposed";
+
+	//makenewfolder
+	CTimeString::makenewfolder(dir_ + "/" + s_folder, s_newfoldername);
+	//evaluation
+	vector<vector<string>> s_value_vecvec;
+	s_value_vecvec = DoEvaluation(dir_ + "/" + s_folder + "/" + s_newfoldername, index_pair_vec, b_useProposed, b_useNir, b_useVelodyne, b_useFPFH);
+
+	M_s_output_vecvec.insert(M_s_output_vecvec.end(), s_value_vecvec.begin(), s_value_vecvec.end());
+
+	////regular saving csv
+	//string s_elapsed_frame = CTimeString::getTimeElapsefrom2Strings(time_regular, time_end_frame);
+	//cout << "time_elapsed from last .csv output: " << s_elapsed_frame << endl;
+	//cout << "time_elapsed from start:            " << CTimeString::getTimeElapsefrom2Strings(time_start, time_end_frame) << endl;
+	//int elapsed_millisec = CTimeString::getTimeElapsefrom2Strings_millisec(time_regular, time_end_frame);
+	//int elapsed_minute = (int)(((float)elapsed_millisec / 1000.) / 60.);
+	//if (elapsed_minute >= th_minute_CSV)
+	//{
+	//	//save
+	//	CTimeString::getCSVFromVecVec(M_s_output_vecvec, dir_ + "/" + s_newfoldername + "/" + time_regular + "_output.csv");
+	//	time_regular = CTimeString::getTimeString();
+	//	//clear s_output_vecvec
+	//	M_s_output_vecvec.clear();
+	//	GR_addToOutputString_OutputHeader_FPFH(M_s_output_vecvec);
+	//}
+	//cout << endl;
+
+	//if (i_frame_pair % 5 == 0 && !b_changeParameter)
+	//{
+	//	cout << "Parameter list" << endl;
+	//	CTimeString::showParameter(parameter_vec, M_name_parameter_vec);
+	//	cout << endl;
+	//}
+
+
+	CTimeString::getCSVFromVecVec(M_s_output_vecvec, dir_ + "/" + s_folder + "/" + s_newfoldername + "/" + s_newfoldername + "_output.csv");
+
+	if (b_useRigidTransformation)
+		showRigidTransformation(index_pair_vec);
+
+	else if (b_show_AllFrame_AllPairs)
+		showAllPairs(index_pair_vec, b_useNir, b_useVelodyne, b_useFPFH, b_useGeometricConstraints, b_useColorfullCorr);
+
+	//GR_FPFH_getResultAnalysis(dir_, s_newfoldername);
+
+	////cluster size
+	//if (b_useClusterNotification)
+	//{
+	//	vector<vector<string>> s_vecvec;
+	//	{
+	//		vector<vector<string>> s_input_vecvec;
+	//		vector<string> filenames_;
+	//		CTimeString::getFileNames_extension(dir_ + "/" + s_newfoldername, filenames_, "_SucEst.csv");
+	//		if (filenames_.size() != 1)
+	//		{
+	//			cout << "ERROR: one _SucEst.csv have not been found" << endl;
+	//			return;
+	//		}
+	//		s_input_vecvec = CTimeString::getVecVecFromCSV_string(
+	//			dir_ + "/" + s_newfoldername + "/" + filenames_[0]);
+	//		s_vecvec = CTimeString::getMatrixData_fromFormatOfFPFH(s_input_vecvec, "Result", 2, "Sum elapsed time", -2);
+	//	}
+
+	//	vector<vector<int>> pairs_vecvec;
+	//	for (int j = 0; j < s_vecvec.size(); j++)
+	//	{
+	//		if (stoi(s_vecvec[j][20]) == 0) continue;
+	//		vector<int> pairs_vec;
+	//		int i_tgt = stoi(s_vecvec[j][0]);
+	//		int i_src = stoi(s_vecvec[j][1]);
+	//		pairs_vec.push_back(i_tgt);
+	//		pairs_vec.push_back(i_src);
+	//		pairs_vecvec.push_back(pairs_vec);
+	//	}
+	//	vector<vector<int>> cluster_vecvec;
+	//	cluster_vecvec = CTimeString::getIntCluster_SomeToSome(pairs_vecvec);
+	//	cout << "cluster_vecvec[0].size():" << cluster_vecvec[0].size() << endl;
+	//	if (cluster_vecvec[0].size() >= 11)
+	//	{
+	//		vector<vector<string>> s_temp;
+	//		vector<string> s_temp2;
+	//		s_temp.push_back(s_temp2);
+	//		CTimeString::getCSVFromVecVec(s_temp, dir_ + "/" + s_newfoldername + "_hasClusterSize" + to_string(cluster_vecvec[0].size()) + ".csv");
+	//	}
+	//}
+
+}
+
+void CGlobalFeatureRegistration_test::variParamaters(string dir_)
+{
+	vector<float> parameter_vec_init;
+
+	//cout << "0: registration of all frames and output files(.csv and .pcd)" << endl;
+	//cout << "1: output error of fpfh value (all frames)" << endl;
+	//cout << "2: output show FPFH variance (all frames)" << endl;
+
+	bool b_create_new_pattern_file = false;
+	cout << "do you create new pattern?  Yes:1  No:0" << endl;
+	cout << "->";
+	cin >> b_create_new_pattern_file;
+
+	//M_name_parameter_vec
+	M_name_parameter_vec.clear();
+	M_name_parameter_vec.push_back("voxel_size");						//0
+	M_name_parameter_vec.push_back("radius_normal_FPFH");				//1
+	M_name_parameter_vec.push_back("radius_FPFH");						//2
+	M_name_parameter_vec.push_back("MaxCorrespondenceDistance_SAC");	//3
+	M_name_parameter_vec.push_back("SimilarityThreshold_SAC");			//4
+	M_name_parameter_vec.push_back("InlierFraction_SAC");				//5
+	M_name_parameter_vec.push_back("MaximumIterations_SAC");			//6
+	M_name_parameter_vec.push_back("NumberOfSamples_SAC");				//7
+	M_name_parameter_vec.push_back("CorrespondenceRandomness_SAC");		//8
+	//
+	M_name_parameter_vec.push_back("th_nearest_nir");					//0
+	M_name_parameter_vec.push_back("th_rank_rate_nir");					//1
+	M_name_parameter_vec.push_back("th_nearest_velodyne");				//2
+	M_name_parameter_vec.push_back("th_rank_rate_velodyne");			//3
+	M_name_parameter_vec.push_back("th_nearest_fpfh");					//4
+	M_name_parameter_vec.push_back("num_nearest_fpfh");					//5
+	M_name_parameter_vec.push_back("th_rank_rate_fpfh");				//6
+	M_name_parameter_vec.push_back("i_method_rigidTransformation");		//7
+	M_name_parameter_vec.push_back("th_geometricConstraint");			//8
+
+	if (b_create_new_pattern_file)
+	{
+		vector<vector<float>> pattern_vecvec_new;
+		//input parameter
+		vector<vector<float>> parameter_vecvec;
+		//CTimeString::changeParameter_2dimension(parameter_vec_vec, name_parameter_vec, parameter_vec_arg);
+		CTimeString::changeParameter_2dimension(parameter_vecvec, M_name_parameter_vec, dir_ + "/" + "parameter_vecvec.csv", 1, 4, -1, -1);
+		pattern_vecvec_new = CTimeString::calcVectorPairPattern(parameter_vecvec);
+		//write new parameter_vec_vec
+		{
+			vector<vector<string>> s_vec_vec;
+			//header
+			{
+				vector<string> s_header_vec;
+				//s_header_vec.push_back("Parameter");
+				for (int i = 0; i < M_name_parameter_vec.size(); i++)
+					s_header_vec.push_back(M_name_parameter_vec[i]);
+				s_vec_vec.push_back(s_header_vec);
+			}
+			for (int j = 0; j < pattern_vecvec_new.size(); j++)
+			{
+				vector<string> s_vec;
+				for (int i = 0; i < pattern_vecvec_new[j].size(); i++)
+					s_vec.push_back(to_string(pattern_vecvec_new[j][i]));
+				s_vec_vec.push_back(s_vec);
+			}
+			CTimeString::getCSVFromVecVec(s_vec_vec, dir_ + "/" + "pattern_vecvec.csv");
+		}
+	}
+
+	cout << "press 1 and Enter if you have closed file" << endl;
+	{
+		int aa;
+		cin >> aa;
+	}
+
+	//read pattern_vec_vec.csv
+	vector<vector<float>> pattern_vec_vec;
+	{
+		vector<vector<string>> s_vec_vec;
+		s_vec_vec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + "pattern_vecvec.csv");
+		for (int j = 1; j < s_vec_vec.size(); j++)
+		{
+			vector<float> pattern_vec;
+			for (int i = 0; i < s_vec_vec[j].size(); i++)
+				pattern_vec.push_back(stof(s_vec_vec[j][i]));
+			pattern_vec_vec.push_back(pattern_vec);
+		}
+	}
+	cout << "show pattern" << endl;
+	for (int j = 0; j < pattern_vec_vec.size(); j++)
+	{
+		cout << j << ":";
+		for (int i = 0; i < pattern_vec_vec[j].size(); i++)
+		{
+			string s_value;
+			s_value = to_string(pattern_vec_vec[j][i]);
+			if (s_value.size() < 4) s_value = " " + s_value;
+			if (s_value.size() < 4) s_value = " " + s_value;
+			if (s_value.size() < 4) s_value = " " + s_value;
+			cout << "  " << s_value;
+		}
+		cout << endl;
+	}
+
+	for (int j = 0; j < pattern_vec_vec.size(); j++)
+	{
+		vector<float> parameter_vec = pattern_vec_vec[j];
+		vector<float> parameter_oldFPFH_vec;//
+		vector<float> parameter_featureRegistration_vec;
+		parameter_oldFPFH_vec.insert(parameter_oldFPFH_vec.end(), parameter_vec.begin(), parameter_vec.begin() + 9);	//0~8
+		parameter_featureRegistration_vec.insert(parameter_featureRegistration_vec.end(), parameter_vec.begin() + 9, parameter_vec.end());	//9~last
+		cout << "start pattern:" << j << endl;
+		//alignAllFrames(dir_, parameter_oldFPFH_vec, parameter_featureRegistration_vec, 0);
+		alignAllFrames(dir_, parameter_oldFPFH_vec, parameter_featureRegistration_vec, 1);
+	}
+
+	cout << endl;
+
+}
