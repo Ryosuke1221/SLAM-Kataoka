@@ -253,12 +253,14 @@ public:
 		const vector<boost::shared_ptr<pcl::PointCloud<T_PointType>>> cloud_vec, const vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> &fpfh_vec,
 		const vector<vector<int>> &index_valid_vecvec, float th_nearest_fpfh, int th_nearest_num, bool b_cout = false)
 	{
-		cout << "calcRanking_featureFPFH" << endl;
+		cout << "    calcRanking_featureFPFH" << endl;
 		vector<vector<pair<float, float>>> compare_vecvec;//[index_frame_pair][index_pair] :variance
 		for (int j = 0; j < index_pair_vec.size(); j++)
 		{
 			int i_tgt = index_pair_vec[j].first;
 			int i_src = index_pair_vec[j].second;
+			cout << "    i_tgt:" << i_tgt;
+			cout << ", i_src:" << i_src << endl;
 			vector<pair<float, float>> compare_vec;
 			compare_vec = calcRanking_compare_featureFPFH(corrs_vec[j], cloud_vec[i_src], cloud_vec[i_tgt],
 				fpfh_vec[i_src], fpfh_vec[i_tgt], index_valid_vecvec[i_src], index_valid_vecvec[i_tgt],
@@ -302,6 +304,7 @@ public:
 			pcl::Correspondences corrs_;
 			corrs_ = determineCorrespondences_featureFpfh_eachPairHaving_remove(fpfh_vec[i_src], fpfh_vec[i_tgt],
 				index_valid_vecvec[i_src], index_valid_vecvec[i_tgt], th_nearest_num, th_nearest_fpfh);
+			cout << "corrs_.size():" << corrs_.size() << endl;
 			corrs_vec_arg.push_back(corrs_);
 		}
 		cout << "  calc ranking" << endl;
@@ -869,6 +872,7 @@ public:
 	static void calcRanking_compareArg_eachValue_multipleEachCovariance(const vector<vector<float>> &compare_vecvec,
 		vector<int> &frame_vec, vector<int> &corr_index_vec, vector<float> &evaluation_vec, bool b_cout = false)
 	{
+		cout << "calcRanking_compareArg_eachValue_multipleEachCovariance" << endl;
 		vector<vector<float>> ranking_vecvec;	//[ranking][kind_value]
 		for (int j = 0; j < compare_vecvec.size(); j++)
 		{
@@ -907,6 +911,7 @@ public:
 
 	static vector<vector<int>> calcRanking_compareArg_multipleEachCovariance(const vector<vector<pair<float, float>>> &compare_vecvec, bool b_cout = false)
 	{
+		cout << "calcRanking_compareArg_multipleEachCovariance (" << CTimeString::getTimeString() << ")" << endl;
 		vector<vector<float>> compare_vecvec_multiple;	//[index_frame_pair][index_pair] :variance
 		for (int j = 0; j < compare_vecvec.size(); j++)
 		{
@@ -1003,7 +1008,7 @@ public:
 			pcl::Correspondences corrs_;
 			corrs_ = determineCorrespondences_featureScalar_remove(feature_vecvec[i_src], feature_vecvec[i_tgt],
 				index_valid_vecvec[i_src], index_valid_vecvec[i_tgt], th_nearest);
-
+			cout << "    corrs_.size():" << corrs_.size() << endl;
 			corrs_vec.push_back(corrs_);
 		}
 		cout << "  calc ranking" << endl;
@@ -1150,8 +1155,10 @@ public:
 
 		if (num_valid < 3)
 		{
-			cout << "ERROR(CExtendableICP::getCorrespondance_RatioOfDistanceOfSrcAndTgt): Few correspondednces exist simultaneously." << endl;
-			throw std::runtime_error("ERROR(CExtendableICP::getCorrespondance_RatioOfDistanceOfSrcAndTgt): Few correspondednces exist simultaneously.");
+			//cout << "ERROR(CExtendableICP::getCorrespondance_RatioOfDistanceOfSrcAndTgt): Few correspondednces exist simultaneously." << endl;
+			//throw std::runtime_error("ERROR(CExtendableICP::getCorrespondance_RatioOfDistanceOfSrcAndTgt): Few correspondednces exist simultaneously.");
+			cout << "Few correspondednces exist simultaneously. (CExtendableICP::getCorrespondance_RatioOfDistanceOfSrcAndTgt)" << endl;
+			return corrs_output_vec;
 		}
 
 		vector<vector<int>> corr_pair_cluster_vecvec_new;
@@ -1274,7 +1281,7 @@ public:
 		}
 		CTimeString::sortVector2d(evaluation_vecvec, 1);
 
-		cout << "evaluation_vecvec[0][0]:" << evaluation_vecvec[0][0] << endl;
+		//cout << "evaluation_vecvec[0][0]:" << evaluation_vecvec[0][0] << endl;
 
 		return corrs_vec[evaluation_vecvec[0][0]];
 	}

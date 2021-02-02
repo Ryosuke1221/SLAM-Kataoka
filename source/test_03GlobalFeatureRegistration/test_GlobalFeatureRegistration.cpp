@@ -2950,6 +2950,7 @@ void CGlobalFeatureRegistration_test::inputData(string dir_, bool b_useNir, bool
 		}
 	}
 
+	if (!b_useNir)  b_changeColor_nir = false;
 	if (b_changeColor_nir)
 	{
 		float value_max = -std::numeric_limits<float>::max();
@@ -3146,6 +3147,7 @@ void CGlobalFeatureRegistration_test::DoFeatureRegistration(vector<pair<int, int
 	M_evaluation_corr_vecvec_nir.clear();
 	M_evaluation_corr_vecvec_velodyne.clear();
 	M_evaluation_corr_vecvec_fpfh.clear();
+	M_corrs_output_vec.clear();
 
 	float th_nearest_nir;
 	float th_rank_rate_nir;
@@ -3240,8 +3242,8 @@ void CGlobalFeatureRegistration_test::DoFeatureRegistration(vector<pair<int, int
 		if (b_useNir) corrs_temp.insert(corrs_temp.end(), M_corrs_nir_vec[j].begin(), M_corrs_nir_vec[j].end());
 		if (b_useVelodyne) corrs_temp.insert(corrs_temp.end(), M_corrs_velodyne_vec[j].begin(), M_corrs_velodyne_vec[j].end());
 		if (b_useFPFH) corrs_temp.insert(corrs_temp.end(), M_corrs_fpfh_vec[j].begin(), M_corrs_fpfh_vec[j].end());
-		cout << "i_tgt:" << i_tgt << endl;
-		cout << "i_src:" << i_src << endl;
+		cout << "i_tgt:" << i_tgt;
+		cout << ", i_src:" << i_src << endl;
 		if (b_useGeometricConstraints)
 			M_corrs_all_vecvec.push_back(CGlobalFeatureRegistration::determineCorrespondences_geometricConstraint(M_cloud_vec[i_src], M_cloud_vec[i_tgt], corrs_temp, th_geometricConstraint, true));
 		else
@@ -3252,13 +3254,11 @@ void CGlobalFeatureRegistration_test::DoFeatureRegistration(vector<pair<int, int
 		}
 	}
 
-	vector<pcl::Correspondences> corrs_output_vec;
-
 	for (int j = 0; j < index_pair_vec.size(); j++)
 	{
 		int i_tgt = index_pair_vec[j].first;
 		int i_src = index_pair_vec[j].second;
-		corrs_output_vec.push_back(CGlobalFeatureRegistration::determineCorrespondences_geometricConstraint_evaluateCluster(
+		M_corrs_output_vec.push_back(CGlobalFeatureRegistration::determineCorrespondences_geometricConstraint_evaluateCluster(
 			M_cloud_vec[i_src], M_cloud_vec[i_tgt], M_corrs_all_vecvec[j], i_method_rigidTransformation));
 	}
 	for (int j = 0; j < index_pair_vec.size(); j++)
@@ -3266,7 +3266,7 @@ void CGlobalFeatureRegistration_test::DoFeatureRegistration(vector<pair<int, int
 		int i_tgt = index_pair_vec[j].first;
 		int i_src = index_pair_vec[j].second;
 		Eigen::Matrix4f transformation_matrix = Eigen::Matrix4f::Identity();
-		estimateRigidTransformation_static(M_cloud_vec[i_src], M_cloud_vec[i_tgt], corrs_output_vec[j], transformation_matrix);
+		estimateRigidTransformation_static(M_cloud_vec[i_src], M_cloud_vec[i_tgt], M_corrs_output_vec[j], transformation_matrix);
 		M_transformation_vec.push_back(transformation_matrix.cast<double>());
 	}
 
@@ -3608,7 +3608,6 @@ vector<pair<int, int>> CGlobalFeatureRegistration_test::getFramePairVec(string d
 				{
 					b_ignore_vecvec[i_tgt][i_src] = true;
 					cout << "i_tgt:" << i_tgt << " i_src:" << i_src << "  ignored" << endl;
-
 				}
 				else if (stoi(s_value) == 1)
 				{
@@ -3647,13 +3646,15 @@ vector<pair<int, int>> CGlobalFeatureRegistration_test::getFramePairVec(string d
 }
 
 vector<vector<string>> CGlobalFeatureRegistration_test::DoEvaluation(string dir_save, vector<pair<int, int>> index_pair_vec, bool b_useProposed,
-	bool b_useNir, bool b_useVelodyne, bool b_useFPFH)
+	bool b_useNir, bool b_useVelodyne, bool b_useFPFH, bool b_cout)
 {
+	cout << "DoEvaluation" << endl;
 	vector<vector<string>> s_output_vecvec;
 	{
 		vector<string> s_output_vec;
 		s_output_vec.push_back("i_tgt");
 		s_output_vec.push_back("i_src");
+		s_output_vec.push_back("isProposed");
 		s_output_vec.push_back("b_usedNIR");
 		s_output_vec.push_back("b_usedVelodyne");
 		s_output_vec.push_back("b_usedFPFH");
@@ -3663,8 +3664,11 @@ vector<vector<string>> CGlobalFeatureRegistration_test::DoEvaluation(string dir_
 		s_output_vec.push_back("Roll");
 		s_output_vec.push_back("Pitch");
 		s_output_vec.push_back("Yaw");
-		s_output_vec.push_back("isProposed");
 		s_output_vec.push_back("isConverged");
+		s_output_vec.push_back("corr_nir_size");
+		s_output_vec.push_back("corr_velodyne_size");
+		s_output_vec.push_back("corr_fpfh_size");
+		s_output_vec.push_back("corr_output_size");
 		s_output_vec.push_back("e_euqulid");
 		s_output_vec.push_back("e_error_PointCloudDistance");
 		s_output_vec.push_back("median_nearest");
@@ -3679,23 +3683,15 @@ vector<vector<string>> CGlobalFeatureRegistration_test::DoEvaluation(string dir_
 		int i_tgt = index_pair_vec[j].first;
 		int i_src = index_pair_vec[j].second;
 
-		cout << endl;
-		cout << "i_tgt:" << i_tgt << endl;
-		cout << "i_src:" << i_src << endl;
 
 		Eigen::Matrix4d transformation_ = Eigen::Matrix4d::Identity();
 		transformation_ = M_transformation_vec[j];
 
-		cout << "transformation_:" << endl;
-		cout << transformation_ << endl;
 
 		Eigen::Matrix4d transformation_true = Eigen::Matrix4d::Identity();
 		transformation_true =
 			calcHomogeneousMatrixFromVector6d(M_trajectory_true_vec[i_tgt]).inverse() *
 			calcHomogeneousMatrixFromVector6d(M_trajectory_true_vec[i_src]);
-
-		cout << "transformation_true:" << endl;
-		cout << transformation_true << endl;
 
 		float error_euqulid;
 		error_euqulid = sqrt(
@@ -3757,12 +3753,44 @@ vector<vector<string>> CGlobalFeatureRegistration_test::DoEvaluation(string dir_
 		bool b_usedNIR = b_useNir;
 		bool b_usedVelodyne = b_useVelodyne;
 		bool b_usedFPFH = b_useFPFH;
-		if (M_corrs_nir_vec[j].size() == 0) b_usedNIR = false;
-		if (M_corrs_velodyne_vec[j].size() == 0) b_usedVelodyne = false;
-		if (M_corrs_fpfh_vec[j].size() == 0) b_usedFPFH = false;
+
+		int corr_nir_size = 0;
+		int corr_velodyne_size = 0;
+		int corr_fpfh_size = 0;
+		int corr_output_size = 0;
+		if (!b_useProposed)
+		{
+			b_usedNIR = false;
+			b_usedVelodyne = false;
+			b_usedFPFH = true;
+		}
+		else
+		{
+			corr_nir_size = M_corrs_nir_vec[j].size();
+			corr_velodyne_size = M_corrs_velodyne_vec[j].size();
+			corr_fpfh_size = M_corrs_fpfh_vec[j].size();
+			corr_output_size = M_corrs_output_vec[j].size();
+			if (corr_nir_size == 0) b_usedNIR = false;
+			if (corr_velodyne_size == 0) b_usedVelodyne = false;
+			if (corr_fpfh_size == 0) b_usedFPFH = false;
+		}
+
+		if (b_cout)
+		{
+			cout << endl;
+			cout << "i_tgt:" << i_tgt;
+			cout << ", i_src:" << i_src << endl;
+
+			cout << "transformation_:" << endl;
+			cout << transformation_ << endl;
+
+			cout << "transformation_true:" << endl;
+			cout << transformation_true << endl;
+		}
 
 		s_output_vec.push_back(to_string(i_tgt));
 		s_output_vec.push_back(to_string(i_src));
+		s_output_vec.push_back(to_string((int)b_useProposed));
 		s_output_vec.push_back(to_string((int)b_usedNIR));
 		s_output_vec.push_back(to_string((int)b_usedVelodyne));
 		s_output_vec.push_back(to_string((int)b_usedFPFH));
@@ -3772,8 +3800,11 @@ vector<vector<string>> CGlobalFeatureRegistration_test::DoEvaluation(string dir_
 		s_output_vec.push_back(to_string(pos_vec(3, 0)));
 		s_output_vec.push_back(to_string(pos_vec(4, 0)));
 		s_output_vec.push_back(to_string(pos_vec(5, 0)));
-		s_output_vec.push_back(to_string((int)b_useProposed));
 		s_output_vec.push_back(to_string((int)b_isConverged));
+		s_output_vec.push_back(to_string(corr_nir_size));
+		s_output_vec.push_back(to_string(corr_velodyne_size));
+		s_output_vec.push_back(to_string(corr_fpfh_size));
+		s_output_vec.push_back(to_string(corr_output_size));
 		s_output_vec.push_back(to_string(error_euqulid));
 		s_output_vec.push_back(to_string(error_PointCloudDistance));
 		s_output_vec.push_back(to_string(median_nearest));			//median of distance of nearest neightbor(after registration)
@@ -3840,14 +3871,10 @@ void CGlobalFeatureRegistration_test::alignAllFrames(string dir_,
 
 	//vector<vector<string>> s_output_vecvec;
 
-	string s_folder = "varyParameters_Result";
+	string s_folder = "Result_01varyParameters";
 
 	bool b_show_AllFrame_AllPairs = false;
 	bool b_useRigidTransformation = false;
-
-	bool b_useNir = false;
-	bool b_useVelodyne = false;
-	bool b_useFPFH = false;
 
 	bool b_useColorfullCorr = false;
 
@@ -3855,26 +3882,21 @@ void CGlobalFeatureRegistration_test::alignAllFrames(string dir_,
 	bool b_changeColor_velodyne = false;
 
 	bool b_useProposed = false;
+	if (i_method == 0) b_useProposed = false;
+	else if (i_method == 1) b_useProposed = true;
 
+	bool b_useNir = false;
+	bool b_useVelodyne = false;
+	bool b_useFPFH = false;
 	b_useNir = true;
 	b_useVelodyne = true;
 	b_useFPFH = true;
-
-	//b_useOldFPFH = true;
-
-	//cout << "1: use FPFH   0: use proposed  ->";
-	//cin >> b_useOldFPFH;
-
-	if (i_method == 0) b_useProposed = false;
-	else if (i_method == 1) b_useProposed = true;
 
 	b_changeColor_nir = true;
 
 	//b_useRigidTransformation = true;
 
 	//if (!b_useRigidTransformation) b_show_AllFrame_AllPairs = true;
-
-	if (!b_useNir)  b_changeColor_nir = false;
 
 	M_s_output_vecvec.clear();
 
@@ -4000,6 +4022,7 @@ void CGlobalFeatureRegistration_test::alignAllFrames(string dir_,
 	cout << "index_pair_vec:" << endl;
 	for (int j = 0; j < index_pair_vec.size(); j++)
 		cout << "i_tgt:" << index_pair_vec[j].first << ", i_src:" << index_pair_vec[j].second << endl;
+	cout << endl;
 
 	//float th_nearest_nir;
 	//float th_rank_rate_nir;
@@ -4080,6 +4103,7 @@ void CGlobalFeatureRegistration_test::alignAllFrames(string dir_,
 		DoOldFPFHRegistration(index_pair_vec, parameter_oldFPFH_vec);
 	else
 		DoFeatureRegistration(index_pair_vec, parameter_featureRegistration_vec, b_useNir, b_useVelodyne, b_useFPFH);
+	cout << endl;
 	//result: M_transformation_vec
 
 	string t_end = CTimeString::getTimeString();
@@ -4299,8 +4323,8 @@ void CGlobalFeatureRegistration_test::variParamaters(string dir_)
 		parameter_oldFPFH_vec.insert(parameter_oldFPFH_vec.end(), parameter_vec.begin(), parameter_vec.begin() + 9);	//0~8
 		parameter_featureRegistration_vec.insert(parameter_featureRegistration_vec.end(), parameter_vec.begin() + 9, parameter_vec.end());	//9~last
 		cout << "start pattern:" << j << endl;
-		//alignAllFrames(dir_, parameter_oldFPFH_vec, parameter_featureRegistration_vec, 0);
-		alignAllFrames(dir_, parameter_oldFPFH_vec, parameter_featureRegistration_vec, 1);
+		alignAllFrames(dir_, parameter_oldFPFH_vec, parameter_featureRegistration_vec, 0);
+		//alignAllFrames(dir_, parameter_oldFPFH_vec, parameter_featureRegistration_vec, 1);
 	}
 
 	cout << endl;

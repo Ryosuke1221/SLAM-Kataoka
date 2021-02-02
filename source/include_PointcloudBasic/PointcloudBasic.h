@@ -460,14 +460,14 @@ public:
 			float n_x = 0.5 * (transformation_relative(2, 1) - transformation_relative(1, 2)) / sin(error_beta);
 			float n_y = 0.5 * (transformation_relative(0, 2) - transformation_relative(2, 0)) / sin(error_beta);
 			float n_z = 0.5 * (transformation_relative(1, 0) - transformation_relative(0, 1)) / sin(error_beta);
-			cout << "n_x:" << n_x << endl;
-			cout << "n_y:" << n_y << endl;
-			cout << "n_z:" << n_z << endl;
+			//cout << "n_x:" << n_x << endl;
+			//cout << "n_y:" << n_y << endl;
+			//cout << "n_z:" << n_z << endl;
 			//error_angle_normal = fabs(acos(n_x));
 			error_angle_normal = fabs(acos(transformation_relative(0, 0)));
 		}
-		cout << "error_beta:" << error_beta << endl;
-		cout << "error_angle_normal:" << error_angle_normal << endl;
+		//cout << "error_beta:" << error_beta << endl;
+		//cout << "error_angle_normal:" << error_angle_normal << endl;
 
 		vector<float> angle_return;
 		angle_return.push_back(error_beta);

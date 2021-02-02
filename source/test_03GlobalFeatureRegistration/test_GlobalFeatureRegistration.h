@@ -38,11 +38,6 @@ private:
 	vector<vector<float>> M_evaluation_corr_vecvec_fpfh;
 
 	void DoDifferential_PairEvaluation3(string dir_);
-	void inputData(string dir_, bool b_useNir, bool b_useVelodyne, bool b_changeColor_nir,
-		bool b_useFPFH, bool b_useOldFPFH);
-	void DoOldFPFHRegistration(vector<pair<int, int>> index_pair_vec, vector<float> parameter_vec);
-	void DoFeatureRegistration(vector<pair<int, int>> index_pair_vec, vector<float> parameter_vec,
-		bool b_useNir, bool b_useVelodyne, bool b_useFPFH);
 	void showAllPairs(vector<pair<int, int>> index_pair_vec, bool b_useNir, bool b_useVelodyne, bool b_useFPFH,
 		bool b_useGeometricConstraints, bool b_useColorfullCorr);
 	void showRigidTransformation(vector<pair<int, int>> index_pair_vec);
@@ -56,13 +51,19 @@ private:
 	vector<pcl::Correspondences> M_corrs_nir_vec;
 	vector<pcl::Correspondences> M_corrs_velodyne_vec;
 	vector<pcl::Correspondences> M_corrs_fpfh_vec;
+	vector<pcl::Correspondences> M_corrs_output_vec;
 
 public:
+	void inputData(string dir_, bool b_useNir, bool b_useVelodyne, bool b_changeColor_nir,
+		bool b_useFPFH, bool b_useOldFPFH);
+	void DoOldFPFHRegistration(vector<pair<int, int>> index_pair_vec, vector<float> parameter_vec);
+	void DoFeatureRegistration(vector<pair<int, int>> index_pair_vec, vector<float> parameter_vec,
+		bool b_useNir, bool b_useVelodyne, bool b_useFPFH);
 	void fillParameterToTXT(vector<vector<string>> &s_output_vecvec, vector<float> parameter_oldFPFH_vec,
 		vector<float> parameter_featureRegistration_vec);
 	vector<pair<int, int>> getFramePairVec(string dir_);
 	vector<vector<string>> DoEvaluation(string dir_save, vector<pair<int, int>> index_pair_vec, bool b_useProposed,
-		bool b_useNir, bool b_useVelodyne, bool b_useFPFH);
+		bool b_useNir, bool b_useVelodyne, bool b_useFPFH, bool b_cout = false);
 	void alignAllFrames(string dir_, vector<float> parameter_oldFPFH_vec, vector<float> parameter_featureRegistration_vec, int i_method);
 	void variParamaters(string dir_);
 
