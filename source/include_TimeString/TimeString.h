@@ -370,6 +370,8 @@ public:
 
 	static vector<vector<string>> getMatrixData_fromFormatOfFPFH(vector<vector<string>> s_input_vecvec,
 		string s_start, int i_pos_start_fromS, string s_finish, int i_pos_finish_fromS);
+	static vector<vector<string>> getMatrixData_fromSpecificAreaOfMatrix(vector<vector<string>> s_input_vecvec,
+		string s_start, int i_pos_start_fromS, string s_end, int i_pos_end_fromS, int i_pos_start = 0);
 
 	template<typename T>
 	static vector<int> getHistogram(const vector<T> &value_vec, int num_bin, bool b_cout = false)

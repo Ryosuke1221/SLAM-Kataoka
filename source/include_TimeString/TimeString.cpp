@@ -1090,6 +1090,29 @@ vector<vector<string>> CTimeString::getMatrixData_fromFormatOfFPFH(vector<vector
 	return s_output_vecvec;
 }
 
+vector<vector<string>> CTimeString::getMatrixData_fromSpecificAreaOfMatrix(vector<vector<string>> s_input_vecvec,
+	string s_start, int i_pos_start_fromS, string s_end, int i_pos_end_fromS, int i_pos_start)
+{
+	{
+		bool b_calc = false;
+		vector<vector<string>> s_output_vecvec;
+		for (int j = i_pos_start; j < s_input_vecvec.size(); j++)
+		{
+			if (s_input_vecvec[j - i_pos_start_fromS][0] == s_start && !b_calc)	//start
+			{
+				b_calc = true;
+				i_pos_start = j;
+			}
+			if (!b_calc) continue;
+			s_output_vecvec.push_back(s_input_vecvec[j]);
+			if (i_pos_end_fromS > 0 && j == s_input_vecvec.size() - 1) break;
+			else if (s_input_vecvec[j - i_pos_end_fromS][0] == s_end) break;
+		}
+		if (!b_calc) cout << s_start << " not found." << endl;
+		return s_output_vecvec;
+	}
+}
+
 string CTimeString::getFilename_onlyExtension(string s_filename)
 {
 	vector<int> pos_period;

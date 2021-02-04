@@ -20,7 +20,8 @@ void CGlobalFeatureRegistration_test::mainProcess()
 		EN_PairEvaluation,
 		EN_PairEvaluation2,
 		EN_PairEvaluation3,
-		EN_VariParamaters
+		EN_VariParamaters_GlobalRegistration,
+		EN_EstimateSucceededFrames_GlobalRegistration,
 	};
 
 	while (!b_finish)
@@ -41,7 +42,8 @@ void CGlobalFeatureRegistration_test::mainProcess()
 		cout << " " << EN_PairEvaluation << ": PairEvaluation" << endl;
 		cout << " " << EN_PairEvaluation2 << ": PairEvaluation2" << endl;
 		cout << " " << EN_PairEvaluation3 << ": PairEvaluation3" << endl;
-		cout << " " << EN_VariParamaters << ": VariParamaters" << endl;
+		cout << " " << EN_VariParamaters_GlobalRegistration << ": VariParamaters_GlobalRegistration" << endl;
+		cout << " " << EN_EstimateSucceededFrames_GlobalRegistration << ": EstimateSucceededFrames_GlobalRegistration" << endl;
 
 		cout << "WhichProcess: ";
 		cin >> WhichProcess;
@@ -111,8 +113,12 @@ void CGlobalFeatureRegistration_test::mainProcess()
 			DoDifferential_PairEvaluation3(dir_);
 			break;
 
-		case EN_VariParamaters:
+		case EN_VariParamaters_GlobalRegistration:
 			variParamaters(dir_);
+			break;
+
+		case EN_EstimateSucceededFrames_GlobalRegistration:
+			estimateSucceededFrames(dir_ + "/Result_01varyParameters/_Estimation");
 			break;
 
 		default:
@@ -3671,9 +3677,9 @@ vector<vector<string>> CGlobalFeatureRegistration_test::DoEvaluation(string dir_
 		s_output_vec.push_back("corr_output_size");
 		s_output_vec.push_back("e_euqulid");
 		s_output_vec.push_back("e_error_PointCloudDistance");
-		s_output_vec.push_back("median_nearest");
 		s_output_vec.push_back("e_error_beta");
 		s_output_vec.push_back("e_error_angle_normal");
+		s_output_vec.push_back("median_nearest");
 		s_output_vecvec.push_back(s_output_vec);
 	}
 
@@ -3807,9 +3813,10 @@ vector<vector<string>> CGlobalFeatureRegistration_test::DoEvaluation(string dir_
 		s_output_vec.push_back(to_string(corr_output_size));
 		s_output_vec.push_back(to_string(error_euqulid));
 		s_output_vec.push_back(to_string(error_PointCloudDistance));
-		s_output_vec.push_back(to_string(median_nearest));			//median of distance of nearest neightbor(after registration)
 		s_output_vec.push_back(to_string(error_beta));
 		s_output_vec.push_back(to_string(error_angle_normal));
+		s_output_vec.push_back(to_string(median_nearest));			//median of distance of nearest neighbor(after registration)
+		//s_output_vec.push_back(to_string(mean_nearest));			//mean of distance of nearest neighbor(after registration)
 
 		pcl::PointCloud<T_PointType>::Ptr cloud_output(new pcl::PointCloud<T_PointType>());
 		cloud_output->clear();
