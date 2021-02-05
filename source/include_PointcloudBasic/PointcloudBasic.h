@@ -237,14 +237,41 @@ public:
 		return weight_vec;
 	}
 
+	//getMedianDistance
 	template <class T_PointType>
-	static float getMedianDistance(
+	static float getMedianDistanceVectorOfNearestPointCloud(
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src, boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_tgt)
+	{
+		////corr
+		//pcl::Correspondences correspondences = determineCorrespondences_output(cloud_src, cloud_tgt);
+		////call median function
+		//return getCorrMedianDistance(correspondences);
+
+		return CTimeString::getMedian(getDistanceVectorOfNearestPointCloud(cloud_src, cloud_tgt));
+	}
+
+	template <class T_PointType>
+	static float getMeanDistanceVectorOfNearestPointCloud(
+		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src, boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_tgt)
+	{
+		vector<float> distance_vec = getDistanceVectorOfNearestPointCloud(cloud_src, cloud_tgt);
+		float mean_ = 0.;
+		for (int j = 0; j < distance_vec.size(); j++)
+			mean_ += distance_vec[j];
+		if (distance_vec.size() != 0) mean_ /= (float)distance_vec.size();
+		return mean_;
+	}
+
+	template <class T_PointType>
+	static vector<float> getDistanceVectorOfNearestPointCloud(
 		boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_src, boost::shared_ptr<pcl::PointCloud<T_PointType>> cloud_tgt)
 	{
 		//corr
 		pcl::Correspondences correspondences = determineCorrespondences_output(cloud_src, cloud_tgt);
-		//call median function
-		return getCorrMedianDistance(correspondences);
+		vector<float> distance_vec;
+		for (int j = 0; j < correspondences.size(); j++)
+			distance_vec.push_back(correspondences[j].distance);
+		return distance_vec;
 	}
 
 	template <class T_PointType>

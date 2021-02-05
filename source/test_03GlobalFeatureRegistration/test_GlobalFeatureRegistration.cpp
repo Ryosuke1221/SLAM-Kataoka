@@ -22,6 +22,7 @@ void CGlobalFeatureRegistration_test::mainProcess()
 		EN_PairEvaluation3,
 		EN_VariParamaters_GlobalRegistration,
 		EN_EstimateSucceededFrames_GlobalRegistration,
+		EN_ICP_VariParamaters
 	};
 
 	while (!b_finish)
@@ -44,6 +45,7 @@ void CGlobalFeatureRegistration_test::mainProcess()
 		cout << " " << EN_PairEvaluation3 << ": PairEvaluation3" << endl;
 		cout << " " << EN_VariParamaters_GlobalRegistration << ": VariParamaters_GlobalRegistration" << endl;
 		cout << " " << EN_EstimateSucceededFrames_GlobalRegistration << ": EstimateSucceededFrames_GlobalRegistration" << endl;
+		cout << " " << EN_ICP_VariParamaters << ": EN_ICP_VariParamaters" << endl;
 
 		cout << "WhichProcess: ";
 		cin >> WhichProcess;
@@ -119,6 +121,10 @@ void CGlobalFeatureRegistration_test::mainProcess()
 
 		case EN_EstimateSucceededFrames_GlobalRegistration:
 			estimateSucceededFrames(dir_ + "/Result_01varyParameters/_Estimation");
+			break;
+
+		case EN_ICP_VariParamaters:
+			align_ICP_fromGlobalRegistration_variParamaters(dir_);
 			break;
 
 		default:
@@ -2902,7 +2908,6 @@ void CGlobalFeatureRegistration_test::inputData(string dir_, bool b_useNir, bool
 			M_cloud_vec.push_back(cloud);
 		}
 	}
-
 	for (int j = 0; j < M_cloud_vec.size(); j++)
 		cout << "j:" << j << " cloud_vec[j]->size():" << M_cloud_vec[j]->size() << endl;
 	cout << endl;
@@ -3493,15 +3498,15 @@ void CGlobalFeatureRegistration_test::showRigidTransformation(vector<pair<int, i
 
 }
 
-void CGlobalFeatureRegistration_test::fillParameterToTXT(vector<vector<string>> &s_output_vecvec, vector<float> parameter_oldFPFH_vec, vector<float> parameter_featureRegistration_vec)
+void CGlobalFeatureRegistration_test::fillParameterToTXT(vector<float> parameter_oldFPFH_vec, vector<float> parameter_featureRegistration_vec)
 {
-	//s_output_vecvec <- parameter_oldFPFH_vec
-	//s_output_vecvec <- parameter_featureRegistration_vec
+	//M_s_output_vecvec <- parameter_oldFPFH_vec
+	//M_s_output_vecvec <- parameter_featureRegistration_vec
 
 	{
 		vector<string> s_vec;
 		s_vec.push_back("Parameter_oldFPFH");
-		s_output_vecvec.push_back(s_vec);
+		M_s_output_vecvec.push_back(s_vec);
 	}
 
 	for (int j = 0; j < M_name_parameter_vec.size(); j++)
@@ -3513,7 +3518,7 @@ void CGlobalFeatureRegistration_test::fillParameterToTXT(vector<vector<string>> 
 			s_vec.push_back("");
 			s_vec.push_back("");
 			s_vec.push_back("");
-			s_output_vecvec.push_back(s_vec);
+			M_s_output_vecvec.push_back(s_vec);
 		}
 
 		vector<string> s_vec;
@@ -3537,7 +3542,7 @@ void CGlobalFeatureRegistration_test::fillParameterToTXT(vector<vector<string>> 
 				s_vec.push_back(to_string(parameter_featureRegistration_vec[j - 9]));
 		}
 
-		s_output_vecvec.push_back(s_vec);
+		M_s_output_vecvec.push_back(s_vec);
 
 	}
 
@@ -3560,7 +3565,6 @@ void CGlobalFeatureRegistration_test::fillParameterToTXT(vector<vector<string>> 
 	//th_rank_rate_fpfh = parameter_featureRegistration_vec[6];
 	//i_method_rigidTransformation = (int)parameter_featureRegistration_vec[7];
 	//th_geometricConstraint = parameter_featureRegistration_vec[8];
-
 }
 
 vector<pair<int, int>> CGlobalFeatureRegistration_test::getFramePairVec(string dir_)
@@ -3677,8 +3681,10 @@ vector<vector<string>> CGlobalFeatureRegistration_test::DoEvaluation(string dir_
 		s_output_vec.push_back("corr_output_size");
 		s_output_vec.push_back("e_euqulid");
 		s_output_vec.push_back("e_error_PointCloudDistance");
+		s_output_vec.push_back("e_error_PointCloudDistance_median");
 		s_output_vec.push_back("e_error_beta");
 		s_output_vec.push_back("e_error_angle_normal");
+		s_output_vec.push_back("mean_nearest");
 		s_output_vec.push_back("median_nearest");
 		s_output_vecvec.push_back(s_output_vec);
 	}
@@ -3722,18 +3728,29 @@ vector<vector<string>> CGlobalFeatureRegistration_test::DoEvaluation(string dir_
 
 		pcl::PointCloud<T_PointType>::Ptr cloud_tgt(new pcl::PointCloud<T_PointType>());
 		pcl::copyPointCloud(*M_cloud_vec[i_tgt], *cloud_tgt);
-		double median_nearest = getMedianDistance(cloud_src, cloud_tgt);
 
-		float error_PointCloudDistance = 0.;
+		double mean_nearest = getMeanDistanceVectorOfNearestPointCloud(cloud_src, cloud_tgt);
+		double median_nearest = getMedianDistanceVectorOfNearestPointCloud(cloud_src, cloud_tgt);
+
+		vector<float> error_PointCloudDistance_vec;
 		for (int i = 0; i < cloud_src->size(); i++)
 		{
-			error_PointCloudDistance += sqrt(
-				pow(cloud_src->points[i].x - cloud_src_true->points[i].x, 2.)
-				+ pow(cloud_src->points[i].y - cloud_src_true->points[i].y, 2.)
-				+ pow(cloud_src->points[i].y - cloud_src_true->points[i].z, 2.)
+			error_PointCloudDistance_vec.push_back(
+				sqrt(
+					pow(cloud_src->points[i].x - cloud_src_true->points[i].x, 2.)
+					+ pow(cloud_src->points[i].y - cloud_src_true->points[i].y, 2.)
+					+ pow(cloud_src->points[i].z - cloud_src_true->points[i].z, 2.))
 			);
 		}
-		if (cloud_src->size() != 0) error_PointCloudDistance /= (float)cloud_src->size();
+
+		float error_PointCloudDistance = 0.;
+		for (int i = 0; i < error_PointCloudDistance_vec.size(); i++)
+			error_PointCloudDistance += error_PointCloudDistance_vec[i];
+		if (error_PointCloudDistance_vec.size() != 0) error_PointCloudDistance 
+			/= (float)error_PointCloudDistance_vec.size();
+
+		float error_PointCloudDistance_median = 0.;
+		error_PointCloudDistance_median = CTimeString::getMedian(error_PointCloudDistance_vec);
 
 		float error_beta;
 		float error_angle_normal;
@@ -3813,10 +3830,11 @@ vector<vector<string>> CGlobalFeatureRegistration_test::DoEvaluation(string dir_
 		s_output_vec.push_back(to_string(corr_output_size));
 		s_output_vec.push_back(to_string(error_euqulid));
 		s_output_vec.push_back(to_string(error_PointCloudDistance));
+		s_output_vec.push_back(to_string(error_PointCloudDistance_median));
 		s_output_vec.push_back(to_string(error_beta));
 		s_output_vec.push_back(to_string(error_angle_normal));
+		s_output_vec.push_back(to_string(mean_nearest));			//mean of distance of nearest neighbor(after registration)
 		s_output_vec.push_back(to_string(median_nearest));			//median of distance of nearest neighbor(after registration)
-		//s_output_vec.push_back(to_string(mean_nearest));			//mean of distance of nearest neighbor(after registration)
 
 		pcl::PointCloud<T_PointType>::Ptr cloud_output(new pcl::PointCloud<T_PointType>());
 		cloud_output->clear();
@@ -3852,7 +3870,7 @@ vector<vector<string>> CGlobalFeatureRegistration_test::DoEvaluation(string dir_
 			filename_pcd += ".pcd";
 		}
 
-		pcl::io::savePCDFile<T_PointType>(dir_save + "/" + filename_pcd, *cloud_output);
+		if(b_isConverged) pcl::io::savePCDFile<T_PointType>(dir_save + "/" + filename_pcd, *cloud_output);
 		s_output_vecvec.push_back(s_output_vec);
 	}
 
@@ -3911,7 +3929,7 @@ void CGlobalFeatureRegistration_test::alignAllFrames(string dir_,
 
 	inputData(dir_, b_useNir, b_useVelodyne, b_changeColor_nir, b_useFPFH, b_useProposed);
 
-	fillParameterToTXT(M_s_output_vecvec, parameter_oldFPFH_vec, parameter_featureRegistration_vec);
+	fillParameterToTXT(parameter_oldFPFH_vec, parameter_featureRegistration_vec);
 
 	cout << "M_s_output_vecvec:" << endl;
 	for (int j = 0; j < M_s_output_vecvec.size(); j++)
@@ -3953,17 +3971,17 @@ void CGlobalFeatureRegistration_test::alignAllFrames(string dir_,
 			if (i_tgt == 3) b_JValid = true; if (i_src == 3) b_IValid = true;
 			if (i_tgt == 4) b_JValid = true; if (i_src == 4) b_IValid = true;
 			if (i_tgt == 5) b_JValid = true; if (i_src == 5) b_IValid = true;		//NIR
-			if (i_tgt == 6) b_JValid = true; if (i_src == 6) b_IValid = true;		//NIR
-			if (i_tgt == 7) b_JValid = true; if (i_src == 7) b_IValid = true;		//NIR
-			if (i_tgt == 8) b_JValid = true; if (i_src == 8) b_IValid = true;		//NIR
-			if (i_tgt == 9) b_JValid = true; if (i_src == 9) b_IValid = true;
-			if (i_tgt == 10) b_JValid = true; if (i_src == 10) b_IValid = true;
-			if (i_tgt == 11) b_JValid = true; if (i_src == 11) b_IValid = true;		//NIR
-			if (i_tgt == 12) b_JValid = true; if (i_src == 12) b_IValid = true;		//NIR
-			if (i_tgt == 13) b_JValid = true; if (i_src == 13) b_IValid = true;
-			if (i_tgt == 14) b_JValid = true; if (i_src == 14) b_IValid = true;
-			if (i_tgt == 15) b_JValid = true; if (i_src == 15) b_IValid = true;
-			if (i_tgt == 16) b_JValid = true; if (i_src == 16) b_IValid = true;		//NIR
+			//if (i_tgt == 6) b_JValid = true; if (i_src == 6) b_IValid = true;		//NIR
+			//if (i_tgt == 7) b_JValid = true; if (i_src == 7) b_IValid = true;		//NIR
+			//if (i_tgt == 8) b_JValid = true; if (i_src == 8) b_IValid = true;		//NIR
+			//if (i_tgt == 9) b_JValid = true; if (i_src == 9) b_IValid = true;
+			//if (i_tgt == 10) b_JValid = true; if (i_src == 10) b_IValid = true;
+			//if (i_tgt == 11) b_JValid = true; if (i_src == 11) b_IValid = true;		//NIR
+			//if (i_tgt == 12) b_JValid = true; if (i_src == 12) b_IValid = true;		//NIR
+			//if (i_tgt == 13) b_JValid = true; if (i_src == 13) b_IValid = true;
+			//if (i_tgt == 14) b_JValid = true; if (i_src == 14) b_IValid = true;
+			//if (i_tgt == 15) b_JValid = true; if (i_src == 15) b_IValid = true;
+			//if (i_tgt == 16) b_JValid = true; if (i_src == 16) b_IValid = true;		//NIR
 
 			////if (i_tgt == 0) b_JValid = true; if (i_src == 0) b_IValid = true;
 			////if (i_tgt == 1) b_JValid = true; if (i_src == 1) b_IValid = true;
@@ -4177,59 +4195,10 @@ void CGlobalFeatureRegistration_test::alignAllFrames(string dir_,
 	else if (b_show_AllFrame_AllPairs)
 		showAllPairs(index_pair_vec, b_useNir, b_useVelodyne, b_useFPFH, b_useGeometricConstraints, b_useColorfullCorr);
 
-	//GR_FPFH_getResultAnalysis(dir_, s_newfoldername);
-
-	////cluster size
-	//if (b_useClusterNotification)
-	//{
-	//	vector<vector<string>> s_vecvec;
-	//	{
-	//		vector<vector<string>> s_input_vecvec;
-	//		vector<string> filenames_;
-	//		CTimeString::getFileNames_extension(dir_ + "/" + s_newfoldername, filenames_, "_SucEst.csv");
-	//		if (filenames_.size() != 1)
-	//		{
-	//			cout << "ERROR: one _SucEst.csv have not been found" << endl;
-	//			return;
-	//		}
-	//		s_input_vecvec = CTimeString::getVecVecFromCSV_string(
-	//			dir_ + "/" + s_newfoldername + "/" + filenames_[0]);
-	//		s_vecvec = CTimeString::getMatrixData_fromFormatOfFPFH(s_input_vecvec, "Result", 2, "Sum elapsed time", -2);
-	//	}
-
-	//	vector<vector<int>> pairs_vecvec;
-	//	for (int j = 0; j < s_vecvec.size(); j++)
-	//	{
-	//		if (stoi(s_vecvec[j][20]) == 0) continue;
-	//		vector<int> pairs_vec;
-	//		int i_tgt = stoi(s_vecvec[j][0]);
-	//		int i_src = stoi(s_vecvec[j][1]);
-	//		pairs_vec.push_back(i_tgt);
-	//		pairs_vec.push_back(i_src);
-	//		pairs_vecvec.push_back(pairs_vec);
-	//	}
-	//	vector<vector<int>> cluster_vecvec;
-	//	cluster_vecvec = CTimeString::getIntCluster_SomeToSome(pairs_vecvec);
-	//	cout << "cluster_vecvec[0].size():" << cluster_vecvec[0].size() << endl;
-	//	if (cluster_vecvec[0].size() >= 11)
-	//	{
-	//		vector<vector<string>> s_temp;
-	//		vector<string> s_temp2;
-	//		s_temp.push_back(s_temp2);
-	//		CTimeString::getCSVFromVecVec(s_temp, dir_ + "/" + s_newfoldername + "_hasClusterSize" + to_string(cluster_vecvec[0].size()) + ".csv");
-	//	}
-	//}
-
 }
 
 void CGlobalFeatureRegistration_test::variParamaters(string dir_)
 {
-	vector<float> parameter_vec_init;
-
-	//cout << "0: registration of all frames and output files(.csv and .pcd)" << endl;
-	//cout << "1: output error of fpfh value (all frames)" << endl;
-	//cout << "2: output show FPFH variance (all frames)" << endl;
-
 	bool b_create_new_pattern_file = false;
 	cout << "do you create new pattern?  Yes:1  No:0" << endl;
 	cout << "->";
@@ -4263,7 +4232,8 @@ void CGlobalFeatureRegistration_test::variParamaters(string dir_)
 		//input parameter
 		vector<vector<float>> parameter_vecvec;
 		//CTimeString::changeParameter_2dimension(parameter_vec_vec, name_parameter_vec, parameter_vec_arg);
-		CTimeString::changeParameter_2dimension(parameter_vecvec, M_name_parameter_vec, dir_ + "/" + "parameter_vecvec.csv", 1, 4, -1, -1);
+		CTimeString::changeParameter_2dimension(parameter_vecvec, M_name_parameter_vec, 
+			dir_ + "/Result_01varyParameters/parameter_vecvec.csv", 1, 4, -1, -1);
 		pattern_vecvec_new = CTimeString::calcVectorPairPattern(parameter_vecvec);
 		//write new parameter_vec_vec
 		{
@@ -4283,7 +4253,7 @@ void CGlobalFeatureRegistration_test::variParamaters(string dir_)
 					s_vec.push_back(to_string(pattern_vecvec_new[j][i]));
 				s_vec_vec.push_back(s_vec);
 			}
-			CTimeString::getCSVFromVecVec(s_vec_vec, dir_ + "/" + "pattern_vecvec.csv");
+			CTimeString::getCSVFromVecVec(s_vec_vec, dir_ + "/Result_01varyParameters/pattern_vecvec.csv");
 		}
 	}
 
@@ -4297,7 +4267,7 @@ void CGlobalFeatureRegistration_test::variParamaters(string dir_)
 	vector<vector<float>> pattern_vec_vec;
 	{
 		vector<vector<string>> s_vec_vec;
-		s_vec_vec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + "pattern_vecvec.csv");
+		s_vec_vec = CTimeString::getVecVecFromCSV_string(dir_ + "/Result_01varyParameters/pattern_vecvec.csv");
 		for (int j = 1; j < s_vec_vec.size(); j++)
 		{
 			vector<float> pattern_vec;
@@ -4336,4 +4306,922 @@ void CGlobalFeatureRegistration_test::variParamaters(string dir_)
 
 	cout << endl;
 
+}
+
+void CGlobalFeatureRegistration_test::estimateSucceededFrames(string dir_)
+{
+	M_name_parameter_vec.clear();
+
+	bool b_isGotParameterName = false;
+	bool b_isProposed = false;
+
+	//read folder name
+	vector<string> s_folder_vec;
+	CTimeString::getFileNames_folder(dir_, s_folder_vec);
+	for (int j = s_folder_vec.size() - 1; j >= 0; j--)
+		if (s_folder_vec[j] == "_Ignore") s_folder_vec.erase(s_folder_vec.begin() + j);
+
+	vector<vector<string>> s_output_vecvec;
+	for (int j = 0; j < s_folder_vec.size(); j++)
+	{
+		int frame_max = 0;
+
+		//read text
+		vector<vector<string>> s_txt_vecvec;
+		{
+			vector<string> s_filename_vec;
+			CTimeString::getFileNames_extension(dir_ + "/" + s_folder_vec[j], s_filename_vec, ".csv");
+			if (s_filename_vec.size() == 0)
+			{
+				cout << "ERROR: No .csv found and continuing." << endl;
+				continue;
+			}
+			s_txt_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + s_folder_vec[j] + "/" + s_filename_vec[0]);
+			int i_find = s_filename_vec[0].find("conventional");
+			if (i_find == std::string::npos) b_isProposed = true;
+
+		}
+
+		//get information of parameter
+		vector<float> parameter_vec;
+		{
+			vector<vector<string>> s_vecvec_temp =
+				CTimeString::getMatrixData_fromSpecificAreaOfMatrix(s_txt_vecvec, "Parameter_oldFPFH", 1, "Result", -2, 1);
+			for (int i = 0; i < s_vecvec_temp.size(); i++)
+			{
+				if (i == 9) continue;
+				if (!b_isGotParameterName)
+					M_name_parameter_vec.push_back(s_vecvec_temp[i][0]);
+				parameter_vec.push_back(stof(s_vecvec_temp[i][4]));
+			}
+			if (M_name_parameter_vec.size() != 0) b_isGotParameterName = true;
+		}
+
+		//get information of result
+		vector<vector<string>> s_result_vecvec;
+		s_result_vecvec = CTimeString::getMatrixData_fromSpecificAreaOfMatrix(s_txt_vecvec, "Result", 2, "time_elapsed:", -2, 23);
+
+		//estimation
+		vector<vector<int>> framePair_success_vecvec;
+		for (int i = 0; i < s_result_vecvec.size(); i++)
+		{
+			int i_tgt, i_src;
+			i_tgt = stoi(s_result_vecvec[i][0]);
+			i_src = stoi(s_result_vecvec[i][1]);
+			if (i_src > frame_max) frame_max = i_src;
+			bool b_isConverged = (bool)(stoi(s_result_vecvec[i][12]));
+			float e_error_PointCloudDistance = stof(s_result_vecvec[i][18]);
+
+			//float th_successOfGlobalRegistration_distance = 6.;
+			float th_successOfGlobalRegistration_distance = 8.;
+			bool b_estimatedSuccess = false;
+			if (e_error_PointCloudDistance < th_successOfGlobalRegistration_distance && b_isConverged) b_estimatedSuccess = true;
+			if (b_estimatedSuccess)
+			{
+				vector<int> framePair_success_vec;
+				framePair_success_vec.push_back(i_tgt);
+				framePair_success_vec.push_back(i_src);
+				framePair_success_vecvec.push_back(framePair_success_vec);
+			}
+		}
+
+		//calc cluster size
+		vector<vector<int>> cluster_vecvec;
+		cluster_vecvec = CTimeString::getIntCluster_SomeToSome(framePair_success_vecvec);
+
+		//output to string
+		vector<string> s_output_vec;
+		s_output_vec.push_back(s_folder_vec[j]);
+		for (int i = 0; i < parameter_vec.size(); i++)
+			s_output_vec.push_back(to_string(parameter_vec[i]));
+
+		//b_isProposed
+		s_output_vec.push_back(to_string((int)b_isProposed));
+
+		int num_allFramePairs = s_result_vecvec.size();
+		int num_succeededFramePairs = framePair_success_vecvec.size();
+		s_output_vec.push_back(to_string(num_allFramePairs));
+		s_output_vec.push_back(to_string(num_succeededFramePairs));
+
+		//succeededFramePairs
+		{
+			string s_output = "";
+			for (int i = 0; i < framePair_success_vecvec.size(); i++)
+			{
+				s_output +=
+					to_string(framePair_success_vecvec[i][0]) + "-"
+					+ to_string(framePair_success_vecvec[i][1]) + " ";
+			}
+			s_output_vec.push_back(s_output);
+		}
+
+		//biggestCluster
+		if (cluster_vecvec.size() > 0)
+		{
+			string s_output;
+			for (int i = 0; i < cluster_vecvec[0].size(); i++)
+				s_output += to_string(cluster_vecvec[0][i]) + " ";
+			s_output_vec.push_back(s_output);
+		}
+
+		//size_biggestCluster
+		if (cluster_vecvec.size() > 0)
+			s_output_vec.push_back(to_string(cluster_vecvec[0].size()));
+
+		//second_biggestCluster
+		if (cluster_vecvec.size() > 1)
+		{
+			string s_output;
+			for (int i = 0; i < cluster_vecvec[1].size(); i++)
+				s_output += to_string(cluster_vecvec[1][i]) + " ";
+			s_output_vec.push_back(s_output);
+		}
+
+		//frames_notContainded
+		//need debug
+		vector<int> frames_notContainded_vec;
+		frames_notContainded_vec.clear();
+		for (int i = 0; i <= frame_max; i++)
+			frames_notContainded_vec.push_back(i);
+		if (cluster_vecvec.size() > 0)
+		{
+			//cout << "frame_max:" << frame_max << endl;
+			for (int i = cluster_vecvec[0].size() - 1; i >= 0; i--)
+				frames_notContainded_vec.erase(frames_notContainded_vec.begin() + cluster_vecvec[0][i]);
+		}
+		{
+			//for (int i = 0; i < cluster_vecvec[0].size(); i++)
+			//	cout << cluster_vecvec[0][i] << " ";
+			//cout << endl;
+			//for (int i = 0; i < frames_notContainded_vec.size(); i++)
+			//	cout << frames_notContainded_vec[i] << " ";
+			//cout << endl;
+			string s_output = "";
+			for (int i = 0; i < frames_notContainded_vec.size(); i++)
+				s_output += to_string(frames_notContainded_vec[i]) + " ";
+			s_output_vec.push_back(s_output);
+		}
+
+
+		//calc matrix?
+
+		s_output_vecvec.push_back(s_output_vec);
+		cout << endl;
+	}
+
+	//header
+	{
+		vector<string> s_output_vec;
+		s_output_vec.push_back("");
+		for (int j = 0; j < M_name_parameter_vec.size(); j++)
+			s_output_vec.push_back(M_name_parameter_vec[j]);
+		s_output_vec.push_back("b_isProposed");
+		s_output_vec.push_back("num_allFramePairs");
+		s_output_vec.push_back("num_succeededFramePairs");
+		s_output_vec.push_back("succeededFramePairs");
+		s_output_vec.push_back("biggestCluster");
+		s_output_vec.push_back("size_biggestCluster");
+		s_output_vec.push_back("second_biggestCluster");
+		s_output_vec.push_back("frames_notContainded");
+		s_output_vecvec.insert(s_output_vecvec.begin(), s_output_vec);
+	}
+
+	//output
+	vector<vector<string>> s_output_vecvec_transposed;
+	s_output_vecvec_transposed = CTimeString::getTranspositionOfVecVec(s_output_vecvec);
+	CTimeString::getCSVFromVecVec(s_output_vecvec_transposed, dir_ + "/" + CTimeString::getTimeString() + "_estimation.csv");
+}
+
+void CGlobalFeatureRegistration_test::inputData_ICP(string dir_)
+{
+	M_cloud_vec.clear();
+	M_transformation_vec.clear();
+	M_trajectory_true_vec.clear();
+	M_chara_vecvec.clear();
+	M_b_isConverged_vec.clear();
+	M_b_estimatedSuccess_vec.clear();
+
+	string s_folder;
+	//what folder? -> "0:00_nir", "1:01_velodyne", or "2:03_all"
+	{
+		vector<string> filenames_folder;
+
+		CTimeString::getFileNames_folder(dir_, filenames_folder);
+		for (int i = 0; i < filenames_folder.size(); i++)
+		{
+			string s_i = to_string(i);
+			if (s_i.size() < 2) s_i = " " + s_i;
+			cout << "i:" << s_i << " " << filenames_folder[i] << endl;
+		}
+		cout << endl;
+		//cout << "input folder you want to calc ->";
+		int i_folder;
+		//cin >> i_folder;
+		i_folder = 2;
+		s_folder = filenames_folder[i_folder];
+	}
+	vector<string> filenames_cloud;
+	{
+		CTimeString::getFileNames_extension(dir_ + "/" + s_folder, filenames_cloud, ".pcd");
+		for (int i = 0; i < filenames_cloud.size(); i++)
+		{
+			pcl::PointCloud<T_PointType>::Ptr cloud(new pcl::PointCloud<T_PointType>());
+			pcl::io::loadPCDFile(dir_ + "/" + s_folder + "/" + filenames_cloud[i], *cloud);
+			cloud->is_dense = true;
+			M_cloud_vec.push_back(cloud);
+		}
+	}
+	for (int j = 0; j < M_cloud_vec.size(); j++)
+		cout << "j:" << j << " cloud_vec[j]->size():" << M_cloud_vec[j]->size() << endl;
+	cout << endl;
+
+	//input true trajectory
+	{
+		string filename_true = "transformation_fin.csv";
+		vector<vector<double>> trajectory_vecvec_temp = CTimeString::getVecVecFromCSV(dir_ + "/" + filename_true);
+		for (int i = 0; i < trajectory_vecvec_temp.size(); i++)
+		{
+			Eigen::Vector6d Pos_temp = Eigen::Vector6d::Zero();
+			Pos_temp << trajectory_vecvec_temp[i][1], trajectory_vecvec_temp[i][2],
+				trajectory_vecvec_temp[i][3], trajectory_vecvec_temp[i][4],
+				trajectory_vecvec_temp[i][5], trajectory_vecvec_temp[i][6];
+			M_trajectory_true_vec.push_back(Pos_temp);
+		}
+	}
+
+	//input character
+	for (int i = 0; i < M_cloud_vec.size(); i++)
+	{
+		vector<int> chara_vec;
+		chara_vec = CExtendableICP::ICP_Chara_GetCharaData(M_cloud_vec[i]);
+		M_chara_vecvec.push_back(chara_vec);
+	}
+
+}
+
+void CGlobalFeatureRegistration_test::inputData_ICP_initPos(string dir_, bool b_calcOnlyBiggestCluster, float th_successOfGlobalRegistration_distance, bool &b_isProposed)
+{
+	M_initPos_vec.clear();
+
+	b_isProposed = false;
+
+	//read text
+	vector<vector<string>> s_txt_vecvec;
+	{
+		vector<string> s_filename_vec;
+		CTimeString::getFileNames_extension(dir_, s_filename_vec, ".csv");
+		if (s_filename_vec.size() == 0)
+		{
+			cout << "ERROR: No .csv found and continuing." << endl;
+			return;
+		}
+		s_txt_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + s_filename_vec[0]);
+		int i_find = s_filename_vec[0].find("conventional");
+		if (i_find == std::string::npos) b_isProposed = true;
+	}
+
+	//input initPos
+	{
+		vector<vector<string>> s_input_vecvec;
+		s_input_vecvec = CTimeString::getMatrixData_fromSpecificAreaOfMatrix(s_txt_vecvec, "Result", 2, "time_elapsed:", -2, 23);
+		for (int j = 0; j < s_input_vecvec.size(); j++)
+		{
+			bool b_isConverged = false;
+			b_isConverged =(bool)stoi(s_input_vecvec[j][12]);
+			float e_error_PointCloudDistance = stof(s_input_vecvec[j][18]);
+			bool b_success = false;
+			if (e_error_PointCloudDistance < th_successOfGlobalRegistration_distance && b_isConverged) b_success = true;
+			SInitPos_ICP initPos_;
+			if (b_success)
+			{
+				int i_tgt = stoi(s_input_vecvec[j][0]);
+				int i_src = stoi(s_input_vecvec[j][1]);
+				initPos_.i_tgt = i_tgt;
+				initPos_.i_src = i_src;
+				initPos_.Init_Vector <<
+					stod(s_input_vecvec[j][6])
+					, stod(s_input_vecvec[j][7])
+					, stod(s_input_vecvec[j][8])
+					, stod(s_input_vecvec[j][9])
+					, stod(s_input_vecvec[j][10])
+					, stod(s_input_vecvec[j][11]);
+				M_initPos_vec.push_back(initPos_);
+			}
+		}
+	}
+
+	if (!b_calcOnlyBiggestCluster) return;
+
+	vector<int> frames_all;
+	for (int j = 0; j < M_cloud_vec.size(); j++)
+		frames_all.push_back(j);
+
+	//calc frames that should be deleted
+	vector<vector<int>> value_vecvec;
+
+	for (int j = 0; j < M_initPos_vec.size(); j++)
+	{
+		vector<int> value_vec;
+		value_vec.push_back(M_initPos_vec[j].i_tgt);
+		value_vec.push_back(M_initPos_vec[j].i_src);
+		value_vecvec.push_back(value_vec);
+	}
+	cout << "before" << endl;
+	for (int j = 0; j < value_vecvec.size(); j++)
+	{
+		cout << "j:" << j;
+		for (int i = 0; i < value_vecvec[j].size(); i++)
+			cout << " " << value_vecvec[j][i];
+		cout << endl;
+	}
+	cout << endl;
+
+	vector<vector<int>> value_vecvec_new;
+	value_vecvec_new = CTimeString::getIntCluster_SomeToSome(value_vecvec);
+	cout << "after" << endl;
+	for (int j = 0; j < value_vecvec_new.size(); j++)
+	{
+		for (int i = 0; i < value_vecvec_new[j].size(); i++)
+			cout << " " << value_vecvec_new[j][i];
+		cout << endl;
+	}
+	cout << endl;
+
+	//not contained to bigger cluster
+	vector<bool> b_frames_isInBiggerCluster_vec;
+	b_frames_isInBiggerCluster_vec.resize(M_cloud_vec.size());
+	fill(b_frames_isInBiggerCluster_vec.begin(), b_frames_isInBiggerCluster_vec.end(), false);
+	for (int j = 0; j < value_vecvec_new[0].size(); j++)
+		b_frames_isInBiggerCluster_vec[value_vecvec_new[0][j]] = true;
+
+	for (int j = 0; j < b_frames_isInBiggerCluster_vec.size(); j++)
+		if (!b_frames_isInBiggerCluster_vec[j]) cout << "frame:" << j << "is not contained." << endl;
+
+	int index_new = 0;
+	for (int j = 0; j < M_cloud_vec.size(); j++)
+	{
+		if (b_frames_isInBiggerCluster_vec[j])
+		{
+			frames_all.push_back(index_new);
+			index_new++;
+		}
+		else frames_all.push_back(-1);
+	}
+
+	//cout << "show deleted frames(-1)" << endl;
+	//for (int i = 0; i < frames_all.size(); i++)
+	//	cout << "i:" << i << " " << frames_all[i] << endl;
+
+	//M_initPos_vec
+	for (int j = M_initPos_vec.size() - 1; j >= 0; j--)
+	{
+		if (b_frames_isInBiggerCluster_vec[M_initPos_vec[j].i_tgt]
+			&& b_frames_isInBiggerCluster_vec[M_initPos_vec[j].i_src]) continue;
+		M_initPos_vec.erase(M_initPos_vec.begin() + j);
+	}
+
+}
+
+void CGlobalFeatureRegistration_test::fillParameterToTXT_ICP(vector<float> parameter_vec)
+{
+	//M_s_output_vecvec <- parameter_vec
+	{
+		vector<string> s_vec;
+		s_vec.push_back("Parameter_ICP");
+		M_s_output_vecvec.push_back(s_vec);
+	}
+
+	for (int j = 0; j < M_name_parameter_vec.size(); j++)
+	{
+		vector<string> s_vec;
+		s_vec.push_back(M_name_parameter_vec[j]);
+		s_vec.push_back("");
+		s_vec.push_back("");
+		s_vec.push_back("");
+		if (j == 0) s_vec.push_back(to_string((int)parameter_vec[j]));
+		else s_vec.push_back(to_string(parameter_vec[j]));
+		M_s_output_vecvec.push_back(s_vec);
+
+	}
+
+	//M_name_parameter_vec.clear();
+	//M_name_parameter_vec.push_back("MaximumIterations");							//0
+	//M_name_parameter_vec.push_back("MaxCorrespondenceDistance");					//1
+	//M_name_parameter_vec.push_back("EuclideanFitnessEpsilon");					//2
+	//M_name_parameter_vec.push_back("TransformationEpsilon");						//3
+	//M_name_parameter_vec.push_back("penalty_chara");								//4
+	//M_name_parameter_vec.push_back("weight_dist_chara");							//5
+	//M_name_parameter_vec.push_back("th_successOfGlobalRegistration_distance");	//6
+}
+
+vector<vector<string>> CGlobalFeatureRegistration_test::DoEvaluation_ICP(string dir_save, float th_successOfICP_distance, bool b_useProposed, bool b_cout)
+{
+	cout << "DoEvaluation_ICP" << endl;
+	vector<vector<string>> s_output_vecvec;
+	{
+		vector<string> s_output_vec;
+		s_output_vec.push_back("i_tgt");
+		s_output_vec.push_back("i_src");
+		s_output_vec.push_back("isProposed");
+		//s_output_vec.push_back("b_usedNIR");
+		//s_output_vec.push_back("b_usedVelodyne");
+		//s_output_vec.push_back("b_usedFPFH");
+		s_output_vec.push_back("X");
+		s_output_vec.push_back("Y");
+		s_output_vec.push_back("Z");
+		s_output_vec.push_back("Roll");
+		s_output_vec.push_back("Pitch");
+		s_output_vec.push_back("Yaw");
+		s_output_vec.push_back("isConverged");
+		//s_output_vec.push_back("corr_nir_size");
+		//s_output_vec.push_back("corr_velodyne_size");
+		//s_output_vec.push_back("corr_fpfh_size");
+		//s_output_vec.push_back("corr_output_size");
+		s_output_vec.push_back("e_euqulid");
+		s_output_vec.push_back("e_error_PointCloudDistance");
+		s_output_vec.push_back("e_error_PointCloudDistance_median");
+		s_output_vec.push_back("e_error_beta");
+		s_output_vec.push_back("e_error_angle_normal");
+		s_output_vec.push_back("mean_nearest");
+		s_output_vec.push_back("median_nearest");
+		s_output_vec.push_back("b_estimatedSuccess");
+		s_output_vecvec.push_back(s_output_vec);
+	}
+
+	for (int j = 0; j < M_initPos_vec.size(); j++)
+	{
+		vector<string> s_output_vec;
+		int i_tgt = M_initPos_vec[j].i_tgt;
+		int i_src = M_initPos_vec[j].i_src;
+
+		Eigen::Matrix4d transformation_init = Eigen::Matrix4d::Identity();
+		transformation_init = calcHomogeneousMatrixFromVector6d(M_initPos_vec[j].Init_Vector);
+		Eigen::Matrix4d transformation_ = Eigen::Matrix4d::Identity();
+		transformation_ = M_transformation_vec[j] * transformation_init;
+
+		Eigen::Matrix4d transformation_true = Eigen::Matrix4d::Identity();
+		transformation_true =
+			calcHomogeneousMatrixFromVector6d(M_trajectory_true_vec[i_tgt]).inverse() *
+			calcHomogeneousMatrixFromVector6d(M_trajectory_true_vec[i_src]);
+
+		float error_euqulid;
+		error_euqulid = sqrt(
+			pow(transformation_(0, 3) - transformation_true(0, 3), 2.)
+			+ pow(transformation_(1, 3) - transformation_true(1, 3), 2.)
+			+ pow(transformation_(2, 3) - transformation_true(2, 3), 2.)
+		);
+
+		pcl::PointCloud<T_PointType>::Ptr cloud_src(new pcl::PointCloud<T_PointType>());
+		pcl::PointCloud<T_PointType>::Ptr cloud_src_true(new pcl::PointCloud<T_PointType>());
+		pcl::PointCloud<T_PointType>::Ptr cloud_src_init(new pcl::PointCloud<T_PointType>());
+		pcl::PointCloud<T_PointType>::Ptr cloud_tgt(new pcl::PointCloud<T_PointType>());
+
+		//cloud_src_init
+		pcl::copyPointCloud(*M_cloud_vec[i_src], *cloud_src_init);
+		{
+			Eigen::Affine3f trans_ = calcAffine3fFromHomogeneousMatrix(transformation_init);
+			pcl::transformPointCloud(*cloud_src_init, *cloud_src_init, trans_);
+		}
+		//cloud_src
+		pcl::copyPointCloud(*M_cloud_vec[i_src], *cloud_src);
+		{
+			Eigen::Affine3f trans_ = calcAffine3fFromHomogeneousMatrix(transformation_);
+			pcl::transformPointCloud(*cloud_src, *cloud_src, trans_);
+		}
+		//cloud_src_true
+		pcl::copyPointCloud(*M_cloud_vec[i_src], *cloud_src_true);
+		{
+			Eigen::Affine3f trans_ = calcAffine3fFromHomogeneousMatrix(transformation_true);
+			pcl::transformPointCloud(*cloud_src_true, *cloud_src_true, trans_);
+		}
+		//cloud_tgt
+		pcl::copyPointCloud(*M_cloud_vec[i_tgt], *cloud_tgt);
+
+		double mean_nearest = getMeanDistanceVectorOfNearestPointCloud(cloud_src, cloud_tgt);
+		double median_nearest = getMedianDistanceVectorOfNearestPointCloud(cloud_src, cloud_tgt);
+
+		vector<float> error_PointCloudDistance_vec;
+		for (int i = 0; i < cloud_src->size(); i++)
+		{
+			error_PointCloudDistance_vec.push_back(
+				sqrt(
+					pow(cloud_src->points[i].x - cloud_src_true->points[i].x, 2.)
+					+ pow(cloud_src->points[i].y - cloud_src_true->points[i].y, 2.)
+					+ pow(cloud_src->points[i].z - cloud_src_true->points[i].z, 2.))
+			);
+		}
+
+		float error_PointCloudDistance = 0.;
+		for (int i = 0; i < error_PointCloudDistance_vec.size(); i++)
+			error_PointCloudDistance += error_PointCloudDistance_vec[i];
+		if (error_PointCloudDistance_vec.size() != 0) error_PointCloudDistance
+			/= (float)error_PointCloudDistance_vec.size();
+
+		float error_PointCloudDistance_median = 0.;
+		error_PointCloudDistance_median = CTimeString::getMedian(error_PointCloudDistance_vec);
+
+		float error_beta;
+		float error_angle_normal;
+		vector<float> error_angle_vec;
+		//error_angle_vec = getAngleError(transformation_true, transformation_);
+		error_angle_vec = getAngleError(transformation_, transformation_true);
+		error_beta = error_angle_vec[0];
+		error_angle_normal = error_angle_vec[1];
+
+		Eigen::Vector6d pos_vec = Eigen::Vector6d::Zero();
+		pos_vec = calcVector6dFromHomogeneousMatrix(transformation_);
+
+		bool b_isConverged = M_b_isConverged_vec[j];
+
+		//estimation
+		bool b_estimatedSuccess = false;
+		if (error_PointCloudDistance < th_successOfICP_distance) b_estimatedSuccess = true;
+		M_b_estimatedSuccess_vec.push_back(b_estimatedSuccess);
+
+		if (b_cout)
+		{
+			cout << endl;
+			cout << "i_tgt:" << i_tgt;
+			cout << ", i_src:" << i_src << endl;
+
+			cout << "transformation_:" << endl;
+			cout << transformation_ << endl;
+
+			cout << "transformation_true:" << endl;
+			cout << transformation_true << endl;
+		}
+
+		s_output_vec.push_back(to_string(i_tgt));
+		s_output_vec.push_back(to_string(i_src));
+		s_output_vec.push_back(to_string((int)b_useProposed));
+		//s_output_vec.push_back(to_string((int)b_usedNIR));
+		//s_output_vec.push_back(to_string((int)b_usedVelodyne));
+		//s_output_vec.push_back(to_string((int)b_usedFPFH));
+		s_output_vec.push_back(to_string(pos_vec(0, 0)));
+		s_output_vec.push_back(to_string(pos_vec(1, 0)));
+		s_output_vec.push_back(to_string(pos_vec(2, 0)));
+		s_output_vec.push_back(to_string(pos_vec(3, 0)));
+		s_output_vec.push_back(to_string(pos_vec(4, 0)));
+		s_output_vec.push_back(to_string(pos_vec(5, 0)));
+		s_output_vec.push_back(to_string((int)b_isConverged));
+		//s_output_vec.push_back(to_string(corr_nir_size));
+		//s_output_vec.push_back(to_string(corr_velodyne_size));
+		//s_output_vec.push_back(to_string(corr_fpfh_size));
+		//s_output_vec.push_back(to_string(corr_output_size));
+		s_output_vec.push_back(to_string(error_euqulid));
+		s_output_vec.push_back(to_string(error_PointCloudDistance));
+		s_output_vec.push_back(to_string(error_PointCloudDistance_median));
+		s_output_vec.push_back(to_string(error_beta));
+		s_output_vec.push_back(to_string(error_angle_normal));
+		s_output_vec.push_back(to_string(mean_nearest));			//mean of distance of nearest neighbor(after registration)
+		s_output_vec.push_back(to_string(median_nearest));			//median of distance of nearest neighbor(after registration)
+		s_output_vec.push_back(to_string((int)b_estimatedSuccess));
+
+		pcl::PointCloud<T_PointType>::Ptr cloud_output(new pcl::PointCloud<T_PointType>());
+		cloud_output->clear();
+		pcl::copyPointCloud(*cloud_tgt, *cloud_output);
+		//tgt -> red
+		for (int i = 0; i < cloud_output->size(); i++)
+		{
+			cloud_output->points[i].r = 255;
+			cloud_output->points[i].g = 0;
+			cloud_output->points[i].b = 0;
+		}
+		//cloud_src -> green
+		for (int i = 0; i < cloud_src->size(); i++)
+		{
+			cloud_src->points[i].r = 0;
+			cloud_src->points[i].g = 255;
+			cloud_src->points[i].b = 0;
+			cloud_output->push_back(cloud_src->points[i]);
+		}
+
+		//cloud_src_init -> green + white
+		for (int i = 0; i < cloud_src_init->size(); i++)
+		{
+			cloud_src_init->points[i].r = 100;
+			cloud_src_init->points[i].g = 255;
+			cloud_src_init->points[i].b = 100;
+			cloud_output->push_back(cloud_src_init->points[i]);
+		}
+
+		string filename_pcd;
+		{
+			string s_tgt = to_string(i_tgt);
+			if (s_tgt.size() < 2) s_tgt = "0" + s_tgt;
+			s_tgt = "tgt" + s_tgt;
+			string s_src = to_string(i_src);
+			if (s_src.size() < 2) s_src = "0" + s_src;
+			s_src = "src" + s_src;
+			filename_pcd = s_tgt + s_src + "_result";
+
+			if (!b_useProposed) filename_pcd += "_00conventional_ICP";
+			else  filename_pcd += "_01proposed_ICP";
+			filename_pcd += ".pcd";
+		}
+
+		if (b_isConverged) pcl::io::savePCDFile<T_PointType>(dir_save + "/" + filename_pcd, *cloud_output);
+		s_output_vecvec.push_back(s_output_vec);
+	}
+
+	{
+		vector<string> s_vec;
+		s_output_vecvec.push_back(s_vec);
+	}
+	{
+		vector<string> s_vec;
+		s_vec.push_back("time_elapsed:");
+		s_vec.push_back("");
+		s_vec.push_back(M_t_elapsed);
+		s_output_vecvec.push_back(s_vec);
+	}
+
+	return s_output_vecvec;
+}
+
+void CGlobalFeatureRegistration_test::align_ICP_AllFrames(string dir_, string s_folder_arg, vector<float> parameter_vec)
+{
+	typedef pcl::PointXYZRGB T_PointType;
+
+	string s_folder = "Result_02_ICP_varyParameters/_Input";
+	string s_folder_output = "Result_02_ICP_varyParameters";
+
+	M_s_output_vecvec.clear();
+
+	string t_start = CTimeString::getTimeString();
+
+	inputData_ICP(dir_);
+
+	bool b_isProposed_arg;
+	inputData_ICP_initPos(dir_ + "/" + s_folder + "/" + s_folder_arg, 
+		true, parameter_vec[6], b_isProposed_arg);
+	//void inputData_ICP_initPos(string dir_, bool b_calcOnlyBiggestCluster, float th_successOfGlobalRegistration_distance, bool &b_isProposed)
+
+	fillParameterToTXT_ICP(parameter_vec);
+
+	//s_output_vecvec <- filename_GlobalRegistration:
+	{
+		vector<string> s_vec;
+		s_vec.push_back("filename_GlobalRegistration:");
+		s_vec.push_back("");
+		s_vec.push_back("");
+		s_vec.push_back("");
+		s_vec.push_back(s_folder_arg);
+		M_s_output_vecvec.push_back(s_vec);
+	}
+
+	cout << "M_s_output_vecvec:" << endl;
+	for (int j = 0; j < M_s_output_vecvec.size(); j++)
+	{
+		for (int i = 0; i < M_s_output_vecvec[j].size(); i++)
+			cout << M_s_output_vecvec[j][i] << "  ";
+		cout << endl;
+	}
+	cout << endl;
+
+	//loop by folder
+	for (int j = 0; j < M_initPos_vec.size(); j++)
+	{
+		pcl::PointCloud<T_PointType>::Ptr cloud_temp(new pcl::PointCloud<T_PointType>());
+
+		int i_tgt = M_initPos_vec[j].i_tgt;
+		int i_src = M_initPos_vec[j].i_src;
+
+		pcl::PointCloud<T_PointType>::Ptr cloud_tgt(new pcl::PointCloud<T_PointType>());
+		pcl::PointCloud<T_PointType>::Ptr cloud_src(new pcl::PointCloud<T_PointType>());
+		pcl::PointCloud<T_PointType>::Ptr cloud_src_transformed(new pcl::PointCloud<T_PointType>());
+		pcl::copyPointCloud(*M_cloud_vec[i_tgt], *cloud_tgt);
+		pcl::copyPointCloud(*M_cloud_vec[i_src], *cloud_src);
+
+		//transform src by InitPos
+		{
+			Eigen::Affine3f Trans_temp = Eigen::Affine3f::Identity();
+			Trans_temp = calcAffine3fFromHomogeneousMatrix(
+				calcHomogeneousMatrixFromVector6d(M_initPos_vec[j].Init_Vector));
+			pcl::transformPointCloud(*cloud_src, *cloud_src_transformed, Trans_temp);
+		}
+
+		string time_start_frame = CTimeString::getTimeString();
+
+		//vector<int> inlier_;
+		float fitnessscore;
+		//int frame_failed = 0;
+		//Eigen::Matrix4d transform_ = Eigen::Matrix4d::Identity();
+		//bool b_cout_RANSAC = false;
+		Eigen::Vector6d Registration_Vector = Eigen::Vector6d::Zero();
+
+		cout << "i_tgt:" << i_tgt << " i_src:" << i_src << endl;
+
+		//parameter
+		int MaximumIterations;
+		float MaxCorrespondenceDistance, EuclideanFitnessEpsilon, TransformationEpsilon;
+		MaximumIterations = (int)parameter_vec[0];
+		MaxCorrespondenceDistance = parameter_vec[1];
+		EuclideanFitnessEpsilon = parameter_vec[2];
+		TransformationEpsilon = parameter_vec[3];
+		//property
+		float penalty_chara, weight_dist_chara;
+		penalty_chara = parameter_vec[4];
+		weight_dist_chara = parameter_vec[5];
+
+		if (!b_isProposed_arg)
+		{
+			pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> align_ICP;
+			//parameter
+			align_ICP.setMaximumIterations(MaximumIterations);
+			align_ICP.setMaxCorrespondenceDistance(MaxCorrespondenceDistance);
+			align_ICP.setEuclideanFitnessEpsilon(EuclideanFitnessEpsilon);
+			align_ICP.setTransformationEpsilon(TransformationEpsilon);
+			//data
+			align_ICP.setInputTarget(cloud_tgt);
+			align_ICP.setInputSource(cloud_src_transformed);
+			//align
+			align_ICP.align(*cloud_temp);
+			M_b_isConverged_vec.push_back(align_ICP.hasConverged());
+			//Registration_Vector = calcVector6dFromHomogeneousMatrix(
+			//	align_ICP.getFinalTransformation().cast<double>());
+			M_transformation_vec.push_back(align_ICP.getFinalTransformation().cast<double>());
+		}
+		else
+		{
+			CExtendableICP align_ICP_proposed;
+			//parameter
+			align_ICP_proposed.setMothodInt(1);
+			align_ICP_proposed.setMaximumIterations(MaximumIterations);
+			align_ICP_proposed.setMaxCorrespondenceDistance(MaxCorrespondenceDistance);
+			align_ICP_proposed.setEuclideanFitnessEpsilon(EuclideanFitnessEpsilon);
+			align_ICP_proposed.setTransformationEpsilon(TransformationEpsilon);
+			align_ICP_proposed.setCharaParameter(penalty_chara, weight_dist_chara);
+			//data
+			align_ICP_proposed.setInputTarget(cloud_tgt);
+			align_ICP_proposed.setInputSource(cloud_src_transformed);
+			align_ICP_proposed.setCharaVector_tgt(M_chara_vecvec[i_tgt]);
+			align_ICP_proposed.setCharaVector_src(M_chara_vecvec[i_src]);
+			//align
+			align_ICP_proposed.align();
+			M_b_isConverged_vec.push_back(align_ICP_proposed.hasConverged());
+			//Registration_Vector = align_ICP_proposed.getFinalTransformation_Vec();
+			M_transformation_vec.push_back(align_ICP_proposed.getFinalTransformation().cast<double>());
+		}
+
+	}
+
+	string t_end = CTimeString::getTimeString();
+	string t_elapsed = CTimeString::getTimeElapsefrom2Strings(t_start, t_end);
+	cout << "t_elapsed(all frames):" << t_elapsed << endl;
+	M_t_elapsed = t_elapsed;
+
+	//M_s_output_vecvec <- Result
+	{
+		vector<string> s_vec;
+		M_s_output_vecvec.push_back(s_vec);
+	}
+	{
+		vector<string> s_vec;
+		s_vec.push_back("Result_ICP");
+		M_s_output_vecvec.push_back(s_vec);
+	}
+
+	string s_newfoldername = CTimeString::getTimeString();
+	if (!b_isProposed_arg)
+		s_newfoldername += "_conventional";
+	else
+		s_newfoldername += "_proposed";
+
+	s_newfoldername += "_ICP";
+
+	//makenewfolder
+	CTimeString::makenewfolder(dir_ + "/" + s_folder_output, s_newfoldername);
+	//evaluation
+	float th_successOfICP_distance = 1.;
+	vector<vector<string>> s_value_vecvec;
+	s_value_vecvec = DoEvaluation_ICP(dir_ + "/" + s_folder_output + "/" + s_newfoldername, th_successOfICP_distance, b_isProposed_arg, false);
+	M_s_output_vecvec.insert(M_s_output_vecvec.end(), s_value_vecvec.begin(), s_value_vecvec.end());
+
+	vector<vector<string>> s_cluster_vecvec = calcBiggestFrameCluster();
+	M_s_output_vecvec.insert(M_s_output_vecvec.end(), s_cluster_vecvec.begin(), s_cluster_vecvec.end());
+
+	//M_s_output_vecvec <-(front) inputed file
+	vector<vector<string>> s_input_vecvec;
+	{
+		vector<string> s_filename_vec;
+		CTimeString::getFileNames_extension(dir_ + "/" + s_folder + "/" + s_folder_arg, s_filename_vec, ".csv");
+		if (s_filename_vec.size() == 0)
+		{
+			cout << "ERROR: No .csv found and continuing." << endl;
+			return;
+		}
+		s_input_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + s_folder + "/" + s_folder_arg + "/" + s_filename_vec[0]);
+	}
+	{
+		vector<string> s_vec;
+		s_input_vecvec.push_back(s_vec);
+	}
+	M_s_output_vecvec.insert(M_s_output_vecvec.begin(), s_input_vecvec.begin(), s_input_vecvec.end());
+
+	CTimeString::getCSVFromVecVec(M_s_output_vecvec, dir_ + "/" + s_folder_output + "/" + s_newfoldername + "/" + s_newfoldername + "_output.csv");
+}
+
+void CGlobalFeatureRegistration_test::align_ICP_fromGlobalRegistration_variParamaters(string dir_)
+{
+	bool b_create_new_pattern_file = false;
+	cout << "do you create new pattern?  Yes:1  No:0" << endl;
+	cout << "->";
+	cin >> b_create_new_pattern_file;
+
+	string s_folder = "Result_02_ICP_varyParameters/_Input";
+
+	//M_name_parameter_vec
+	M_name_parameter_vec.clear();
+	M_name_parameter_vec.push_back("MaximumIterations");						//0
+	M_name_parameter_vec.push_back("MaxCorrespondenceDistance");				//1
+	M_name_parameter_vec.push_back("EuclideanFitnessEpsilon");					//2
+	M_name_parameter_vec.push_back("TransformationEpsilon");					//3
+	M_name_parameter_vec.push_back("penalty_chara");							//4
+	M_name_parameter_vec.push_back("weight_dist_chara");						//5
+	M_name_parameter_vec.push_back("th_successOfGlobalRegistration_distance");	//6
+
+	if (b_create_new_pattern_file)
+	{
+		vector<vector<float>> pattern_vecvec_new;
+		//input parameter
+		vector<vector<float>> parameter_vecvec;
+		CTimeString::changeParameter_2dimension(parameter_vecvec, M_name_parameter_vec,
+			dir_ + "/" + s_folder + "/parameter_vecvec.csv", 1, 4, -1, -1);
+		pattern_vecvec_new = CTimeString::calcVectorPairPattern(parameter_vecvec);
+		//write new parameter_vec_vec
+		{
+			vector<vector<string>> s_vec_vec;
+			//header
+			{
+				vector<string> s_header_vec;
+				//s_header_vec.push_back("Parameter");
+				for (int i = 0; i < M_name_parameter_vec.size(); i++)
+					s_header_vec.push_back(M_name_parameter_vec[i]);
+				s_vec_vec.push_back(s_header_vec);
+			}
+			for (int j = 0; j < pattern_vecvec_new.size(); j++)
+			{
+				vector<string> s_vec;
+				for (int i = 0; i < pattern_vecvec_new[j].size(); i++)
+					s_vec.push_back(to_string(pattern_vecvec_new[j][i]));
+				s_vec_vec.push_back(s_vec);
+			}
+			CTimeString::getCSVFromVecVec(s_vec_vec, dir_ + "/" + s_folder + "/pattern_vecvec.csv");
+		}
+	}
+
+	cout << "press 1 and Enter if you have closed file" << endl;
+	{
+		int aa;
+		cin >> aa;
+	}
+
+	//read pattern_vec_vec.csv
+	vector<vector<float>> pattern_vec_vec;
+	{
+		vector<vector<string>> s_vec_vec;
+		s_vec_vec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + s_folder + "/pattern_vecvec.csv");
+		for (int j = 1; j < s_vec_vec.size(); j++)
+		{
+			vector<float> pattern_vec;
+			for (int i = 0; i < s_vec_vec[j].size(); i++)
+				pattern_vec.push_back(stof(s_vec_vec[j][i]));
+			pattern_vec_vec.push_back(pattern_vec);
+		}
+	}
+	cout << "show pattern" << endl;
+	for (int j = 0; j < pattern_vec_vec.size(); j++)
+	{
+		cout << j << ":";
+		for (int i = 0; i < pattern_vec_vec[j].size(); i++)
+		{
+			string s_value;
+			s_value = to_string(pattern_vec_vec[j][i]);
+			if (s_value.size() < 4) s_value = " " + s_value;
+			if (s_value.size() < 4) s_value = " " + s_value;
+			if (s_value.size() < 4) s_value = " " + s_value;
+			cout << "  " << s_value;
+		}
+		cout << endl;
+	}
+
+	//read folder name
+	vector<string> s_folder_vec;
+	CTimeString::getFileNames_folder(dir_ + "/" + s_folder, s_folder_vec);
+	for (int j = s_folder_vec.size() - 1; j >= 0; j--)
+		if (s_folder_vec[j] == "_Ignore") s_folder_vec.erase(s_folder_vec.begin() + j);
+
+	for (int j = 0; j < s_folder_vec.size(); j++)
+	{
+		for (int i = 0; i < pattern_vec_vec.size(); i++)
+		{
+			vector<float> parameter_vec = pattern_vec_vec[i];
+			cout << "start pattern:" << j << endl;
+			align_ICP_AllFrames(dir_, s_folder_vec[j], pattern_vec_vec[i]);
+
+		}
+	}
+
+	cout << endl;
 }
