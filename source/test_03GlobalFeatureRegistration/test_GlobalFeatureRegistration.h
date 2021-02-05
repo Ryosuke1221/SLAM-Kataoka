@@ -54,7 +54,7 @@ private:
 	vector<pcl::Correspondences> M_corrs_output_vec;
 
 public:
-	void inputData(string dir_, bool b_useNir, bool b_useVelodyne, bool b_changeColor_nir,
+	void inputData(string dir_, vector<float> parameter_oldFPFH_vec, bool b_useNir, bool b_useVelodyne, bool b_changeColor_nir,
 		bool b_useFPFH, bool b_useOldFPFH);
 	void DoOldFPFHRegistration(vector<pair<int, int>> index_pair_vec, vector<float> parameter_vec);
 	void DoFeatureRegistration(vector<pair<int, int>> index_pair_vec, vector<float> parameter_vec,
@@ -65,7 +65,7 @@ public:
 		bool b_useNir, bool b_useVelodyne, bool b_useFPFH, bool b_cout = false);
 	void alignAllFrames(string dir_, vector<float> parameter_oldFPFH_vec, vector<float> parameter_featureRegistration_vec, int i_method);
 	void variParamaters(string dir_);
-	void estimateSucceededFrames(string dir_);
+	void compareGlobalRegistration(string dir_);
 
 private:
 	struct SInitPos_ICP
@@ -86,126 +86,121 @@ public:
 		float th_successOfGlobalRegistration_distance, bool &b_isProposed);
 	void fillParameterToTXT_ICP(vector<float> parameter_vec);
 	vector<vector<string>> DoEvaluation_ICP(string dir_save, float th_successOfICP_distance, bool b_useProposed, bool b_cout);
+	vector<vector<string>> calcBiggestFrameCluster_ICP();
 	void align_ICP_AllFrames(string dir_, string s_folder_arg, vector<float> parameter_vec);
 	void align_ICP_fromGlobalRegistration_variParamaters(string dir_);
-
-	vector<vector<string>> calcBiggestFrameCluster()
+	void compareICP(string dir_)
 	{
-		vector<vector<string>> s_output_vec;
-		{
-			vector<string> s_vec;
-			s_output_vec.push_back(s_vec);
-		}
+		M_name_parameter_vec.clear();
 
-		//estimation cluster
-		vector<vector<int>> framePair_success_vecvec;
-		for (int j = 0; j < M_initPos_vec.size(); j++)
-		{
-			if (!M_b_estimatedSuccess_vec[j]) continue;
-			vector<int> framePair_success_vec;
-			framePair_success_vec.push_back(M_initPos_vec[j].i_tgt);
-			framePair_success_vec.push_back(M_initPos_vec[j].i_src);
-			framePair_success_vecvec.push_back(framePair_success_vec);
-		}
-		//calc cluster size
-		vector<vector<int>> cluster_vecvec;
-		cluster_vecvec = CTimeString::getIntCluster_SomeToSome(framePair_success_vecvec);
+		bool b_isGotParameterName = false;
+		bool b_isProposed = false;
 
-		//num_allFramePairs
-		int num_allFramePairs = M_initPos_vec.size();
-		{
-			vector<string> s_vec;
-			s_vec.push_back("num_allFramePairs:");
-			s_vec.push_back(to_string(num_allFramePairs));
-			s_output_vec.push_back(s_vec);
-		}
+		//read folder name
+		vector<string> s_folder_vec;
+		CTimeString::getFileNames_folder(dir_, s_folder_vec);
+		for (int j = s_folder_vec.size() - 1; j >= 0; j--)
+			if (s_folder_vec[j] == "_Ignore") s_folder_vec.erase(s_folder_vec.begin() + j);
 
-		//num_succeededFramePairs
-		int num_succeededFramePairs = framePair_success_vecvec.size();
-		{
-			vector<string> s_vec;
-			s_vec.push_back("num_succeededFramePairs:");
-			s_vec.push_back(to_string(num_succeededFramePairs));
-			s_output_vec.push_back(s_vec);
-		}
+		bool b_isGotEvaluationNames = false;
+		vector<string> s_evaluationNames_vec;
 
-		//succeededFramePairs
+		vector<vector<string>> s_output_vecvec;
+		for (int j = 0; j < s_folder_vec.size(); j++)
 		{
-			string s_output = "";
-			for (int j = 0; j < framePair_success_vecvec.size(); j++)
+			int frame_max = 0;
+
+			//read text
+			vector<vector<string>> s_txt_vecvec;
 			{
-				s_output +=
-					to_string(framePair_success_vecvec[j][0]) + "-"
-					+ to_string(framePair_success_vecvec[j][1]) + " ";
-			}
-			vector<string> s_vec;
-			s_vec.push_back("succeededFramePairs:");
-			s_vec.push_back(s_output);
-			s_output_vec.push_back(s_vec);
-		}
+				vector<string> s_filename_vec;
+				CTimeString::getFileNames_extension(dir_ + "/" + s_folder_vec[j], s_filename_vec, ".csv");
+				if (s_filename_vec.size() == 0)
+				{
+					cout << "ERROR: No .csv found and continuing." << endl;
+					continue;
+				}
+				s_txt_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + s_folder_vec[j] + "/" + s_filename_vec[0]);
+				int i_find = s_filename_vec[0].find("conventional");
+				if (i_find == std::string::npos) b_isProposed = true;
 
-		//biggestCluster
-		{
-			string s_output = "";
-			vector<string> s_vec;
-			s_vec.push_back("biggestCluster:");
-			if (cluster_vecvec.size() > 0)
+			}
+
+			//get information of parameter
+			vector<float> parameter_vec;
 			{
-				for (int j = 0; j < cluster_vecvec[0].size(); j++)
-					s_output += to_string(cluster_vecvec[0][j]) + " ";
+				vector<vector<string>> s_vecvec_temp =
+					CTimeString::getMatrixData_fromSpecificAreaOfMatrix(s_txt_vecvec, "Parameter_ICP", 1, "Result_ICP", -2, 1);
+				for (int i = 0; i < s_vecvec_temp.size(); i++)
+				{
+					//if (i == 9) continue;
+					if (!b_isGotParameterName)
+						M_name_parameter_vec.push_back(s_vecvec_temp[i][0]);
+					parameter_vec.push_back(stof(s_vecvec_temp[i][4]));
+				}
+				if (M_name_parameter_vec.size() != 0) b_isGotParameterName = true;
 			}
-			s_vec.push_back(s_output);
-			s_output_vec.push_back(s_vec);
-		}
 
-		//size_biggestCluster
-		{
-			vector<string> s_vec;
-			s_vec.push_back("size_biggestCluster:");
-			if (cluster_vecvec.size() > 0) 
-				s_vec.push_back(to_string(cluster_vecvec[0].size()));
-			s_output_vec.push_back(s_vec);
+			//get information of result
+			vector<vector<string>> s_result_vecvec;
+			s_result_vecvec = CTimeString::getMatrixData_fromSpecificAreaOfMatrix(s_txt_vecvec, "th_successOfICP_distance:", 0, "frames_notContainded:", 0, 0);
 
-		}
-
-		//second_biggestCluster
-		{
-			string s_output = "";
-			vector<string> s_vec;
-			s_vec.push_back("second_biggestCluster:");
-			if (cluster_vecvec.size() > 1)
+			if (!b_isGotEvaluationNames)
 			{
-				for (int j = 0; j < cluster_vecvec[1].size(); j++)
-					s_output += to_string(cluster_vecvec[1][j]) + " ";
+				for (int i = 0; i < s_result_vecvec.size(); i++)
+				{
+					if (i == 1) continue;
+					s_evaluationNames_vec.push_back(s_result_vecvec[i][0]);
+				}
+				b_isGotEvaluationNames = true;
 			}
-			s_vec.push_back(s_output);
-			s_output_vec.push_back(s_vec);
-		}
 
-		//frames_notContainded
-		//need debug
-		{
-			int frame_max = M_cloud_vec.size() - 1;
-			vector<int> frames_notContainded_vec;
-			frames_notContainded_vec.clear();
-			for (int i = 0; i <= frame_max; i++)
-				frames_notContainded_vec.push_back(i);
-			string s_output = "";
-			if (cluster_vecvec.size() > 0)
+			//output to string
+			vector<string> s_output_vec;
+
+			s_output_vec.push_back(s_folder_vec[j]);
+			for (int i = 0; i < parameter_vec.size(); i++)
+				s_output_vec.push_back(to_string(parameter_vec[i]));
+
+			//b_isProposed
+			s_output_vec.push_back(to_string((int)b_isProposed));
+
+			for (int i = 0; i < s_result_vecvec.size(); i++)
 			{
-				//cout << "frame_max:" << frame_max << endl;
-				for (int j = cluster_vecvec[0].size() - 1; j >= 0; j--)
-					frames_notContainded_vec.erase(frames_notContainded_vec.begin() + cluster_vecvec[0][j]);
+				if (i == 1) continue;
+				s_output_vec.push_back(s_result_vecvec[i][1]);
 			}
-			for (int j = 0; j < frames_notContainded_vec.size(); j++)
-				s_output += to_string(frames_notContainded_vec[j]) + " ";
-			vector<string> s_vec;
-			s_vec.push_back("frames_notContainded:");
-			s_vec.push_back(s_output);
-			s_output_vec.push_back(s_vec);
+
+			s_output_vecvec.push_back(s_output_vec);
+			cout << endl;
 		}
 
-		return s_output_vec;
+		//header
+		{
+			vector<string> s_output_vec;
+			s_output_vec.push_back("");
+			for (int j = 0; j < M_name_parameter_vec.size(); j++)
+				s_output_vec.push_back(M_name_parameter_vec[j]);
+			s_output_vec.push_back("b_isProposed");
+
+			for (int j = 0; j < s_evaluationNames_vec.size(); j++)
+				s_output_vec.push_back(s_evaluationNames_vec[j]);
+
+			//s_output_vec.push_back("num_allFramePairs");
+			//s_output_vec.push_back("num_succeededFramePairs");
+			//s_output_vec.push_back("succeededFramePairs");
+			//s_output_vec.push_back("biggestCluster");
+			//s_output_vec.push_back("size_biggestCluster");
+			//s_output_vec.push_back("second_biggestCluster");
+			//s_output_vec.push_back("frames_notContainded");
+			s_output_vecvec.insert(s_output_vecvec.begin(), s_output_vec);
+		}
+
+		//output
+		vector<vector<string>> s_output_vecvec_transposed;
+		s_output_vecvec_transposed = CTimeString::getTranspositionOfVecVec(s_output_vecvec);
+		CTimeString::getCSVFromVecVec(s_output_vecvec_transposed, dir_ + "/" + CTimeString::getTimeString() + "_comparison.csv");
+
 	}
 
 };

@@ -21,8 +21,9 @@ void CGlobalFeatureRegistration_test::mainProcess()
 		EN_PairEvaluation2,
 		EN_PairEvaluation3,
 		EN_VariParamaters_GlobalRegistration,
-		EN_EstimateSucceededFrames_GlobalRegistration,
-		EN_ICP_VariParamaters
+		EN_CompareGlobalRegistration,
+		EN_ICP_VariParamaters,
+		EN_CompareICP
 	};
 
 	while (!b_finish)
@@ -44,8 +45,9 @@ void CGlobalFeatureRegistration_test::mainProcess()
 		cout << " " << EN_PairEvaluation2 << ": PairEvaluation2" << endl;
 		cout << " " << EN_PairEvaluation3 << ": PairEvaluation3" << endl;
 		cout << " " << EN_VariParamaters_GlobalRegistration << ": VariParamaters_GlobalRegistration" << endl;
-		cout << " " << EN_EstimateSucceededFrames_GlobalRegistration << ": EstimateSucceededFrames_GlobalRegistration" << endl;
-		cout << " " << EN_ICP_VariParamaters << ": EN_ICP_VariParamaters" << endl;
+		cout << " " << EN_CompareGlobalRegistration << ": CompareGlobalRegistration" << endl;
+		cout << " " << EN_ICP_VariParamaters << ": ICP_VariParamaters" << endl;
+		cout << " " << EN_CompareICP << ": CompareICP" << endl;
 
 		cout << "WhichProcess: ";
 		cin >> WhichProcess;
@@ -119,13 +121,16 @@ void CGlobalFeatureRegistration_test::mainProcess()
 			variParamaters(dir_);
 			break;
 
-		case EN_EstimateSucceededFrames_GlobalRegistration:
-			estimateSucceededFrames(dir_ + "/Result_01varyParameters/_Estimation");
+		case EN_CompareGlobalRegistration:
+			compareGlobalRegistration(dir_ + "/Result_01varyParameters/_Comparison");
 			break;
 
 		case EN_ICP_VariParamaters:
 			align_ICP_fromGlobalRegistration_variParamaters(dir_);
 			break;
+
+		case EN_CompareICP:
+			compareICP(dir_ + "/Result_02_ICP_varyParameters/_Comparison");
 
 		default:
 			break;
@@ -2849,7 +2854,7 @@ void CGlobalFeatureRegistration_test::DoDifferential_PairEvaluation3(string dir_
 
 }
 
-void CGlobalFeatureRegistration_test::inputData(string dir_, bool b_useNir, bool b_useVelodyne, bool b_changeColor_nir,
+void CGlobalFeatureRegistration_test::inputData(string dir_, vector<float> parameter_oldFPFH_vec,  bool b_useNir, bool b_useVelodyne, bool b_changeColor_nir,
 	bool b_useFPFH, bool b_useProposed)
 {
 	M_cloud_vec.clear();
@@ -2859,7 +2864,7 @@ void CGlobalFeatureRegistration_test::inputData(string dir_, bool b_useNir, bool
 	M_fpfh_vec.clear();
 	M_transformation_vec.clear();
 	M_trajectory_true_vec.clear();
-	
+
 	//input true trajectory
 	{
 		string filename_true = "transformation_fin.csv";
@@ -3024,8 +3029,8 @@ void CGlobalFeatureRegistration_test::inputData(string dir_, bool b_useNir, bool
 	//vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> fpfh_vec;
 	if (b_useFPFH && b_useProposed)
 	{
-		float radius_normal_FPFH;
-		radius_normal_FPFH = 0.5;
+		float radius_normal_FPFH = parameter_oldFPFH_vec[1];
+		//radius_normal_FPFH = 0.5;
 		const pcl::search::KdTree<T_PointType>::Ptr kdtree_ne(new pcl::search::KdTree<T_PointType>);
 		const auto view_point_ne = T_PointType(0.0, 10.0, 10.0);
 		vector<pcl::PointCloud<pcl::Normal>::Ptr> normals_vec;
@@ -3040,7 +3045,8 @@ void CGlobalFeatureRegistration_test::inputData(string dir_, bool b_useNir, bool
 			ne->compute(*normals);
 			normals_vec.push_back(normals);
 		}
-		float radius_FPFH_center = 1.;
+		float radius_FPFH_center = parameter_oldFPFH_vec[2];;
+		//radius_FPFH_center = 1.;
 		//original
 		//index_valid_vecvec_FPFH = CFPFH_PCL::getFPFH_unique_someRadius(cloud_vec, normals_vec, radius_FPFH_center, true);
 		//output to file
@@ -3927,7 +3933,7 @@ void CGlobalFeatureRegistration_test::alignAllFrames(string dir_,
 
 	string t_start = CTimeString::getTimeString();
 
-	inputData(dir_, b_useNir, b_useVelodyne, b_changeColor_nir, b_useFPFH, b_useProposed);
+	inputData(dir_, parameter_oldFPFH_vec, b_useNir, b_useVelodyne, b_changeColor_nir, b_useFPFH, b_useProposed);
 
 	fillParameterToTXT(parameter_oldFPFH_vec, parameter_featureRegistration_vec);
 
@@ -3971,17 +3977,17 @@ void CGlobalFeatureRegistration_test::alignAllFrames(string dir_,
 			if (i_tgt == 3) b_JValid = true; if (i_src == 3) b_IValid = true;
 			if (i_tgt == 4) b_JValid = true; if (i_src == 4) b_IValid = true;
 			if (i_tgt == 5) b_JValid = true; if (i_src == 5) b_IValid = true;		//NIR
-			//if (i_tgt == 6) b_JValid = true; if (i_src == 6) b_IValid = true;		//NIR
-			//if (i_tgt == 7) b_JValid = true; if (i_src == 7) b_IValid = true;		//NIR
-			//if (i_tgt == 8) b_JValid = true; if (i_src == 8) b_IValid = true;		//NIR
-			//if (i_tgt == 9) b_JValid = true; if (i_src == 9) b_IValid = true;
-			//if (i_tgt == 10) b_JValid = true; if (i_src == 10) b_IValid = true;
-			//if (i_tgt == 11) b_JValid = true; if (i_src == 11) b_IValid = true;		//NIR
-			//if (i_tgt == 12) b_JValid = true; if (i_src == 12) b_IValid = true;		//NIR
-			//if (i_tgt == 13) b_JValid = true; if (i_src == 13) b_IValid = true;
-			//if (i_tgt == 14) b_JValid = true; if (i_src == 14) b_IValid = true;
-			//if (i_tgt == 15) b_JValid = true; if (i_src == 15) b_IValid = true;
-			//if (i_tgt == 16) b_JValid = true; if (i_src == 16) b_IValid = true;		//NIR
+			if (i_tgt == 6) b_JValid = true; if (i_src == 6) b_IValid = true;		//NIR
+			if (i_tgt == 7) b_JValid = true; if (i_src == 7) b_IValid = true;		//NIR
+			if (i_tgt == 8) b_JValid = true; if (i_src == 8) b_IValid = true;		//NIR
+			if (i_tgt == 9) b_JValid = true; if (i_src == 9) b_IValid = true;
+			if (i_tgt == 10) b_JValid = true; if (i_src == 10) b_IValid = true;
+			if (i_tgt == 11) b_JValid = true; if (i_src == 11) b_IValid = true;		//NIR
+			if (i_tgt == 12) b_JValid = true; if (i_src == 12) b_IValid = true;		//NIR
+			if (i_tgt == 13) b_JValid = true; if (i_src == 13) b_IValid = true;
+			if (i_tgt == 14) b_JValid = true; if (i_src == 14) b_IValid = true;
+			if (i_tgt == 15) b_JValid = true; if (i_src == 15) b_IValid = true;
+			if (i_tgt == 16) b_JValid = true; if (i_src == 16) b_IValid = true;		//NIR
 
 			////if (i_tgt == 0) b_JValid = true; if (i_src == 0) b_IValid = true;
 			////if (i_tgt == 1) b_JValid = true; if (i_src == 1) b_IValid = true;
@@ -4300,15 +4306,15 @@ void CGlobalFeatureRegistration_test::variParamaters(string dir_)
 		parameter_oldFPFH_vec.insert(parameter_oldFPFH_vec.end(), parameter_vec.begin(), parameter_vec.begin() + 9);	//0~8
 		parameter_featureRegistration_vec.insert(parameter_featureRegistration_vec.end(), parameter_vec.begin() + 9, parameter_vec.end());	//9~last
 		cout << "start pattern:" << j << endl;
-		alignAllFrames(dir_, parameter_oldFPFH_vec, parameter_featureRegistration_vec, 0);
-		//alignAllFrames(dir_, parameter_oldFPFH_vec, parameter_featureRegistration_vec, 1);
+		//alignAllFrames(dir_, parameter_oldFPFH_vec, parameter_featureRegistration_vec, 0);
+		alignAllFrames(dir_, parameter_oldFPFH_vec, parameter_featureRegistration_vec, 1);
 	}
 
 	cout << endl;
 
 }
 
-void CGlobalFeatureRegistration_test::estimateSucceededFrames(string dir_)
+void CGlobalFeatureRegistration_test::compareGlobalRegistration(string dir_)
 {
 	M_name_parameter_vec.clear();
 
@@ -4359,7 +4365,7 @@ void CGlobalFeatureRegistration_test::estimateSucceededFrames(string dir_)
 
 		//get information of result
 		vector<vector<string>> s_result_vecvec;
-		s_result_vecvec = CTimeString::getMatrixData_fromSpecificAreaOfMatrix(s_txt_vecvec, "Result", 2, "time_elapsed:", -2, 23);
+		s_result_vecvec = CTimeString::getMatrixData_fromSpecificAreaOfMatrix(s_txt_vecvec, "Result", 2, "time_elapsed:", -2, 0);
 
 		//estimation
 		vector<vector<int>> framePair_success_vecvec;
@@ -4372,8 +4378,8 @@ void CGlobalFeatureRegistration_test::estimateSucceededFrames(string dir_)
 			bool b_isConverged = (bool)(stoi(s_result_vecvec[i][12]));
 			float e_error_PointCloudDistance = stof(s_result_vecvec[i][18]);
 
-			//float th_successOfGlobalRegistration_distance = 6.;
-			float th_successOfGlobalRegistration_distance = 8.;
+			//float th_successOfGlobalRegistration_distance = 8.;
+			float th_successOfGlobalRegistration_distance = 1.5;
 			bool b_estimatedSuccess = false;
 			if (e_error_PointCloudDistance < th_successOfGlobalRegistration_distance && b_isConverged) b_estimatedSuccess = true;
 			if (b_estimatedSuccess)
@@ -4489,7 +4495,7 @@ void CGlobalFeatureRegistration_test::estimateSucceededFrames(string dir_)
 	//output
 	vector<vector<string>> s_output_vecvec_transposed;
 	s_output_vecvec_transposed = CTimeString::getTranspositionOfVecVec(s_output_vecvec);
-	CTimeString::getCSVFromVecVec(s_output_vecvec_transposed, dir_ + "/" + CTimeString::getTimeString() + "_estimation.csv");
+	CTimeString::getCSVFromVecVec(s_output_vecvec_transposed, dir_ + "/" + CTimeString::getTimeString() + "_comparison.csv");
 }
 
 void CGlobalFeatureRegistration_test::inputData_ICP(string dir_)
@@ -4939,6 +4945,125 @@ vector<vector<string>> CGlobalFeatureRegistration_test::DoEvaluation_ICP(string 
 	return s_output_vecvec;
 }
 
+vector<vector<string>> CGlobalFeatureRegistration_test::calcBiggestFrameCluster_ICP()
+{
+	vector<vector<string>> s_output_vec;
+	{
+		vector<string> s_vec;
+		s_output_vec.push_back(s_vec);
+	}
+
+	//estimation cluster
+	vector<vector<int>> framePair_success_vecvec;
+	for (int j = 0; j < M_initPos_vec.size(); j++)
+	{
+		if (!M_b_estimatedSuccess_vec[j]) continue;
+		vector<int> framePair_success_vec;
+		framePair_success_vec.push_back(M_initPos_vec[j].i_tgt);
+		framePair_success_vec.push_back(M_initPos_vec[j].i_src);
+		framePair_success_vecvec.push_back(framePair_success_vec);
+	}
+	//calc cluster size
+	vector<vector<int>> cluster_vecvec;
+	cluster_vecvec = CTimeString::getIntCluster_SomeToSome(framePair_success_vecvec);
+
+	//num_allFramePairs
+	int num_allFramePairs = M_initPos_vec.size();
+	{
+		vector<string> s_vec;
+		s_vec.push_back("num_allFramePairs:");
+		s_vec.push_back(to_string(num_allFramePairs));
+		s_output_vec.push_back(s_vec);
+	}
+
+	//num_succeededFramePairs
+	int num_succeededFramePairs = framePair_success_vecvec.size();
+	{
+		vector<string> s_vec;
+		s_vec.push_back("num_succeededFramePairs:");
+		s_vec.push_back(to_string(num_succeededFramePairs));
+		s_output_vec.push_back(s_vec);
+	}
+
+	//succeededFramePairs
+	{
+		string s_output = "";
+		for (int j = 0; j < framePair_success_vecvec.size(); j++)
+		{
+			s_output +=
+				to_string(framePair_success_vecvec[j][0]) + "-"
+				+ to_string(framePair_success_vecvec[j][1]) + " ";
+		}
+		vector<string> s_vec;
+		s_vec.push_back("succeededFramePairs:");
+		s_vec.push_back(s_output);
+		s_output_vec.push_back(s_vec);
+	}
+
+	//biggestCluster
+	{
+		string s_output = "";
+		vector<string> s_vec;
+		s_vec.push_back("biggestCluster:");
+		if (cluster_vecvec.size() > 0)
+		{
+			for (int j = 0; j < cluster_vecvec[0].size(); j++)
+				s_output += to_string(cluster_vecvec[0][j]) + " ";
+		}
+		s_vec.push_back(s_output);
+		s_output_vec.push_back(s_vec);
+	}
+
+	//size_biggestCluster
+	{
+		vector<string> s_vec;
+		s_vec.push_back("size_biggestCluster:");
+		if (cluster_vecvec.size() > 0)
+			s_vec.push_back(to_string(cluster_vecvec[0].size()));
+		s_output_vec.push_back(s_vec);
+
+	}
+
+	//second_biggestCluster
+	{
+		string s_output = "";
+		vector<string> s_vec;
+		s_vec.push_back("second_biggestCluster:");
+		if (cluster_vecvec.size() > 1)
+		{
+			for (int j = 0; j < cluster_vecvec[1].size(); j++)
+				s_output += to_string(cluster_vecvec[1][j]) + " ";
+		}
+		s_vec.push_back(s_output);
+		s_output_vec.push_back(s_vec);
+	}
+
+	//frames_notContainded
+	//need debug
+	{
+		int frame_max = M_cloud_vec.size() - 1;
+		vector<int> frames_notContainded_vec;
+		frames_notContainded_vec.clear();
+		for (int i = 0; i <= frame_max; i++)
+			frames_notContainded_vec.push_back(i);
+		string s_output = "";
+		if (cluster_vecvec.size() > 0)
+		{
+			//cout << "frame_max:" << frame_max << endl;
+			for (int j = cluster_vecvec[0].size() - 1; j >= 0; j--)
+				frames_notContainded_vec.erase(frames_notContainded_vec.begin() + cluster_vecvec[0][j]);
+		}
+		for (int j = 0; j < frames_notContainded_vec.size(); j++)
+			s_output += to_string(frames_notContainded_vec[j]) + " ";
+		vector<string> s_vec;
+		s_vec.push_back("frames_notContainded:");
+		s_vec.push_back(s_output);
+		s_output_vec.push_back(s_vec);
+	}
+
+	return s_output_vec;
+}
+
 void CGlobalFeatureRegistration_test::align_ICP_AllFrames(string dir_, string s_folder_arg, vector<float> parameter_vec)
 {
 	typedef pcl::PointXYZRGB T_PointType;
@@ -5098,7 +5223,19 @@ void CGlobalFeatureRegistration_test::align_ICP_AllFrames(string dir_, string s_
 	s_value_vecvec = DoEvaluation_ICP(dir_ + "/" + s_folder_output + "/" + s_newfoldername, th_successOfICP_distance, b_isProposed_arg, false);
 	M_s_output_vecvec.insert(M_s_output_vecvec.end(), s_value_vecvec.begin(), s_value_vecvec.end());
 
-	vector<vector<string>> s_cluster_vecvec = calcBiggestFrameCluster();
+	//th_successOfICP_distance
+	{
+		vector<string> s_vec;
+		M_s_output_vecvec.push_back(s_vec);
+	}
+	{
+		vector<string> s_vec;
+		s_vec.push_back("th_successOfICP_distance:");
+		s_vec.push_back(to_string(th_successOfICP_distance));
+		M_s_output_vecvec.push_back(s_vec);
+	}
+
+	vector<vector<string>> s_cluster_vecvec = calcBiggestFrameCluster_ICP();
 	M_s_output_vecvec.insert(M_s_output_vecvec.end(), s_cluster_vecvec.begin(), s_cluster_vecvec.end());
 
 	//M_s_output_vecvec <-(front) inputed file

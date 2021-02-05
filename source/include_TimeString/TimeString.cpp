@@ -1096,6 +1096,7 @@ vector<vector<string>> CTimeString::getMatrixData_fromSpecificAreaOfMatrix(vecto
 	{
 		bool b_calc = false;
 		vector<vector<string>> s_output_vecvec;
+		if (i_pos_start - i_pos_start_fromS < 0) i_pos_start = i_pos_start_fromS;
 		for (int j = i_pos_start; j < s_input_vecvec.size(); j++)
 		{
 			if (s_input_vecvec[j - i_pos_start_fromS][0] == s_start && !b_calc)	//start
@@ -1106,7 +1107,7 @@ vector<vector<string>> CTimeString::getMatrixData_fromSpecificAreaOfMatrix(vecto
 			if (!b_calc) continue;
 			s_output_vecvec.push_back(s_input_vecvec[j]);
 			if (i_pos_end_fromS > 0 && j == s_input_vecvec.size() - 1) break;
-			else if (s_input_vecvec[j - i_pos_end_fromS][0] == s_end) break;
+			else if (s_input_vecvec[j - i_pos_end_fromS][0] == s_end && b_calc) break;
 		}
 		if (!b_calc) cout << s_start << " not found." << endl;
 		return s_output_vecvec;
