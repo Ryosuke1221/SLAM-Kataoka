@@ -58,7 +58,7 @@ public:
 		bool b_useFPFH, bool b_useOldFPFH);
 	void DoOldFPFHRegistration(vector<pair<int, int>> index_pair_vec, vector<float> parameter_vec);
 	void DoFeatureRegistration(vector<pair<int, int>> index_pair_vec, vector<float> parameter_vec,
-		bool b_useNir, bool b_useVelodyne, bool b_useFPFH);
+		bool b_useNir, bool b_useVelodyne, bool b_useFPFH, vector<vector<bool>> b_ignore_vecvec);
 	void fillParameterToTXT(vector<float> parameter_oldFPFH_vec, vector<float> parameter_featureRegistration_vec);
 	vector<pair<int, int>> getFramePairVec(string dir_);
 	vector<vector<string>> DoEvaluation(string dir_save, vector<pair<int, int>> index_pair_vec, bool b_useProposed,
@@ -89,118 +89,7 @@ public:
 	vector<vector<string>> calcBiggestFrameCluster_ICP();
 	void align_ICP_AllFrames(string dir_, string s_folder_arg, vector<float> parameter_vec);
 	void align_ICP_fromGlobalRegistration_variParamaters(string dir_);
-	void compareICP(string dir_)
-	{
-		M_name_parameter_vec.clear();
-
-		bool b_isGotParameterName = false;
-		bool b_isProposed = false;
-
-		//read folder name
-		vector<string> s_folder_vec;
-		CTimeString::getFileNames_folder(dir_, s_folder_vec);
-		for (int j = s_folder_vec.size() - 1; j >= 0; j--)
-			if (s_folder_vec[j] == "_Ignore") s_folder_vec.erase(s_folder_vec.begin() + j);
-
-		bool b_isGotEvaluationNames = false;
-		vector<string> s_evaluationNames_vec;
-
-		vector<vector<string>> s_output_vecvec;
-		for (int j = 0; j < s_folder_vec.size(); j++)
-		{
-			int frame_max = 0;
-
-			//read text
-			vector<vector<string>> s_txt_vecvec;
-			{
-				vector<string> s_filename_vec;
-				CTimeString::getFileNames_extension(dir_ + "/" + s_folder_vec[j], s_filename_vec, ".csv");
-				if (s_filename_vec.size() == 0)
-				{
-					cout << "ERROR: No .csv found and continuing." << endl;
-					continue;
-				}
-				s_txt_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + s_folder_vec[j] + "/" + s_filename_vec[0]);
-				int i_find = s_filename_vec[0].find("conventional");
-				if (i_find == std::string::npos) b_isProposed = true;
-
-			}
-
-			//get information of parameter
-			vector<float> parameter_vec;
-			{
-				vector<vector<string>> s_vecvec_temp =
-					CTimeString::getMatrixData_fromSpecificAreaOfMatrix(s_txt_vecvec, "Parameter_ICP", 1, "Result_ICP", -2, 1);
-				for (int i = 0; i < s_vecvec_temp.size(); i++)
-				{
-					//if (i == 9) continue;
-					if (!b_isGotParameterName)
-						M_name_parameter_vec.push_back(s_vecvec_temp[i][0]);
-					parameter_vec.push_back(stof(s_vecvec_temp[i][4]));
-				}
-				if (M_name_parameter_vec.size() != 0) b_isGotParameterName = true;
-			}
-
-			//get information of result
-			vector<vector<string>> s_result_vecvec;
-			s_result_vecvec = CTimeString::getMatrixData_fromSpecificAreaOfMatrix(s_txt_vecvec, "th_successOfICP_distance:", 0, "frames_notContainded:", 0, 0);
-
-			if (!b_isGotEvaluationNames)
-			{
-				for (int i = 0; i < s_result_vecvec.size(); i++)
-				{
-					if (i == 1) continue;
-					s_evaluationNames_vec.push_back(s_result_vecvec[i][0]);
-				}
-				b_isGotEvaluationNames = true;
-			}
-
-			//output to string
-			vector<string> s_output_vec;
-
-			s_output_vec.push_back(s_folder_vec[j]);
-			for (int i = 0; i < parameter_vec.size(); i++)
-				s_output_vec.push_back(to_string(parameter_vec[i]));
-
-			//b_isProposed
-			s_output_vec.push_back(to_string((int)b_isProposed));
-
-			for (int i = 0; i < s_result_vecvec.size(); i++)
-			{
-				if (i == 1) continue;
-				s_output_vec.push_back(s_result_vecvec[i][1]);
-			}
-
-			s_output_vecvec.push_back(s_output_vec);
-			cout << endl;
-		}
-
-		//header
-		{
-			vector<string> s_output_vec;
-			s_output_vec.push_back("");
-			for (int j = 0; j < M_name_parameter_vec.size(); j++)
-				s_output_vec.push_back(M_name_parameter_vec[j]);
-			s_output_vec.push_back("b_isProposed");
-
-			for (int j = 0; j < s_evaluationNames_vec.size(); j++)
-				s_output_vec.push_back(s_evaluationNames_vec[j]);
-
-			//s_output_vec.push_back("num_allFramePairs");
-			//s_output_vec.push_back("num_succeededFramePairs");
-			//s_output_vec.push_back("succeededFramePairs");
-			//s_output_vec.push_back("biggestCluster");
-			//s_output_vec.push_back("size_biggestCluster");
-			//s_output_vec.push_back("second_biggestCluster");
-			//s_output_vec.push_back("frames_notContainded");
-			s_output_vecvec.insert(s_output_vecvec.begin(), s_output_vec);
-		}
-
-		//output
-		vector<vector<string>> s_output_vecvec_transposed;
-		s_output_vecvec_transposed = CTimeString::getTranspositionOfVecVec(s_output_vecvec);
-		CTimeString::getCSVFromVecVec(s_output_vecvec_transposed, dir_ + "/" + CTimeString::getTimeString() + "_comparison.csv");
-
-	}
+	void compareICP(string dir_);
+	vector<vector<bool>> calcMatrixOfRemovingFramePairs(string filename_);
 
 };

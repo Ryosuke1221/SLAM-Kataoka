@@ -3158,7 +3158,7 @@ void CGlobalFeatureRegistration_test::DoOldFPFHRegistration(vector<pair<int, int
 }
 
 void CGlobalFeatureRegistration_test::DoFeatureRegistration(vector<pair<int, int>> index_pair_vec, vector<float> parameter_vec, 
-	bool b_useNir, bool b_useVelodyne, bool b_useFPFH)
+	bool b_useNir, bool b_useVelodyne, bool b_useFPFH, vector<vector<bool>> b_ignore_vecvec)
 {
 	M_corrs_all_vecvec.clear();
 	M_evaluation_corr_vecvec_nir.clear();
@@ -3261,6 +3261,10 @@ void CGlobalFeatureRegistration_test::DoFeatureRegistration(vector<pair<int, int
 		if (b_useFPFH) corrs_temp.insert(corrs_temp.end(), M_corrs_fpfh_vec[j].begin(), M_corrs_fpfh_vec[j].end());
 		cout << "i_tgt:" << i_tgt;
 		cout << ", i_src:" << i_src << endl;
+
+		if (b_ignore_vecvec.size() != 0)
+			if (b_ignore_vecvec[i_tgt][i_src]) corrs_temp.clear();
+
 		if (b_useGeometricConstraints)
 			M_corrs_all_vecvec.push_back(CGlobalFeatureRegistration::determineCorrespondences_geometricConstraint(M_cloud_vec[i_src], M_cloud_vec[i_tgt], corrs_temp, th_geometricConstraint, true));
 		else
@@ -4129,11 +4133,13 @@ void CGlobalFeatureRegistration_test::alignAllFrames(string dir_,
 	//	b_useRigidTransformation = (bool)stoi(s_temp_vecvec[8][3]);
 	//}
 
+	vector<vector<bool>> b_ignore_vecvec;
+	b_ignore_vecvec = calcMatrixOfRemovingFramePairs(dir_ + "/matrix_ignore_ahead_new.csv");
 
 	if (!b_useProposed)
 		DoOldFPFHRegistration(index_pair_vec, parameter_oldFPFH_vec);
 	else
-		DoFeatureRegistration(index_pair_vec, parameter_featureRegistration_vec, b_useNir, b_useVelodyne, b_useFPFH);
+		DoFeatureRegistration(index_pair_vec, parameter_featureRegistration_vec, b_useNir, b_useVelodyne, b_useFPFH, b_ignore_vecvec);
 	cout << endl;
 	//result: M_transformation_vec
 
@@ -4379,7 +4385,8 @@ void CGlobalFeatureRegistration_test::compareGlobalRegistration(string dir_)
 			float e_error_PointCloudDistance = stof(s_result_vecvec[i][18]);
 
 			//float th_successOfGlobalRegistration_distance = 8.;
-			float th_successOfGlobalRegistration_distance = 1.5;
+			//float th_successOfGlobalRegistration_distance = 1.5;
+			float th_successOfGlobalRegistration_distance = 3.;
 			bool b_estimatedSuccess = false;
 			if (e_error_PointCloudDistance < th_successOfGlobalRegistration_distance && b_isConverged) b_estimatedSuccess = true;
 			if (b_estimatedSuccess)
@@ -5361,4 +5368,159 @@ void CGlobalFeatureRegistration_test::align_ICP_fromGlobalRegistration_variParam
 	}
 
 	cout << endl;
+}
+
+void CGlobalFeatureRegistration_test::compareICP(string dir_)
+{
+	M_name_parameter_vec.clear();
+
+	bool b_isGotParameterName = false;
+	bool b_isProposed = false;
+
+	//read folder name
+	vector<string> s_folder_vec;
+	CTimeString::getFileNames_folder(dir_, s_folder_vec);
+	for (int j = s_folder_vec.size() - 1; j >= 0; j--)
+		if (s_folder_vec[j] == "_Ignore") s_folder_vec.erase(s_folder_vec.begin() + j);
+
+	bool b_isGotEvaluationNames = false;
+	vector<string> s_evaluationNames_vec;
+
+	vector<vector<string>> s_output_vecvec;
+	for (int j = 0; j < s_folder_vec.size(); j++)
+	{
+		int frame_max = 0;
+
+		//read text
+		vector<vector<string>> s_txt_vecvec;
+		{
+			vector<string> s_filename_vec;
+			CTimeString::getFileNames_extension(dir_ + "/" + s_folder_vec[j], s_filename_vec, ".csv");
+			if (s_filename_vec.size() == 0)
+			{
+				cout << "ERROR: No .csv found and continuing." << endl;
+				continue;
+			}
+			s_txt_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/" + s_folder_vec[j] + "/" + s_filename_vec[0]);
+			int i_find = s_filename_vec[0].find("conventional");
+			if (i_find == std::string::npos) b_isProposed = true;
+
+		}
+
+		//get information of parameter
+		vector<float> parameter_vec;
+		{
+			vector<vector<string>> s_vecvec_temp =
+				CTimeString::getMatrixData_fromSpecificAreaOfMatrix(s_txt_vecvec, "Parameter_ICP", 1, "Result_ICP", -2, 1);
+			for (int i = 0; i < s_vecvec_temp.size(); i++)
+			{
+				//if (i == 9) continue;
+				if (!b_isGotParameterName)
+					M_name_parameter_vec.push_back(s_vecvec_temp[i][0]);
+				parameter_vec.push_back(stof(s_vecvec_temp[i][4]));
+			}
+			if (M_name_parameter_vec.size() != 0) b_isGotParameterName = true;
+		}
+
+		//get information of result
+		vector<vector<string>> s_result_vecvec;
+		s_result_vecvec = CTimeString::getMatrixData_fromSpecificAreaOfMatrix(s_txt_vecvec, "th_successOfICP_distance:", 0, "frames_notContainded:", 0, 0);
+
+		if (!b_isGotEvaluationNames)
+		{
+			for (int i = 0; i < s_result_vecvec.size(); i++)
+			{
+				if (i == 1) continue;
+				s_evaluationNames_vec.push_back(s_result_vecvec[i][0]);
+			}
+			b_isGotEvaluationNames = true;
+		}
+
+		//output to string
+		vector<string> s_output_vec;
+
+		s_output_vec.push_back(s_folder_vec[j]);
+		for (int i = 0; i < parameter_vec.size(); i++)
+			s_output_vec.push_back(to_string(parameter_vec[i]));
+
+		//b_isProposed
+		s_output_vec.push_back(to_string((int)b_isProposed));
+
+		for (int i = 0; i < s_result_vecvec.size(); i++)
+		{
+			if (i == 1) continue;
+			s_output_vec.push_back(s_result_vecvec[i][1]);
+		}
+
+		s_output_vecvec.push_back(s_output_vec);
+		cout << endl;
+	}
+
+	//header
+	{
+		vector<string> s_output_vec;
+		s_output_vec.push_back("");
+		for (int j = 0; j < M_name_parameter_vec.size(); j++)
+			s_output_vec.push_back(M_name_parameter_vec[j]);
+		s_output_vec.push_back("b_isProposed");
+
+		for (int j = 0; j < s_evaluationNames_vec.size(); j++)
+			s_output_vec.push_back(s_evaluationNames_vec[j]);
+		s_output_vecvec.insert(s_output_vecvec.begin(), s_output_vec);
+	}
+
+	//output
+	vector<vector<string>> s_output_vecvec_transposed;
+	s_output_vecvec_transposed = CTimeString::getTranspositionOfVecVec(s_output_vecvec);
+	CTimeString::getCSVFromVecVec(s_output_vecvec_transposed, dir_ + "/" + CTimeString::getTimeString() + "_comparison.csv");
+
+}
+
+vector<vector<bool>> CGlobalFeatureRegistration_test::calcMatrixOfRemovingFramePairs(string filename_)
+{
+	vector<vector<bool>> b_ignore_vecvec;
+	vector<vector<string>> s_matrix_vecvec;
+	//input from text
+	{
+		vector<vector<string>> s_matrix_vecvec_temp;
+		s_matrix_vecvec_temp = CTimeString::getVecVecFromCSV_string(filename_);
+		for (int j = 1; j < s_matrix_vecvec_temp.size(); j++)
+		{
+			vector<string> s_frame_vec;
+			for (int i = 1; i < s_matrix_vecvec_temp[j].size(); i++)
+			{
+				s_frame_vec.push_back(s_matrix_vecvec_temp[j][i]);
+			}
+			s_matrix_vecvec.push_back(s_frame_vec);
+		}
+	}
+
+	//init ignore and ahead
+	for (int j = 0; j < s_matrix_vecvec.size(); j++)
+	{
+		vector<bool> b_vecvec;
+		b_vecvec.resize(s_matrix_vecvec.size());
+		fill(b_vecvec.begin(), b_vecvec.end(), false);
+		b_ignore_vecvec.push_back(b_vecvec);
+	}
+
+	//extract from vecvec
+	for (int i_tgt = 0; i_tgt < s_matrix_vecvec.size(); i_tgt++)
+	{
+		for (int i_src = 0; i_src < s_matrix_vecvec.size(); i_src++)
+		{
+			string s_value = s_matrix_vecvec[i_tgt][i_src];
+			if (s_value.size() == 0 || s_value == "-")
+				continue;
+			else if (stoi(s_value) == -1)
+			{
+				b_ignore_vecvec[i_tgt][i_src] = true;
+				cout << "i_tgt:" << i_tgt << " i_src:" << i_src << "  ignored" << endl;
+
+			}
+		}
+	}
+	cout << endl;
+
+	return b_ignore_vecvec;
 }
