@@ -353,6 +353,7 @@ public:
 		{
 			//int found_neighs = kdtree_tgt->nearestKSearch(cloud_src->at(i), num_nearest, index, distance);
 			int found_neighs = kdtree_tgt->radiusSearch(cloud_src->at(j), th_value, index, distance);
+			if (index.size() == 0) continue;
 			pcl::Correspondence corr;
 			corr.index_query = j;
 			if (!b_multipleNear)

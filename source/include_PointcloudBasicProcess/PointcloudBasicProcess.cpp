@@ -673,7 +673,7 @@ void CPointcloudBasicProcess::DoMappingFromTrajectory(string dir_)
 	b_useGrid = true;
 
 	bool b_useTurnYaw = false;
-	//b_useTurnYaw = true;
+	b_useTurnYaw = true;
 
 	bool b_useWhiteCloud = false;
 	//b_useWhiteCloud = true;
@@ -752,8 +752,8 @@ void CPointcloudBasicProcess::DoMappingFromTrajectory(string dir_)
 				yaw_Mat = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., yaw_trans);
 				yaw_Mat = yaw_Mat * calcHomogeneousMatrixFromVector6d(trajectoryVector_);
 				trajectoryVector_ = calcVector6dFromHomogeneousMatrix(yaw_Mat);
-				if (stoi(s_temp_vecvec[j][7]) == 1) frames_all.push_back(-1);
-				else frames_all.push_back(j - 1);
+				//if (stoi(s_temp_vecvec[j][7]) == 1) frames_all.push_back(-1);
+				//else frames_all.push_back(j - 1);
 			}
 			trajectoryVector_vec.push_back(trajectoryVector_);
 		}

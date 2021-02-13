@@ -3196,9 +3196,9 @@ void CGlobalFeatureRegistration_test::DoFeatureRegistration(vector<pair<int, int
 	//else b_useFPFH = false;
 	//if (parameter_vec[0] == 1.) b_useGeometricConstraints = true;
 	//else b_useGeometricConstraints = false;
-	b_useNir = true;
-	b_useVelodyne = true;
-	b_useFPFH = true;
+	//b_useNir = true;
+	//b_useVelodyne = true;
+	//b_useFPFH = true;
 	b_useGeometricConstraints = true;
 
 	cout << "calc pairs" << endl;
@@ -3799,9 +3799,9 @@ vector<vector<string>> CGlobalFeatureRegistration_test::DoEvaluation(string dir_
 		}
 		else
 		{
-			corr_nir_size = M_corrs_nir_vec[j].size();
-			corr_velodyne_size = M_corrs_velodyne_vec[j].size();
-			corr_fpfh_size = M_corrs_fpfh_vec[j].size();
+			if (M_corrs_nir_vec.size() != 0) corr_nir_size = M_corrs_nir_vec[j].size();
+			if (M_corrs_velodyne_vec.size() != 0) corr_velodyne_size = M_corrs_velodyne_vec[j].size();
+			if (M_corrs_fpfh_vec.size() != 0) corr_fpfh_size = M_corrs_fpfh_vec[j].size();
 			corr_output_size = M_corrs_output_vec[j].size();
 			if (corr_nir_size == 0) b_usedNIR = false;
 			if (corr_velodyne_size == 0) b_usedVelodyne = false;
@@ -3923,9 +3923,9 @@ void CGlobalFeatureRegistration_test::alignAllFrames(string dir_,
 	bool b_useNir = false;
 	bool b_useVelodyne = false;
 	bool b_useFPFH = false;
-	b_useNir = true;
+	//b_useNir = true;
 	b_useVelodyne = true;
-	b_useFPFH = true;
+	//b_useFPFH = true;
 
 	b_changeColor_nir = true;
 
@@ -3979,19 +3979,19 @@ void CGlobalFeatureRegistration_test::alignAllFrames(string dir_,
 			if (i_tgt == 1) b_JValid = true; if (i_src == 1) b_IValid = true;
 			if (i_tgt == 2) b_JValid = true; if (i_src == 2) b_IValid = true;
 			if (i_tgt == 3) b_JValid = true; if (i_src == 3) b_IValid = true;
-			if (i_tgt == 4) b_JValid = true; if (i_src == 4) b_IValid = true;
-			if (i_tgt == 5) b_JValid = true; if (i_src == 5) b_IValid = true;		//NIR
-			if (i_tgt == 6) b_JValid = true; if (i_src == 6) b_IValid = true;		//NIR
-			if (i_tgt == 7) b_JValid = true; if (i_src == 7) b_IValid = true;		//NIR
-			if (i_tgt == 8) b_JValid = true; if (i_src == 8) b_IValid = true;		//NIR
-			if (i_tgt == 9) b_JValid = true; if (i_src == 9) b_IValid = true;
-			if (i_tgt == 10) b_JValid = true; if (i_src == 10) b_IValid = true;
-			if (i_tgt == 11) b_JValid = true; if (i_src == 11) b_IValid = true;		//NIR
-			if (i_tgt == 12) b_JValid = true; if (i_src == 12) b_IValid = true;		//NIR
-			if (i_tgt == 13) b_JValid = true; if (i_src == 13) b_IValid = true;
-			if (i_tgt == 14) b_JValid = true; if (i_src == 14) b_IValid = true;
-			if (i_tgt == 15) b_JValid = true; if (i_src == 15) b_IValid = true;
-			if (i_tgt == 16) b_JValid = true; if (i_src == 16) b_IValid = true;		//NIR
+			//if (i_tgt == 4) b_JValid = true; if (i_src == 4) b_IValid = true;
+			//if (i_tgt == 5) b_JValid = true; if (i_src == 5) b_IValid = true;		//NIR
+			//if (i_tgt == 6) b_JValid = true; if (i_src == 6) b_IValid = true;		//NIR
+			//if (i_tgt == 7) b_JValid = true; if (i_src == 7) b_IValid = true;		//NIR
+			//if (i_tgt == 8) b_JValid = true; if (i_src == 8) b_IValid = true;		//NIR
+			//if (i_tgt == 9) b_JValid = true; if (i_src == 9) b_IValid = true;
+			//if (i_tgt == 10) b_JValid = true; if (i_src == 10) b_IValid = true;
+			//if (i_tgt == 11) b_JValid = true; if (i_src == 11) b_IValid = true;		//NIR
+			//if (i_tgt == 12) b_JValid = true; if (i_src == 12) b_IValid = true;		//NIR
+			//if (i_tgt == 13) b_JValid = true; if (i_src == 13) b_IValid = true;
+			//if (i_tgt == 14) b_JValid = true; if (i_src == 14) b_IValid = true;
+			//if (i_tgt == 15) b_JValid = true; if (i_src == 15) b_IValid = true;
+			//if (i_tgt == 16) b_JValid = true; if (i_src == 16) b_IValid = true;		//NIR
 
 			////if (i_tgt == 0) b_JValid = true; if (i_src == 0) b_IValid = true;
 			////if (i_tgt == 1) b_JValid = true; if (i_src == 1) b_IValid = true;
@@ -4623,15 +4623,42 @@ void CGlobalFeatureRegistration_test::inputData_ICP_initPos(string dir_, bool b_
 		}
 	}
 
-	if (!b_calcOnlyBiggestCluster) return;
+	//	
+	cout << "before" << endl;
+	{
+		vector<vector<int>> value_vecvec_temp;
+		for (int j = 0; j < M_initPos_vec.size(); j++)
+		{
+			int i_tgt = M_initPos_vec[j].i_tgt;
+			int i_src = M_initPos_vec[j].i_src;
+			vector<int> pair;
+			pair.push_back(i_tgt);
+			pair.push_back(i_src);
+			cout << "i_tgt:" << i_tgt;
+			cout << ", i_src:" << i_src << endl;
+			value_vecvec_temp.push_back(pair);
 
-	vector<int> frames_all;
-	for (int j = 0; j < M_cloud_vec.size(); j++)
-		frames_all.push_back(j);
+		}
+		vector<vector<int>> value_vecvec_temp_cluster;
+		value_vecvec_temp_cluster = CTimeString::getIntCluster_SomeToSome(value_vecvec_temp);
+		//
+		for (int j = 0; j < value_vecvec_temp_cluster.size(); j++)
+		{
+			cout << "j:" << j << endl;
+			for (int i = 0; i < value_vecvec_temp_cluster[j].size(); i++)
+			{
+				cout << value_vecvec_temp_cluster[j][i] << " ";
+			}
+			cout << endl;
+		}
+	}
+	cout << endl;
+
+
+	if (!b_calcOnlyBiggestCluster) return;
 
 	//calc frames that should be deleted
 	vector<vector<int>> value_vecvec;
-
 	for (int j = 0; j < M_initPos_vec.size(); j++)
 	{
 		vector<int> value_vec;
@@ -4639,26 +4666,8 @@ void CGlobalFeatureRegistration_test::inputData_ICP_initPos(string dir_, bool b_
 		value_vec.push_back(M_initPos_vec[j].i_src);
 		value_vecvec.push_back(value_vec);
 	}
-	cout << "before" << endl;
-	for (int j = 0; j < value_vecvec.size(); j++)
-	{
-		cout << "j:" << j;
-		for (int i = 0; i < value_vecvec[j].size(); i++)
-			cout << " " << value_vecvec[j][i];
-		cout << endl;
-	}
-	cout << endl;
-
 	vector<vector<int>> value_vecvec_new;
 	value_vecvec_new = CTimeString::getIntCluster_SomeToSome(value_vecvec);
-	cout << "after" << endl;
-	for (int j = 0; j < value_vecvec_new.size(); j++)
-	{
-		for (int i = 0; i < value_vecvec_new[j].size(); i++)
-			cout << " " << value_vecvec_new[j][i];
-		cout << endl;
-	}
-	cout << endl;
 
 	//not contained to bigger cluster
 	vector<bool> b_frames_isInBiggerCluster_vec;
@@ -4668,30 +4677,44 @@ void CGlobalFeatureRegistration_test::inputData_ICP_initPos(string dir_, bool b_
 		b_frames_isInBiggerCluster_vec[value_vecvec_new[0][j]] = true;
 
 	for (int j = 0; j < b_frames_isInBiggerCluster_vec.size(); j++)
-		if (!b_frames_isInBiggerCluster_vec[j]) cout << "frame:" << j << "is not contained." << endl;
-
-	int index_new = 0;
-	for (int j = 0; j < M_cloud_vec.size(); j++)
-	{
-		if (b_frames_isInBiggerCluster_vec[j])
-		{
-			frames_all.push_back(index_new);
-			index_new++;
-		}
-		else frames_all.push_back(-1);
-	}
-
-	//cout << "show deleted frames(-1)" << endl;
-	//for (int i = 0; i < frames_all.size(); i++)
-	//	cout << "i:" << i << " " << frames_all[i] << endl;
-
-	//M_initPos_vec
+		if (!b_frames_isInBiggerCluster_vec[j]) cout << "frame:" << j << " is not contained." << endl;
 	for (int j = M_initPos_vec.size() - 1; j >= 0; j--)
 	{
 		if (b_frames_isInBiggerCluster_vec[M_initPos_vec[j].i_tgt]
 			&& b_frames_isInBiggerCluster_vec[M_initPos_vec[j].i_src]) continue;
 		M_initPos_vec.erase(M_initPos_vec.begin() + j);
 	}
+
+	//	
+	cout << "after" << endl;
+	{
+		vector<vector<int>> value_vecvec_temp;
+		for (int j = 0; j < M_initPos_vec.size(); j++)
+		{
+			int i_tgt = M_initPos_vec[j].i_tgt;
+			int i_src = M_initPos_vec[j].i_src;
+			vector<int> pair;
+			pair.push_back(i_tgt);
+			pair.push_back(i_src);
+			cout << "i_tgt:" << i_tgt;
+			cout << ", i_src:" << i_src << endl;
+			value_vecvec_temp.push_back(pair);
+
+		}
+		vector<vector<int>> value_vecvec_temp_cluster;
+		value_vecvec_temp_cluster = CTimeString::getIntCluster_SomeToSome(value_vecvec_temp);
+		//
+		for (int j = 0; j < value_vecvec_temp_cluster.size(); j++)
+		{
+			cout << "j:" << j << endl;
+			for (int i = 0; i < value_vecvec_temp_cluster[j].size(); i++)
+			{
+				cout << value_vecvec_temp_cluster[j][i] << " ";
+			}
+			cout << endl;
+		}
+	}
+	cout << endl;
 
 }
 

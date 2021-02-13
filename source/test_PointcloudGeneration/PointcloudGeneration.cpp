@@ -48,7 +48,6 @@ void CPointcloudGeneration::mainProcess()
 
 
 		cout << " " << EN_DoMappingFromTrajectory << ": DoMappingFromTrajectory" << endl;
-		cout << " " << EN_DoMappingFromTrajectory << ": DoMappingFromTrajectory" << endl;
 
 
 		cout << "WhichProcess: ";
@@ -288,7 +287,7 @@ void CPointcloudGeneration::PCDGeneration_fromPCD(string dir_)
 		for (int j = 0; j < filenames_.size(); j++)
 		{
 			pcl::PointCloud<T_PointType_input>::Ptr cloud_(new pcl::PointCloud<T_PointType_input>());
-			pcl::io::loadPCDFile(dir_ + "/" + filenames_[j], *cloud_);
+			pcl::io::loadPCDFile(dir_ + "/" + s_folder_input + "/" + filenames_[j], *cloud_);
 			cloud_->is_dense = true;
 			cloud_input_vec.push_back(cloud_);
 		}
@@ -323,12 +322,13 @@ void CPointcloudGeneration::PCDGeneration_fromPCD(string dir_)
 			vector<float> intensity_vec_all;
 			for (int j = 0; j < intensity_vecvec.size(); j++)
 			{
-				intensity_vec_all.insert(intensity_vec_all.end(), intensity_vecvec[j].begin(), intensity_vecvec[j].end());
-				vector<float> Quartile_vec = CTimeString::getMedian_Quartile(intensity_vec_all);
-				cout << " first_quartile:" << Quartile_vec[0];
-				cout << " median_:" << Quartile_vec[1];
-				cout << " third_quartile:" << Quartile_vec[1];
+				cout << "j:" << j << endl;
 			}
+			vector<float> Quartile_vec = CTimeString::getMedian_Quartile(intensity_vec_all);
+			cout << " first_quartile:" << Quartile_vec[0];
+			cout << " median_:" << Quartile_vec[1];
+			cout << " third_quartile:" << Quartile_vec[1] << endl;
+			cout << endl;
 		}
 
 		float th_max, th_min;
@@ -387,7 +387,7 @@ void CPointcloudGeneration::PCDGeneration_fromPCD(string dir_)
 
 	}
 
-	else if (i_method == EN_XYZRGB_fromXYZI)
+	else if (i_method == EN_XYZI_fromXYZRGB)
 	{
 		typedef typename pcl::PointXYZRGB T_PointType_input;
 		typedef typename pcl::PointXYZI T_PointType_output;
@@ -401,7 +401,7 @@ void CPointcloudGeneration::PCDGeneration_fromPCD(string dir_)
 		for (int j = 0; j < filenames_.size(); j++)
 		{
 			pcl::PointCloud<T_PointType_input>::Ptr cloud_(new pcl::PointCloud<T_PointType_input>());
-			pcl::io::loadPCDFile(dir_ + "/" + filenames_[j], *cloud_);
+			pcl::io::loadPCDFile(dir_ + "/" + s_folder_input + "/" + filenames_[j], *cloud_);
 			cloud_->is_dense = true;
 			cloud_input_vec.push_back(cloud_);
 		}
