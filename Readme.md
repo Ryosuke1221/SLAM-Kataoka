@@ -164,7 +164,9 @@ tgt00src01_result_00conventional.pcd
 となる。
 
 
+
 ### 1.2.3 実行手順
+
 
 - build/Project.slnをVisual Studioで開く。
 
@@ -285,26 +287,3 @@ tgt00src01_result_00conventional_ICP.pcd
 
 
 ### 1.2.3 実行準備
-
-所定の位置に、大域的位置合わせの実行結果の.csvを配置する。
-
-<!-- 途中xx -->
-
-### 1.3.4 実行手順
-
-- build/Project.slnをVisual Studioで開く。
-
-- test_03GlobalFeatureFegistraionをスタートアッププロジェクトに指定する。
-
-- デバッグなしで実行。<br>
-コマンドプロンプトが立ち上がる。
-
-- VariParamaters_GlobalRegistrationに該当する番号を入力してエンターを押す。<br>
-(本資料作成時では14。)
-
-- do you create new pattern?  Yes:1  No:0<br>
-計算したいパラメータの組み合わせを更新した場合のみYes(1)、更新が無ければNo(0)を選択する。<br>
-※data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\parameter_vecvec.csvの値を参照してdata\data_test_03GlobalFeatureRegistration\Result_01varyParameters\pattern_vecvec.csvが更新される。
-
-- press 1 and Enter if you have closed file<br>
-1を押してエンターを押すと計算が開始する。
