@@ -2896,7 +2896,7 @@ void CGlobalFeatureRegistration_test::inputData(string dir_, vector<float> param
 		int i_folder;
 		//cin >> i_folder;
 		i_folder = 2;
-		s_folder = filenames_folder[i_folder];
+		//s_folder = filenames_folder[i_folder];
 		s_folder = "03_all";
 	}
 
