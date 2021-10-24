@@ -49,6 +49,8 @@ SLAM-kataoka/
   ├data/
 ```
 
+## 1.x 点群の前処理
+
 
 ## 1.2 大域的位置合わせ
 - 属性付き点群、各フレーム間での大域的位置合わせ結果から、各フレーム間での局所的位置合わせ結果を出力する。
@@ -132,7 +134,7 @@ data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\
 | Roll | X軸方向の回転。 |
 | Pitch | X軸方向の回転。 |
 | Yaw | X軸方向の回転。 |
-| isConverged | 位置合わせが収束したかどうか。 |
+| isConverged | 位置合わせが収束したかどうか。<br>収束は1、失敗は0。 |
 | corr_nir_size | 近赤外情報の点対応算出時の点対応数。 |
 | corr_velodyne_size | Velodyne反射強度情報の点対応算出時の点対応数。 |
 | corr_fpfh_size | FPFH情報の点対応算出時の点対応数。 |
@@ -253,7 +255,7 @@ data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\
 | Roll | X軸方向の回転。 |
 | Pitch | X軸方向の回転。 |
 | Yaw | X軸方向の回転。 |
-| isConverged | 位置合わせが収束したかどうか。 |
+| isConverged | 位置合わせが収束したかどうか。<br>収束は1、失敗は0。 |
 | e_euqulid | 並進方向変位の真値とのエラー。 |
 | e_error_PointCloudDistance | 位置合わせ後の点の座標とのエラーの平均値。 |
 | e_error_PointCloudDistance_median | 位置合わせ後の点の座標とのエラーの中央値。 |
@@ -261,7 +263,7 @@ data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\
 | e_error_angle_normal | 回転方向の真値とのエラー(ロボットの方向ベクトルの角度誤差)。 |
 | mean_nearest | 位置合わせ後のターゲット点群とソース点群の近傍点距離の平均値。 |
 | median_nearest | 位置合わせ後のターゲット点群とソース点群の近傍点距離の中央値。 |
-| b_estimatedSuccess | 位置合わせの成否の推定値。 |
+| b_estimatedSuccess | 位置合わせの成否の推定値。<br>成功は1、失敗は0。 |
 | time_elapsed | 処理全体にかかった時間。 |
 
 
@@ -287,3 +289,28 @@ tgt00src01_result_00conventional_ICP.pcd
 
 
 ### 1.2.3 実行準備
+
+```
+data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\_input\
+```
+に、大域位置合わせの実行結果のフォルダを配置する。<br>
+
+
+### 1.3.4 実行手順
+
+- build/Project.slnをVisual Studioで開く。
+
+- test_03GlobalFeatureFegistraionをスタートアッププロジェクトに指定する。
+
+- デバッグなしで実行。<br>
+コマンドプロンプトが立ち上がる。
+
+- ICP_VariParamatersに該当する番号を入力してエンターを押す。<br>
+(本資料作成時では16。)
+
+- do you create new pattern?  Yes:1  No:0<br>
+計算したいパラメータの組み合わせを更新した場合のみYes(1)、更新が無ければNo(0)を選択する。<br>
+※data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\\_Input\parameter_vecvec.csvの値を参照してdata\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\\_Input\pattern_vecvec.csvが更新される。
+
+- press 1 and Enter if you have closed file<br>
+1を押してエンターを押すと計算が開始する。

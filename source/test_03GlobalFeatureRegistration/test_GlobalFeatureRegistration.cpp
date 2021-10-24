@@ -2897,7 +2897,7 @@ void CGlobalFeatureRegistration_test::inputData(string dir_, vector<float> param
 		//cin >> i_folder;
 		i_folder = 2;
 		s_folder = filenames_folder[i_folder];
-
+		s_folder = "03_all";
 	}
 
 	//input pointcloud
@@ -5178,6 +5178,8 @@ void CGlobalFeatureRegistration_test::align_ICP_AllFrames(string dir_, string s_
 		float penalty_chara, weight_dist_chara;
 		penalty_chara = parameter_vec[4];
 		weight_dist_chara = parameter_vec[5];
+
+		//b_isProposed_arg = false;//20210226
 
 		if (!b_isProposed_arg)
 		{
