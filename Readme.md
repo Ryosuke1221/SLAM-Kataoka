@@ -37,6 +37,7 @@ Click [reference_page3](https://cpp-learning.com/wp-content/uploads/2019/06/READ
 
 - ソース点群：ターゲット点群に対して位置合わせされる点群。
 
+- NIR：near infra-red、近赤外線
 
 # 1. SLAM-kataoka
 
@@ -49,14 +50,171 @@ SLAM-kataoka/
   ├data/
 ```
 
-## 1.x 点群の前処理
+## 1.2 点群の前処理
 
 
-## 1.2 大域的位置合わせ
+### 1.2.1 点群データの場所
+
+点群データは、
+```
+data\data_test_03GlobalFeatureRegistration\03_all
+```
+に配置する。<br>
+
+なお、
+```
+data\data_test_03GlobalFeatureRegistration\00_nir
+```
+には近赤外情報を計測したフレームのみの点群、<br>
+
+```
+data\data_test_03GlobalFeatureRegistration\01_velodyne
+```
+には近赤外情報を計測したフレーム以外の点群を保存している。<br>
+
+
+### 1.2.2 点群データの生成
+
+センサから得た点群データ(.csv)を、当プログラムを適用できる形(.pcd)に変換する。<br>
+
+#### 1.2.2.1 .csvから.pcd(途中1)を生成
+
+入力データの.csvは
+```
+data_test_PointcloudGeneration\03_PCDGeneration_fromCSV<br>
+/05_NarahaWinter202001\_01Generation
+```
+に配置する。<br>
+
+まず、Velodyneのみを計測に用いたフレームの点群の、velodyneデータを生成する。<br>
+
+- build/Project.slnをVisual Studioで開く。
+
+- test_PointcloudGenerationをスタートアッププロジェクトに指定する。
+
+- デバッグなしで実行。<br>
+コマンドプロンプトが立ち上がる。
+
+- NarahaWinter202001に該当する番号を入力してエンターを押す。<br>
+(本資料作成時では8。)
+
+- 0: PCDGenerationを選ぶ。<br>
+
+- 0: VELO_PCAPを選ぶ。<br>
+XXX (Frame 0000).csvが読み込まれ、.pcdが生成される。<br>
+生成された点群は、data_test_PointcloudGeneration\03_PCDGeneration_fromCSV<br>
+\05_NarahaWinter202001\\_01Generation時刻_Output_XYZI_VELO_PCAP
+に保存される。<br>
+
+続いて、VelodyneとNIRセンサを計測に用いたフレームの点群の、velodyneデータを生成する。
+
+- NarahaWinter202001に該当する番号を入力まで共通。
+
+- 0: PCDGenerationを選ぶ。<br>
+
+- 1: VELO_withNIRを選ぶ。<br>
+XXXvelo.csvが読み込まれ、.pcdが生成される。<br>
+生成された点群は、data_test_PointcloudGeneration\03_PCDGeneration_fromCSV<br>
+\05_NarahaWinter202001\\_01Generation時刻_Output_XYZI_VELO_withNIR
+に保存される。<br>
+
+続いて、VelodyneとNIRセンサを計測に用いたフレームの点群の、NIRデータを生成する。
+
+- NarahaWinter202001に該当する番号を入力まで共通。
+
+- 0: PCDGenerationを選ぶ。<br>
+
+- 2: NIRを選ぶ。<br>
+XXXnir.csvが読み込まれ、.pcdが生成される。
+生成された点群は、data_test_PointcloudGeneration\03_PCDGeneration_fromCSV<br>
+\05_NarahaWinter202001\\_01Generation時刻_Output_XYZI_NIR
+に保存される。<br>
+
+
+#### 1.2.2.2 .pcd(途中1)から.pcd(途中2)を生成
+
+入力データの.pcd(1.2.2.1で生成したもの)は
+```
+data_test_PointcloudGeneration\03_PCDGeneration_fromCSV<br>
+/05_NarahaWinter202001\_02Filtering
+```
+に配置する。<br>
+
+まず、velodyneデータから、位置合わせに不要な箇所の点群を除去する。
+
+- NarahaWinter202001に該当する番号を入力まで共通。
+
+- 1: Filteringを選ぶ。<br>
+
+- 0: FilteringVelodyneを選ぶ。<br>
+XXX (Frame 0000).pcdが読み込まれ、.pcd(途中2)が生成される。<br>
+生成された点群は、data_test_PointcloudGeneration\03_PCDGeneration_fromCSV<br>
+\05_NarahaWinter202001\\_02Filtering時刻_Output
+に保存される。<br>
+
+続いて、NIRデータから、位置合わせに不要な箇所の点群を除去する。
+
+- NarahaWinter202001に該当する番号を入力まで共通。
+
+- 1: Filteringを選ぶ。<br>
+
+- 1: FilteringNIRを選ぶ。<br>
+XXXvelo.pcdとXXXvnir.pcdが読み込まれ、.pcd(途中2)が生成される。<br>
+生成された点群は、data_test_PointcloudGeneration\03_PCDGeneration_fromCSV<br>
+\05_NarahaWinter202001\\_02Filtering時刻_Output
+に保存される。<br>
+
+
+#### 1.2.2.3 .pcd(途中2)から.pcd(完成)を生成
+
+入力データの.pcd(1.2.2.2で生成したもの)は
+```
+data_test_PointcloudGeneration\03_PCDGeneration_fromCSV<br>
+/05_NarahaWinter202001\_03Combination
+```
+に配置する。<br>
+
+まず、Velodyneのみを計測に用いたフレームの点群から、手法に適用できる形式の点群データを生成する。<br>
+
+- NarahaWinter202001に該当する番号を入力まで共通。
+
+- 2: Combination of Velodyne and NIRを選ぶ。<br>
+
+- 0: Combine Velodyne onlyを選ぶ。<br>
+XXX (Frame 0000).pcdとXXXvelo.pcdが読み込まれ、.pcd(完成)が生成される。<br>
+生成された点群は、data_test_PointcloudGeneration\03_PCDGeneration_fromCSV<br>
+\05_NarahaWinter202001\\_03Combination_Output
+に保存される。<br>
+
+- select delete them or not  1:yes  0:no<br>
+既に出力フォルダ内に別の.pcdが存在する場合にこの選択肢が出る。<br>
+yesを選択することでこれらを削除することができる。
+
+- Do you delete it realy?  yes:1  no:0<br>
+古い.pcdを削除して問題ないなら、yesを選択する。
+
+続いて、VelodyneとNIRセンサを計測に用いたフレームの点群から、手法に適用できる形式の点群データを生成する。<br>
+
+- NarahaWinter202001に該当する番号を入力まで共通。
+
+- 2: Combination of Velodyne and NIRを選ぶ。<br>
+
+- 1: Combine Velodyne and NIRを選ぶ。<br>
+XXX (Frame 0000).pcdとXXXvelo.pcdが読み込まれ、.pcd(完成)が生成される。
+生成された点群は、data_test_PointcloudGeneration\03_PCDGeneration_fromCSV<br>
+\05_NarahaWinter202001\\_03Combination_Output
+に保存される。<br>
+
+- select delete them or not  1:yes  0:no<br>
+既に出力フォルダ内に別の.pcdが存在する場合にこの選択肢が出る。<br>
+既にVelodyneのみを計測に用いたフレームのの点群を生成しているはずなので、noを選択する。
+
+
+## 1.3 大域的位置合わせ
 - 属性付き点群、各フレーム間での大域的位置合わせ結果から、各フレーム間での局所的位置合わせ結果を出力する。
 
 
-### 1.2.1 設定パラメータ
+### 1.3.1 設定パラメータ
 ```
 data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\parameter_vecvec.csv
 ```
@@ -103,7 +261,7 @@ data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\pattern_vecve
 ※一番上の行にてパラメータ名を指定している。
 
 
-### 1.2.2 出力形式
+### 1.3.2 出力形式
 ```
 data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\
 ```
@@ -113,7 +271,7 @@ data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\
 <br>
 
 
-#### 1.2.2.1 位置合わせ結果：変位情報
+#### 1.3.2.1 位置合わせ結果：変位情報
 
 位置合わせの変位は"時刻_手法_output.csv"というファイル名で出力される。<br>
 
@@ -146,7 +304,7 @@ data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\
 | e_error_angle_normal | 回転方向の真値とのエラー(ロボットの方向ベクトルの角度誤差)。 |
 | time_elapsed | 処理全体にかかった時間。 |
 
-#### 1.2.2.2 位置合わせ結果：点群データ
+#### 1.3.2.2 位置合わせ結果：点群データ
 
 出力された位置合わせ結果を2点群間に適用した後の点群を.pcd形式で出力する。<br>
 
@@ -166,9 +324,15 @@ tgt00src01_result_00conventional.pcd
 となる。
 
 
+### 1.3.3 実行準備
 
-### 1.2.3 実行手順
+- data_test_PointcloudGeneration\03_PCDGeneration_fromCSV<br>
+\05_NarahaWinter202001\\_03Combination_Output
+にある点群をdata\data_test_03GlobalFeatureRegistration\03_all
+に配置する。
 
+
+### 1.3.4 実行手順
 
 - build/Project.slnをVisual Studioで開く。
 
@@ -189,11 +353,12 @@ tgt00src01_result_00conventional.pcd
 <!-- 処理中の画面に関しても説明したい。xx -->
 
 
-## 1.3 局所的位置合わせ
+## 1.4 局所的位置合わせ
 
-- 属性付き点群、各フレーム間での大域的位置合わせ結果から、各フレーム間での局所的位置合わせ結果を出力する。
+- 属性付き点群、各フレーム間での大域的位置合わせ結果から、各フレーム間での局所的位置合わせ結果を出力する。<br>
+この手法はICPをベースにしている。
 
-### 1.3.1 設定パラメータ
+### 1.4.1 設定パラメータ
 
 ```
 data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\_Input\parameter_vecvec.csv
@@ -223,7 +388,7 @@ data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\_Input\p
 ↑このファイルにて、結果1つ分の計算に用いるパラメータの組み合わせを行ごとにまとめている。<br>
 
 
-### 1.3.2 出力形式
+### 1.4.2 出力形式
 
 ```
 data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\
@@ -234,7 +399,7 @@ data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\
 <br>
 
 
-#### 1.3.2.1 位置合わせ結果：変位情報
+#### 1.4.2.1 位置合わせ結果：変位情報
 
 位置合わせの変位は"時刻_手法_output.csv"というファイル名で出力される。<br>
 
@@ -267,7 +432,7 @@ data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\
 | time_elapsed | 処理全体にかかった時間。 |
 
 
-#### 1.3.2.2 位置合わせ結果：点群データ
+#### 1.4.2.2 位置合わせ結果：点群データ
 
 出力された位置合わせ結果を2点群間に適用した後の点群を.pcd形式で出力する。<br>
 
@@ -288,15 +453,17 @@ tgt00src01_result_00conventional_ICP.pcd
 となる。
 
 
-### 1.2.3 実行準備
+### 1.4.3 実行準備
 
 ```
 data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\_input\
 ```
 に、大域位置合わせの実行結果のフォルダを配置する。<br>
 
+フォルダ名の例：時刻_conventional
 
-### 1.3.4 実行手順
+
+### 1.4.4 実行手順
 
 - build/Project.slnをVisual Studioで開く。
 
