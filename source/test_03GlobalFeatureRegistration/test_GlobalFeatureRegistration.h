@@ -58,7 +58,7 @@ public:
 		bool b_useFPFH, bool b_useOldFPFH);
 	void DoOldFPFHRegistration(vector<pair<int, int>> index_pair_vec, vector<float> parameter_vec);
 	void DoFeatureRegistration(vector<pair<int, int>> index_pair_vec, vector<float> parameter_vec,
-		bool b_useNir, bool b_useVelodyne, bool b_useFPFH, vector<vector<bool>> b_ignore_vecvec);
+		bool b_useNir, bool b_useVelodyne, bool b_useFPFH);
 	void fillParameterToTXT(vector<float> parameter_oldFPFH_vec, vector<float> parameter_featureRegistration_vec);
 	vector<pair<int, int>> getFramePairVec(string dir_);
 	vector<vector<string>> DoEvaluation(string dir_save, vector<pair<int, int>> index_pair_vec, bool b_useProposed,

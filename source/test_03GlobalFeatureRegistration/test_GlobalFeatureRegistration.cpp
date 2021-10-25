@@ -3158,7 +3158,7 @@ void CGlobalFeatureRegistration_test::DoOldFPFHRegistration(vector<pair<int, int
 }
 
 void CGlobalFeatureRegistration_test::DoFeatureRegistration(vector<pair<int, int>> index_pair_vec, vector<float> parameter_vec, 
-	bool b_useNir, bool b_useVelodyne, bool b_useFPFH, vector<vector<bool>> b_ignore_vecvec)
+	bool b_useNir, bool b_useVelodyne, bool b_useFPFH)
 {
 	M_corrs_all_vecvec.clear();
 	M_evaluation_corr_vecvec_nir.clear();
@@ -3261,9 +3261,6 @@ void CGlobalFeatureRegistration_test::DoFeatureRegistration(vector<pair<int, int
 		if (b_useFPFH) corrs_temp.insert(corrs_temp.end(), M_corrs_fpfh_vec[j].begin(), M_corrs_fpfh_vec[j].end());
 		cout << "i_tgt:" << i_tgt;
 		cout << ", i_src:" << i_src << endl;
-
-		if (b_ignore_vecvec.size() != 0)
-			if (b_ignore_vecvec[i_tgt][i_src]) corrs_temp.clear();
 
 		if (b_useGeometricConstraints)
 			M_corrs_all_vecvec.push_back(CGlobalFeatureRegistration::determineCorrespondences_geometricConstraint(M_cloud_vec[i_src], M_cloud_vec[i_tgt], corrs_temp, th_geometricConstraint, true));
@@ -3951,107 +3948,30 @@ void CGlobalFeatureRegistration_test::alignAllFrames(string dir_,
 	cout << endl;
 
 	vector<pair<int, int>> index_pair_vec;
-
-	//vector<pair<int, int>> getFramePairVec(string dir_)
-	//index_pair_vec = getFramePairVec(dir_);
-
-	//{
-	//	int i_tgt = 5;
-	//	int i_src = 6;
-	//	index_pair_vec.push_back(make_pair(i_tgt, i_src));
-	//}
-	//{
-	//	int i_tgt = 5;
-	//	int i_src = 7;
-	//	index_pair_vec.push_back(make_pair(i_tgt, i_src));
-	//}
-	for (int j = 0; j < M_cloud_vec.size() - 1; j++)
 	{
-		for (int i = j + 1; i < M_cloud_vec.size(); i++)
+		string filename_ = dir_ + "/ignore_frame_list.csv";
 		{
-			int i_tgt = j;
-			int i_src = i;
+			vector<vector<double>> matrix_vecvec_temp;
+			matrix_vecvec_temp = CTimeString::getVecVecFromCSV(filename_);
 
-			bool b_JValid = false;
-			bool b_IValid = false;
+			if(matrix_vecvec_temp.size() != M_cloud_vec.size())
+				throw std::runtime_error("ERROR: ignore_framePair_matrix.csv has invald values.");
 
-			if (i_tgt == 0) b_JValid = true; if (i_src == 0) b_IValid = true;
-			if (i_tgt == 1) b_JValid = true; if (i_src == 1) b_IValid = true;
-			if (i_tgt == 2) b_JValid = true; if (i_src == 2) b_IValid = true;
-			if (i_tgt == 3) b_JValid = true; if (i_src == 3) b_IValid = true;
-			//if (i_tgt == 4) b_JValid = true; if (i_src == 4) b_IValid = true;
-			//if (i_tgt == 5) b_JValid = true; if (i_src == 5) b_IValid = true;		//NIR
-			//if (i_tgt == 6) b_JValid = true; if (i_src == 6) b_IValid = true;		//NIR
-			//if (i_tgt == 7) b_JValid = true; if (i_src == 7) b_IValid = true;		//NIR
-			//if (i_tgt == 8) b_JValid = true; if (i_src == 8) b_IValid = true;		//NIR
-			//if (i_tgt == 9) b_JValid = true; if (i_src == 9) b_IValid = true;
-			//if (i_tgt == 10) b_JValid = true; if (i_src == 10) b_IValid = true;
-			//if (i_tgt == 11) b_JValid = true; if (i_src == 11) b_IValid = true;		//NIR
-			//if (i_tgt == 12) b_JValid = true; if (i_src == 12) b_IValid = true;		//NIR
-			//if (i_tgt == 13) b_JValid = true; if (i_src == 13) b_IValid = true;
-			//if (i_tgt == 14) b_JValid = true; if (i_src == 14) b_IValid = true;
-			//if (i_tgt == 15) b_JValid = true; if (i_src == 15) b_IValid = true;
-			//if (i_tgt == 16) b_JValid = true; if (i_src == 16) b_IValid = true;		//NIR
-
-			////if (i_tgt == 0) b_JValid = true; if (i_src == 0) b_IValid = true;
-			////if (i_tgt == 1) b_JValid = true; if (i_src == 1) b_IValid = true;
-			////if (i_tgt == 2) b_JValid = true; if (i_src == 2) b_IValid = true;
-			////if (i_tgt == 3) b_JValid = true; if (i_src == 3) b_IValid = true;
-			////if (i_tgt == 4) b_JValid = true; if (i_src == 4) b_IValid = true;
-			//if (i_tgt == 5) b_JValid = true; if (i_src == 5) b_IValid = true;		//NIR
-			//if (i_tgt == 6) b_JValid = true; if (i_src == 6) b_IValid = true;		//NIR
-			//if (i_tgt == 7) b_JValid = true; if (i_src == 7) b_IValid = true;		//NIR
-			//if (i_tgt == 8) b_JValid = true; if (i_src == 8) b_IValid = true;		//NIR
-			////if (i_tgt == 9) b_JValid = true; if (i_src == 9) b_IValid = true;
-			////if (i_tgt == 10) b_JValid = true; if (i_src == 10) b_IValid = true;
-			//if (i_tgt == 11) b_JValid = true; if (i_src == 11) b_IValid = true;		//NIR
-			//if (i_tgt == 12) b_JValid = true; if (i_src == 12) b_IValid = true;		//NIR
-			////if (i_tgt == 13) b_JValid = true; if (i_src == 13) b_IValid = true;
-			////if (i_tgt == 14) b_JValid = true; if (i_src == 14) b_IValid = true;
-			////if (i_tgt == 15) b_JValid = true; if (i_src == 15) b_IValid = true;
-			//if (i_tgt == 16) b_JValid = true; if (i_src == 16) b_IValid = true;		//NIR
-
-			////if (i_tgt == 0) b_JValid = true; if (i_src == 0) b_IValid = true;
-			////if (i_tgt == 1) b_JValid = true; if (i_src == 1) b_IValid = true;
-			////if (i_tgt == 2) b_JValid = true; if (i_src == 2) b_IValid = true;
-			////if (i_tgt == 3) b_JValid = true; if (i_src == 3) b_IValid = true;
-			////if (i_tgt == 4) b_JValid = true; if (i_src == 4) b_IValid = true;
-			//if (i_tgt == 5) b_JValid = true; if (i_src == 5) b_IValid = true;		//NIR
-			//if (i_tgt == 6) b_JValid = true; if (i_src == 6) b_IValid = true;		//NIR
-			//if (i_tgt == 7) b_JValid = true; if (i_src == 7) b_IValid = true;		//NIR
-			////if (i_tgt == 8) b_JValid = true; if (i_src == 8) b_IValid = true;		//NIR
-			////if (i_tgt == 9) b_JValid = true; if (i_src == 9) b_IValid = true;
-			////if (i_tgt == 10) b_JValid = true; if (i_src == 10) b_IValid = true;
-			//if (i_tgt == 11) b_JValid = true; if (i_src == 11) b_IValid = true;		//NIR
-			////if (i_tgt == 12) b_JValid = true; if (i_src == 12) b_IValid = true;		//NIR
-			////if (i_tgt == 13) b_JValid = true; if (i_src == 13) b_IValid = true;
-			////if (i_tgt == 14) b_JValid = true; if (i_src == 14) b_IValid = true;
-			////if (i_tgt == 15) b_JValid = true; if (i_src == 15) b_IValid = true;
-			////if (i_tgt == 16) b_JValid = true; if (i_src == 16) b_IValid = true;		//NIR
-
-			//if (i_tgt == 0) b_JValid = true; if (i_src == 0) b_IValid = true;
-			////if (i_tgt == 1) b_JValid = true; if (i_src == 1) b_IValid = true;
-			////if (i_tgt == 2) b_JValid = true; if (i_src == 2) b_IValid = true;
-			////if (i_tgt == 3) b_JValid = true; if (i_src == 3) b_IValid = true;
-			////if (i_tgt == 4) b_JValid = true; if (i_src == 4) b_IValid = true;
-			//if (i_tgt == 5) b_JValid = true; if (i_src == 5) b_IValid = true;		//NIR
-			//if (i_tgt == 6) b_JValid = true; if (i_src == 6) b_IValid = true;		//NIR
-			//if (i_tgt == 7) b_JValid = true; if (i_src == 7) b_IValid = true;		//NIR
-			////if (i_tgt == 8) b_JValid = true; if (i_src == 8) b_IValid = true;		//NIR
-			////if (i_tgt == 9) b_JValid = true; if (i_src == 9) b_IValid = true;
-			////if (i_tgt == 10) b_JValid = true; if (i_src == 10) b_IValid = true;
-			////if (i_tgt == 11) b_JValid = true; if (i_src == 11) b_IValid = true;		//NIR
-			////if (i_tgt == 12) b_JValid = true; if (i_src == 12) b_IValid = true;		//NIR
-			////if (i_tgt == 13) b_JValid = true; if (i_src == 13) b_IValid = true;
-			////if (i_tgt == 14) b_JValid = true; if (i_src == 14) b_IValid = true;
-			////if (i_tgt == 15) b_JValid = true; if (i_src == 15) b_IValid = true;
-			////if (i_tgt == 16) b_JValid = true; if (i_src == 16) b_IValid = true;		//NIR
-
-			if (!b_JValid) continue;
-			if (!b_IValid) continue;
-
-			index_pair_vec.push_back(make_pair(i_tgt, i_src));
+			for (int j = 0; j < M_cloud_vec.size() - 1; j++)
+			{
+				for (int i = j + 1; i < M_cloud_vec.size(); i++)
+				{
+					bool b_JValid = false;
+					bool b_IValid = false;
+					if (matrix_vecvec_temp[j][1] != -1.) b_JValid = true;
+					if (matrix_vecvec_temp[i][1] != -1.) b_IValid = true;
+					if (!b_JValid) continue;
+					if (!b_IValid) continue;
+					index_pair_vec.push_back(make_pair(j, i));
+				}
+			}
 		}
+
 	}
 
 	cout << "index_pair_vec:" << endl;
@@ -4059,87 +3979,27 @@ void CGlobalFeatureRegistration_test::alignAllFrames(string dir_,
 		cout << "i_tgt:" << index_pair_vec[j].first << ", i_src:" << index_pair_vec[j].second << endl;
 	cout << endl;
 
-	//float th_nearest_nir;
-	//float th_rank_rate_nir;
-	//float th_nearest_velodyne;
-	//float th_rank_rate_velodyne;
-	//float th_nearest_fpfh;
-	//int num_nearest_fpfh;
-	//float th_rank_rate_fpfh;
-	//int i_method_rigidTransformation;
-	//float th_geometricConstraint;
-
-
-	//th_nearest_nir = 10.;
-	////th_rank_rate_nir = 0.5;
-	////th_rank_rate_nir = 1.;
-	//th_rank_rate_nir = 0.2;
-	////cout << "input th_nearest_nir:";
-	////cin >> th_nearest_nir;
-	//th_nearest_velodyne = 10.;
-	////th_rank_rate_velodyne = 0.5;
-	//th_rank_rate_velodyne = 1.;
-
-	//th_nearest_fpfh = 1800.;
-	//num_nearest_fpfh = 10;
-	////th_rank_rate_fpfh = 0.5;
-	//th_rank_rate_fpfh = 0.5;
-
-	//if (b_useParameterAdjustment)
-	//{
-	//	if (!b_first)
-	//	{
-	//		int aa;
-	//		cout << "input txt:";
-	//		cin >> aa;
-	//	}
-	//	b_first = false;
-	//	vector<vector<string>> s_temp_vecvec;
-	//	s_temp_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/parameter2.csv");
-	//	th_nearest_nir = stof(s_temp_vecvec[1][3]);
-	//	th_rank_rate_nir = stof(s_temp_vecvec[2][3]);
-	//	th_nearest_velodyne = stof(s_temp_vecvec[3][3]);
-	//	th_rank_rate_velodyne = stof(s_temp_vecvec[4][3]);
-	//	th_rank_rate_fpfh = stof(s_temp_vecvec[5][3]);
-	//	th_geometricConstraint = stof(s_temp_vecvec[6][3]);
-	//	i_method_rigidTransformation = stoi(s_temp_vecvec[7][3]);
-	//	b_useRigidTransformation = (bool)stoi(s_temp_vecvec[8][3]);
-	//}
-
-
-	//th_geometricConstraint = 0.8;
-
 	bool b_useGeometricConstraints = false;
 	b_useGeometricConstraints = true;
 
-	//if (b_useParameterAdjustment)
-	//{
-	//	if (!b_first)
-	//	{
-	//		int aa;
-	//		cout << "input txt:";
-	//		cin >> aa;
-	//	}
-	//	b_first = false;
-	//	vector<vector<string>> s_temp_vecvec;
-	//	s_temp_vecvec = CTimeString::getVecVecFromCSV_string(dir_ + "/parameter2.csv");
-	//	th_nearest_nir = stof(s_temp_vecvec[1][3]);
-	//	th_rank_rate_nir = stof(s_temp_vecvec[2][3]);
-	//	th_nearest_velodyne = stof(s_temp_vecvec[3][3]);
-	//	th_rank_rate_velodyne = stof(s_temp_vecvec[4][3]);
-	//	th_rank_rate_fpfh = stof(s_temp_vecvec[5][3]);
-	//	th_geometricConstraint = stof(s_temp_vecvec[6][3]);
-	//	i_method_rigidTransformation = stoi(s_temp_vecvec[7][3]);
-	//	b_useRigidTransformation = (bool)stoi(s_temp_vecvec[8][3]);
-	//}
-
 	vector<vector<bool>> b_ignore_vecvec;
-	b_ignore_vecvec = calcMatrixOfRemovingFramePairs(dir_ + "/matrix_ignore_framePair.csv");
+	b_ignore_vecvec = calcMatrixOfRemovingFramePairs(dir_ + "/ignore_framePair_matrix.csv");
+
+	for (int j = index_pair_vec.size() - 1; j >= 0; j--)
+	{
+		if (b_ignore_vecvec[index_pair_vec[j].first][index_pair_vec[j].second])
+			index_pair_vec.erase(index_pair_vec.begin() + j);
+	}
+
+	cout << "index_pair_vec:" << endl;
+	for (int j = 0; j < index_pair_vec.size(); j++)
+		cout << "i_tgt:" << index_pair_vec[j].first << ", i_src:" << index_pair_vec[j].second << endl;
+	cout << endl;
 
 	if (!b_useProposed)
 		DoOldFPFHRegistration(index_pair_vec, parameter_oldFPFH_vec);
 	else
-		DoFeatureRegistration(index_pair_vec, parameter_featureRegistration_vec, b_useNir, b_useVelodyne, b_useFPFH, b_ignore_vecvec);
+		DoFeatureRegistration(index_pair_vec, parameter_featureRegistration_vec, b_useNir, b_useVelodyne, b_useFPFH);
 	cout << endl;
 	//result: M_transformation_vec
 
