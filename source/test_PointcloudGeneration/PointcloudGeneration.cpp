@@ -108,50 +108,28 @@ void CPointcloudGeneration::FreeSpace(string dir_)
 	CTimeString::getFileNames_extension(dir_, filenames_, ".csv");
 	typedef typename pcl::PointXYZRGB T_PointType;
 	vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec;
-	int i_debug = 0;
 
 	for (int j = 0; j < filenames_.size(); j++)
 	{
-		i_debug = 0;
-
 		cout << "j:" << j << endl;
-
-		cout << "debug:" << i_debug++ << endl;
-
-		//vector<vector<string>> data_vec_vec_string;
-		//data_vec_vec_string = CTimeString::getVecVecFromCSV_string(dir_ + filenames_[j], "\t");
+		vector<vector<string>> data_vec_vec_string;
+		data_vec_vec_string = CTimeString::getVecVecFromCSV_string(dir_ + "/" + filenames_[j], " ");
 		vector<vector<double>> pc_vecvec;
-
-		pc_vecvec = CTimeString::getVecVecFromCSV(dir_ + "/" + filenames_[j]);
-		cout << "debug:" << i_debug++ << endl;
-
-		cout << "pc_vecvec.size():" << pc_vecvec.size() << endl;
-
-		//for (int i = 0; i < data_vec_vec_string.size(); i++)
-		//	cout << data_vec_vec_string[j][0] << data_vec_vec_string[j][1] << endl;
-		cout << "debug:" << i_debug++ << endl;
-
-		//for (int i = 0; i < data_vec_vec_string.size(); i++)
-		//{
-		//	vector<double> pc_vec;
-		//	pc_vec.push_back(stod(data_vec_vec_string[i][0]));
-		//	pc_vec.push_back(stod(data_vec_vec_string[i][1]));
-		//	pc_vec.push_back(stod(data_vec_vec_string[i][2]));
-		//	pc_vec.push_back(stod(data_vec_vec_string[i][3]));
-		//	pc_vec.push_back(stod(data_vec_vec_string[i][4]));
-		//	pc_vecvec.push_back(pc_vec);
-		//}
-		//cout << "debug:" << i_debug++ << endl;
+		for (int i = 0; i < data_vec_vec_string.size(); i++)
+		{
+			vector<double> pc_vec;
+			pc_vec.push_back(stod(data_vec_vec_string[i][0]));
+			pc_vec.push_back(stod(data_vec_vec_string[i][1]));
+			pc_vec.push_back(stod(data_vec_vec_string[i][2]));
+			pc_vec.push_back(stod(data_vec_vec_string[i][3]));
+			pc_vec.push_back(stod(data_vec_vec_string[i][4]));
+			pc_vecvec.push_back(pc_vec);
+		}
 
 		pcl::PointCloud<T_PointType>::Ptr cloud_(new pcl::PointCloud<T_PointType>());
 		cloud_->clear();
 		for (int i = 0; i < pc_vecvec.size(); i++)
 		{
-			//cout << "pc_vecvec[i].size():" << pc_vecvec[i].size() << endl;
-
-			//if (i == 2)
-			//	cout << "pc_vecvec[i].size():" << pc_vecvec[i].size() << endl;
-
 			T_PointType point_;
 			point_.x = pc_vecvec[i][0];
 			point_.y = pc_vecvec[i][1];
@@ -159,16 +137,12 @@ void CPointcloudGeneration::FreeSpace(string dir_)
 			point_.r = pc_vecvec[i][3];
 			point_.g = pc_vecvec[i][4];
 			point_.b = 0;
-
 			cloud_->push_back(point_);
 		}
 		cloud_->is_dense = true;
 		cout << "cloud_->size():" << cloud_->size() << endl;
 		cloud_vec.push_back(cloud_);
-
-		cout << "debug:" << i_debug++ << endl;
 		cout << endl;
-
 	}
 
 	if (cloud_vec.size() == 0)
@@ -184,9 +158,9 @@ void CPointcloudGeneration::FreeSpace(string dir_)
 	{
 		string s_name;
 		s_name = filenames_[j].substr(0, filenames_[j].size() - 4) + ".pcd";
+		cout << "saving cloud[" << j << "]..." << endl;
 		pcl::io::savePCDFile<T_PointType>(dir_ + "/" + s_foldername + "/" + s_name, *cloud_vec[j]);
 	}
-
 
 }
 
