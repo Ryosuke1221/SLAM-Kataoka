@@ -4134,7 +4134,7 @@ void CGlobalFeatureRegistration_test::alignAllFrames(string dir_,
 	//}
 
 	vector<vector<bool>> b_ignore_vecvec;
-	b_ignore_vecvec = calcMatrixOfRemovingFramePairs(dir_ + "/matrix_ignore_ahead_new.csv");
+	b_ignore_vecvec = calcMatrixOfRemovingFramePairs(dir_ + "/matrix_ignore_framePair.csv");
 
 	if (!b_useProposed)
 		DoOldFPFHRegistration(index_pair_vec, parameter_oldFPFH_vec);
