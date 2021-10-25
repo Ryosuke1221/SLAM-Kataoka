@@ -20,6 +20,7 @@ void CPointcloudGeneration::mainProcess()
 		EN_PCDGeneration_fromCSV,
 		EN_PCDGeneration_fromPCD,
 		EN_NarahaWinter202001,
+		EN_ThermalCloudGeneration,
 
 		EN_GetPcdFromCSV,
 		EN_FilterPointCloud,
@@ -27,7 +28,6 @@ void CPointcloudGeneration::mainProcess()
 		EN_CSV_FromPointCloud,
 		EN_Segmentation,
 		EN_DoOutlierRejector,
-
 	};
 
 	while (!b_finish)
@@ -44,11 +44,7 @@ void CPointcloudGeneration::mainProcess()
 		cout << " " << EN_PCDGeneration_fromCSV << ": PCDGeneration_fromCSV" << endl;
 		cout << " " << EN_PCDGeneration_fromPCD << ": PCDGeneration_fromPCD" << endl;
 		cout << " " << EN_NarahaWinter202001 << ": NarahaWinter202001" << endl;
-
-
-
-		cout << " " << EN_DoMappingFromTrajectory << ": DoMappingFromTrajectory" << endl;
-
+		cout << " " << EN_ThermalCloudGeneration << ": ThermalCloudGeneration" << endl;
 
 		cout << "WhichProcess: ";
 		cin >> WhichProcess;
@@ -65,7 +61,7 @@ void CPointcloudGeneration::mainProcess()
 			break;
 
 		case EN_FreeSpace:
-			CPointcloudGeneration::FreeSpace(dir_ + "/06_samo");
+			CPointcloudGeneration::FreeSpace();
 			break;
 
 		case EN_FileProcess:
@@ -96,72 +92,18 @@ void CPointcloudGeneration::mainProcess()
 		case EN_NarahaWinter202001:
 			NarahaWinter202001(dir_ + "/05_NarahaWinter202001");
 
+		case EN_ThermalCloudGeneration:
+			ThermalCloudGeneration(dir_ + "/06_thermal");
+
 		default:
 			break;
 		}
 	}
 }
 
-void CPointcloudGeneration::FreeSpace(string dir_)
+void CPointcloudGeneration::FreeSpace()
 {
-	vector<string> filenames_;
-	CTimeString::getFileNames_extension(dir_, filenames_, ".csv");
-	typedef typename pcl::PointXYZRGB T_PointType;
-	vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec;
-
-	for (int j = 0; j < filenames_.size(); j++)
-	{
-		cout << "j:" << j << endl;
-		vector<vector<string>> data_vec_vec_string;
-		data_vec_vec_string = CTimeString::getVecVecFromCSV_string(dir_ + "/" + filenames_[j], " ");
-		vector<vector<double>> pc_vecvec;
-		for (int i = 0; i < data_vec_vec_string.size(); i++)
-		{
-			vector<double> pc_vec;
-			pc_vec.push_back(stod(data_vec_vec_string[i][0]));
-			pc_vec.push_back(stod(data_vec_vec_string[i][1]));
-			pc_vec.push_back(stod(data_vec_vec_string[i][2]));
-			pc_vec.push_back(stod(data_vec_vec_string[i][3]));
-			pc_vec.push_back(stod(data_vec_vec_string[i][4]));
-			pc_vecvec.push_back(pc_vec);
-		}
-
-		pcl::PointCloud<T_PointType>::Ptr cloud_(new pcl::PointCloud<T_PointType>());
-		cloud_->clear();
-		for (int i = 0; i < pc_vecvec.size(); i++)
-		{
-			T_PointType point_;
-			point_.x = pc_vecvec[i][0];
-			point_.y = pc_vecvec[i][1];
-			point_.z = pc_vecvec[i][2];
-			point_.r = pc_vecvec[i][3];
-			point_.g = pc_vecvec[i][4];
-			point_.b = 0;
-			cloud_->push_back(point_);
-		}
-		cloud_->is_dense = true;
-		cout << "cloud_->size():" << cloud_->size() << endl;
-		cloud_vec.push_back(cloud_);
-		cout << endl;
-	}
-
-	if (cloud_vec.size() == 0)
-	{
-		cout << "ERROR: no file found." << endl;
-		throw std::runtime_error("ERROR: no file found.");
-	}
-
-	//save
-	string s_foldername = CTimeString::getTimeString() + "_Output_samo";
-	CTimeString::makenewfolder(dir_, s_foldername);
-	for (int j = 0; j < cloud_vec.size(); j++)
-	{
-		string s_name;
-		s_name = filenames_[j].substr(0, filenames_[j].size() - 4) + ".pcd";
-		cout << "saving cloud[" << j << "]..." << endl;
-		pcl::io::savePCDFile<T_PointType>(dir_ + "/" + s_foldername + "/" + s_name, *cloud_vec[j]);
-	}
-
+	
 }
 
 void CPointcloudGeneration::PCDGeneration_fromCSV(string dir_)
@@ -1178,5 +1120,67 @@ void CPointcloudGeneration::DoOutlierRejector()
 	}
 
 	pv.closeViewer();
+
+}
+
+void CPointcloudGeneration::ThermalCloudGeneration(string dir_)
+{
+	vector<string> filenames_;
+	CTimeString::getFileNames_extension(dir_, filenames_, ".csv");
+	typedef typename pcl::PointXYZRGB T_PointType;
+	vector<pcl::PointCloud<T_PointType>::Ptr> cloud_vec;
+
+	for (int j = 0; j < filenames_.size(); j++)
+	{
+		cout << "j:" << j << endl;
+		vector<vector<string>> data_vec_vec_string;
+		data_vec_vec_string = CTimeString::getVecVecFromCSV_string(dir_ + "/" + filenames_[j], " ");
+		vector<vector<double>> pc_vecvec;
+		for (int i = 0; i < data_vec_vec_string.size(); i++)
+		{
+			vector<double> pc_vec;
+			pc_vec.push_back(stod(data_vec_vec_string[i][0]));
+			pc_vec.push_back(stod(data_vec_vec_string[i][1]));
+			pc_vec.push_back(stod(data_vec_vec_string[i][2]));
+			pc_vec.push_back(stod(data_vec_vec_string[i][3]));
+			pc_vec.push_back(stod(data_vec_vec_string[i][4]));
+			pc_vecvec.push_back(pc_vec);
+		}
+
+		pcl::PointCloud<T_PointType>::Ptr cloud_(new pcl::PointCloud<T_PointType>());
+		cloud_->clear();
+		for (int i = 0; i < pc_vecvec.size(); i++)
+		{
+			T_PointType point_;
+			point_.x = pc_vecvec[i][0];
+			point_.y = pc_vecvec[i][1];
+			point_.z = pc_vecvec[i][2];
+			point_.r = pc_vecvec[i][3];
+			point_.g = pc_vecvec[i][4];
+			point_.b = 0;
+			cloud_->push_back(point_);
+		}
+		cloud_->is_dense = true;
+		cout << "cloud_->size():" << cloud_->size() << endl;
+		cloud_vec.push_back(cloud_);
+		cout << endl;
+	}
+
+	if (cloud_vec.size() == 0)
+	{
+		cout << "ERROR: no file found." << endl;
+		throw std::runtime_error("ERROR: no file found.");
+	}
+
+	//save
+	string s_foldername = CTimeString::getTimeString() + "_Output_samo";
+	CTimeString::makenewfolder(dir_, s_foldername);
+	for (int j = 0; j < cloud_vec.size(); j++)
+	{
+		string s_name;
+		s_name = filenames_[j].substr(0, filenames_[j].size() - 4) + ".pcd";
+		cout << "saving cloud[" << j << "]..." << endl;
+		pcl::io::savePCDFile<T_PointType>(dir_ + "/" + s_foldername + "/" + s_name, *cloud_vec[j]);
+	}
 
 }

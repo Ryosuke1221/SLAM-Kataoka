@@ -15,7 +15,7 @@ class CPointcloudGeneration : public CPointcloudBasicProcess
 {
 public:
 	void mainProcess();
-	void FreeSpace(string dir_);
+	void FreeSpace();
 private:
 
 	void PCDGeneration_fromCSV(string dir_);	//debug
@@ -171,5 +171,6 @@ private:
 
 	void DoOutlierRejector();
 
+	void ThermalCloudGeneration(string dir_);
 
 };
