@@ -12,7 +12,7 @@ public:
 private:
 	enum KEYNUM {
 		NONE,
-		ZERO,
+		LALT,
 		X_,
 		Y_,
 		Z_,
@@ -36,4 +36,5 @@ private:
 
 	void  HandRegistration(string dir_);
 
+	bool M_b_mode_minus;
 };

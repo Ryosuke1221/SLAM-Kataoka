@@ -134,6 +134,7 @@ void CHandRegistration::HandRegistration(string dir_)
 	bool b_first = true;
 	bool b_escaped = false;
 	bool b_break = false;
+	M_b_mode_minus = false;
 
 	vector<string> filenames_;
 	CTimeString::getFileNames_extension(dir_, filenames_, ".pcd");
@@ -352,12 +353,12 @@ void CHandRegistration::HandRegistration(string dir_)
 			HM_Trans_now = calcHomogeneousMatrixFromVector6d(0., 0., 0., 0., 0., -resolution_rotation)
 				* HM_Trans_now;
 		}
-		else if (key_ == ZERO)
+		else if (key_ == LALT)
 		{
 			HM_free = Eigen::Matrix4d::Identity();
 			for (int i = 0; i <= index_PC_now; i++) HM_free = HM_free * HM_displacement_vec[i];
 			HM_Trans_now = HM_free;
-			cout << "0(numpad) pressed and reset" << endl;
+			cout << "LAlt pressed and reset" << endl;
 		}
 		else if (key_ == ENTER)
 		{
@@ -390,75 +391,90 @@ void CHandRegistration::HandRegistration(string dir_)
 		}
 		else if (key_ == RCTRL)
 		{
-			Eigen::Vector6d Registration_Vec = Eigen::Vector6d::Zero();
-			//GetAsyncKeyState(VK_RETURN);
-			cout << endl;
-			cout << "Registration" << endl;
-			cout << "select additional option:" << endl;
-			cout << " 0:ICP" << endl;
-			cout << " 1:ICP(only X,Y,Yaw)" << endl;
-			cout << " 2:Global Registration" << endl;
-			cout << " 3:Global Registration(only X,Y,Yaw)" << endl;
-			cout << " 4:Configuration(ICP parameter)" << endl;
-			cout << " 5:Configuration(GR parameter)" << endl;
-			cout << "->";
-			int i_select;
-			cin.clear();
-			cin.ignore(1024, '\n');
-			cin >> i_select;
-			if (i_select == 0 || i_select == 1)
+			while (1)
 			{
-				pcl::IterativeClosestPoint<PointType_func, PointType_func> align_ICP;
-				pcl::PointCloud<PointType_func>::Ptr cloud_temp_align(new pcl::PointCloud<PointType_func>());
-				align_ICP.setMaximumIterations(MaximumIterations);
-				align_ICP.setMaxCorrespondenceDistance(MaxCorrespondenceDistance);
-				align_ICP.setEuclideanFitnessEpsilon(EuclideanFitnessEpsilon);
-				align_ICP.setTransformationEpsilon(TransformationEpsilon);
-				align_ICP.setInputSource(cloud_moving);
-				align_ICP.setInputTarget(cloud_before);
-				align_ICP.align(*cloud_temp_align);
-				Registration_Vec = calcVector6dFromHomogeneousMatrix(align_ICP.getFinalTransformation().cast<double>());
-				if (i_select == 0)
+				Eigen::Vector6d Registration_Vec = Eigen::Vector6d::Zero();
+				//GetAsyncKeyState(VK_RETURN);
+				cout << endl;
+				cout << "Registration" << endl;
+				cout << "select additional option:" << endl;
+				cout << " 0:ICP" << endl;
+				cout << " 1:ICP(only X,Y,Yaw)" << endl;
+				//cout << " 2:Global Registration" << endl;
+				//cout << " 3:Global Registration(only X,Y,Yaw)" << endl;
+				cout << " 2:Configuration(ICP parameter)" << endl;
+				//cout << " 5:Configuration(GR parameter)" << endl;
+				cout << " other(1 digit):Quit Registration" << endl;
+				cout << "->";
+
+				string s_select = "";
+				cin.clear();
+				cin.ignore(1024, '\n');
+				cin >> s_select;
+
+				if (s_select.size() != 1)
 				{
-					HM_Trans_now = calcHomogeneousMatrixFromVector6d(
-						Registration_Vec(0, 0), Registration_Vec(1, 0), Registration_Vec(2, 0),
-						Registration_Vec(3, 0), Registration_Vec(4, 0), Registration_Vec(5, 0))
-						* HM_Trans_now;
-					cout << "X:" << Registration_Vec(0, 0) << " Y:" << Registration_Vec(1, 0) << " Z:" << Registration_Vec(2, 0) << endl;
-					cout << "Roll:" << Registration_Vec(3, 0) << " Pitch:" << Registration_Vec(4, 0) << " Yaw:" << Registration_Vec(5, 0) << endl;
+					continue;
+				}
+				int i_select = stoi(s_select);
+
+				if (i_select == 0 || i_select == 1)
+				{
+					pcl::IterativeClosestPoint<PointType_func, PointType_func> align_ICP;
+					pcl::PointCloud<PointType_func>::Ptr cloud_temp_align(new pcl::PointCloud<PointType_func>());
+					align_ICP.setMaximumIterations(MaximumIterations);
+					align_ICP.setMaxCorrespondenceDistance(MaxCorrespondenceDistance);
+					align_ICP.setEuclideanFitnessEpsilon(EuclideanFitnessEpsilon);
+					align_ICP.setTransformationEpsilon(TransformationEpsilon);
+					align_ICP.setInputSource(cloud_moving);
+					align_ICP.setInputTarget(cloud_before);
+					align_ICP.align(*cloud_temp_align);
+					Registration_Vec = calcVector6dFromHomogeneousMatrix(align_ICP.getFinalTransformation().cast<double>());
+					if (i_select == 0)
+					{
+						HM_Trans_now = calcHomogeneousMatrixFromVector6d(
+							Registration_Vec(0, 0), Registration_Vec(1, 0), Registration_Vec(2, 0),
+							Registration_Vec(3, 0), Registration_Vec(4, 0), Registration_Vec(5, 0))
+							* HM_Trans_now;
+						cout << "X:" << Registration_Vec(0, 0) << " Y:" << Registration_Vec(1, 0) << " Z:" << Registration_Vec(2, 0) << endl;
+						cout << "Roll:" << Registration_Vec(3, 0) << " Pitch:" << Registration_Vec(4, 0) << " Yaw:" << Registration_Vec(5, 0) << endl;
+					}
+					else
+					{
+						HM_Trans_now = calcHomogeneousMatrixFromVector6d(
+							Registration_Vec(0, 0), Registration_Vec(1, 0), 0.,
+							0., 0., Registration_Vec(5, 0))
+							* HM_Trans_now;
+						cout << "X:" << Registration_Vec(0, 0) << " Y:" << Registration_Vec(1, 0) << " Yaw:" << Registration_Vec(5, 0) << endl;
+					}
+					break;
+				}
+				//else if (i_select == 2) {}
+				//else if (i_select == 3) {}
+				else if (i_select == 2)
+				{
+					cout << "input MaxCorrespondenceDistance (double)" << endl;
+					cout << "->";
+					cin >> MaxCorrespondenceDistance;
 				}
 				else
 				{
-					HM_Trans_now = calcHomogeneousMatrixFromVector6d(
-						Registration_Vec(0, 0), Registration_Vec(1, 0), 0.,
-						0., 0., Registration_Vec(5, 0))
-						* HM_Trans_now;
-					cout << "X:" << Registration_Vec(0, 0) << " Y:" << Registration_Vec(1, 0) << " Yaw:" << Registration_Vec(5, 0) << endl;
+					cout << "ERROR: cin cought invalid value" << endl;
+					break;
 				}
-			}
-			else if (i_select == 2) {}
-			else if (i_select == 3) {}
-			else if (i_select == 4)
-			{
-				cout << "input MaxCorrespondenceDistance (double)" << endl;
-				cout << "->";
-				cin >> MaxCorrespondenceDistance;
-			}
-			else
-			{
-				cout << "ERROR: cin cought invalid value" << endl;
+
 			}
 			GetAsyncKeyState(VK_RETURN);
 			cout << "registration finished." << endl;
 			cout << endl;
 			cout << "**********( key option )**********" << endl;
 			cout << " +X:1  +Y:2  +Z:3  +Roll:4  +Pitch:5  +Yaw:6" << endl;
-			cout << " -X:Q  -Y:W  -Z:E  -Roll:R  -Pitch:T  -Yaw:Y" << endl;
 			cout << "Resolution: translation:" << resolution_translation;
 			cout << "[m] rotation:" << resolution_rotation * R2D << "[deg]" << endl;
 			cout << "calc median: Left SHIFT" << endl;
 			cout << "Registration: Left CTRL" << endl;
-			cout << "Reset:0" << endl;
+			cout << "Reset:Left Alt" << endl;
+			cout << "Minus mode:-" << endl;
 			cout << "Next:ENTER" << endl;
 			cout << "Escape:ESC" << endl;
 			cout << "**********************************" << endl;
@@ -572,10 +588,10 @@ CHandRegistration::KEYNUM CHandRegistration::getKEYNUM()
 	short key_num_ROLL_minus;
 	short key_num_PITCH_minus;
 	short key_num_YAW_minus;
-	short key_num_ZERO;
+	short key_num_LALT;
 	short key_num_ENTER;
 	short key_num_ESC;
-	//short key_num_SUBTRACT;
+	short key_num_MINUS;
 	short key_num_RSHIFT;
 	short key_num_RCTRL;
 
@@ -585,18 +601,47 @@ CHandRegistration::KEYNUM CHandRegistration::getKEYNUM()
 	key_num_ROLL_ = GetAsyncKeyState(0x34);	//4
 	key_num_PITCH_ = GetAsyncKeyState(0x35);//5
 	key_num_YAW_ = GetAsyncKeyState(0x36);	//6
-	key_num_X_minus = GetAsyncKeyState(0x51);	//Q
-	key_num_Y_minus = GetAsyncKeyState(0x57);	//W
-	key_num_Z_minus = GetAsyncKeyState(0x45);	//E
 	key_num_ROLL_minus = GetAsyncKeyState(0x52);	//R
 	key_num_PITCH_minus = GetAsyncKeyState(0x54);//T
 	key_num_YAW_minus = GetAsyncKeyState(0x59);	//Y
-	key_num_ZERO = GetAsyncKeyState(0x30);	//0
+	key_num_LALT = GetAsyncKeyState(VK_LMENU);	//0
 	key_num_ENTER = GetAsyncKeyState(VK_RETURN);
 	key_num_ESC = GetAsyncKeyState(VK_ESCAPE);
-	//key_num_SUBTRACT = GetAsyncKeyState(VK_OEM_MINUS);
+	key_num_MINUS = GetAsyncKeyState(VK_OEM_MINUS);
 	key_num_RSHIFT = GetAsyncKeyState(VK_RSHIFT);
 	key_num_RCTRL = GetAsyncKeyState(VK_RCONTROL);
+
+	key_num_X_minus = 0;
+	key_num_Y_minus = 0;
+	key_num_Z_minus = 0;
+	if (M_b_mode_minus)
+	{
+		key_num_X_minus = key_num_X_;
+		key_num_Y_minus = key_num_Y_;
+		key_num_Z_minus = key_num_Z_;
+		key_num_ROLL_minus = key_num_ROLL_;
+		key_num_PITCH_minus = key_num_PITCH_;
+		key_num_YAW_minus = key_num_YAW_;
+		key_num_X_ = 0;
+		key_num_Y_ = 0;
+		key_num_Z_ = 0;
+		key_num_ROLL_ = 0;
+		key_num_PITCH_ = 0;
+		key_num_YAW_ = 0;
+		if ((key_num_MINUS & 1) == 1)
+		{
+			M_b_mode_minus = false;
+			cout << "end of minus_mode" << endl;
+		}
+	}
+	else
+	{
+		if ((key_num_MINUS & 1) == 1)
+		{
+			M_b_mode_minus = true;
+			cout << "changed to minus_mode" << endl;
+		}
+	}
 
 	if ((key_num_X_ & 1) == 1) key_ = X_;
 	else if ((key_num_Y_ & 1) == 1) key_ = Y_;
@@ -610,9 +655,8 @@ CHandRegistration::KEYNUM CHandRegistration::getKEYNUM()
 	else if ((key_num_ROLL_minus & 1) == 1) key_ = ROLL_MINUS;
 	else if ((key_num_PITCH_minus & 1) == 1) key_ = PITCH_MINUS;
 	else if ((key_num_YAW_minus & 1) == 1) key_ = YAW_MINUS;
-	else if ((key_num_ZERO & 1) == 1) key_ = ZERO;
+	else if ((key_num_LALT & 1) == 1) key_ = LALT;
 	else if ((key_num_ENTER & 1) == 1) key_ = ENTER;
-	//else if ((key_num_SUBTRACT & 1) == 1) key_ = SUBTRACT;
 	else if ((key_num_ESC & 1) == 1) key_ = ESC;
 	else if ((key_num_RSHIFT & 1) == 1) key_ = RSHIFT;
 	else if ((key_num_RCTRL & 1) == 1) key_ = RCTRL;
