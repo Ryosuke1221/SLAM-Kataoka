@@ -384,7 +384,7 @@ void CHandRegistration::HandRegistration(string dir_)
 			if (cloud_before->size() != 0 && cloud_moving->size() != 0)
 			{
 				cout << "median of this frame and before frame:";
-				cout << getMedianDistance(cloud_before, cloud_moving) << endl;
+				cout << getMedianDistanceVectorOfNearestPointCloud(cloud_before, cloud_moving) << endl;
 			}
 			else cout << "ERROR: couldn't show median because empty pointcloud" << endl;
 		}

@@ -15,7 +15,7 @@ class CPointcloudGeneration : public CPointcloudBasicProcess
 {
 public:
 	void mainProcess();
-	void FreeSpace();
+	void FreeSpace(string dir_);
 private:
 
 	void PCDGeneration_fromCSV(string dir_);	//debug
