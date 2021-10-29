@@ -244,12 +244,12 @@ void CHandRegistration::HandRegistration(string dir_)
 			cout << endl;
 			cout << "**********( key option )**********" << endl;
 			cout << " +X:1  +Y:2  +Z:3  +Roll:4  +Pitch:5  +Yaw:6" << endl;
-			cout << " -X:Q  -Y:W  -Z:E  -Roll:R  -Pitch:T  -Yaw:Y" << endl;
 			cout << "Resolution: translation:" << resolution_translation;
 			cout << "[m] rotation:" << resolution_rotation * R2D << "[deg]" << endl;
-			cout << "calc median: Right SHIFT" << endl;
-			cout << "Registration: Right CTRL" << endl;
-			cout << "Reset:0" << endl;
+			cout << "calc median: Left SHIFT" << endl;
+			cout << "Registration: Left CTRL" << endl;
+			cout << "Reset:Left Alt" << endl;
+			cout << "Minus mode:-" << endl;
 			cout << "Next:ENTER" << endl;
 			cout << "Escape:ESC" << endl;
 			cout << "**********************************" << endl;
