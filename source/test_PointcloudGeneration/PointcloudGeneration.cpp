@@ -94,12 +94,15 @@ void CPointcloudGeneration::mainProcess()
 
 		case EN_NarahaWinter202001:
 			NarahaWinter202001(dir_ + "/05_NarahaWinter202001");
+			break;
 
 		case EN_ThermalCloudGeneration:
 			ThermalCloudGeneration(dir_ + "/06_thermal");
+			break;
 
 		case EN_DoOutlierRejector:
 			DoOutlierRejector(dir_ + "/07_outlierRejector");
+			break;
 
 		default:
 			break;
@@ -117,12 +120,14 @@ void CPointcloudGeneration::PCDGeneration_fromCSV(string dir_)
 	enum
 	{
 		EN_XYZI_fromXYZ,
-		XYZI_fromXYZI,
-		EN_XYZRGB_fromXYZRGB
+		EN_XYZI_fromXYZI,
+		EN_XYZRGB_fromXYZRGB,
+		//EN_NarahaWinter202001,
+		//EN_ThermalCloudGeneration
 	};
 
 	cout << EN_XYZI_fromXYZ << ": XYZI from .csv(index, X, Y, Z)" << endl;
-	cout << XYZI_fromXYZI << ": XYZI .csv(index, X, Y, Z, Intensity)" << endl;
+	cout << EN_XYZI_fromXYZI << ": XYZI .csv(index, X, Y, Z, Intensity)" << endl;
 	cout << EN_XYZRGB_fromXYZRGB << ": XYZRGB from .csv(index, X, Y, Z, R, G, B)" << endl;
 	cout << "->";
 	
@@ -172,7 +177,7 @@ void CPointcloudGeneration::PCDGeneration_fromCSV(string dir_)
 		}
 	}
 
-	else if (i_method == XYZI_fromXYZI)
+	else if (i_method == EN_XYZI_fromXYZI)
 	{
 		typedef typename pcl::PointXYZI T_PointType;
 
@@ -261,6 +266,12 @@ void CPointcloudGeneration::PCDGeneration_fromCSV(string dir_)
 		}
 
 	}
+
+	else if (i_method == EN_XYZRGB_fromXYZRGB)
+	{	
+		
+	}
+
 }
 
 void CPointcloudGeneration::PCDGeneration_fromPCD(string dir_)
@@ -1381,7 +1392,7 @@ void CPointcloudGeneration::ThermalCloudGeneration(string dir_)
 			point_.z = pc_vecvec[i][2];
 			point_.r = pc_vecvec[i][3];
 			point_.g = pc_vecvec[i][4];
-			point_.b = 0;
+			point_.b = 255;
 			cloud_->push_back(point_);
 		}
 		cloud_->is_dense = true;
