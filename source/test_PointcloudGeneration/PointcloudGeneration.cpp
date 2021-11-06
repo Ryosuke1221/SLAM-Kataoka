@@ -322,6 +322,7 @@ void CPointcloudGeneration::PCDGeneration_fromPCD(string dir_)
 			for (int j = 0; j < intensity_vecvec.size(); j++)
 			{
 				cout << "j:" << j << endl;
+				intensity_vec_all.insert(intensity_vec_all.end(), intensity_vecvec[j].begin(), intensity_vecvec[j].end());
 			}
 			vector<float> Quartile_vec = CTimeString::getMedian_Quartile(intensity_vec_all);
 			cout << " first_quartile:" << Quartile_vec[0];
@@ -333,7 +334,7 @@ void CPointcloudGeneration::PCDGeneration_fromPCD(string dir_)
 		float th_max, th_min;
 		th_max = value_max;
 		th_min = value_min;
-		th_max = 180.;
+		//th_max = 180.;//naraha winter?
 
 		//change
 		cout << endl;

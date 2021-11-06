@@ -266,6 +266,12 @@ public:
 	{
 		//return: first_quartile, median_, third_quartile
 
+		if (value_vec.size() == 0)
+		{
+			cout << "ERROR at CTimeString::getMedian_Quartile: No input found." << endl;
+			throw std::runtime_error("ERROR at CTimeString::getMedian_Quartile: No input found.");
+		}
+
 		//https://atarimae.biz/archives/19162
 		sortVector(value_vec);
 		int size = value_vec.size();
