@@ -101,7 +101,6 @@ void CPointcloudGeneration::mainProcess()
 		case EN_DoOutlierRejector:
 			DoOutlierRejector(dir_ + "/07_outlierRejector");
 
-
 		default:
 			break;
 		}
@@ -1036,8 +1035,23 @@ void CPointcloudGeneration::DoSegmentation()
 	pv.closeViewer();
 }
 
-void CPointcloudGeneration::DoOutlierRejector_clustering(string dir_)
+void CPointcloudGeneration::DoOutlierRejector_ground(string dir_)
 {
+	bool b_usePlaneDetection = false;
+	cout << "use PlaneDetection  yes:1 no:0" << endl;
+	cout << "->";
+	cin >> b_usePlaneDetection;
+
+	double th_height;
+	//th_height = -0.1;	//naraha summer
+	th_height = -0.4;//thermal
+
+	if (!b_usePlaneDetection)
+	{
+		cout << "th_height ->";
+		cin >> th_height;
+	}
+	
 	string s_folder;
 	{
 		vector<string> s_folder_vec;
@@ -1088,15 +1102,156 @@ void CPointcloudGeneration::DoOutlierRejector_clustering(string dir_)
 	pcl::PointCloud<PointType_func>::Ptr cloud_(new pcl::PointCloud<PointType_func>());
 	pcl::PointCloud<PointType_func>::Ptr cloud_temp(new pcl::PointCloud<PointType_func>());
 
+	int index_ = 0;
+	cout << "Press space to next" << endl;
+	while (1)
+	{
+		//short key_num = GetAsyncKeyState(VK_SPACE);
+		if ((GetAsyncKeyState(VK_SPACE) & 1) == 1)
+		{
+			if (index_ >= 2 * (filenames_.size()))
+			{
+				cout << "index over" << endl;
+				break;
+			}
+
+			if (index_ % 2 == 0)
+			{
+				int index_temp = (int)(index_ / 2);
+				//read file
+				cout << "index_: " << index_temp << endl;
+				pcl::io::loadPCDFile(dir_ + "/" + s_folder + "/" + filenames_[index_temp], *cloud_);
+				cout << "showing:" << filenames_[index_temp] << " size:" << cloud_->size() << endl;
+			}
+			else
+			{
+				if (cloud_->size() == 0)
+					cout << "no pointcloud found" << endl;
+
+				if (b_usePlaneDetection)
+					detectPlane<PointType_func>(*cloud_, 0.05, true, true);
+
+				else
+				{
+					cloud_temp->clear();
+					pcl::copyPointCloud(*cloud_, *cloud_temp);
+					cloud_->clear();
+					for (size_t i = 0; i < cloud_temp->size(); i++)
+					{
+						if (th_height > cloud_temp->points[i].z) continue;
+						cloud_->push_back(cloud_temp->points[i]);
+					}
+				}
+
+				//save to vector
+				pcl::PointCloud<PointType_func>::Ptr cloud_filtered(new pcl::PointCloud<PointType_func>());
+				cloud_filtered->clear();
+				pcl::copyPointCloud(*cloud_, *cloud_filtered);
+				cloud_->is_dense = true;
+				cout << "cloud_filtered->size():" << cloud_filtered->size() << endl;
+				cloud_filtered_vec.push_back(cloud_filtered);
+			}
+			pv.setPointCloud(cloud_, filenames_[(int)(index_ / 2)]);
+			index_++;
+		}
+
+		//escape
+		//short key_num_esc = GetAsyncKeyState(VK_ESCAPE);
+		if ((GetAsyncKeyState(VK_ESCAPE) & 1) == 1) {
+			cout << "toggled!" << endl;
+			break;
+		}
+		pv.updateViewer();
+	}
+
+	pv.closeViewer();
+
+	//output point clouds
+	bool b_save;
+	cout << "Do you save filterd pointcloud ?  Yes:1 No:0" << endl;
+	cout << "->";
+	cin >> b_save;
+	if (b_save)
+	{
+		string s_foldername = CTimeString::getTimeString() + "_outlierFiltered";
+		CTimeString::makenewfolder(dir_, s_foldername);
+		for (int j = 0; j < cloud_filtered_vec.size(); j++)
+		{
+			string s_name;
+			s_name = filenames_[j].substr(0, filenames_[j].size() - 4) + ".pcd";
+			cout << "saving cloud[" << j << "]..." << endl;
+			pcl::io::savePCDFile<PointType_func>(dir_ + "/" + s_foldername + "/" + s_name, *cloud_filtered_vec[j]);
+		}
+		cout << "file has saved!" << endl;
+	}
+	else cout << "file did not saved!" << endl;
+
+}
+
+void CPointcloudGeneration::DoOutlierRejector_clustering(string dir_)
+{
+	string s_folder;
+	{
+		vector<string> s_folder_vec;
+		CTimeString::getFileNames_folder(dir_, s_folder_vec);
+
+		if (s_folder_vec.size() == 0)
+		{
+			cout << "ERROR: No PointCloud folder found." << endl;
+			return;
+		}
+
+		for (int i = 0; i < s_folder_vec.size(); i++)
+		{
+			string s_i = to_string(i);
+			if (s_i.size() < 2) s_i = " " + s_i;
+			cout << "i:" << s_i << " " << s_folder_vec[i] << endl;
+		}
+		cout << "select folder of input point cloud" << endl;
+		cout << "->";
+		int i_folder;
+		cin >> i_folder;
+		s_folder = s_folder_vec[i_folder];
+	}
+
 	//parameter of outlier rejector
-	float Tolerance_out;
-	int MinClusterSize_out;
-	Tolerance_out = 1.;
-	MinClusterSize_out = 100;
+	//float Tolerance_out;
+	//int MinClusterSize_out;
+	//Tolerance_out = 1.;
+	//MinClusterSize_out = 100;
 	int Meank_out;
 	float StddevMulThresh_out;
 	Meank_out = 50;
-	StddevMulThresh_out = 0.1;
+	//StddevMulThresh_out = 0.1;//naraha?
+	StddevMulThresh_out = 1;
+	cout << "StddevMulThresh_out ->";
+	cin >> StddevMulThresh_out;
+
+	//typedef typename pcl::PointXYZI PointType_func;
+	typedef typename pcl::PointXYZRGB PointType_func;
+
+	CPointVisualization<PointType_func> pv;
+	if (typeid(PointType_func) == typeid(pcl::PointXYZI))
+		pv.setWindowName("show XYZI");
+	else if (typeid(PointType_func) == typeid(pcl::PointXYZRGB))
+		pv.setWindowName("show XYZRGB");
+	else
+		throw std::runtime_error("This PointType is unsupported.");
+
+	vector<string> filenames_;
+	CTimeString::getFileNames_extension(dir_ + "/" + s_folder, filenames_, ".pcd");
+	cout << "file size: " << filenames_.size() << endl;
+
+	if (filenames_.size() == 0)
+	{
+		cout << "ERROR: no file found" << endl;
+		return;
+	}
+
+	vector< pcl::PointCloud<PointType_func>::Ptr> cloud_filtered_vec;
+
+	pcl::PointCloud<PointType_func>::Ptr cloud_(new pcl::PointCloud<PointType_func>());
+	pcl::PointCloud<PointType_func>::Ptr cloud_temp(new pcl::PointCloud<PointType_func>());
 
 	int index_ = 0;
 	cout << "Press space to next" << endl;
@@ -1172,17 +1327,6 @@ void CPointcloudGeneration::DoOutlierRejector_clustering(string dir_)
 void CPointcloudGeneration::DoOutlierRejector(string dir_)
 {
 	
-	//dir_ = "../../data";
-	//vector<string> dir_folder_vec;
-	//FileProcess_FolderInFolder(dir_, dir_folder_vec);
-
-	//int i_select;
-	//cout << "select folder (index) ->";
-	//cin >> i_select;
-	//cout << i_select << "(" << dir_folder_vec[i_select] << ")" << endl;
-	//dir_ = dir_ + "/" + dir_folder_vec[i_select];
-	//cout << endl;
-
 	enum
 	{
 		EN_GROUND,
