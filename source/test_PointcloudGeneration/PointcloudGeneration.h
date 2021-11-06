@@ -169,7 +169,37 @@ private:
 
 	void DoSegmentation();
 
-	void DoOutlierRejector();
+	void DoOutlierRejector_ground(string dir_)
+	{
+		//bool b_RemoveGround = true;
+		//b_RemoveGround = false;
+		//double th_height;
+		////th_height = -0.1;	//naraha summer
+		////th_height = -0.25;
+
+		//if (b_RemoveGround)
+		//{
+		//	cloud_temp->clear();
+		//	pcl::copyPointCloud(*cloud_moving_init, *cloud_temp);
+		//	cloud_moving_init->clear();
+		//	for (size_t i = 0; i < cloud_temp->size(); i++)
+		//	{
+		//		if (th_height > cloud_temp->points[i].z) continue;
+		//		cloud_moving_init->push_back(cloud_temp->points[i]);
+		//	}
+		//}
+
+		////remove ground plane
+		//if (cloud_->size() != 0 && b_plane)
+		//{
+		//	detectPlane<PointType_func>(*cloud_, 0.05, true, true);	//velo
+		//	//detectPlane<PointType_func>(*cloud_, 0.01, true, true);	//nir
+		//}
+
+	}
+
+	void DoOutlierRejector_clustering(string dir_);
+	void DoOutlierRejector(string dir_);
 
 	void ThermalCloudGeneration(string dir_);
 
