@@ -93,7 +93,14 @@ void CHandRegistration::HandRegistration(string dir_)
 
 
 	bool b_RemoveGround = true;
-	//b_RemoveGround = false;
+	b_RemoveGround = false;
+	double th_height;
+	//th_height = -0.1;	//naraha summer
+	//th_height = -0.25;
+
+	//th_height = -0.3;
+	th_height = -0.35;//good
+	th_height = -0.4;//
 
 
 	//typedef typename pcl::PointXYZI PointType_func;
@@ -240,14 +247,27 @@ void CHandRegistration::HandRegistration(string dir_)
 			if (-1 == pcl::io::loadPCDFile(filename_PC, *cloud_moving_init)) break;
 
 			cout << "i:" << index_PC_now << " number:" << cloud_moving_init->size();
+
+			if (b_RemoveGround)
+			{
+				cloud_temp->clear();
+				pcl::copyPointCloud(*cloud_moving_init, *cloud_temp);
+				cloud_moving_init->clear();
+				for (size_t i = 0; i < cloud_temp->size(); i++)
+				{
+					if (th_height > cloud_temp->points[i].z) continue;
+					cloud_moving_init->push_back(cloud_temp->points[i]);
+				}
+			}
+
 			cout << " finename: " << filenames_[index_PC_now] << endl;
 			cout << endl;
 			cout << "**********( key option )**********" << endl;
 			cout << " +X:1  +Y:2  +Z:3  +Roll:4  +Pitch:5  +Yaw:6" << endl;
 			cout << "Resolution: translation:" << resolution_translation;
 			cout << "[m] rotation:" << resolution_rotation * R2D << "[deg]" << endl;
-			cout << "calc median: Left SHIFT" << endl;
-			cout << "Registration: Left CTRL" << endl;
+			cout << "calc median: Right SHIFT" << endl;
+			cout << "Registration: Right CTRL" << endl;
 			cout << "Reset:Left Alt" << endl;
 			cout << "Minus mode:-" << endl;
 			cout << "Next:ENTER" << endl;
@@ -265,21 +285,6 @@ void CHandRegistration::HandRegistration(string dir_)
 			pcl::transformPointCloud(*cloud_moving_init, *cloud_moving, Trans_);
 
 			b_makeNewPC = false;
-
-			if (b_RemoveGround)
-			{
-				double th_height;
-				//th_height = -0.1;	//naraha summer
-				th_height = -0.3;
-				cloud_temp->clear();
-				pcl::copyPointCloud(*cloud_moving, *cloud_temp);
-				cloud_moving->clear();
-				for (size_t i = 0; i < cloud_temp->size(); i++)
-				{
-					if (th_height > cloud_temp->points[i].z) continue;
-					cloud_moving->push_back(cloud_temp->points[i]);
-				}
-			}
 
 		}
 
@@ -471,14 +476,18 @@ void CHandRegistration::HandRegistration(string dir_)
 			cout << " +X:1  +Y:2  +Z:3  +Roll:4  +Pitch:5  +Yaw:6" << endl;
 			cout << "Resolution: translation:" << resolution_translation;
 			cout << "[m] rotation:" << resolution_rotation * R2D << "[deg]" << endl;
-			cout << "calc median: Left SHIFT" << endl;
-			cout << "Registration: Left CTRL" << endl;
+			cout << "calc median: Right SHIFT" << endl;
+			cout << "Registration: Right CTRL" << endl;
 			cout << "Reset:Left Alt" << endl;
 			cout << "Minus mode:-" << endl;
 			cout << "Next:ENTER" << endl;
 			cout << "Escape:ESC" << endl;
 			cout << "**********************************" << endl;
 			cout << endl;
+
+			cout << endl;
+			cout << "HM_Trans_now:" << endl;
+			cout << HM_Trans_now << endl;
 		}
 
 		if (!(key_ == NONE || key_ == ENTER))
