@@ -272,6 +272,8 @@ public:
 			throw std::runtime_error("ERROR at CTimeString::getMedian_Quartile: No input found.");
 		}
 
+		cout << "InputData size = " << value_vec.size() << " in CTimeString::getMedian_Quartile" << endl;
+
 		//https://atarimae.biz/archives/19162
 		sortVector(value_vec);
 		int size = value_vec.size();

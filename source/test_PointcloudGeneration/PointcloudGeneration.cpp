@@ -311,17 +311,24 @@ void CPointcloudGeneration::PCDGeneration_fromPCD(string dir_)
 				intensity_vec.push_back(value_);
 			}
 			intensity_vecvec.push_back(intensity_vec);
+			cout << "j:" << j << " size:" << intensity_vec.size() << endl;
 		}
 
 		cout << "value_max:" << value_max << endl;
 		cout << "value_min:" << value_min << endl;
 
 		//Quartile
+		cout << endl;
+		cout << "Do you calculate quartile of intensity ?  1:Yes  0:No" << endl;
+		cout << "->";
+		bool b_calcQuartile = false;
+		cin >> b_calcQuartile;
+		if(b_calcQuartile)
 		{
+			string t_start_q = CTimeString::getTimeString();
 			vector<float> intensity_vec_all;
 			for (int j = 0; j < intensity_vecvec.size(); j++)
 			{
-				cout << "j:" << j << endl;
 				intensity_vec_all.insert(intensity_vec_all.end(), intensity_vecvec[j].begin(), intensity_vecvec[j].end());
 			}
 			vector<float> Quartile_vec = CTimeString::getMedian_Quartile(intensity_vec_all);
@@ -329,6 +336,8 @@ void CPointcloudGeneration::PCDGeneration_fromPCD(string dir_)
 			cout << " median_:" << Quartile_vec[1];
 			cout << " third_quartile:" << Quartile_vec[1] << endl;
 			cout << endl;
+			string t_end_q = CTimeString::getTimeString();
+			cout << "elapsed time (quartile):" << CTimeString::getTimeElapsefrom2Strings(t_start_q, t_end_q) << endl;;
 		}
 
 		float th_max, th_min;
