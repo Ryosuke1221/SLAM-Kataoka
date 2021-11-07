@@ -1037,11 +1037,12 @@ void CGlobalFeatureRegistration_test::DoDifferential_RigidTransformation_FPFH_Fe
 		}
 		float radius_FPFH_center = 1.;
 		//index_valid_vecvec_FPFH = CFPFH_PCL::getFPFH_unique_someRadius(cloud_vec, normals_vec, radius_FPFH_center, true);
-		//index_valid_vecvec_FPFH = CFPFH_PCL::getFPFH_unique_someRadius_outputFile(cloud_vec, normals_vec, radius_FPFH_center, dir_, filenames_cloud, true);
-		index_valid_vecvec_FPFH = CGlobalFeatureRegistration::getFPFH_unique_someRadius_inputFile(dir_, filenames_cloud);
+		if(M_b_calcUniquePointOfFPFHInSomeRadius)
+			index_valid_vecvec_FPFH = CGlobalFeatureRegistration::getFPFH_unique_someRadius_outputFile(cloud_vec, normals_vec, radius_FPFH_center, dir_, filenames_cloud, true);
+		else
+			index_valid_vecvec_FPFH = CGlobalFeatureRegistration::getFPFH_unique_someRadius_inputFile(dir_, filenames_cloud);
 		for (int j = 0; j < cloud_vec.size(); j++)
 			fpfh_vec.push_back(CFPFH_PCL::computeFPFH(cloud_vec[j], cloud_vec[j], normals_vec[j], radius_FPFH_center));
-
 	}
 	string ts_end = CTimeString::getTimeString();
 	cout << "elapsed time:" << CTimeString::getTimeElapsefrom2Strings(ts_start, ts_end) << endl;
@@ -2854,7 +2855,7 @@ void CGlobalFeatureRegistration_test::DoDifferential_PairEvaluation3(string dir_
 
 }
 
-void CGlobalFeatureRegistration_test::inputData(string dir_, vector<float> parameter_oldFPFH_vec,  bool b_useNir, bool b_useVelodyne, bool b_changeColor_nir,
+void CGlobalFeatureRegistration_test::inputData(string dir_, vector<float> parameter_oldFPFH_vec,  bool b_useNir, bool b_useVelodyne, 
 	bool b_useFPFH, bool b_useProposed)
 {
 	M_cloud_vec.clear();
@@ -2966,8 +2967,8 @@ void CGlobalFeatureRegistration_test::inputData(string dir_, vector<float> param
 		}
 	}
 
-	if (!b_useNir)  b_changeColor_nir = false;
-	if (b_changeColor_nir)
+	//if (!b_useNir)  b_changeColor_nir = false;
+	if (M_b_changeColor_r_RGB)
 	{
 		float value_max = -std::numeric_limits<float>::max();
 		float value_min = std::numeric_limits<float>::max();
@@ -3024,6 +3025,52 @@ void CGlobalFeatureRegistration_test::inputData(string dir_, vector<float> param
 		}
 	}
 
+	if (M_b_changeColor_g_RGB)
+	{
+		float value_max = -std::numeric_limits<float>::max();
+		float value_min = std::numeric_limits<float>::max();
+		for (int j = 0; j < M_feature_vecvec_velodyne.size(); j++)
+		{
+			for (int i = 0; i < M_feature_vecvec_velodyne[j].size(); i++)
+			{
+				if (value_max < M_feature_vecvec_velodyne[j][i]) value_max = M_feature_vecvec_velodyne[j][i];
+				if (value_min > M_feature_vecvec_velodyne[j][i]) value_min = M_feature_vecvec_velodyne[j][i];
+			}
+		}
+
+		for (int j = 0; j < M_feature_vecvec_velodyne.size(); j++)
+		{
+			vector<std::uint8_t> color_vec;
+			if (M_feature_vecvec_velodyne[j].size() == 0)
+			{
+				color_vec.push_back((std::uint8_t)0);
+				color_vec.push_back((std::uint8_t)255);
+				color_vec.push_back((std::uint8_t)0);
+				for (int i = 0; i < M_cloud_vec[j]->size(); i++)
+				{
+					T_PointType point_ = M_cloud_vec[j]->points[i];
+					point_.r = color_vec[0];
+					point_.g = color_vec[1];
+					point_.b = color_vec[2];
+					M_cloud_vec[j]->points[i] = point_;
+				}
+			}
+			else
+			{
+				for (int i = 0; i < M_cloud_vec[j]->size(); i++)
+				{
+					color_vec = CPointVisualization<T_PointType>::getRGBwithValuebyPseudoColor(M_feature_vecvec_velodyne[j][i], value_max, value_min);
+					T_PointType point_ = M_cloud_vec[j]->points[i];
+					point_.r = color_vec[0];
+					point_.g = color_vec[1];
+					point_.b = color_vec[2];
+					M_cloud_vec[j]->points[i] = point_;
+				}
+			}
+		}
+	}
+
+
 	//calc valid point of FPFH
 	//vector<vector<int>> index_valid_vecvec_FPFH;
 	//vector<pcl::PointCloud<pcl::FPFHSignature33>::Ptr> fpfh_vec;
@@ -3046,13 +3093,19 @@ void CGlobalFeatureRegistration_test::inputData(string dir_, vector<float> param
 			normals_vec.push_back(normals);
 		}
 		float radius_FPFH_center = parameter_oldFPFH_vec[2];;
-		//radius_FPFH_center = 1.;
 		//original
 		//index_valid_vecvec_FPFH = CFPFH_PCL::getFPFH_unique_someRadius(cloud_vec, normals_vec, radius_FPFH_center, true);
-		//output to file
-		//index_valid_vecvec_FPFH = CFPFH_PCL::getFPFH_unique_someRadius_outputFile(cloud_vec, normals_vec, radius_FPFH_center, dir_, filenames_cloud, true);
-		//input from file
-		M_index_valid_vecvec_FPFH = CGlobalFeatureRegistration::getFPFH_unique_someRadius_inputFile(dir_, filenames_cloud);
+		if (M_b_calcUniquePointOfFPFHInSomeRadius)
+		{
+			//output to file
+			M_index_valid_vecvec_FPFH = CGlobalFeatureRegistration::getFPFH_unique_someRadius_outputFile(M_cloud_vec, normals_vec, radius_FPFH_center, dir_, filenames_cloud, true);
+			M_b_calcUniquePointOfFPFHInSomeRadius = false;
+		}
+		else
+		{
+			//input from file
+			M_index_valid_vecvec_FPFH = CGlobalFeatureRegistration::getFPFH_unique_someRadius_inputFile(dir_, filenames_cloud);
+		}
 
 		for (int j = 0; j < M_cloud_vec.size(); j++)
 			M_fpfh_vec.push_back(CFPFH_PCL::computeFPFH(M_cloud_vec[j], M_cloud_vec[j], normals_vec[j], radius_FPFH_center));
@@ -3910,9 +3963,6 @@ void CGlobalFeatureRegistration_test::alignAllFrames(string dir_,
 
 	bool b_useColorfullCorr = false;
 
-	bool b_changeColor_nir = false;
-	bool b_changeColor_velodyne = false;
-
 	bool b_useProposed = false;
 	if (i_method == 0) b_useProposed = false;
 	else if (i_method == 1) b_useProposed = true;
@@ -3920,11 +3970,10 @@ void CGlobalFeatureRegistration_test::alignAllFrames(string dir_,
 	bool b_useNir = false;
 	bool b_useVelodyne = false;
 	bool b_useFPFH = false;
-	//b_useNir = true;
+	b_useNir = true;
 	b_useVelodyne = true;
-	//b_useFPFH = true;
+	b_useFPFH = true;
 
-	b_changeColor_nir = true;
 
 	//b_useRigidTransformation = true;
 
@@ -3934,7 +3983,7 @@ void CGlobalFeatureRegistration_test::alignAllFrames(string dir_,
 
 	string t_start = CTimeString::getTimeString();
 
-	inputData(dir_, parameter_oldFPFH_vec, b_useNir, b_useVelodyne, b_changeColor_nir, b_useFPFH, b_useProposed);
+	inputData(dir_, parameter_oldFPFH_vec, b_useNir, b_useVelodyne, b_useFPFH, b_useProposed);
 
 	fillParameterToTXT(parameter_oldFPFH_vec, parameter_featureRegistration_vec);
 
@@ -3954,8 +4003,11 @@ void CGlobalFeatureRegistration_test::alignAllFrames(string dir_,
 			vector<vector<double>> matrix_vecvec_temp;
 			matrix_vecvec_temp = CTimeString::getVecVecFromCSV(filename_);
 
-			if(matrix_vecvec_temp.size() != M_cloud_vec.size())
+			if (matrix_vecvec_temp.size() != M_cloud_vec.size())
+			{
+				cout << "ERROR: ignore_framePair_matrix.csv has invald values." << endl;
 				throw std::runtime_error("ERROR: ignore_framePair_matrix.csv has invald values.");
+			}
 
 			for (int j = 0; j < M_cloud_vec.size() - 1; j++)
 			{
@@ -3974,7 +4026,7 @@ void CGlobalFeatureRegistration_test::alignAllFrames(string dir_,
 
 	}
 
-	cout << "index_pair_vec:" << endl;
+	cout << "index_pair_vec(before ignoring some framePair):" << endl;
 	for (int j = 0; j < index_pair_vec.size(); j++)
 		cout << "i_tgt:" << index_pair_vec[j].first << ", i_src:" << index_pair_vec[j].second << endl;
 	cout << endl;
@@ -3991,7 +4043,7 @@ void CGlobalFeatureRegistration_test::alignAllFrames(string dir_,
 			index_pair_vec.erase(index_pair_vec.begin() + j);
 	}
 
-	cout << "index_pair_vec:" << endl;
+	cout << "index_pair_vec(before ignoring some framePair):" << endl;
 	for (int j = 0; j < index_pair_vec.size(); j++)
 		cout << "i_tgt:" << index_pair_vec[j].first << ", i_src:" << index_pair_vec[j].second << endl;
 	cout << endl;
@@ -4075,6 +4127,18 @@ void CGlobalFeatureRegistration_test::variParamaters(string dir_)
 	cout << "do you create new pattern?  Yes:1  No:0" << endl;
 	cout << "->";
 	cin >> b_create_new_pattern_file;
+
+	//naraha:NIR
+	//naraha_thermo:Lidar
+	M_b_changeColor_r_RGB = false;
+
+	//naraha:Lidar
+	//naraha_thermo:thermo
+	M_b_changeColor_g_RGB = true;
+
+	cout << "Do you calculate new pointcloud ? (calcUniquePointOfFPFHInSomeRadius):  yes:1  no:0" << endl;;
+	cout << "->";
+	cin >> M_b_calcUniquePointOfFPFHInSomeRadius;
 
 	//M_name_parameter_vec
 	M_name_parameter_vec.clear();

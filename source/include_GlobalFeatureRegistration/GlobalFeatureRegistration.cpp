@@ -89,9 +89,15 @@ vector<vector<int>> CGlobalFeatureRegistration::getFPFH_unique_someRadius_inputF
 	{
 		vector<string> filenames_temp;
 		CTimeString::getFileNames_extension(dir_, filenames_temp, "validPoint_FPFH");
-		if (filenames_temp.size() != 1)
+		if (filenames_temp.size() == 0)
 		{
-			cout << "ERROR: some validPoint_FPFH found." << endl;
+			cout << "ERROR: no validPoint_FPFH found." << endl;
+			throw std::runtime_error("ERROR: some validPoint_FPFH found.");
+		}
+
+		else if (filenames_temp.size() != 1)
+		{
+			cout << "ERROR: too many validPoint_FPFH found." << endl;
 			throw std::runtime_error("ERROR: some validPoint_FPFH found.");
 		}
 		filename_input = filenames_temp[0];

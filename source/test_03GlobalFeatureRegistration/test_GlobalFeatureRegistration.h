@@ -52,9 +52,13 @@ private:
 	vector<pcl::Correspondences> M_corrs_velodyne_vec;
 	vector<pcl::Correspondences> M_corrs_fpfh_vec;
 	vector<pcl::Correspondences> M_corrs_output_vec;
+	//20211107 add some bools to member variable
+	bool M_b_changeColor_r_RGB;
+	bool M_b_changeColor_g_RGB;
+	bool M_b_calcUniquePointOfFPFHInSomeRadius;
 
 public:
-	void inputData(string dir_, vector<float> parameter_oldFPFH_vec, bool b_useNir, bool b_useVelodyne, bool b_changeColor_nir,
+	void inputData(string dir_, vector<float> parameter_oldFPFH_vec, bool b_useNir, bool b_useVelodyne, 
 		bool b_useFPFH, bool b_useOldFPFH);
 	void DoOldFPFHRegistration(vector<pair<int, int>> index_pair_vec, vector<float> parameter_vec);
 	void DoFeatureRegistration(vector<pair<int, int>> index_pair_vec, vector<float> parameter_vec,

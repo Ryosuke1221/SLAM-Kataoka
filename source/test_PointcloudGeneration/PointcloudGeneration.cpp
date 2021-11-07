@@ -1392,7 +1392,9 @@ void CPointcloudGeneration::ThermalCloudGeneration(string dir_)
 			point_.z = pc_vecvec[i][2];
 			point_.r = pc_vecvec[i][3];
 			point_.g = pc_vecvec[i][4];
-			point_.b = 255;
+			//point_.b = 0;
+			point_.b = 180;
+			//point_.b = 255;
 			cloud_->push_back(point_);
 		}
 		cloud_->is_dense = true;
