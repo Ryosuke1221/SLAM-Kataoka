@@ -1335,6 +1335,139 @@ void CPointcloudGeneration::DoOutlierRejector_clustering(string dir_)
 
 }
 
+void CPointcloudGeneration::DoOutlierRejector_VGF(string dir_)
+{
+	string s_folder;
+	{
+		vector<string> s_folder_vec;
+		CTimeString::getFileNames_folder(dir_, s_folder_vec);
+
+		if (s_folder_vec.size() == 0)
+		{
+			cout << "ERROR: No PointCloud folder found." << endl;
+			return;
+		}
+
+		for (int i = 0; i < s_folder_vec.size(); i++)
+		{
+			string s_i = to_string(i);
+			if (s_i.size() < 2) s_i = " " + s_i;
+			cout << "i:" << s_i << " " << s_folder_vec[i] << endl;
+		}
+		cout << "select folder of input point cloud" << endl;
+		cout << "->";
+		int i_folder;
+		cin >> i_folder;
+		s_folder = s_folder_vec[i_folder];
+	}
+
+	float th_VGF;
+	th_VGF = 0.05;//naraha winter
+	cout << "th_VGF ->";
+	cin >> th_VGF;
+
+	//typedef typename pcl::PointXYZI PointType_func;
+	typedef typename pcl::PointXYZRGB PointType_func;
+
+	CPointVisualization<PointType_func> pv;
+	if (typeid(PointType_func) == typeid(pcl::PointXYZI))
+		pv.setWindowName("show XYZI");
+	else if (typeid(PointType_func) == typeid(pcl::PointXYZRGB))
+		pv.setWindowName("show XYZRGB");
+	else
+		throw std::runtime_error("This PointType is unsupported.");
+
+	vector<string> filenames_;
+	CTimeString::getFileNames_extension(dir_ + "/" + s_folder, filenames_, ".pcd");
+	cout << "file size: " << filenames_.size() << endl;
+
+	if (filenames_.size() == 0)
+	{
+		cout << "ERROR: no file found" << endl;
+		return;
+	}
+
+	vector< pcl::PointCloud<PointType_func>::Ptr> cloud_filtered_vec;
+
+	pcl::PointCloud<PointType_func>::Ptr cloud_(new pcl::PointCloud<PointType_func>());
+	pcl::PointCloud<PointType_func>::Ptr cloud_temp(new pcl::PointCloud<PointType_func>());
+
+	int index_ = 0;
+	cout << "Press space to next" << endl;
+	while (1)
+	{
+		//short key_num = GetAsyncKeyState(VK_SPACE);
+		if ((GetAsyncKeyState(VK_SPACE) & 1) == 1)
+		{
+			if (index_ >= 2 * (filenames_.size()))
+			{
+				cout << "index over" << endl;
+				break;
+			}
+
+			if (index_ % 2 == 0)
+			{
+				int index_temp = (int)(index_ / 2);
+				//read file
+				cout << "index_: " << index_temp << endl;
+				pcl::io::loadPCDFile(dir_ + "/" + s_folder + "/" + filenames_[index_temp], *cloud_);
+				cout << "showing:" << filenames_[index_temp] << " size:" << cloud_->size() << endl;
+			}
+			else
+			{
+				//voxel grid filter
+				cout << "VGF" << endl;
+				pcl::ApproximateVoxelGrid<PointType_func> VGFilter;
+				VGFilter.setInputCloud(cloud_);
+				VGFilter.setLeafSize(th_VGF, th_VGF, th_VGF);
+				VGFilter.filter(*cloud_);
+
+				//save to vector
+				pcl::PointCloud<PointType_func>::Ptr cloud_filtered(new pcl::PointCloud<PointType_func>());
+				cloud_filtered->clear();
+				pcl::copyPointCloud(*cloud_, *cloud_filtered);
+				cloud_->is_dense = true;
+				cout << "cloud_filtered->size():" << cloud_filtered->size() << endl;
+				cloud_filtered_vec.push_back(cloud_filtered);
+			}
+			pv.setPointCloud(cloud_);
+			index_++;
+		}
+
+		//escape
+		//short key_num_esc = GetAsyncKeyState(VK_ESCAPE);
+		if ((GetAsyncKeyState(VK_ESCAPE) & 1) == 1) {
+			cout << "toggled!" << endl;
+			break;
+		}
+		pv.updateViewer();
+	}
+
+	pv.closeViewer();
+
+	//output point clouds
+	bool b_save;
+	cout << "Do you save filterd pointcloud ?  Yes:1 No:0" << endl;
+	cout << "->";
+	cin >> b_save;
+	if (b_save)
+	{
+		string s_foldername = CTimeString::getTimeString() + "_outlierFiltered";
+		CTimeString::makenewfolder(dir_, s_foldername);
+		for (int j = 0; j < cloud_filtered_vec.size(); j++)
+		{
+			string s_name;
+			s_name = filenames_[j].substr(0, filenames_[j].size() - 4) + ".pcd";
+			cout << "saving cloud[" << j << "]..." << endl;
+			pcl::io::savePCDFile<PointType_func>(dir_ + "/" + s_foldername + "/" + s_name, *cloud_filtered_vec[j]);
+		}
+		cout << "file has saved!" << endl;
+	}
+	else cout << "file did not saved!" << endl;
+
+
+}
+
 void CPointcloudGeneration::DoOutlierRejector(string dir_)
 {
 	
@@ -1342,20 +1475,23 @@ void CPointcloudGeneration::DoOutlierRejector(string dir_)
 	{
 		EN_GROUND,
 		EN_CLUSTRING,
+		EN_VoxelGridFilter,
 	};
 
 	cout << EN_GROUND << ": Remove outlier of ground" << endl;
 	cout << EN_CLUSTRING << ": Remove outlier by clustring" << endl;
+	cout << EN_VoxelGridFilter << ": VoxelGridFilter" << endl;
 	cout << "->";
 
 	int i_method;
 	cin >> i_method;
 
-	if (i_method == 0)
+	if (i_method == EN_GROUND)
 		DoOutlierRejector_ground(dir_);
-	else if (i_method == 1)
+	else if (i_method == EN_CLUSTRING)
 		DoOutlierRejector_clustering(dir_);
-	
+	else if (i_method == EN_VoxelGridFilter)
+		DoOutlierRejector_VGF(dir_);
 }
 
 void CPointcloudGeneration::ThermalCloudGeneration(string dir_)

@@ -3107,6 +3107,11 @@ void CGlobalFeatureRegistration_test::inputData(string dir_, vector<float> param
 			M_index_valid_vecvec_FPFH = CGlobalFeatureRegistration::getFPFH_unique_someRadius_inputFile(dir_, filenames_cloud);
 		}
 
+		cout << endl;
+		cout << "M_index_valid_vecvec_FPFH:" << endl;
+		for (int j = 0; j < M_index_valid_vecvec_FPFH.size(); j++)
+			cout << "j:" << j << " size:" << M_index_valid_vecvec_FPFH[j].size() << endl;
+
 		for (int j = 0; j < M_cloud_vec.size(); j++)
 			M_fpfh_vec.push_back(CFPFH_PCL::computeFPFH(M_cloud_vec[j], M_cloud_vec[j], normals_vec[j], radius_FPFH_center));
 	}

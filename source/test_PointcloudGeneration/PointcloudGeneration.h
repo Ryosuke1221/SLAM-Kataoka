@@ -171,6 +171,7 @@ private:
 
 	void DoOutlierRejector_ground(string dir_);
 	void DoOutlierRejector_clustering(string dir_);
+	void DoOutlierRejector_VGF(string dir_);
 	void DoOutlierRejector(string dir_);
 
 	void ThermalCloudGeneration(string dir_);
