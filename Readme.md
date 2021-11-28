@@ -239,16 +239,15 @@ data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\parameter_vec
 | NumberOfSamples_SAC | ソース点群の中からこの数だけランダムに点を選び、点対応を求める際の候補とする。 |
 | CorrespondenceRandomness_SAC | FPFH空間での近傍点探索にて、この数だけ近傍点をピックアップする。近傍点の中からランダムに最近傍点を決め、最終的な点対応としている． |
 | th_nearest_nir | 近赤外情報を踏まえた近傍点計算における、近傍とみなすかを与える閾値。 |
-| th_rank_rate_nir | 選別時に、 |
+| th_rank_rate_nir | 空間的ばらつきを考慮した点対応集合の選別(近赤外情報)において、ばらつきのパラメータが小さい点対応を選別する際、小さい方から数えてどれほどの割合<br>(0 < th_rank_rate_nir < 1)<br>を選別するかを与えるパラメータ。 |
 | th_nearest_velodyne | LiDAR反射強度情報を踏まえた近傍点計算における、近傍とみなすかを与える閾値。 |
-| th_rank_rate_velodyne | TD |
+| th_rank_rate_velodyne | 空間的ばらつきを考慮した点対応集合の選別(LiDAR反射強度情報)において、ばらつきのパラメータが小さい点対応を選別する際、小さい方から数えてどれほどの割合<br>(0 < th_rank_rate_velodyne < 1)<br>を選別するかを与えるパラメータ。 |
 | th_nearest_fpfh | FPFH情報を踏まえた近傍点計算における、近傍とみなすかを与える閾値。 |
-| num_nearest_fpfh | TD |
-| th_rank_rate_fpfh | TD |
-| i_method_rigidTransformation | TD |
-| th_geometricConstraint | TD |
-
-<!-- パラメータが未記入の箇所がある。xx -->
+| num_nearest_fpfh | FPFH情報を踏まえた近傍点計算における、近傍点数の最大値を与える閾値。 |
+| th_rank_rate_fpfh | 空間的ばらつきを考慮した点対応集合の選別(FPFH情報)において、ばらつきのパラメータが小さい点対応を選別する際、小さい方から数えてどれほどの割合<br>(0 < th_rank_rate_fpfh < 1)<br>を選別するかを与えるパラメータ。 |
+| i_method_rigidTransformation | 幾何学的拘束を考慮した点対応集合の選別において、出力候補の点対応集合同士を比較する際の評価値の計算方法を、数パターンある中から指定するためのパラメータ。<br>基本的に固定値2(点対応集合の)を用いている。
+ |
+| th_geometricConstraint | 幾何学的拘束を考慮した点対応集合の選別において、用いている閾値。<br>この閾値の値が大きくなるほど基準が厳しくなり、出力される点対応集合のサイズが小さくなる。 |
  <br>
 
 ```
@@ -378,7 +377,6 @@ data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\_Input\p
 | penalty_chara | 位置合わせ後のエラー値の算出時にて、近傍点の属性クラスがそれぞれ異なる場合(例えば熱源属性クラスと水溜まり属性クラスなど)、<br>"点1つあたりのエラー値 = (点間距離 +  penalty_chara) / 点対応数の合計"<br>とする。 |
 | weight_dist_chara | 位置合わせ処理の近傍点探索時にて、近傍点探索の基準となるソース点群の点が希少クラスである場合、<br>"探索距離の最大値 = 元々の最大値 * weight_dist_chara"<br>とする。これにより希少クラスの点を注目点とした際に、探索距離を拡張する。 |
 | th_successOfGlobalRegistration_distance | 大域的位置合わせの結果においてe_error_PointCloudDistanceの値がこれよりも小さい場合のみにICPを行うとものしている。 |
-<!-- パラメータが未記入の箇所がある。xx -->
  <br>
 
 
