@@ -4241,8 +4241,8 @@ void CGlobalFeatureRegistration_test::variParamaters(string dir_)
 		parameter_oldFPFH_vec.insert(parameter_oldFPFH_vec.end(), parameter_vec.begin(), parameter_vec.begin() + 9);	//0~8
 		parameter_featureRegistration_vec.insert(parameter_featureRegistration_vec.end(), parameter_vec.begin() + 9, parameter_vec.end());	//9~last
 		cout << "start pattern:" << j << endl;
-		//alignAllFrames(dir_, parameter_oldFPFH_vec, parameter_featureRegistration_vec, 0);
-		alignAllFrames(dir_, parameter_oldFPFH_vec, parameter_featureRegistration_vec, 1);
+		alignAllFrames(dir_, parameter_oldFPFH_vec, parameter_featureRegistration_vec, 0);
+		//alignAllFrames(dir_, parameter_oldFPFH_vec, parameter_featureRegistration_vec, 1);
 	}
 
 	cout << endl;
@@ -4459,7 +4459,7 @@ void CGlobalFeatureRegistration_test::inputData_ICP(string dir_)
 		//cout << "input folder you want to calc ->";
 		int i_folder;
 		//cin >> i_folder;
-		i_folder = 2;
+		i_folder = 0;
 		s_folder = filenames_folder[i_folder];
 	}
 	vector<string> filenames_cloud;
