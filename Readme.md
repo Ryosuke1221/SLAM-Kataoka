@@ -375,9 +375,9 @@ data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\_Input\p
 | MaxCorrespondenceDistance | 近傍点算出の際の距離の閾値。 |
 | EuclideanFitnessEpsilon | 収束判定時の、近傍点距離平均の変化量に関する閾値。 |
 | TransformationEpsilon | 収束判定時の、変位の変化量に関する閾値。 |
-| penalty_chara | A |
-| weight_dist_chara | A |
-| th_successOfGlobalRegistration_distance | A |
+| penalty_chara | 位置合わせ後のエラー値の算出時にて、近傍点の属性クラスがそれぞれ異なる場合(例えば熱源属性クラスと水溜まり属性クラスなど)、<br>"点1つあたりのエラー値 = (点間距離 +  penalty_chara) / 点対応数の合計"<br>とする。 |
+| weight_dist_chara | 位置合わせ処理の近傍点探索時にて、近傍点探索の基準となるソース点群の点が希少クラスである場合、<br>"探索距離の最大値 = 元々の最大値 * weight_dist_chara"<br>とする。これにより希少クラスの点を注目点とした際に、探索距離を拡張する。 |
+| th_successOfGlobalRegistration_distance | 大域的位置合わせの結果においてe_error_PointCloudDistanceの値がこれよりも小さい場合のみにICPを行うとものしている。 |
 <!-- パラメータが未記入の箇所がある。xx -->
  <br>
 
