@@ -323,7 +323,7 @@ tgt00src01_result_00conventional.pcd
 となる。
 
 
-### 1.3.3 実行準備
+### 1.3.3 位置合わせ 実行準備
 
 - data_test_PointcloudGeneration\03_PCDGeneration_fromCSV<br>
 \05_NarahaWinter202001\\_03Combination_Output
@@ -331,7 +331,7 @@ tgt00src01_result_00conventional.pcd
 に配置する。
 
 
-### 1.3.4 実行手順
+### 1.3.4 位置合わせ 実行手順
 
 - build/Project.slnをVisual Studioで開く。
 
@@ -350,6 +350,42 @@ tgt00src01_result_00conventional.pcd
 - press 1 and Enter if you have closed file<br>
 1を押してエンターを押すと計算が開始する。
 <!-- 処理中の画面に関しても説明したい。xx -->
+
+
+### 1.3.5 位置合わせ結果比較 実行準備
+
+- data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\_Comparison\
+に大域位置合わせの実行結果のフォルダを配置する。<br>フォルダ名の例：時刻_conventional
+
+
+### 1.3.6 位置合わせ結果比較 実行手順
+
+- build/Project.slnをVisual Studioで開く。
+
+- test_03GlobalFeatureFegistraionをスタートアッププロジェクトに指定する。
+
+- デバッグなしで実行。<br>
+コマンドプロンプトが立ち上がる。
+
+- CompareGlobalRegistrationに該当する番号を入力してエンターを押す。<br>
+(本資料作成時では15。)
+
+- 位置合わせ結果の比較の結果が
+data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\_Comparison\
+に出力される。<br>
+
+- 以下に出力の説明を示す。<br>
+
+| 出力 | 意味 |
+| :-- | :-- |
+| b_isProposed | 提案手法を用いたかどうか(FPFHを用いていれば0、大域的位置合わせを用いていれば1)。<br>→なぜかどの場合でも1になってしまうバグが存在する。 |
+| num_allFramePairs | 位置合わせの計算を行ったフレームの組の総数。 |
+| num_succeededFramePairs | 位置合わせが成功したと思われるフレームの組の総数。 |
+| succeededFramePairs | 位置合わせが成功したと思われるフレームの組。 |
+| biggestCluster | succeededFramePairsを繋ぎ合わせて、相対的な変位が計算できるフレームの組み合わせの中で、一番大きい物。 |
+| size_biggestCluster | biggestClusterのサイズ。 |
+| second_biggestCluster | succeededFramePairsを繋ぎ合わせて、相対的な変位が計算できるフレームの組み合わせの中で、二番目に大きい物。 |
+| frames_notContainded | biggestClusterに含まれていないフレーム。<br>→たまに計算されないバグが存在する。 |
 
 
 ## 1.4 局所的位置合わせ
