@@ -356,6 +356,7 @@ tgt00src01_result_00conventional.pcd
 
 - data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\_Comparison\
 に大域位置合わせの実行結果のフォルダを配置する。<br>フォルダ名の例：時刻_conventional
+ <br> <br>
 
 
 ### 1.3.6 位置合わせ結果比較 実行手順
@@ -371,8 +372,7 @@ tgt00src01_result_00conventional.pcd
 (本資料作成時では15。)
 
 - 位置合わせ結果の比較の結果が
-data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\_Comparison\
-に出力される。<br>
+data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\\_Comparison\に出力される。<br>
 
 - 以下に出力の説明を示す。<br>
 
