@@ -5403,7 +5403,10 @@ void CGlobalFeatureRegistration_test::compareICP(string dir_)
 		for (int i = 0; i < s_result_vecvec.size(); i++)
 		{
 			if (i == 1) continue;
-			s_output_vec.push_back(s_result_vecvec[i][1]);
+			if (s_result_vecvec[i].size() <= 1)
+				s_output_vec.push_back("");
+			else
+				s_output_vec.push_back(s_result_vecvec[i][1]);
 		}
 
 		s_output_vecvec.push_back(s_output_vec);
