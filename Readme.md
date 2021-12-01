@@ -49,7 +49,18 @@ Click [reference_page3](https://cpp-learning.com/wp-content/uploads/2019/06/READ
 SLAM-kataoka/
   ├source/
   ├build/
+     ├Project.sln
   ├data/
+     ├data_test_03GlobalFeatureRegistration/
+        ├03_all/
+     ├data_test_PointcloudGeneration/
+        ├03_PCDGeneration_fromCSV/
+           ├05_NarahaWinter202001/
+              ├_01Generation/
+              ├_02Filtering/
+              ├_03Combination/
+              ├_03Combination_Output/
+     
 ```
 <br>
 
@@ -84,8 +95,8 @@ data\data_test_03GlobalFeatureRegistration\01_velodyne
 
 入力データの.csvは
 ```
-data_test_PointcloudGeneration\03_PCDGeneration_fromCSV<br>
-/05_NarahaWinter202001\_01Generation
+data\data_test_PointcloudGeneration\03_PCDGeneration_fromCSV<br>
+\05_NarahaWinter202001\_01Generation
 ```
 に配置する。<br><br>
 
@@ -332,7 +343,7 @@ tgt00src01_result_00conventional.pcd
 
 ### 1.3.4 位置合わせ 実行手順
 
-- build/Project.slnをVisual Studioで開く。
+- build\Project.slnをVisual Studioで開く。
 
 - test_03GlobalFeatureFegistraionをスタートアッププロジェクトに指定する。
 
@@ -360,7 +371,7 @@ tgt00src01_result_00conventional.pcd
 
 ### 1.3.6 位置合わせ結果比較 実行手順
 
-- build/Project.slnをVisual Studioで開く。
+- build\Project.slnをVisual Studioで開く。
 
 - test_03GlobalFeatureFegistraionをスタートアッププロジェクトに指定する。
 
@@ -499,7 +510,7 @@ data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\_input\
 
 ### 1.4.4 位置合わせ 実行手順
 
-- build/Project.slnをVisual Studioで開く。
+- build\Project.slnをVisual Studioで開く。
 
 - test_03GlobalFeatureFegistraionをスタートアッププロジェクトに指定する。
 
@@ -526,7 +537,7 @@ data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\_input\
 
 ### 1.4.6 位置合わせ結果比較 実行手順
 
-- build/Project.slnをVisual Studioで開く。
+- build\Project.slnをVisual Studioで開く。
 
 - test_03GlobalFeatureFegistraionをスタートアッププロジェクトに指定する。
 
