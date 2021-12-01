@@ -129,8 +129,7 @@ XXXvelo.csvが読み込まれ、.pcdが生成される。<br>
 
 - 2: NIRを選ぶ。<br>
 XXXnir.csvが読み込まれ、.pcdが生成される。
-生成された点群は、data_test_PointcloudGeneration\03_PCDGeneration_fromCSV<br>
-\05_NarahaWinter202001\\_01Generation時刻_Output_XYZI_NIR
+生成された点群は、data_test_PointcloudGeneration\03_PCDGeneration_fromCSV\05_NarahaWinter202001\\_01Generation時刻_Output_XYZI_NIR
 に保存される。<br><br>
 
 
@@ -138,8 +137,7 @@ XXXnir.csvが読み込まれ、.pcdが生成される。
 
 入力データの.pcd(1.2.2.1で生成したもの)は
 ```
-data_test_PointcloudGeneration\03_PCDGeneration_fromCSV<br>
-/05_NarahaWinter202001\_02Filtering
+data_test_PointcloudGeneration\03_PCDGeneration_fromCSV\05_NarahaWinter202001\_02Filtering
 ```
 に配置する。<br><br>
 
