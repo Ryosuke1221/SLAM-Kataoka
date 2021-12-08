@@ -737,7 +737,7 @@ TimeString.cpp,TimeString.h
 - 計算に用いる点群をOpen3D_loop_closure-master<br>\\_InputOutput\\__202102\\_pointcloud
 に配置する。
 
-- 真の軌跡データをOpen3D_loop_closure-master<br>\\_InputOutput\\__202102\\_pointcloud
+- 真の軌跡データを
 Open3D_loop_closure-master\\_InputOutput\\__202102
 に配置する。<br><br>
 
