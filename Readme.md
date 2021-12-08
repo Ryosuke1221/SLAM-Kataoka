@@ -421,7 +421,8 @@ data\data_test_03GlobalFeatureRegistration\ignore_framePair_matrix.csv
 
 - do you create new pattern?  Yes:1  No:0<br>
 計算したいパラメータの組み合わせを更新した場合のみYes(1)、更新が無ければNo(0)を選択する。<br>
-※data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\parameter_vecvec.csvの値を参照してdata\data_test_03GlobalFeatureRegistration\Result_01varyParameters\pattern_vecvec.csvが更新される。
+※data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\parameter_vecvec.csvの値を参照してdata\data_test_03GlobalFeatureRegistration\Result_01varyParameters\pattern_vecvec.csvが更新される。<br>
+このファイルには、計算速度向上のため、FPFHの特徴量を毎回計算しなくても良いようにする役割がある。
 
 - press 1 and Enter if you have closed file<br>
 1を押してエンターを押すと計算が開始する。<br><br>
