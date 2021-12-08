@@ -60,7 +60,6 @@ SLAM-kataoka/
               ├_02Filtering/
               ├_03Combination/
               ├_03Combination_Output/
-     
 ```
 <br>
 
@@ -422,12 +421,14 @@ data\data_test_03GlobalFeatureRegistration\ignore_framePair_matrix.csv
 - do you create new pattern?  Yes:1  No:0<br>
 計算したいパラメータの組み合わせを更新した場合のみYes(1)、更新が無ければNo(0)を選択する。<br>
 ※data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\parameter_vecvec.csvの値を参照してdata\data_test_03GlobalFeatureRegistration\Result_01varyParameters\pattern_vecvec.csvが更新される。<br>
-このファイルには、計算速度向上のため、FPFHの特徴量を毎回計算しなくても良いようにする役割がある。
 
 - press 1 and Enter if you have closed file<br>
 1を押してエンターを押すと計算が開始する。<br><br>
 <!-- 処理中の画面に関しても説明したい。xx -->
 
+<!-- 
+このファイルには、計算速度向上のため、FPFHの特徴量を毎回計算しなくても良いようにする役割がある。xx
+-->
 
 ### 1.3.7 位置合わせ結果比較 実行準備
 
@@ -632,3 +633,135 @@ data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\\_Compar
 | second_biggestCluster | succeededFramePairsを繋ぎ合わせて、相対的な変位が計算できるフレームの組み合わせの中で、二番目に大きい物。 |
 | frames_notContainded | biggestClusterに含まれていないフレーム。<br>→たまに計算されないバグが存在する。 |
 <br>
+
+## 2. ポーズ調整
+
+- 属性付き点群、各フレーム間での局所的的位置合わせ結果から、ロボット(センサ)の走行した軌跡を出力する。<br>
+ここでは、従来から広く用いられてきたポーズ調整を用いる。
+
+## 2.1 ディレクトリ構造
+```
+Open3D_loop_closure-master/
+  ├source/
+  ├build/
+     ├Open3D.sln
+  ├_InputOutput/
+     ├__202102/
+        ├_comparison/
+        ├_input/
+        ├_output/
+        ├_pointcloud/
+        ├parameter_vecvec.csv
+        ├pattern_vecvec.csv
+        ├transformation_fin.csv   
+```
+<br>
+
+## 2.2 設定パラメータ
+
+```
+Open3D_loop_closure-master\_InputOutput\__202102\parameter_vecvec.csv
+```
+↑このファイルに、ポーズ調整を行う際に用いるパラメータをまとめている。<br>
+
+1つのパラメータに複数の値を指定すると、それぞれの場合の結果を出力する。<br>
+
+以下に設定パラメータの説明を示す。<br>
+
+| パラメータ | 意味 |
+| :-- | :-- |
+| edge_inf_threshold | ポーズ調整の情報行列算出に関係する閾値で、この値が大きいほど各変位の位置合わせ精度の優劣が付きにくくなる。 |
+| max_correspondence_distance | ロボット位置のノードをエッジで繋ぐか否かを判断する時に使われるらしい。 |
+| edge_prune_threshold | ロボット位置のノードをエッジで繋ぐか否かを判断する時に使われるらしい。<br>この値が大きいほど、エッジとして見做されなくなる。 |
+ <br>
+
+
+```
+Open3D_loop_closure-master\_InputOutput\__202102\pattern_vecvec.csv
+```
+↑このファイルにて、結果1つ分の計算に用いるパラメータの組み合わせを行ごとにまとめている。<br><br>
+
+
+## 2.3 出力形式
+
+## 2.4 位置合わせ 実行準備
+
+- Open3D_loop_closure-master以下をいずれかのフォルダにコピーする。
+
+- Open3D_loop_closure-master\buildの中身を全て削除する。
+
+- CMake(cmake-gui)を起動する。
+
+- CMakeでの処理<br>
+キャッシュを削除する。<br>
+scrとbuildのフォルダを設定する。<br>
+configureを選ぶ。<br>
+searchにpyと入れる。<br>
+python関係の選択肢が出てくるので、全部チェックを外す。※項目は3つくらいだった。<br>
+configureを選ぶ。configureが通るはず。エラーのポップアップが出なければ成功。
+generateを選ぶ。<br>
+Open Projectを選ぶ。これでVisual Studioが起動する。
+
+- Visual Studioでの、バッチビルドまでの処理<br>
+Debugx64を選択する。<br>
+ビルドからバッチビルドを選択する。<br>
+Releaseとdebugとついているものを全部選択する。<br>
+ビルドを選択する。<br>
+暫く待って、結果が46正常終了、40失敗となれば恐らく成功である。この数が違うと後々エラーが出る可能性がある。
+
+```
+考えられる原因：
+・最初のcmakeのキャッシュ削除を忘れる．
+・別のソースコードを入れたり，既存のものを書き換えたりすること．
+```
+
+- Visual Studioでの、バッチビルドから先の処理<br>
+ソリューションエクスプローラから、ソリューションOpen3Dに右クリックをする。<br>
+プロパティを選択する。<br>
+共通プロパティ、スタートアッププロジェクト、シングルスタートアップ、TestPoseGraphをそれぞれ選択する。<br>
+デバッグ無しで実行を選択する。多分通る。<br>
+
+```
+実行時にエラーが出ても以下を試す。
+・Releasex64に変更する。
+・ソリューションエクスプローラからTestPoseGraphのプルダウンを開く。
+・Source Filesに右クリック、追加、既存の項目を選択し、
+Open3D_loop_closure-master\src\Testにある
+Optimization_FeatureRegistration.cpp,Optimization_FeatureRegistration.h,
+Optimization_FPFH.cpp,Optimization_FPFH.h,
+TimeString.cpp,TimeString.h
+をそれぞれ追加する。
+・デバッグ無しで実行する。
+```
+
+- 計算に用いる点群をOpen3D_loop_closure-master<br>\\_InputOutput\\__202102\\_pointcloud
+に配置する。
+
+- 真の軌跡データをOpen3D_loop_closure-master<br>\\_InputOutput\\__202102\\_pointcloud
+Open3D_loop_closure-master\\_InputOutput\\__202102
+に配置する。<br><br>
+
+## 2.5 位置合わせ 実行手順
+
+- build\Project.slnをVisual Studioで開く。
+
+- test_03GlobalFeatureFegistraionをスタートアッププロジェクトに指定する。
+
+- デバッグなしで実行。<br>
+コマンドプロンプトが立ち上がる。
+
+- select method:  0:calculation_varyParameters  1:compare_Opitmization<br>
+0を選択する。
+
+- do you create new pattern?  Yes:1  No:0<br>
+計算したいパラメータの組み合わせを更新した場合のみYes(1)、更新が無ければNo(0)を選択する。<br>
+※Open3D_loop_closure-master\\_InputOutput\\__202102\parameter_vecvec.csvの値を参照してOpen3D_loop_closure-master\\_InputOutput\\__202102\pattern_vecvec.csvが更新される。<br>
+
+- press 1 and Enter if you have closed file<br>
+1を押してエンターを押すと計算が開始する。<br><br>
+<!-- 処理中の画面に関しても説明したい。xx -->
+
+
+## 2.6 位置合わせ結果比較 実行準備
+
+## 2.7 位置合わせ結果比較 実行手順
