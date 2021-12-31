@@ -686,7 +686,7 @@ Open3D_loop_closure-master\_InputOutput\__202102\pattern_vecvec.csv
 ## 2.3 出力形式
 
 ```
-Open3D_loop_closure-master\_InputOutput\__202102
+Open3D_loop_closure-master\_InputOutput\__202102\_output
 ```
 ↑このフォルダ直下に出力結果が保存される。<br>
 
@@ -827,5 +827,31 @@ Open3D_loop_closure-master\\_InputOutput\\__202102
 
 
 ## 2.6 位置合わせ結果比較 実行準備
+- Open3D_loop_closure-master\\_InputOutput\\__202102\\_comparisonに、__202102\_output\に出力された出力ファイルを配置する。<br><br>
+
 
 ## 2.7 位置合わせ結果比較 実行手順
+- build\Open3D.slnをVisual Studioで開く。
+
+- test\TestPoseGraphをスタートアッププロジェクトに指定する。
+
+- デバッグなしで実行。<br>
+コマンドプロンプトが立ち上がる。
+
+- select method:  0:calculation_varyParameters  1:compare_Opitmization<br>
+1を選択する。
+
+- ポーズ調整結果の比較の結果が
+Open3D_loop_closure-master\\_InputOutput\\__202102\\_comparison\に"opt日付_comparison.csv"という名前で出力される。<br>
+
+- 以下に出力の説明を示す。<br>
+
+| 出力 | 意味 |
+| :-- | :-- |
+| Removed_FramePairs | ポーズ調整の過程で計算から除外されたフレーム。 |
+| b_isProposed | 提案手法を用いたかどうか(FPFHとICPを用いていれば0、提案手法の大域的位置合わせと局所的位置合わせを用いていれば1)。 |
+| e_error_PointCloudDistance"i" | iフレームの点群におけるe_error_PointCloudDistanceの値。 |
+| e_euqulid_relative_mean | e_euqulid_relative_meanの値。 |
+| e_euqulid_absolute_mean | e_euqulid_absolute_meanの値。 |
+| e_error_PointCloudDistance_map | e_error_PointCloudDistance_mapの値。 |
+<br>
