@@ -634,6 +634,7 @@ data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\\_Compar
 | frames_notContainded | biggestClusterに含まれていないフレーム。<br>→たまに計算されないバグが存在する。 |
 <br>
 
+
 ## 2. ポーズ調整
 
 - 属性付き点群、各フレーム間での局所的的位置合わせ結果から、ロボット(センサ)の走行した軌跡を出力する。<br>
@@ -684,6 +685,72 @@ Open3D_loop_closure-master\_InputOutput\__202102\pattern_vecvec.csv
 
 ## 2.3 出力形式
 
+```
+Open3D_loop_closure-master\_InputOutput\__202102
+```
+↑このフォルダ直下に出力結果が保存される。<br>
+
+ポーズ調整後の変位は"時刻_手法の種類_optimization_output.csv"というファイル名で出力される。<br>
+
+出力結果の.csvは、excelで閲覧することで表形式で確認できる。<br><br>
+
+
+### 2.3.1 ポーズ調整：ポーズ調整前の軌跡
+
+Trajectory(before):の下に、ポーズ調整前の軌跡が出力される。<br>
+
+1行あたりの軌跡データは、フレーム、X、Y、Z、Roll、Pitch、Yawで表現される。<br>
+
+※この軌跡は、局所的位置合わせ結果の変位の、若いフレーム間の変位を優先的に選んで計算される。<br><br>
+
+
+### 2.3.2 ポーズ調整：変位情報
+
+以下に出力の説明を示す。<br>
+※スキップされたフレームの変位には-1が代入される。
+
+| 出力 | 意味 |
+| :-- | :-- |
+| i_tgt | ターゲット点群のフレーム。 |
+| i_src | ソース点群のフレーム。 |
+| isProposed | 従来手法なら0、提案手法なら1。 |
+| X | X軸方向の変位。 |
+| Y | Y軸方向の変位。 |
+| Z | Z軸方向の変位。 |
+| Roll | X軸方向の回転。 |
+| Pitch | X軸方向の回転。 |
+| Yaw | X軸方向の回転。 |
+| IsSkiped | フレームが計算において考慮されたかどうか(1ならスキップ)。 |
+| e_euqulid_relative | 前のフレームからの変位の真値とのユークリッドエラー。 |
+| e_euqulid_absolute | 真のロボット位置とのユークリッド距離。 |
+| e_error_beta_relative | 前のフレームからの変位における回転方向の真値とのエラー(ロボットの方向ベクトルのねじれ方向の角度誤差)。 |
+| e_error_angle_normal_relative | 真のロボット位置における回転方向の真値とのエラー(ロボットの方向ベクトルのねじれ方向の角度誤差)。 |
+| e_error_beta_absolute | 前のフレームからの変位における回転方向の真値とのエラー(ロボットの方向ベクトルの角度誤差)。 |
+| e_error_angle_normal_absolute | 真のロボット位置における回転方向の真値とのエラー(ロボットの方向ベクトルの角度誤差)。 |
+| e_error_PointCloudDistance | ポーズ調整後の点の座標とのエラーの平均値。 |
+| e_error_PointCloudDistance_median | ポーズ調整後の点の座標とのエラーの中央値。 |
+<br>
+
+
+### 2.3.3 ポーズ調整：ポーズ調整後の軌跡
+
+Trajectory:の下に、ポーズ調整後の軌跡が出力される。<br>
+
+1行あたりの軌跡データは、フレーム、X、Y、Z、Roll、Pitch、Yawで表現される。<br><br>
+
+
+### 2.3.4 ポーズ調整：フレーム全体を通した評価値
+
+ポーズ調整後の軌跡(Trajectory:の下)の下に、フレーム全体を通した軌跡の評価値が出力される。<br>
+
+| 出力 | 意味 |
+| :-- | :-- |
+| e_euqulid_relative_mean: | e_euqulid_relativeの平均値(フレームごとの点群サイズによる重みづけ無し)。 |
+| e_euqulid_absolute_mean: | e_euqulid_absoluteの平均値(フレームごとの点群サイズによる重みづけ無し)。 |
+| e_error_PointCloudDistance_map: | e_error_PointCloudDistanceの平均値(フレームごとの点群サイズによる重みづけ有り)。 |
+<br>
+
+
 ## 2.4 位置合わせ 実行準備
 
 - Open3D_loop_closure-master以下をいずれかのフォルダにコピーする。
@@ -710,7 +777,7 @@ Releaseとdebugとついているものを全部選択する。<br>
 暫く待って、結果が46正常終了、40失敗となれば恐らく成功である。この数が違うと後々エラーが出る可能性がある。
 
 ```
-考えられる原因：
+考えられるエラー原因：
 ・最初のcmakeのキャッシュ削除を忘れる．
 ・別のソースコードを入れたり，既存のものを書き換えたりすること．
 ```
@@ -719,20 +786,16 @@ Releaseとdebugとついているものを全部選択する。<br>
 ソリューションエクスプローラから、ソリューションOpen3Dに右クリックをする。<br>
 プロパティを選択する。<br>
 共通プロパティ、スタートアッププロジェクト、シングルスタートアップ、TestPoseGraphをそれぞれ選択する。<br>
-デバッグ無しで実行を選択する。多分通る。<br>
-
-```
-実行時にエラーが出ても以下を試す。
-・Releasex64に変更する。
-・ソリューションエクスプローラからTestPoseGraphのプルダウンを開く。
-・Source Filesに右クリック、追加、既存の項目を選択し、
+デバッグ無しで実行を選択する(エラーは多分出ない。出ても以下の処理を実行すると上手くいく場合がある。)。<br>
+Releasex64に変更する。
+ソリューションエクスプローラからTestPoseGraphのプルダウンを開く。
+Source Filesに右クリック、追加、既存の項目を選択し、
 Open3D_loop_closure-master\src\Testにある
 Optimization_FeatureRegistration.cpp,Optimization_FeatureRegistration.h,
 Optimization_FPFH.cpp,Optimization_FPFH.h,
 TimeString.cpp,TimeString.h
 をそれぞれ追加する。
-・デバッグ無しで実行する。
-```
+デバッグ無しで実行する。
 
 - 計算に用いる点群をOpen3D_loop_closure-master<br>\\_InputOutput\\__202102\\_pointcloud
 に配置する。
@@ -741,11 +804,12 @@ TimeString.cpp,TimeString.h
 Open3D_loop_closure-master\\_InputOutput\\__202102
 に配置する。<br><br>
 
+
 ## 2.5 位置合わせ 実行手順
 
-- build\Project.slnをVisual Studioで開く。
+- build\Open3D.slnをVisual Studioで開く。
 
-- test_03GlobalFeatureFegistraionをスタートアッププロジェクトに指定する。
+- test\TestPoseGraphをスタートアッププロジェクトに指定する。
 
 - デバッグなしで実行。<br>
 コマンドプロンプトが立ち上がる。
