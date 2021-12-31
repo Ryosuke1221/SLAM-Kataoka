@@ -233,13 +233,15 @@ data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\parameter_vec
 
 1つのパラメータに複数の値を指定すると、それぞれの場合の結果を出力する。<br>
 
+複数の値を設定したい場合は、所定のセルの右のセルに値を順次追加していく。<br>
+
 例：パラメータ1とパラメータ2を2つずつ指定すると、合計で4(=2*2)つの位置合わせ結果が出力される。<br><br>
 
 以下に設定パラメータの説明を示す。<br>
 | パラメータ | 意味 |
 | :-- | :-- |
-|  voxel_size | VGFのボクセル1つあたりの辺の大きさ。このボクセルを単位として点群を低解像度化する |
-|  radius_normal_FPFH | 法線推定において、ある注目点の法線を求める際に周囲の点群を考慮する範囲。 |
+| voxel_size | VGFのボクセル1つあたりの辺の大きさ。このボクセルを単位として点群を低解像度化する |
+| radius_normal_FPFH | 法線推定において、ある注目点の法線を求める際に周囲の点群を考慮する範囲。 |
 | radius_FPFH | 近傍点を探索する範囲。 |
 | MaxCorrespondenceDistance_SAC | 収束判定の際、インライアを決める距離の閾値として用いられる。 |
 | SimilarityThreshold_SAC | bad pair rejectionにて使用。i番目のpairに関して、i-1番目のquery点間の距離、match点間の距離を出して、両者の比(1より小さくなるよう分子分母を入替)がSimilarityThresholdより小さくなった場合にpairを削除する。 |
@@ -422,13 +424,15 @@ data\data_test_03GlobalFeatureRegistration\ignore_framePair_matrix.csv
 計算したいパラメータの組み合わせを更新した場合のみYes(1)、更新が無ければNo(0)を選択する。<br>
 ※data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\parameter_vecvec.csvの値を参照してdata\data_test_03GlobalFeatureRegistration\Result_01varyParameters\pattern_vecvec.csvが更新される。<br>
 
+- Do you calculate new pointcloud ? (calcUniquePointOfFPFHInSomeRadius):  yes:1  no:0<br>
+点群データを新しくしたり、FPFH特徴量を計算するためのパラメータ(voxel_size,radius_normal_FPFH,radius_FPFH)を更新した場合は1を選択する。<br>
+1を選択した場合は、FPFH特徴量の計算の過程の値を始めから計算し、またその値をファイルに出力する。<br>
+0を選択した場合は、FPFH特徴量の計算の過程の値をファイルから読み込んで、全体の計算にかかる時間を節約する。
+   
 - press 1 and Enter if you have closed file<br>
 1を押してエンターを押すと計算が開始する。<br><br>
 <!-- 処理中の画面に関しても説明したい。xx -->
 
-<!-- 
-このファイルには、計算速度向上のため、FPFHの特徴量を毎回計算しなくても良いようにする役割がある。xx
--->
 
 ### 1.3.7 位置合わせ結果比較 実行準備
 
@@ -481,6 +485,8 @@ data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\_Input\p
 ↑このファイルに、局所的位置合わせを行う際に用いるパラメータをまとめている。<br>
 
 1つのパラメータに複数の値を指定すると、それぞれの場合の結果を出力する。<br>
+
+複数の値を設定したい場合は、所定のセルの右のセルに値を順次追加していく。<br>
 
 以下に設定パラメータの説明を示す。<br>
 
@@ -635,7 +641,7 @@ data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\\_Compar
 <br>
 
 
-## 2. ポーズ調整
+# 2. ポーズ調整
 
 - 属性付き点群、各フレーム間での局所的的位置合わせ結果から、ロボット(センサ)の走行した軌跡を出力する。<br>
 ここでは、従来から広く用いられてきたポーズ調整を用いる。
@@ -666,6 +672,8 @@ Open3D_loop_closure-master\_InputOutput\__202102\parameter_vecvec.csv
 ↑このファイルに、ポーズ調整を行う際に用いるパラメータをまとめている。<br>
 
 1つのパラメータに複数の値を指定すると、それぞれの場合の結果を出力する。<br>
+
+複数の値を設定したい場合は、所定のセルの右のセルに値を順次追加していく。<br>
 
 以下に設定パラメータの説明を示す。<br>
 
