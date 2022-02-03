@@ -1,26 +1,3 @@
-
-<!-- 4. 444
-5. 555
-6. 666
-
-- [x] Task1
-- [ ] Task3
-
-text
-
->reference
-
-| 左寄せ | 中央寄せ | 右寄せ |
-|:------|:--------:|-------:|
-| 左    | 中央     | 右　   |
-
-
-Click [reference_page1](https://help.github.com/ja/github/writing-on-github/basic-writing-and-formatting-syntax)
-
-Click [reference_page2](https://cpp-learning.com/readme/)
-
-Click [reference_page3](https://cpp-learning.com/wp-content/uploads/2019/06/README_Template.html) -->
-
 # プログラム操作手順
 # 0. プログラム概要
 
@@ -40,6 +17,10 @@ Click [reference_page3](https://cpp-learning.com/wp-content/uploads/2019/06/READ
 - NIR：near infra-red、近赤外線
 <br><br>
 
+## 0.2 関連リンク
+
+- 真の軌跡を計算する方法： [手動位置合わせ](https://github.com/Ryosuke1221/SLAM-Kataoka/tree/master/source/test_HandRegistration)
+<br><br>
 
 # 1. SLAM-kataoka
 
