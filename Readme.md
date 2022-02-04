@@ -33,12 +33,29 @@ SLAM-kataoka/
      ├Project.sln
   ├data/
      ├data_test_03GlobalFeatureRegistration/
+        ├ignore_frame_list.csv
+        ├ignore_framePair_matrix.csv
+        ├Result_01varyParameters/
+           ├_Comparison/
+           ├parameter_vecvec.csv
+           ├pattern_vecvec.csv
+        ├Result_02_ICP_varyParameters
+           ├_Comparison
+           ├_Input
+              ├parameter_vecvec.csv
+              ├pattern_vecvec.csv
+        ├00_nir/
+        ├01_velodyne/
         ├03_all/
      ├data_test_PointcloudGeneration/
         ├03_PCDGeneration_fromCSV/
            ├05_NarahaWinter202001/
               ├_01Generation/
+                 ├時刻_Output_XYZI_VELO_PCAP/
+                 ├時刻_Output_XYZI_NIR/
+                 ├時刻_Output_XYZI_VELO_withNIR/
               ├_02Filtering/
+                 ├時刻_Output/
               ├_03Combination/
               ├_03Combination_Output/
 ```
@@ -97,7 +114,7 @@ data\data_test_PointcloudGeneration\03_PCDGeneration_fromCSV<br>
 - 0: VELO_PCAPを選ぶ。<br>
 XXX (Frame 0000).csvが読み込まれ、.pcdが生成される。<br>
 生成された点群は、data_test_PointcloudGeneration\03_PCDGeneration_fromCSV<br>
-\05_NarahaWinter202001\\_01Generation時刻_Output_XYZI_VELO_PCAP
+\05_NarahaWinter202001\\_01Generation\時刻_Output_XYZI_VELO_PCAP
 に保存される。<br><br>
 
 続いて、VelodyneとNIRセンサを計測に用いたフレームの点群の、velodyneデータを生成する。
@@ -109,7 +126,7 @@ XXX (Frame 0000).csvが読み込まれ、.pcdが生成される。<br>
 - 1: VELO_withNIRを選ぶ。<br>
 XXXvelo.csvが読み込まれ、.pcdが生成される。<br>
 生成された点群は、data_test_PointcloudGeneration\03_PCDGeneration_fromCSV<br>
-\05_NarahaWinter202001\\_01Generation時刻_Output_XYZI_VELO_withNIR
+\05_NarahaWinter202001\\_01Generation\時刻_Output_XYZI_VELO_withNIR
 に保存される。<br><br>
 
 続いて、VelodyneとNIRセンサを計測に用いたフレームの点群の、NIRデータを生成する。
@@ -496,7 +513,7 @@ data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\
 ```
 ↑このフォルダ直下に"時刻_手法の種類_ICP"というフォルダが作成され、その中に出力結果が保存される。<br>
 
-例：2021年2月26日23時11分18秒835ミリ秒に従来手法を用いると、結果は20210226_2311_18_835_conventional_ICPに出力される。<br><br>
+例：2021年2月26日23時11分18秒835ミリ秒に従来手法を用いると、結果は20210226_2311_18_835_conventional_ICP\に出力される。<br><br>
 
 
 #### 1.4.2.1 位置合わせ結果：変位情報
@@ -648,7 +665,7 @@ Open3D_loop_closure-master/
 ## 2.2 設定パラメータ
 
 ```
-Open3D_loop_closure-master\_InputOutput\__202102\parameter_vecvec.csv
+_InputOutput\__202102\parameter_vecvec.csv
 ```
 ↑このファイルに、ポーズ調整を行う際に用いるパラメータをまとめている。<br>
 
@@ -667,7 +684,7 @@ Open3D_loop_closure-master\_InputOutput\__202102\parameter_vecvec.csv
 
 
 ```
-Open3D_loop_closure-master\_InputOutput\__202102\pattern_vecvec.csv
+_InputOutput\__202102\pattern_vecvec.csv
 ```
 ↑このファイルにて、結果1つ分の計算に用いるパラメータの組み合わせを行ごとにまとめている。<br><br>
 
@@ -675,7 +692,7 @@ Open3D_loop_closure-master\_InputOutput\__202102\pattern_vecvec.csv
 ## 2.3 出力形式
 
 ```
-Open3D_loop_closure-master\_InputOutput\__202102\_output
+_InputOutput\__202102\_output\
 ```
 ↑このフォルダ直下に出力結果が保存される。<br>
 
@@ -744,7 +761,7 @@ Trajectory:の下に、ポーズ調整後の軌跡が出力される。<br>
 
 - Open3D_loop_closure-master以下をいずれかのフォルダにコピーする。
 
-- Open3D_loop_closure-master\buildの中身を全て削除する。
+- build/の中身を全て削除する。
 
 - CMake(cmake-gui)を起動する。
 
@@ -779,18 +796,19 @@ Releaseとdebugとついているものを全部選択する。<br>
 Releasex64に変更する。
 ソリューションエクスプローラからTestPoseGraphのプルダウンを開く。
 Source Filesに右クリック、追加、既存の項目を選択し、
-Open3D_loop_closure-master\src\Testにある
+src\Test\にある
 Optimization_FeatureRegistration.cpp,Optimization_FeatureRegistration.h,
 Optimization_FPFH.cpp,Optimization_FPFH.h,
 TimeString.cpp,TimeString.h
 をそれぞれ追加する。
 デバッグ無しで実行する。
 
-- 計算に用いる点群をOpen3D_loop_closure-master<br>\\_InputOutput\\__202102\\_pointcloud
+- 計算に用いる点群を
+<br>\\_InputOutput\\__202102\\_pointcloud
 に配置する。
 
 - 真の軌跡データを
-Open3D_loop_closure-master\\_InputOutput\\__202102
+_InputOutput\\__202102
 に配置する。<br><br>
 
 
@@ -808,7 +826,7 @@ Open3D_loop_closure-master\\_InputOutput\\__202102
 
 - do you create new pattern?  Yes:1  No:0<br>
 計算したいパラメータの組み合わせを更新した場合のみYes(1)、更新が無ければNo(0)を選択する。<br>
-※Open3D_loop_closure-master\\_InputOutput\\__202102\parameter_vecvec.csvの値を参照してOpen3D_loop_closure-master\\_InputOutput\\__202102\pattern_vecvec.csvが更新される。<br>
+※_InputOutput\\__202102\parameter_vecvec.csvの値を参照して_InputOutput\\__202102\pattern_vecvec.csvが更新される。<br>
 
 - press 1 and Enter if you have closed file<br>
 1を押してエンターを押すと計算が開始する。<br><br>
@@ -816,7 +834,7 @@ Open3D_loop_closure-master\\_InputOutput\\__202102
 
 
 ## 2.6 位置合わせ結果比較 実行準備
-- Open3D_loop_closure-master\\_InputOutput\\__202102\\_comparisonに、__202102\_output\に出力された出力ファイルを配置する。<br><br>
+- _InputOutput\\__202102\\_comparisonに、__202102\_output\に出力された出力ファイルを配置する。<br><br>
 
 
 ## 2.7 位置合わせ結果比較 実行手順
@@ -831,7 +849,7 @@ Open3D_loop_closure-master\\_InputOutput\\__202102
 1を選択する。
 
 - ポーズ調整結果の比較の結果が
-Open3D_loop_closure-master\\_InputOutput\\__202102\\_comparison\に"opt日付_comparison.csv"という名前で出力される。<br>
+_InputOutput\\__202102\\_comparison\に"opt日付_comparison.csv"という名前で出力される。<br>
 
 - 以下に出力の説明を示す。<br>
 
