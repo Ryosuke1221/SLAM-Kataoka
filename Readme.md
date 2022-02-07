@@ -65,6 +65,7 @@ SLAM-kataoka/
 
 
 ### 1.2.1 点群データの場所
+<details><summary>展開</summary><div>
 
 点群データは、
 ```
@@ -81,14 +82,18 @@ data\data_test_03GlobalFeatureRegistration\00_nir
 ```
 data\data_test_03GlobalFeatureRegistration\01_velodyne
 ```
-には近赤外情報を計測したフレーム以外の点群を保存している。<br><br>
+には近赤外情報を計測したフレーム以外の点群を保存している。
+</div></details>
+<br>
 
 
 ### 1.2.2 点群データの生成
 
 センサから得た点群データ(.csv)を、当プログラムを適用できる形(.pcd)に変換する。<br><br>
 
+
 #### 1.2.2.1 .csvから.pcd(途中1)を生成
+<details><summary>展開</summary><div>
 
 入力データの.csvは
 ```
@@ -138,10 +143,13 @@ XXXvelo.csvが読み込まれ、.pcdが生成される。<br>
 - 2: NIRを選ぶ。<br>
 XXXnir.csvが読み込まれ、.pcdが生成される。
 生成された点群は、data_test_PointcloudGeneration\03_PCDGeneration_fromCSV\05_NarahaWinter202001\\_01Generation時刻_Output_XYZI_NIR
-に保存される。<br><br>
+に保存される。
+</div></details>
+<br>
 
 
 #### 1.2.2.2 .pcd(途中1)から.pcd(途中2)を生成
+<details><summary>展開</summary><div>
 
 入力データの.pcd(1.2.2.1で生成したもの)は
 ```
@@ -171,10 +179,13 @@ XXX (Frame 0000).pcdが読み込まれ、.pcd(途中2)が生成される。<br>
 XXXvelo.pcdとXXXvnir.pcdが読み込まれ、.pcd(途中2)が生成される。<br>
 生成された点群は、data_test_PointcloudGeneration\03_PCDGeneration_fromCSV<br>
 \05_NarahaWinter202001\\_02Filtering時刻_Output
-に保存される。<br><br>
+に保存される。
+</div></details>
+<br>
 
 
 #### 1.2.2.3 .pcd(途中2)から.pcd(完成)を生成
+<details><summary>展開</summary><div>
 
 入力データの.pcd(1.2.2.2で生成したもの)は
 ```
@@ -216,7 +227,9 @@ XXX (Frame 0000).pcdとXXXvelo.pcdが読み込まれ、.pcd(完成)が生成さ�
 
 - select delete them or not  1:yes  0:no<br>
 既に出力フォルダ内に別の.pcdが存在する場合にこの選択肢が出る。<br>
-既にVelodyneのみを計測に用いたフレームのの点群を生成しているはずなので、noを選択する。<br><br>
+既にVelodyneのみを計測に用いたフレームのの点群を生成しているはずなので、noを選択する。
+</div></details>
+<br><br>
 
 
 ## 1.3 大域的位置合わせ
@@ -224,6 +237,8 @@ XXX (Frame 0000).pcdとXXXvelo.pcdが読み込まれ、.pcd(完成)が生成さ�
 
 
 ### 1.3.1 設定パラメータ
+<details><summary>展開</summary><div>
+
 ```
 data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\parameter_vecvec.csv
 ```
@@ -266,19 +281,26 @@ data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\pattern_vecve
 
 例：パラメータ1とパラメータ2を2つずつ指定すると、合計で4(=2*2)つの位置合わせ結果の出力となり、このファイルは4行の構成となる。<br>
 
-※一番上の行にてパラメータ名を指定している。<br><br>
+※一番上の行にてパラメータ名を指定している。
+</div></details>
+<br>
 
 
 ### 1.3.2 出力形式
+<details><summary>展開</summary><div>
+
 ```
 data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\
 ```
 ↑このフォルダ直下に"時刻_手法の種類"というフォルダが作成され、その中に出力結果が保存される。<br>
 
-例：2021年2月2日6時8分55秒736ミリ秒に従来手法を用いると、結果は20210202_0608_55_736_conventionalに出力される。<br><br>
+例：2021年2月2日6時8分55秒736ミリ秒に従来手法を用いると、結果は20210202_0608_55_736_conventionalに出力される。
+</div></details>
+<br>
 
 
 #### 1.3.2.1 位置合わせ結果：変位情報
+<details><summary>展開</summary><div>
 
 位置合わせの変位は"時刻_手法_output.csv"というファイル名で出力される。<br>
 
@@ -310,9 +332,12 @@ data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\
 | e_error_beta | 回転方向の真値とのエラー(ロボットの方向ベクトルのねじれ方向の角度誤差)。 |
 | e_error_angle_normal | 回転方向の真値とのエラー(ロボットの方向ベクトルの角度誤差)。 |
 | time_elapsed | 処理全体にかかった時間。 |
+</div></details>
 <br>
 
+
 #### 1.3.2.2 位置合わせ結果：点群データ
+<details><summary>展開</summary><div>
 
 出力された位置合わせ結果を2点群間に適用した後の点群を.pcd形式で出力する。<br>
 
@@ -329,10 +354,14 @@ data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\
 ```
 tgt00src01_result_00conventional.pcd
 ```
-となる。<br><br>
+となる。
+</div></details>
+<br>
 
 
 ### 1.3.3 位置合わせするフレームのスキップ
+<details><summary>展開</summary><div>
+
 - 位置合わせが明らかに失敗してしまうフレームが分かっている場合は、事前の入力によって、そのフレームとの位置合わせをスキップすることができる。
 - スキップしたいフレームは、以下のファイルに入力することによって指定する。
 ```
@@ -360,9 +389,12 @@ data\data_test_03GlobalFeatureRegistration\ignore_frame_list.csv
 | 4 | -1|
 
 ※フレームの組み合わせのスキップを行わない場合も、このファイルを準備する必要がある。
-<br><br>
+</div></details>
+<br>
 
 ### 1.3.4 位置合わせするフレームの組み合わせのスキップ
+<details><summary>展開</summary><div>
+
 - 位置合わせが明らかに失敗してしまうフレームの組み合わせが分かっている場合は、事前の入力によって、そのフレーム間の位置合わせをスキップすることができる。
 - スキップしたいフレームの組み合わせは、以下のファイルに入力することによって指定する。
 ```
@@ -393,13 +425,10 @@ data\data_test_03GlobalFeatureRegistration\ignore_framePair_matrix.csv
 
 <br>
 ※フレームの組み合わせのスキップを行わない場合も、このファイルを準備する必要がある。
-
-
-
-<br><br>
+</div></details>
+<br>
 
 ### 1.3.5 位置合わせ 実行準備
-
 - data_test_PointcloudGeneration\03_PCDGeneration_fromCSV<br>
 \05_NarahaWinter202001\\_03Combination_Output
 にある点群をdata\data_test_03GlobalFeatureRegistration\03_all
@@ -407,6 +436,7 @@ data\data_test_03GlobalFeatureRegistration\ignore_framePair_matrix.csv
 
 
 ### 1.3.6 位置合わせ 実行手順
+<details><summary>展開</summary><div>
 
 - build\Project.slnをVisual Studioで開く。
 
@@ -428,18 +458,23 @@ data\data_test_03GlobalFeatureRegistration\ignore_framePair_matrix.csv
 0を選択した場合は、FPFH特徴量の計算の過程の値をファイルから読み込んで、全体の計算にかかる時間を節約する。
    
 - press 1 and Enter if you have closed file<br>
-1を押してエンターを押すと計算が開始する。<br><br>
+1を押してエンターを押すと計算が開始する。
 <!-- 処理中の画面に関しても説明したい。xx -->
+</div></details>
+<br>
 
 
 ### 1.3.7 位置合わせ結果比較 実行準備
+<details><summary>展開</summary><div>
 
 - data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\_Comparison\
 に大域位置合わせの実行結果のフォルダを配置する。<br>フォルダ名の例：時刻_conventional
-<br><br>
+</div></details>
+<br>
 
 
 ### 1.3.8 位置合わせ結果比較 実行手順
+<details><summary>展開</summary><div>
 
 - build\Project.slnをVisual Studioで開く。
 
@@ -466,7 +501,8 @@ data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\\_Comparison\
 | size_biggestCluster | biggestClusterのサイズ。 |
 | second_biggestCluster | succeededFramePairsを繋ぎ合わせて、相対的な変位が計算できるフレームの組み合わせの中で、二番目に大きい物。 |
 | frames_notContainded | biggestClusterに含まれていないフレーム。<br>→たまに計算されないバグが存在する。 |
-<br>
+</div></details>
+<br><br>
 
 
 ## 1.4 局所的位置合わせ
@@ -476,6 +512,7 @@ data\data_test_03GlobalFeatureRegistration\Result_01varyParameters\\_Comparison\
 <br><br>
 
 ### 1.4.1 設定パラメータ
+<details><summary>展開</summary><div>
 
 ```
 data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\_Input\parameter_vecvec.csv
@@ -503,20 +540,26 @@ data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\_Input\p
 ```
 data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\_Input\pattern_vecvec.csv
 ```
-↑このファイルにて、結果1つ分の計算に用いるパラメータの組み合わせを行ごとにまとめている。<br><br>
+↑このファイルにて、結果1つ分の計算に用いるパラメータの組み合わせを行ごとにまとめている。
+</div></details>
+<br>
 
 
 ### 1.4.2 出力形式
+<details><summary>展開</summary><div>
 
 ```
 data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\
 ```
 ↑このフォルダ直下に"時刻_手法の種類_ICP"というフォルダが作成され、その中に出力結果が保存される。<br>
 
-例：2021年2月26日23時11分18秒835ミリ秒に従来手法を用いると、結果は20210226_2311_18_835_conventional_ICP\に出力される。<br><br>
+例：2021年2月26日23時11分18秒835ミリ秒に従来手法を用いると、結果は20210226_2311_18_835_conventional_ICP\に出力される。
+</div></details>
+<br>
 
 
 #### 1.4.2.1 位置合わせ結果：変位情報
+<details><summary>展開</summary><div>
 
 位置合わせの変位は"時刻_手法_output.csv"というファイル名で出力される。<br>
 
@@ -547,9 +590,12 @@ data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\
 | median_nearest | 位置合わせ後のターゲット点群とソース点群の近傍点距離の中央値。 |
 | b_estimatedSuccess | 位置合わせの成否の推定値。<br>成功は1、失敗は0。 |
 | time_elapsed | 処理全体にかかった時間。 |
+</div></details>
 <br>
 
+
 #### 1.4.2.2 位置合わせ結果：点群データ
+<details><summary>展開</summary><div>
 
 出力された位置合わせ結果を2点群間に適用した後の点群を.pcd形式で出力する。<br>
 
@@ -567,7 +613,9 @@ data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\
 ```
 tgt00src01_result_00conventional_ICP.pcd
 ```
-となる。<br><br>
+となる。
+</div></details>
+<br>
 
 
 ### 1.4.3 位置合わせ 実行準備
@@ -581,6 +629,7 @@ data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\_input\
 
 
 ### 1.4.4 位置合わせ 実行手順
+<details><summary>展開</summary><div>
 
 - build\Project.slnをVisual Studioで開く。
 
@@ -597,7 +646,9 @@ data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\_input\
 ※data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\\_Input\parameter_vecvec.csvの値を参照してdata\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\\_Input\pattern_vecvec.csvが更新される。
 
 - press 1 and Enter if you have closed file<br>
-1を押してエンターを押すと計算が開始する。<br><br>
+1を押してエンターを押すと計算が開始する。
+</div></details>
+<br>
 
 
 ### 1.4.5 位置合わせ結果比較 実行準備
@@ -608,6 +659,7 @@ data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\_input\
 
 
 ### 1.4.6 位置合わせ結果比較 実行手順
+<details><summary>展開</summary><div>
 
 - build\Project.slnをVisual Studioで開く。
 
@@ -636,13 +688,14 @@ data\data_test_03GlobalFeatureRegistration\Result_02_ICP_varyParameters\\_Compar
 | size_biggestCluster | biggestClusterのサイズ。 |
 | second_biggestCluster | succeededFramePairsを繋ぎ合わせて、相対的な変位が計算できるフレームの組み合わせの中で、二番目に大きい物。 |
 | frames_notContainded | biggestClusterに含まれていないフレーム。<br>→たまに計算されないバグが存在する。 |
-<br>
+</div></details>
+<br><br>
 
 
 # 2. ポーズ調整
 
 - 属性付き点群、各フレーム間での局所的的位置合わせ結果から、ロボット(センサ)の走行した軌跡を出力する。<br>
-ここでは、従来から広く用いられてきたポーズ調整を用いる。
+ここでは、従来から広く用いられてきたポーズ調整を用いる。<br><br>
 
 ## 2.1 ディレクトリ構造
 ```
@@ -662,7 +715,9 @@ Open3D_loop_closure-master/
 ```
 <br>
 
+
 ## 2.2 設定パラメータ
+<details><summary>展開</summary><div>
 
 ```
 _InputOutput\__202102\parameter_vecvec.csv
@@ -686,10 +741,13 @@ _InputOutput\__202102\parameter_vecvec.csv
 ```
 _InputOutput\__202102\pattern_vecvec.csv
 ```
-↑このファイルにて、結果1つ分の計算に用いるパラメータの組み合わせを行ごとにまとめている。<br><br>
+↑このファイルにて、結果1つ分の計算に用いるパラメータの組み合わせを行ごとにまとめている。
+</div></details>
+<br><br>
 
 
 ## 2.3 出力形式
+<details><summary>展開</summary><div>
 
 ```
 _InputOutput\__202102\_output\
@@ -698,19 +756,25 @@ _InputOutput\__202102\_output\
 
 ポーズ調整後の変位は"時刻_手法の種類_optimization_output.csv"というファイル名で出力される。<br>
 
-出力結果の.csvは、excelで閲覧することで表形式で確認できる。<br><br>
+出力結果の.csvは、excelで閲覧することで表形式で確認できる。
+</div></details>
+<br>
 
 
 ### 2.3.1 ポーズ調整：ポーズ調整前の軌跡
+<details><summary>展開</summary><div>
 
 Trajectory(before):の下に、ポーズ調整前の軌跡が出力される。<br>
 
 1行あたりの軌跡データは、フレーム、X、Y、Z、Roll、Pitch、Yawで表現される。<br>
 
-※この軌跡は、局所的位置合わせ結果の変位の、若いフレーム間の変位を優先的に選んで計算される。<br><br>
+※この軌跡は、局所的位置合わせ結果の変位の、若いフレーム間の変位を優先的に選んで計算される。
+</div></details>
+<br>
 
 
 ### 2.3.2 ポーズ調整：変位情報
+<details><summary>展開</summary><div>
 
 以下に出力の説明を示す。<br>
 ※スキップされたフレームの変位には-1が代入される。
@@ -735,6 +799,7 @@ Trajectory(before):の下に、ポーズ調整前の軌跡が出力される。<
 | e_error_angle_normal_absolute | 真のロボット位置における回転方向の真値とのエラー(ロボットの方向ベクトルの角度誤差)。 |
 | e_error_PointCloudDistance | ポーズ調整後の点の座標とのエラーの平均値。 |
 | e_error_PointCloudDistance_median | ポーズ調整後の点の座標とのエラーの中央値。 |
+</div></details>
 <br>
 
 
@@ -746,6 +811,7 @@ Trajectory:の下に、ポーズ調整後の軌跡が出力される。<br>
 
 
 ### 2.3.4 ポーズ調整：フレーム全体を通した評価値
+<details><summary>展開</summary><div>
 
 ポーズ調整後の軌跡(Trajectory:の下)の下に、フレーム全体を通した軌跡の評価値が出力される。<br>
 
@@ -754,10 +820,12 @@ Trajectory:の下に、ポーズ調整後の軌跡が出力される。<br>
 | e_euqulid_relative_mean: | e_euqulid_relativeの平均値(フレームごとの点群サイズによる重みづけ無し)。 |
 | e_euqulid_absolute_mean: | e_euqulid_absoluteの平均値(フレームごとの点群サイズによる重みづけ無し)。 |
 | e_error_PointCloudDistance_map: | e_error_PointCloudDistanceの平均値(フレームごとの点群サイズによる重みづけ有り)。 |
-<br>
+</div></details>
+<br><br>
 
 
 ## 2.4 位置合わせ 実行準備
+<details><summary>展開</summary><div>
 
 - Open3D_loop_closure-master以下をいずれかのフォルダにコピーする。
 
@@ -809,10 +877,13 @@ TimeString.cpp,TimeString.h
 
 - 真の軌跡データを
 _InputOutput\\__202102
-に配置する。<br><br>
+に配置する。
+</div></details>
+<br><br>
 
 
 ## 2.5 位置合わせ 実行手順
+<details><summary>展開</summary><div>
 
 - build\Open3D.slnをVisual Studioで開く。
 
@@ -829,8 +900,10 @@ _InputOutput\\__202102
 ※_InputOutput\\__202102\parameter_vecvec.csvの値を参照して_InputOutput\\__202102\pattern_vecvec.csvが更新される。<br>
 
 - press 1 and Enter if you have closed file<br>
-1を押してエンターを押すと計算が開始する。<br><br>
+1を押してエンターを押すと計算が開始する。
 <!-- 処理中の画面に関しても説明したい。xx -->
+</div></details>
+<br><br>
 
 
 ## 2.6 位置合わせ結果比較 実行準備
@@ -838,6 +911,8 @@ _InputOutput\\__202102
 
 
 ## 2.7 位置合わせ結果比較 実行手順
+<details><summary>展開</summary><div>
+
 - build\Open3D.slnをVisual Studioで開く。
 
 - test\TestPoseGraphをスタートアッププロジェクトに指定する。
@@ -861,4 +936,4 @@ _InputOutput\\__202102\\_comparison\に"opt日付_comparison.csv"という名前
 | e_euqulid_relative_mean | e_euqulid_relative_meanの値。 |
 | e_euqulid_absolute_mean | e_euqulid_absolute_meanの値。 |
 | e_error_PointCloudDistance_map | e_error_PointCloudDistance_mapの値。 |
-<br>
+</div></details>
